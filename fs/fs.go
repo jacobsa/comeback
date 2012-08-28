@@ -42,5 +42,5 @@ type DirectoryEntry struct {
 
 	// Zero or more blobs that make up a regular file's contents, to be
 	// concatenated in order.
-	BlobHashes []string
+	BlobHashes []blob.Hash
 }
