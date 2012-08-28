@@ -44,3 +44,7 @@ message DirectoryEntryProto {
   // concatenated in order.
   repeated BlobInfoProto blob = 5;
 }
+
+message DirectoryListingProto {
+  repeated DirectoryEntryProto entry = 1;
+}

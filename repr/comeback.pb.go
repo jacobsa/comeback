@@ -111,6 +111,15 @@ func (this *DirectoryEntryProto) GetMtime() int64 {
 	return 0
 }
 
+type DirectoryListingProto struct {
+	Entry            []*DirectoryEntryProto `protobuf:"bytes,1,rep,name=entry" json:"entry,omitempty"`
+	XXX_unrecognized []byte                 `json:"-"`
+}
+
+func (this *DirectoryListingProto) Reset()         { *this = DirectoryListingProto{} }
+func (this *DirectoryListingProto) String() string { return proto.CompactTextString(this) }
+func (*DirectoryListingProto) ProtoMessage()       {}
+
 func init() {
 	proto.RegisterEnum("repr.DirectoryEntryProto_Type", DirectoryEntryProto_Type_name, DirectoryEntryProto_Type_value)
 }
