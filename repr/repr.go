@@ -20,6 +20,24 @@ package repr
 import "fmt"
 import "github.com/jacobsa/comeback/fs"
 
+func convertType(
+
+func makeEntryProto(entry fs.DirectoryEntry) *DirectoryEntryProto {
+  blobs := []*BlobInfoProto{}
+	for _, hash := range entry.BlobHashes {
+	  proto := &BlobInfoProto{Hash: []byte(hash)}
+	  blobs = append(blobs, proto)
+	}
+
+	return &DirectoryEntryProto{
+		Type: convertType(entry.Type),
+		Permissions: entry.Permissions,
+		Name: entry.Name,
+		Mtime: entry.MTime,
+		Blob: entry.blobs,
+	}
+}
+
 // Marshal turns a list of directory entries into a string that can later be
 // used with Unmarshal.
 func Marshal(entries []fs.DirectoryEntry) (s string, err error) {
