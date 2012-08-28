@@ -16,3 +16,17 @@
 // Package repr contains functions useful for serializing and deserializing
 // directory listing structs.
 package repr
+
+import "github.com/jacobsa/comeback/fs"
+
+// Marshal turns a list of directory entries into a string that can later be
+// used with Unmarshal.
+func Marshal(entries []fs.DirectoryEntry) (s string, err error) {
+	return "TODO"
+}
+
+// Unmarshal recovers a list of directory entries from a string previously
+// created by Marshal.
+func Unmarshal(s string) (entries []fs.DirectoryEntry, err error) {
+	// TODO
+}
