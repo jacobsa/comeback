@@ -16,6 +16,8 @@
 // TODO
 package fs
 
+import "time"
+
 type EntryType uint32
 
 const (
