@@ -15,12 +15,12 @@
 
 package repr;
 
-message BlobInfo {
+message BlobInfoProto {
   // The SHA-1 hash of the blob, in 20-byte 'raw' form.
   optional bytes hash = 1;
 }
 
-message DirectoryEntry {
+message DirectoryEntryProto {
   enum Type {
     // Sentinel for a missing value.
     TYPE_UNKNOWN   = -1;
@@ -42,5 +42,5 @@ message DirectoryEntry {
 
   // The zero or more blobs that make up a regular file's contents, to be
   // concatenated in order.
-  repeated BlobInfo blob = 5;
+  repeated BlobInfoProto blob = 5;
 }
