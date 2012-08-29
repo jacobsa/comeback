@@ -17,9 +17,9 @@
 package fs
 
 import (
+	"github.com/jacobsa/comeback/blob"
 	"io"
 	"io/ioutil"
-	"github.com/jacobsa/comeback/blob"
 	"os"
 	"time"
 )

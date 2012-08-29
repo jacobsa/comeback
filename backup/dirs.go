@@ -35,28 +35,28 @@ type DirectorySaver interface {
 func NewDirectorySaver(
 	store blob.Store,
 	fileSystem fs.FileSystem,
-  fileSaver FileSaver,
-  wrapped DirectorySaver) (DirectorySaver, error) {
+	fileSaver FileSaver,
+	wrapped DirectorySaver) (DirectorySaver, error) {
 	return &dirSaver{
-		blobStore: store,
+		blobStore:  store,
 		fileSystem: fileSystem,
-		fileSaver: fileSaver,
-		wrapped: wrapped,
+		fileSaver:  fileSaver,
+		wrapped:    wrapped,
 	}, nil
 }
 
 type dirSaver struct {
-	blobStore blob.Store
+	blobStore  blob.Store
 	fileSystem fs.FileSystem
-	fileSaver FileSaver
-	wrapped DirectorySaver
+	fileSaver  FileSaver
+	wrapped    DirectorySaver
 }
 
 func convertCommon(fi os.FileInfo) (fs.DirectoryEntry, error) {
 	entry := fs.DirectoryEntry{
 		Permissions: uint32(fi.Mode() & os.ModePerm),
-		Name: fi.Name(),
-		MTime: fi.ModTime(),
+		Name:        fi.Name(),
+		MTime:       fi.ModTime(),
 	}
 
 	// Convert the type.
@@ -118,7 +118,7 @@ func (s *dirSaver) Save(dirpath string) (score blob.Score, err error) {
 			entry.Scores, err = s.saveFile(dirpath, fileInfo)
 		case fs.TypeDirectory:
 			entry.Scores, err = s.saveDir(dirpath, fileInfo)
-	  default:
+		default:
 			err = fmt.Errorf("Unhandled type: %v", entry.Type)
 		}
 

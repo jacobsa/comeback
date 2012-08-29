@@ -41,7 +41,7 @@ type fileSaver struct {
 // Read 16 MiB from the supplied reader, returning less iff the reader returns
 // an error (including EOF). Do not treat EOF as an error condition.
 func getChunk(r io.Reader) ([]byte, error) {
-	r = io.LimitReader(r, 1 << 24)
+	r = io.LimitReader(r, 1<<24)
 	return ioutil.ReadAll(r)
 }
 
