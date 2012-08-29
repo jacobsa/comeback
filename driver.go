@@ -19,8 +19,8 @@ import (
 	"fmt"
 	"github.com/jacobsa/comeback/backup"
 	"github.com/jacobsa/comeback/disk"
+	"github.com/jacobsa/comeback/fs"
 	"log"
-	"os"
 )
 
 func main() {
@@ -36,20 +36,34 @@ func main() {
 		log.Fatalf("Creating file saver: %v", err)
 	}
 
-	// Open a file.
-	f, err := os.Open("/Users/jacobsa/Desktop/cathouse.jpeg")
+	// Create a directory saver.
+	dirSaver, err := backup.NewDirectorySaver(
+		blobStore,
+		fs.NewFileSystem(),
+		fileSaver,
+		nil)
+
 	if err != nil {
-		log.Fatalf("Opening file: %v", err)
+		log.Fatalf("Creating directory saver: %v", err)
 	}
 
-	// Save the file.
-	scores, err := fileSaver.Save(f)
+	// Create another level.
+	dirSaver, err = backup.NewDirectorySaver(
+		blobStore,
+		fs.NewFileSystem(),
+		fileSaver,
+		dirSaver)
+
+	if err != nil {
+		log.Fatalf("Creating directory saver: %v", err)
+	}
+
+	// Save a directory.
+	score, err := dirSaver.Save("/Users/jacobsa/tmp")
 	if err != nil {
 		log.Fatalf("Saving: %v", err)
 	}
 
-	// Print the scores.
-	for _, score := range scores {
-		fmt.Printf("Score: %x\n", score.Sha1Hash())
-	}
+	// Print the score.
+	fmt.Printf("Score: %x\n", score.Sha1Hash())
 }
