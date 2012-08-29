@@ -32,6 +32,19 @@ type DirectorySaver interface {
 	Save(dirpath string) (score blob.Score, err error)
 }
 
+func NewDirectorySaver(
+	store blob.Store,
+	fileSystem fs.FileSystem,
+  fileSaver FileSaver,
+  wrapped DirectorySaver) (DirectorySaver, error) {
+	return &directorySaver{
+		blobStore: store,
+		fileSystem: fileSystem,
+		fileSaver: fileSaver,
+		wrapped: wrapped,
+	}, nil
+}
+
 type directorySaver struct {
 	blobStore blob.Store
 	fileSystem fs.FileSystem
