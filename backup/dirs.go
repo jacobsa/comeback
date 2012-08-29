@@ -40,7 +40,7 @@ type directorySaver struct {
 
 func convertCommon(fi os.FileInfo) (fs.DirectoryEntry, error) {
 	entry := fs.DirectoryEntry{
-		Permissions: fi.Mode() & os.ModePerm,
+		Permissions: uint32(fi.Mode() & os.ModePerm),
 		Name: fi.Name(),
 		MTime: fi.ModTime(),
 	}
@@ -50,15 +50,15 @@ func convertCommon(fi os.FileInfo) (fs.DirectoryEntry, error) {
 	switch typeBits {
 	case 0:
 		entry.Type = fs.TypeFile
-	case os.ModeDir
+	case os.ModeDir:
 		entry.Type = fs.TypeDirectory
-	case os.ModeSymlink
+	case os.ModeSymlink:
 		entry.Type = fs.TypeSymlink
 	default:
-		err = fmt.Errorf("Unhandled mode: %v", fi.Mode())
+		return entry, fmt.Errorf("Unhandled mode: %v", fi.Mode())
 	}
 
-	return entry
+	return entry, nil
 }
 
 func (s *directorySaver) saveDir(parent string, fi os.FileInfo) ([]blob.Score, error) {
