@@ -58,7 +58,7 @@ func makeEntryProto(entry fs.DirectoryEntry) *DirectoryEntryProto {
 // Marshal turns a list of directory entries into bytes that can later be used
 // with Unmarshal.
 func Marshal(entries []fs.DirectoryEntry) (d []byte, err error) {
-	return "TODO", nil
+	return nil, fmt.Errorf("TODO")
 }
 
 // Unmarshal recovers a list of directory entries from bytes previously
