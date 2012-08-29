@@ -16,21 +16,33 @@
 // Package blob contains types related to storage of content-addressed blobs.
 package blob
 
+import (
+	"crypto/sha1"
+)
+
 // A Score is the identifier for a blob previously stored by a blob store. It
 // consists of a hash of the blob's contents, so that with high probability two
 // blobs have the same contents if and only if they have the same score.
 type Score interface {
 	// Return the 20-byte 'raw' SHA-1 hash of the blob's contents.
 	Sha1Hash() []byte
+}
 
-	// Return a 40-digit hex SHA-1 hash of the blob's contents.
-	HexSha1Hash() string
+type score struct {
+	hash []byte
+}
+
+func (s *score) Sha1Hash() []byte {
+	return s.hash
 }
 
 // Compute the score for the supplied blob. This is primarily intended for use
 // by blob store implementations; users should obtain only scores through calls
 // to a store's Store method.
 func ComputeScore(b []byte) Score {
+	h := sha1.New()
+	h.Write(b)
+	return &score{hash: h.Sum(nil)}
 }
 
 // A Store knows how to store blobs for later retrieval.

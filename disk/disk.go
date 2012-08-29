@@ -19,7 +19,7 @@ package blob
 import (
 	"fmt"
 	"github.com/jacobsa/comeback/blob"
-	"ioutil"
+	"io/ioutil"
 )
 
 type blobStore struct {
