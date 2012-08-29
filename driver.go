@@ -18,6 +18,7 @@ package main
 import (
 	"fmt"
 	"github.com/jacobsa/comeback/backup"
+	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/disk"
 	"github.com/jacobsa/comeback/fs"
 	"log"
@@ -65,5 +66,5 @@ func main() {
 	}
 
 	// Print the score.
-	fmt.Printf("Score: %x\n", score.Sha1Hash())
+	fmt.Printf("Score: %s\n", blob.HexScore(score))
 }
