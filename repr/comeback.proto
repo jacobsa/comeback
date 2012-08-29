@@ -45,7 +45,7 @@ message DirectoryEntryProto {
   optional uint32 permissions = 2;
 
   // The name of this entry.
-  optional bytes name = 3;
+  optional string name = 3;
 
   // The modification time.
   optional TimeProto mtime = 4;

@@ -38,7 +38,7 @@ type DirectoryEntry struct {
 	Permissions uint32
 
 	// The name of this entry within its directory.
-	Name []byte
+	Name string
 
 	// The modification time of this entry.
 	MTime time.Time

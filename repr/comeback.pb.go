@@ -97,7 +97,7 @@ func (this *TimeProto) GetNanosecond() uint32 {
 type DirectoryEntryProto struct {
 	Type             *DirectoryEntryProto_Type `protobuf:"varint,1,opt,name=type,enum=repr.DirectoryEntryProto_Type" json:"type,omitempty"`
 	Permissions      *uint32                   `protobuf:"varint,2,opt,name=permissions" json:"permissions,omitempty"`
-	Name             []byte                    `protobuf:"bytes,3,opt,name=name" json:"name,omitempty"`
+	Name             *string                   `protobuf:"bytes,3,opt,name=name" json:"name,omitempty"`
 	Mtime            *TimeProto                `protobuf:"bytes,4,opt,name=mtime" json:"mtime,omitempty"`
 	Blob             []*BlobInfoProto          `protobuf:"bytes,5,rep,name=blob" json:"blob,omitempty"`
 	XXX_unrecognized []byte                    `json:"-"`
@@ -121,11 +121,11 @@ func (this *DirectoryEntryProto) GetPermissions() uint32 {
 	return 0
 }
 
-func (this *DirectoryEntryProto) GetName() []byte {
-	if this != nil {
-		return this.Name
+func (this *DirectoryEntryProto) GetName() string {
+	if this != nil && this.Name != nil {
+		return *this.Name
 	}
-	return nil
+	return ""
 }
 
 func (this *DirectoryEntryProto) GetMtime() *TimeProto {
