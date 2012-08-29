@@ -16,10 +16,8 @@
 package backup
 
 import (
-	"fmt"
 	"github.com/jacobsa/comeback/blob"
-	"io"
-	"io/ioutil"
+	"github.com/jacobsa/comeback/fs"
 )
 
 // An object that knows how to save directories to some underlying storage.
@@ -28,4 +26,11 @@ type DirectorySaver interface {
 	// storage, returning the score of a blob representing the directory's
 	// listing in a format hat can be recovered with repr.Unmarshal.
 	Save(dirpath string) (score blob.Score, err error)
+}
+
+type directorySaver struct {
+	blobStore blob.Store
+	fileSystem fs.FileSystem
+	fileSaver FileSaver
+	wrapped DirectorySaver
 }
