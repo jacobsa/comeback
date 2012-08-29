@@ -13,7 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package blob contains types related to storage of content-addressed blobs.
 package blob
 
 import (
