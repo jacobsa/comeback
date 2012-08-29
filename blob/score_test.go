@@ -38,13 +38,15 @@ func fromHex(h string) []byte {
 	return b
 }
 
-func toInterfaces(buf []byte) []interface{} {
-	result := []interface{}{}
+func matchesHexHash(hexHash string) Matcher {
+	buf := fromHex(hexHash)
+	interfaceSlice := []interface{}{}
+
 	for _, b := range buf {
-		result = append(result, b)
+		interfaceSlice = append(interfaceSlice, b)
 	}
 
-	return result
+	return ElementsAre(interfaceSlice...)
 }
 
 type ScoreTest struct {}
@@ -64,7 +66,7 @@ func (t *ScoreTest) EmptySlice() {
 	hash := score.Sha1Hash()
 	AssertNe(nil, hash)
 	AssertEq(20, len(hash))
-	ExpectThat(hash, ElementsAre(toInterfaces(fromHex(golden))...))
+	ExpectThat(hash, matchesHexHash(golden))
 
 	AssertEq(golden, HexScore(score))
 }
