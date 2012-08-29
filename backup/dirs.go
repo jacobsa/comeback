@@ -16,6 +16,7 @@
 package backup
 
 import (
+	"fmt"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/fs"
 )
@@ -33,4 +34,36 @@ type directorySaver struct {
 	fileSystem fs.FileSystem
 	fileSaver FileSaver
 	wrapped DirectorySaver
+}
+
+func (s *directorySaver) saveDir(parent string, fi os.FileInfo) (fs.DirectoryEntry, error) {
+}
+
+func (s *directorySaver) Save(dirpath string) (score blob.Score, err error) {
+	// Grab a listing for the directory.
+	fileInfos, err := s.FileSystem.ReadDir(dirpath)
+	if err != nil {
+		return nil, fmt.Errorf("Listing directory: %v", err)
+	}
+
+	// Process each entry in the directory, building a list of DirectoryEntry
+	// structs.
+	entries := []fs.DirectoryEntry{}
+	for _, fileInfo := range fileInfos {
+		var entry DirectoryEntry
+
+		// Call the appropriate method based on this entry's type.
+		switch {
+		case fileInfo.IsDir():
+			entry, err = s.saveDir(dirpath, fileInfo)
+		case fileInfo.Mode() & os.ModeType == 0:
+			entry, err = s.saveFile(dirpath, fileInfo)
+	  default:
+			err = fmt.Errorf("Unhandled mode: %v", fileInfo.Mode())
+		}
+
+		if err != nil {
+			return nil, err
+		}
+	}
 }

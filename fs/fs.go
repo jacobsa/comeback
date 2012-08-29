@@ -46,7 +46,8 @@ type DirectoryEntry struct {
 	MTime time.Time
 
 	// The scores of zero or more blobs that make up a regular file's contents,
-	// to be concatenated in order.
+	// to be concatenated in order. For directories, this is exactly one blob
+	// whose contents can be processed using repr.Unmarshal.
 	Scores []blob.Score
 }
 
