@@ -20,6 +20,7 @@ import (
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/fs"
 	"os"
+	"path"
 )
 
 // An object that knows how to save directories to some underlying storage.
@@ -37,10 +38,12 @@ type directorySaver struct {
 	wrapped DirectorySaver
 }
 
-func (s *directorySaver) saveDir(parent string, fi os.FileInfo) (fs.DirectoryEntry, error) {
+func (s *directorySaver) saveDir(parent string, fi os.FileInfo) ([]blob.Score, error) {
+	// Recurse.
+	score, err := s.wrapped.Save(path.Join(parent, fi.Name()))
 }
 
-func (s *directorySaver) saveFile(parent string, fi os.FileInfo) (fs.DirectoryEntry, error) {
+func (s *directorySaver) saveFile(parent string, fi os.FileInfo) ([]blob.Score, error) {
 }
 
 func (s *directorySaver) Save(dirpath string) (score blob.Score, err error) {
@@ -54,14 +57,17 @@ func (s *directorySaver) Save(dirpath string) (score blob.Score, err error) {
 	// structs.
 	entries := []fs.DirectoryEntry{}
 	for _, fileInfo := range fileInfos {
-		var entry fs.DirectoryEntry
+		entry, err := convertCommon(fileInfo)
+		if err != nil {
+			return nil, err
+		}
 
 		// Call the appropriate method based on this entry's type.
 		switch {
 		case fileInfo.IsDir():
-			entry, err = s.saveDir(dirpath, fileInfo)
+			entry.Scores, err = s.saveDir(dirpath, fileInfo)
 		case fileInfo.Mode() & os.ModeType == 0:
-			entry, err = s.saveFile(dirpath, fileInfo)
+			entry.Scores, err = s.saveFile(dirpath, fileInfo)
 	  default:
 			err = fmt.Errorf("Unhandled mode: %v", fileInfo.Mode())
 		}
@@ -69,5 +75,7 @@ func (s *directorySaver) Save(dirpath string) (score blob.Score, err error) {
 		if err != nil {
 			return nil, err
 		}
+
+		entries = append(entries, entry)
 	}
 }
