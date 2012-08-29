@@ -14,7 +14,7 @@
 // limitations under the License.
 
 // Package disk implements a blob store on the local disk.
-package blob
+package disk
 
 import (
 	"fmt"
