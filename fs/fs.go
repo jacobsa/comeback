@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// TODO
+// Package fs contains file system related functions and types.
 package fs
 
 import "github.com/jacobsa/comeback/blob"
