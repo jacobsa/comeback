@@ -16,17 +16,57 @@
 package blob
 
 import (
+	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
+	"encoding/hex"
+	"fmt"
 	"testing"
 )
 
 func TestRegister(t *testing.T) { RunTests(t) }
 
+////////////////////////////////////////////////////////////////////////
+// Helpers
+////////////////////////////////////////////////////////////////////////
+
+func fromHex(h string) []byte {
+	b, err := hex.DecodeString(h)
+	if err != nil {
+		panic(fmt.Sprintf("Invalid hex string: %s", h))
+	}
+
+	return b
+}
+
+func toInterfaces(buf []byte) []interface{} {
+	result := []interface{}{}
+	for _, b := range buf {
+		result = append(result, b)
+	}
+
+	return result
+}
+
 type ScoreTest struct {}
 func init() { RegisterTestSuite(&ScoreTest{}) }
 
+////////////////////////////////////////////////////////////////////////
+// Tests
+////////////////////////////////////////////////////////////////////////
+
 func (t *ScoreTest) EmptySlice() {
-	ExpectEq("TODO", "")
+	data := []byte{}
+	golden := "da39a3ee5e6b4b0d3255bfef95601890afd80709"
+
+	score := ComputeScore(data)
+	AssertNe(nil, score)
+
+	hash := score.Sha1Hash()
+	AssertNe(nil, hash)
+	AssertEq(20, len(hash))
+	ExpectThat(hash, ElementsAre(toInterfaces(fromHex(golden))...))
+
+	AssertEq(golden, HexScore(score))
 }
 
 func (t *ScoreTest) HashStartsWithZero() {
