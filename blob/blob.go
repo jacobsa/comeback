@@ -21,8 +21,18 @@ package blob
 // blobs have the same contents if and only if they have the same score.
 type Score interface {
 	// Return the 20-byte 'raw' SHA-1 hash of the blob's contents.
-	Sha1Hash() string
+	Sha1Hash() []byte
 
 	// Return a 40-digit hex SHA-1 hash of the blob's contents.
 	HexSha1Hash() string
+}
+
+// A Store knows how to store blobs for later retrieval.
+type Store interface {
+	// Store the supplied blob, returning a score with which it can later be
+	// retrieved.
+	Store(blob []byte) (s Score, err error)
+
+	// Load a previously-stored blob.
+	Load(s Score) (blob []byte, err error)
 }
