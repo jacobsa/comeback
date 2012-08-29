@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/fs"
+	"os"
 )
 
 // An object that knows how to save directories to some underlying storage.
@@ -39,9 +40,12 @@ type directorySaver struct {
 func (s *directorySaver) saveDir(parent string, fi os.FileInfo) (fs.DirectoryEntry, error) {
 }
 
+func (s *directorySaver) saveFile(parent string, fi os.FileInfo) (fs.DirectoryEntry, error) {
+}
+
 func (s *directorySaver) Save(dirpath string) (score blob.Score, err error) {
 	// Grab a listing for the directory.
-	fileInfos, err := s.FileSystem.ReadDir(dirpath)
+	fileInfos, err := s.fileSystem.ReadDir(dirpath)
 	if err != nil {
 		return nil, fmt.Errorf("Listing directory: %v", err)
 	}
@@ -50,7 +54,7 @@ func (s *directorySaver) Save(dirpath string) (score blob.Score, err error) {
 	// structs.
 	entries := []fs.DirectoryEntry{}
 	for _, fileInfo := range fileInfos {
-		var entry DirectoryEntry
+		var entry fs.DirectoryEntry
 
 		// Call the appropriate method based on this entry's type.
 		switch {
