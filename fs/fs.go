@@ -17,7 +17,9 @@
 package fs
 
 import (
+	"io"
 	"github.com/jacobsa/comeback/blob"
+	"os"
 	"time"
 )
 
@@ -46,4 +48,15 @@ type DirectoryEntry struct {
 	// The scores of zero or more blobs that make up a regular file's contents,
 	// to be concatenated in order.
 	Scores []blob.Score
+}
+
+// FileSystem represents operations performed on a real file system, but is an
+// interface for mockability.
+type FileSystem interface {
+	// Read the contents of the directory named by the supplied path, returning
+	// an array of directory entries sorted by name.
+	ReadDir(path string) (fi []os.FileInfo, err error)
+
+	// Open the file named by the supplied path for reading.
+	OpenForReading(path string) (r io.Reader, err error)
 }
