@@ -72,7 +72,18 @@ func (t *ScoreTest) EmptySlice() {
 }
 
 func (t *ScoreTest) HashStartsWithZero() {
-	ExpectEq("TODO", "")
+	data := []byte("hello_5")
+	golden := "086766b9ba6a30e3792c05b00c5fb0e85a18a040"
+
+	score := ComputeScore(data)
+	AssertNe(nil, score)
+
+	hash := score.Sha1Hash()
+	AssertNe(nil, hash)
+	AssertEq(20, len(hash))
+	ExpectThat(hash, matchesHexHash(golden))
+
+	AssertEq(golden, HexScore(score))
 }
 
 func (t *ScoreTest) HexHashStartsWithNonZeroNumber() {
@@ -80,5 +91,9 @@ func (t *ScoreTest) HexHashStartsWithNonZeroNumber() {
 }
 
 func (t *ScoreTest) HexHashStartsWithLetter() {
+	ExpectEq("TODO", "")
+}
+
+func (t *ScoreTest) DataContainsNonUtf8() {
 	ExpectEq("TODO", "")
 }
