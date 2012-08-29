@@ -17,17 +17,21 @@
 package blob
 
 import (
-	"fmt"
 	"github.com/jacobsa/comeback/blob"
-	"io/ioutil"
 )
 
 type blobStore struct {
 	basePath string
 }
 
+func (s *blobStore) Store(blob []byte) (blob.Score, error) {
+}
+
+func (s *blobStore) Load(score blob.Score) ([]byte, error) {
+}
+
 // Return a blob store that stores its blobs in the directory with the supplied
 // path.
 func NewBlobStore(path string) (s blob.Store, err error) {
-	return &blobStore{basePath: path}
+	return &blobStore{basePath: path}, nil
 }
