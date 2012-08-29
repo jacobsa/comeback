@@ -40,6 +40,10 @@ func (s *blobStore) Store(b []byte) (blob.Score, error) {
 }
 
 func (s *blobStore) Load(score blob.Score) ([]byte, error) {
+	hexScore := fmt.Sprintf("%x", score.Sha1Hash())
+	filePath := path.Join(s.basePath, hexScore)
+
+	return ioutil.ReadFile(filePath)
 }
 
 // Return a blob store that stores its blobs in the directory with the supplied
