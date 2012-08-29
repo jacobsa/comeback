@@ -51,13 +51,3 @@ func ComputeScore(b []byte) Score {
 func HexScore(score Score) string {
 	return fmt.Sprintf("%x", score.Sha1Hash())
 }
-
-// A Store knows how to store blobs for later retrieval.
-type Store interface {
-	// Store the supplied blob, returning a score with which it can later be
-	// retrieved.
-	Store(blob []byte) (s Score, err error)
-
-	// Load a previously-stored blob.
-	Load(s Score) (blob []byte, err error)
-}
