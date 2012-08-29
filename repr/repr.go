@@ -35,7 +35,10 @@ func makeEntryProto(entry fs.DirectoryEntry) *DirectoryEntryProto {
 		Type: convertType(entry.Type).Enum(),
 		Permissions: proto.Uint32(entry.Permissions),
 		Name: entry.Name,
-		Mtime: entry.MTime,
+		Mtime: &TimeProto{
+			Second: proto.Int64(entry.MTime.Unix()),
+			Nanosecond: proto.Uint32(uint32(entry.MTime.Nanosecond())),
+		},
 		Blob: blobs,
 	}
 }

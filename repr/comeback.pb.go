@@ -70,11 +70,35 @@ func (this *BlobInfoProto) GetHash() []byte {
 	return nil
 }
 
+type TimeProto struct {
+	Second           *int64  `protobuf:"varint,1,opt,name=second" json:"second,omitempty"`
+	Nanosecond       *uint32 `protobuf:"varint,2,opt,name=nanosecond" json:"nanosecond,omitempty"`
+	XXX_unrecognized []byte  `json:"-"`
+}
+
+func (this *TimeProto) Reset()         { *this = TimeProto{} }
+func (this *TimeProto) String() string { return proto.CompactTextString(this) }
+func (*TimeProto) ProtoMessage()       {}
+
+func (this *TimeProto) GetSecond() int64 {
+	if this != nil && this.Second != nil {
+		return *this.Second
+	}
+	return 0
+}
+
+func (this *TimeProto) GetNanosecond() uint32 {
+	if this != nil && this.Nanosecond != nil {
+		return *this.Nanosecond
+	}
+	return 0
+}
+
 type DirectoryEntryProto struct {
 	Type             *DirectoryEntryProto_Type `protobuf:"varint,1,opt,name=type,enum=repr.DirectoryEntryProto_Type" json:"type,omitempty"`
 	Permissions      *uint32                   `protobuf:"varint,2,opt,name=permissions" json:"permissions,omitempty"`
 	Name             []byte                    `protobuf:"bytes,3,opt,name=name" json:"name,omitempty"`
-	Mtime            *int64                    `protobuf:"varint,4,opt,name=mtime" json:"mtime,omitempty"`
+	Mtime            *TimeProto                `protobuf:"bytes,4,opt,name=mtime" json:"mtime,omitempty"`
 	Blob             []*BlobInfoProto          `protobuf:"bytes,5,rep,name=blob" json:"blob,omitempty"`
 	XXX_unrecognized []byte                    `json:"-"`
 }
@@ -104,11 +128,11 @@ func (this *DirectoryEntryProto) GetName() []byte {
 	return nil
 }
 
-func (this *DirectoryEntryProto) GetMtime() int64 {
-	if this != nil && this.Mtime != nil {
-		return *this.Mtime
+func (this *DirectoryEntryProto) GetMtime() *TimeProto {
+	if this != nil {
+		return this.Mtime
 	}
-	return 0
+	return nil
 }
 
 type DirectoryListingProto struct {

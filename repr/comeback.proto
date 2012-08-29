@@ -20,6 +20,16 @@ message BlobInfoProto {
   optional bytes hash = 1;
 }
 
+// An instant in time, with nanosecond resolution.
+message TimeProto {
+  // The number of seconds since the Unix time epoch.
+  optional int64 second = 1;
+
+	// A nanosecond in the second specified above. This must be in the range
+	// [0, 1e9).
+	optional uint32 nanosecond = 2;
+}
+
 message DirectoryEntryProto {
   enum Type {
     // Sentinel for a missing value.
@@ -37,8 +47,8 @@ message DirectoryEntryProto {
   // The name of this entry.
   optional bytes name = 3;
 
-  // Modification time, in microseconds since the epoch.
-  optional int64 mtime = 4;
+  // The modification time.
+  optional TimeProto mtime = 4;
 
   // The zero or more blobs that make up a regular file's contents, to be
   // concatenated in order.
