@@ -35,18 +35,18 @@ func convertType(t fs.EntryType) DirectoryEntryProto_Type {
 }
 
 func makeEntryProto(entry fs.DirectoryEntry) *DirectoryEntryProto {
-  blobs := []*BlobInfoProto{}
+	blobs := []*BlobInfoProto{}
 	for _, score := range entry.Scores {
-	  proto := &BlobInfoProto{Hash: score.Sha1Hash()}
-	  blobs = append(blobs, proto)
+		proto := &BlobInfoProto{Hash: score.Sha1Hash()}
+		blobs = append(blobs, proto)
 	}
 
 	return &DirectoryEntryProto{
-		Type: convertType(entry.Type).Enum(),
+		Type:        convertType(entry.Type).Enum(),
 		Permissions: proto.Uint32(entry.Permissions),
-		Name: entry.Name,
+		Name:        entry.Name,
 		Mtime: &TimeProto{
-			Second: proto.Int64(entry.MTime.Unix()),
+			Second:     proto.Int64(entry.MTime.Unix()),
 			Nanosecond: proto.Uint32(uint32(entry.MTime.Nanosecond())),
 		},
 		Blob: blobs,

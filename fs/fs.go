@@ -22,7 +22,7 @@ import "time"
 type EntryType uint32
 
 const (
-  TypeFile EntryType = iota
+	TypeFile EntryType = iota
 	TypeDirectory
 	TypeSymlink
 )
