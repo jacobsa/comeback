@@ -37,7 +37,7 @@ func NewDirectorySaver(
 	fileSystem fs.FileSystem,
   fileSaver FileSaver,
   wrapped DirectorySaver) (DirectorySaver, error) {
-	return &directorySaver{
+	return &dirSaver{
 		blobStore: store,
 		fileSystem: fileSystem,
 		fileSaver: fileSaver,
@@ -45,7 +45,7 @@ func NewDirectorySaver(
 	}, nil
 }
 
-type directorySaver struct {
+type dirSaver struct {
 	blobStore blob.Store
 	fileSystem fs.FileSystem
 	fileSaver FileSaver
@@ -75,7 +75,7 @@ func convertCommon(fi os.FileInfo) (fs.DirectoryEntry, error) {
 	return entry, nil
 }
 
-func (s *directorySaver) saveDir(parent string, fi os.FileInfo) ([]blob.Score, error) {
+func (s *dirSaver) saveDir(parent string, fi os.FileInfo) ([]blob.Score, error) {
 	// Recurse.
 	score, err := s.wrapped.Save(path.Join(parent, fi.Name()))
 	if err != nil {
@@ -85,7 +85,7 @@ func (s *directorySaver) saveDir(parent string, fi os.FileInfo) ([]blob.Score, e
 	return []blob.Score{score}, nil
 }
 
-func (s *directorySaver) saveFile(parent string, fi os.FileInfo) ([]blob.Score, error) {
+func (s *dirSaver) saveFile(parent string, fi os.FileInfo) ([]blob.Score, error) {
 	// Open the file.
 	f, err := os.Open(path.Join(parent, fi.Name()))
 	if err != nil {
@@ -96,7 +96,7 @@ func (s *directorySaver) saveFile(parent string, fi os.FileInfo) ([]blob.Score, 
 	return s.fileSaver.Save(f)
 }
 
-func (s *directorySaver) Save(dirpath string) (score blob.Score, err error) {
+func (s *dirSaver) Save(dirpath string) (score blob.Score, err error) {
 	// Grab a listing for the directory.
 	fileInfos, err := s.fileSystem.ReadDir(dirpath)
 	if err != nil {
