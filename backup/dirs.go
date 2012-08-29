@@ -115,9 +115,9 @@ func (s *directorySaver) Save(dirpath string) (score blob.Score, err error) {
 		// Call the appropriate method based on this entry's type.
 		switch entry.Type {
 		case fs.TypeFile:
-			entry.Scores, err = s.saveDir(dirpath, fileInfo)
-		case fs.TypeDirectory:
 			entry.Scores, err = s.saveFile(dirpath, fileInfo)
+		case fs.TypeDirectory:
+			entry.Scores, err = s.saveDir(dirpath, fileInfo)
 	  default:
 			err = fmt.Errorf("Unhandled type: %v", entry.Type)
 		}
