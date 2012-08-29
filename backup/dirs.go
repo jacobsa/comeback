@@ -52,6 +52,14 @@ func (s *directorySaver) saveDir(parent string, fi os.FileInfo) ([]blob.Score, e
 }
 
 func (s *directorySaver) saveFile(parent string, fi os.FileInfo) ([]blob.Score, error) {
+	// Open the file.
+	f, err := os.Open(path.Join(parent, fi.Name()))
+	if err != nil {
+		return nil, fmt.Errorf("Opening file: %v", err)
+	}
+
+	// Defer to the file saver.
+	return s.fileSaver.Save(f)
 }
 
 func (s *directorySaver) Save(dirpath string) (score blob.Score, err error) {
