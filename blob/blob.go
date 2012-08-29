@@ -18,6 +18,7 @@ package blob
 
 import (
 	"crypto/sha1"
+	"fmt"
 )
 
 // A Score is the identifier for a blob previously stored by a blob store. It
@@ -43,6 +44,12 @@ func ComputeScore(b []byte) Score {
 	h := sha1.New()
 	h.Write(b)
 	return &score{hash: h.Sum(nil)}
+}
+
+// Return a fixed-width hex version of the score's hash, suitable for using
+// e.g. as a filename.
+func HexScore(score Score) string {
+	return fmt.Sprintf("%x", score.Sha1Hash())
 }
 
 // A Store knows how to store blobs for later retrieval.
