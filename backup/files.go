@@ -16,8 +16,10 @@
 package backup
 
 import (
+	"fmt"
 	"github.com/jacobsa/comeback/blob"
 	"io"
+	"io/ioutil"
 )
 
 // An object that knows how to save files to some underlying storage.
@@ -26,4 +28,41 @@ type FileSaver interface {
 	// a list of scores of blobs that should be concatenated in order to recover
 	// its contents.
 	Save(r io.Reader) (scores []blob.Score, err error)
+}
+
+type fileSaver struct {
+	blobStore blob.Store
+}
+
+// Read 16 MiB from the supplied reader, returning less iff the reader returns
+// an error (including EOF). Do not treat EOF as an error condition.
+func getChunk(r io.Reader) ([]byte, error) {
+	r = io.LimitReader(r, 1 << 24)
+	return ioutil.ReadAll(r)
+}
+
+func (s *fileSaver) Save(r io.Reader) (scores []blob.Score, err error) {
+	// Turn the file into chunks, saving each to the blob store.
+	scores = []blob.Score{}
+	for {
+		chunk, err := getChunk(r)
+		if err != nil {
+			return nil, fmt.Errorf("Reading chunk: %v", err)
+		}
+
+		// Are we done?
+		if len(chunk) == 0 {
+			break
+		}
+
+		// Store the chunk.
+		score, err := s.blobStore.Store(chunk)
+		if err != nil {
+			return nil, fmt.Errorf("Storing chunk: %v", err)
+		}
+
+		scores = append(scores, score)
+	}
+
+	return scores, nil
 }
