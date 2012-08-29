@@ -16,8 +16,10 @@
 // Package fs contains file system related functions and types.
 package fs
 
-import "github.com/jacobsa/comeback/blob"
-import "time"
+import (
+	"github.com/jacobsa/comeback/blob"
+	"time"
+)
 
 type EntryType uint32
 

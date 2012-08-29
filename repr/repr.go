@@ -17,9 +17,11 @@
 // directory listing structs.
 package repr
 
-import "code.google.com/p/goprotobuf/proto"
-import "fmt"
-import "github.com/jacobsa/comeback/fs"
+import (
+	"code.google.com/p/goprotobuf/proto"
+	"fmt"
+	"github.com/jacobsa/comeback/fs"
+)
 
 func convertType(t fs.EntryType) DirectoryEntryProto_Type {
 	switch t {
