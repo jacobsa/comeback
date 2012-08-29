@@ -22,7 +22,7 @@ import "time"
 type EntryType uint32
 
 const (
-  TypeFile = iota
+  TypeFile EntryType = iota
 	TypeDirectory
 	TypeSymlink
 )
@@ -36,7 +36,7 @@ type DirectoryEntry struct {
 	Permissions uint32
 
 	// The name of this entry within its directory.
-	Name string
+	Name []byte
 
 	// The modification time of this entry.
 	MTime time.Time

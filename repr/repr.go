@@ -17,24 +17,26 @@
 // directory listing structs.
 package repr
 
+import "code.google.com/p/goprotobuf/proto"
 import "fmt"
 import "github.com/jacobsa/comeback/fs"
 
-func convertType(
+func convertType(t fs.EntryType) DirectoryEntryProto_Type {
+}
 
 func makeEntryProto(entry fs.DirectoryEntry) *DirectoryEntryProto {
   blobs := []*BlobInfoProto{}
-	for _, hash := range entry.BlobHashes {
-	  proto := &BlobInfoProto{Hash: []byte(hash)}
+	for _, score := range entry.Scores {
+	  proto := &BlobInfoProto{Hash: score.Sha1Hash()}
 	  blobs = append(blobs, proto)
 	}
 
 	return &DirectoryEntryProto{
-		Type: convertType(entry.Type),
-		Permissions: entry.Permissions,
+		Type: convertType(entry.Type).Enum(),
+		Permissions: proto.Uint32(entry.Permissions),
 		Name: entry.Name,
 		Mtime: entry.MTime,
-		Blob: entry.blobs,
+		Blob: blobs,
 	}
 }
 
