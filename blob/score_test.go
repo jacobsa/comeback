@@ -102,7 +102,18 @@ func (t *ScoreTest) HexHashStartsWithNonZeroNumber() {
 }
 
 func (t *ScoreTest) HexHashStartsWithLetter() {
-	ExpectEq("TODO", "")
+	data := []byte("foo_barbazqux")
+	golden := "ccf73cc0bfe964b652934764f847699e4005205e"
+
+	score := ComputeScore(data)
+	AssertNe(nil, score)
+
+	hash := score.Sha1Hash()
+	AssertNe(nil, hash)
+	AssertEq(20, len(hash))
+	ExpectThat(hash, matchesHexHash(golden))
+
+	AssertEq(golden, HexScore(score))
 }
 
 func (t *ScoreTest) DataContainsNonUtf8() {
