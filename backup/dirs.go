@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/fs"
+	"github.com/jacobsa/comeback/repr"
 	"os"
 	"path"
 )
@@ -114,4 +115,13 @@ func (s *directorySaver) Save(dirpath string) (score blob.Score, err error) {
 
 		entries = append(entries, entry)
 	}
+
+	// Create a serialized version of this information.
+	data, err := repr.Marshal(entries)
+	if err != nil {
+		return nil, fmt.Errorf("Marshaling: %v", err)
+	}
+
+	// Store that serialized version.
+	return s.blobStore.Store(data)
 }
