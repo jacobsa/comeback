@@ -22,6 +22,16 @@ import "fmt"
 import "github.com/jacobsa/comeback/fs"
 
 func convertType(t fs.EntryType) DirectoryEntryProto_Type {
+	switch t {
+	case fs.TypeFile:
+		return DirectoryEntryProto_TYPE_FILE
+	case fs.TypeDirectory:
+		return DirectoryEntryProto_TYPE_DIRECTORY
+	case fs.TypeSymlink:
+		return DirectoryEntryProto_TYPE_SYMLINK
+	}
+
+	panic(fmt.Sprintf("Unrecognized EntryType: %v", t))
 }
 
 func makeEntryProto(entry fs.DirectoryEntry) *DirectoryEntryProto {
