@@ -18,6 +18,7 @@ package fs
 
 import (
 	"io"
+	"io/ioutil"
 	"github.com/jacobsa/comeback/blob"
 	"os"
 	"time"
@@ -60,4 +61,20 @@ type FileSystem interface {
 
 	// Open the file named by the supplied path for reading.
 	OpenForReading(path string) (r io.Reader, err error)
+}
+
+// Return a FileSystem that uses the read file system.
+func NewFileSystem() FileSystem {
+	return &fileSystem{}
+}
+
+type fileSystem struct {
+}
+
+func (f *fileSystem) ReadDir(path string) (fi []os.FileInfo, err error) {
+	return ioutil.ReadDir(path)
+}
+
+func (f *fileSystem) OpenForReading(path string) (r io.Reader, err error) {
+	return os.Open(path)
 }
