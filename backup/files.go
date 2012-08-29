@@ -30,6 +30,10 @@ type FileSaver interface {
 	Save(r io.Reader) (scores []blob.Score, err error)
 }
 
+func NewFileSaver(store blob.Store) (FileSaver, error) {
+	return &fileSaver{blobStore: store}, nil
+}
+
 type fileSaver struct {
 	blobStore blob.Store
 }
