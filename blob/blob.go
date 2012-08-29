@@ -27,6 +27,12 @@ type Score interface {
 	HexSha1Hash() string
 }
 
+// Compute the score for the supplied blob. This is primarily intended for use
+// by blob store implementations; users should obtain only scores through calls
+// to a store's Store method.
+func ComputeScore(b []byte) Score {
+}
+
 // A Store knows how to store blobs for later retrieval.
 type Store interface {
 	// Store the supplied blob, returning a score with which it can later be

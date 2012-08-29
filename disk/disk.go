@@ -19,10 +19,15 @@ package blob
 import (
 	"fmt"
 	"github.com/jacobsa/comeback/blob"
+	"ioutil"
 )
+
+type blobStore struct {
+	basePath string
+}
 
 // Return a blob store that stores its blobs in the directory with the supplied
 // path.
 func NewBlobStore(path string) (s blob.Store, err error) {
-	return nil, fmt.Errorf("TODO")
+	return &blobStore{basePath: path}
 }
