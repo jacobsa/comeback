@@ -17,14 +17,26 @@
 package blob
 
 import (
+	"fmt"
 	"github.com/jacobsa/comeback/blob"
+	"io/ioutil"
+	"path"
 )
 
 type blobStore struct {
 	basePath string
 }
 
-func (s *blobStore) Store(blob []byte) (blob.Score, error) {
+func (s *blobStore) Store(b []byte) (blob.Score, error) {
+	score := blob.ComputeScore(b)
+	hexScore := fmt.Sprintf("%x", score.Sha1Hash())
+	filePath := path.Join(s.basePath, hexScore)
+
+	if err := ioutil.WriteFile(filePath, b, 0600); err != nil {
+		return nil, err
+	}
+
+	return score, nil
 }
 
 func (s *blobStore) Load(score blob.Score) ([]byte, error) {
