@@ -17,20 +17,39 @@ package main
 
 import (
 	"fmt"
+	"github.com/jacobsa/comeback/backup"
 	"github.com/jacobsa/comeback/disk"
 	"log"
+	"os"
 )
 
 func main() {
-	store, err := disk.NewBlobStore("/tmp/blobs")
+	// Create the blob store.
+	blobStore, err := disk.NewBlobStore("/tmp/blobs")
 	if err != nil {
 		log.Fatalf("Creating store: %v", err)
 	}
 
-	score, err := store.Store([]byte("Hello"))
+	// Create the file saver.
+  fileSaver, err := backup.NewFileSaver(blobStore)
 	if err != nil {
-		log.Fatalf("Storing: %v", err)
+		log.Fatalf("Creating file saver: %v", err)
 	}
 
-	fmt.Printf("Score: %x\n", score.Sha1Hash())
+	// Open a file.
+	f, err := os.Open("/Users/jacobsa/Desktop/cathouse.jpeg")
+	if err != nil {
+		log.Fatalf("Opening file: %v", err)
+	}
+
+	// Save the file.
+	scores, err := fileSaver.Save(f)
+	if err != nil {
+		log.Fatalf("Saving: %v", err)
+	}
+
+	// Print the scores.
+	for _, score := range scores {
+		fmt.Printf("Score: %x\n", score.Sha1Hash())
+	}
 }
