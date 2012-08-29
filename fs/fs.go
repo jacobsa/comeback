@@ -16,6 +16,7 @@
 // TODO
 package fs
 
+import "github.com/jacobsa/comeback/blob"
 import "time"
 
 type EntryType uint32
@@ -40,7 +41,7 @@ type DirectoryEntry struct {
 	// The modification time of this entry.
 	MTime time.Time
 
-	// Zero or more blobs that make up a regular file's contents, to be
-	// concatenated in order.
-	BlobHashes []blob.Hash
+	// The scores of zero or more blobs that make up a regular file's contents,
+	// to be concatenated in order.
+	Scores []blob.Score
 }
