@@ -38,9 +38,17 @@ type directorySaver struct {
 	wrapped DirectorySaver
 }
 
+func convertCommon(fi os.FileInfo) (fs.DirectoryEntry, error) {
+}
+
 func (s *directorySaver) saveDir(parent string, fi os.FileInfo) ([]blob.Score, error) {
 	// Recurse.
 	score, err := s.wrapped.Save(path.Join(parent, fi.Name()))
+	if err != nil {
+		return nil, err
+	}
+
+	return []blob.Score{score}, nil
 }
 
 func (s *directorySaver) saveFile(parent string, fi os.FileInfo) ([]blob.Score, error) {
