@@ -16,6 +16,7 @@
 package main
 
 import (
+	"encoding/hex"
 	"fmt"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/disk"
@@ -32,8 +33,21 @@ const (
 
 var blobStore blob.Store
 
-func fromHexHash(hexHash string) (blob.Score, error) {
-	return nil, fmt.Errorf("TODO: fromHexHash")
+type score struct {
+	hash []byte
+}
+
+func (s *score) Sha1Hash() []byte {
+	return s.hash
+}
+
+func fromHexHash(h string) (blob.Score, error) {
+	b, err := hex.DecodeString(h)
+	if err != nil {
+		return nil, fmt.Errorf("Invalid hex string: %s", h)
+	}
+
+	return &score{b}, nil
 }
 
 // Restore the file whose contents are described by the referenced blobs to the
