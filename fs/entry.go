@@ -55,4 +55,7 @@ type DirectoryEntry struct {
 	// to be concatenated in order. For directories, this is exactly one blob
 	// whose contents can be processed using repr.Unmarshal.
 	Scores []blob.Score
+
+	// The target, if this is a symlink.
+	Target string
 }
