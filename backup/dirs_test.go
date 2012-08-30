@@ -62,6 +62,20 @@ func (r *readCloser) Close() error {
 	return nil
 }
 
+func makeFileEntry(name string) *fs.DirectoryEntry {
+	return &fs.DirectoryEntry{
+		Type: fs.TypeFile,
+		Name: name,
+	}
+}
+
+func makeDirEntry(name string) *fs.DirectoryEntry {
+	return &fs.DirectoryEntry{
+		Type: fs.TypeDirectory,
+		Name: name,
+	}
+}
+
 type DirectorySaverTest struct {
 	blobStore mock_blob.MockStore
 	fileSystem mock_fs.MockFileSystem
@@ -146,8 +160,8 @@ func (t *DirectorySaverTest) CallsFileSystemAndFileSaverForFiles() {
 
 	// ReadDir
 	entries := []*fs.DirectoryEntry {
-		&fs.DirectoryEntry{Name: "burrito"},
-		&fs.DirectoryEntry{Name: "enchilada"},
+		makeFileEntry("burrito"),
+		makeFileEntry("enchilada"),
 	}
 
 	ExpectCall(t.fileSystem, "ReadDir")(Any()).
@@ -177,9 +191,9 @@ func (t *DirectorySaverTest) CallsFileSystemAndFileSaverForFiles() {
 func (t *DirectorySaverTest) FileSystemReturnsErrorForOneFile() {
 	// ReadDir
 	entries := []*fs.DirectoryEntry {
-		&fs.DirectoryEntry{},
-		&fs.DirectoryEntry{},
-		&fs.DirectoryEntry{},
+		makeFileEntry(""),
+		makeFileEntry(""),
+		makeFileEntry(""),
 	}
 
 	ExpectCall(t.fileSystem, "ReadDir")(Any()).
@@ -208,9 +222,9 @@ func (t *DirectorySaverTest) FileSystemReturnsErrorForOneFile() {
 func (t *DirectorySaverTest) FileSaverReturnsErrorForOneFile() {
 	// ReadDir
 	entries := []*fs.DirectoryEntry {
-		&fs.DirectoryEntry{},
-		&fs.DirectoryEntry{},
-		&fs.DirectoryEntry{},
+		makeFileEntry(""),
+		makeFileEntry(""),
+		makeFileEntry(""),
 	}
 
 	ExpectCall(t.fileSystem, "ReadDir")(Any()).
