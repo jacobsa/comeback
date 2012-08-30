@@ -19,6 +19,7 @@ package repr
 
 import (
 	"code.google.com/p/goprotobuf/proto"
+	"errors"
 	"fmt"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/fs"
@@ -96,7 +97,7 @@ func Unmarshal(d []byte) (entries []*fs.DirectoryEntry, err error) {
 	listingProto := new(DirectoryListingProto)
 	err = proto.Unmarshal(d, listingProto)
 	if err != nil {
-		return
+		return nil, errors.New("Parsing data: " + err.Error())
 	}
 
 	// Convert each entry.

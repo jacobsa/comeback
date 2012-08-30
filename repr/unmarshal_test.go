@@ -16,6 +16,8 @@
 package repr_test
 
 import (
+	"github.com/jacobsa/comeback/repr"
+	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
 	"testing"
 )
@@ -36,7 +38,13 @@ func init() { RegisterTestSuite(&UnmarshalTest{}) }
 ////////////////////////////////////////////////////////////////////////
 
 func (t *UnmarshalTest) JunkWireData() {
-	ExpectEq("TODO", "")
+	// Input
+	d := []byte("asdf")
+
+	// Call
+	_, err := repr.Unmarshal(d)
+
+	ExpectThat(err, Error(HasSubstr("Parsing data")))
 }
 
 func (t *UnmarshalTest) UnknownTypeValue() {
