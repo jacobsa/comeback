@@ -29,6 +29,12 @@ func TestReprTest(t *testing.T) { RunTests(t) }
 // Helpers
 ////////////////////////////////////////////////////////////////////////
 
+func makeLegalEntry() *fs.DirectoryEntry {
+	entry := new(fs.DirectoryEntry)
+	entry.Type = fs.TypeDirectory
+	return entry
+}
+
 type MarshalTest struct {
 }
 
@@ -57,7 +63,20 @@ func (t *MarshalTest) NoEntries() {
 }
 
 func (t *MarshalTest) UnknownType() {
-	ExpectEq("TODO", "")
+	// Input
+	in := []*fs.DirectoryEntry{
+		makeLegalEntry(),
+		makeLegalEntry(),
+		makeLegalEntry(),
+	}
+
+	in[1].Type = 17
+
+	// Marshal
+	_, err := repr.Marshal(in)
+
+	ExpectThat(err, Error(HasSubstr("type")))
+	ExpectThat(err, Error(HasSubstr("17")))
 }
 
 func (t *MarshalTest) PreservesTypes() {
