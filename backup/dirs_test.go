@@ -362,8 +362,8 @@ func (t *DirectorySaverTest) CallsBlobStore() {
 	score3 := blob.ComputeScore([]byte("tortilla"))
 
 	ExpectCall(t.wrapped, "Save")(Any()).
-		WillOnce(oglemock.Return(score1, nil)).
-		WillOnce(oglemock.Return(score2, nil))
+		WillOnce(oglemock.Return(score2, nil)).
+		WillOnce(oglemock.Return(score3, nil))
 
 	// Blob store
 	var blob []byte
