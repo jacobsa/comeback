@@ -41,19 +41,7 @@ func main() {
 	dirSaver, err := backup.NewDirectorySaver(
 		blobStore,
 		fs.NewFileSystem(),
-		fileSaver,
-		nil)
-
-	if err != nil {
-		log.Fatalf("Creating directory saver: %v", err)
-	}
-
-	// Create another level.
-	dirSaver, err = backup.NewDirectorySaver(
-		blobStore,
-		fs.NewFileSystem(),
-		fileSaver,
-		dirSaver)
+		fileSaver)
 
 	if err != nil {
 		log.Fatalf("Creating directory saver: %v", err)
