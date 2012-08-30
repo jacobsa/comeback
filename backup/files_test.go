@@ -54,15 +54,6 @@ type FileSaverTest struct {
 	err error
 }
 
-func elementsAreSlice(bytes []byte) Matcher {
-	interfaceSlice := []interface{}{}
-	for _, b := range bytes {
-		interfaceSlice = append(interfaceSlice, b)
-	}
-
-	return ElementsAre(interfaceSlice...)
-}
-
 func init() { RegisterTestSuite(&FileSaverTest{}) }
 
 func (t *FileSaverTest) SetUp(i *TestInfo) {
@@ -109,9 +100,9 @@ func (t *FileSaverTest) ChunksAreSizedAsExpected() {
 	)
 
 	// Blob store
-	ExpectCall(t.blobStore, "Store")(elementsAreSlice(chunk0))
-	ExpectCall(t.blobStore, "Store")(elementsAreSlice(chunk1))
-	ExpectCall(t.blobStore, "Store")(elementsAreSlice(chunk2))
+	ExpectCall(t.blobStore, "Store")(DeepEquals(chunk0))
+	ExpectCall(t.blobStore, "Store")(DeepEquals(chunk1))
+	ExpectCall(t.blobStore, "Store")(DeepEquals(chunk2))
 
 	// Call
 	t.callSaver()
