@@ -75,7 +75,13 @@ func (t *ReadDirTest) NotADirectory() {
 }
 
 func (t *ReadDirTest) NoReadPermissions() {
-	ExpectEq("TODO", "")
+	dirpath := path.Join(t.baseDir, "foo")
+	err := os.Mkdir(dirpath, 0100)
+	AssertEq(nil, err)
+
+	_, err = t.fileSystem.ReadDir(dirpath)
+	ExpectThat(err, Error(HasSubstr("permission")))
+	ExpectThat(err, Error(HasSubstr("denied")))
 }
 
 func (t *ReadDirTest) RegularFiles() {
