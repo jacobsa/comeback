@@ -16,6 +16,7 @@
 package backup
 
 import (
+	"errors"
 	"fmt"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/fs"
@@ -104,5 +105,10 @@ func (s *dirSaver) Save(dirpath string) (score blob.Score, err error) {
 	}
 
 	// Store that serialized version.
-	return s.blobStore.Store(data)
+	score, err = s.blobStore.Store(data)
+	if err != nil {
+		err = errors.New("Storing dir blob: " + err.Error())
+	}
+
+	return
 }
