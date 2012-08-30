@@ -16,10 +16,18 @@
 package backup
 
 import (
+	. "github.com/jacobsa/oglematchers"
+	. "github.com/jacobsa/oglemock"
 	. "github.com/jacobsa/ogletest"
+	"fmt"
+	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/blob/mock"
 	"github.com/jacobsa/comeback/io/mock"
 	"testing"
+)
+
+const (
+	expectedChunkSize = 1<<24
 )
 
 func TestRegister(t *testing.T) { RunTests(t) }
@@ -31,6 +39,10 @@ func TestRegister(t *testing.T) { RunTests(t) }
 type FileSaverTest struct {
 	blobStore mock_blob.MockStore
 	reader mock_io.MockReader
+	fileSaver FileSaver
+
+	scores []blob.Score
+	err error
 }
 
 func init() { RegisterTestSuite(&FileSaverTest{}) }
@@ -38,6 +50,11 @@ func init() { RegisterTestSuite(&FileSaverTest{}) }
 func (t *FileSaverTest) SetUp(i *TestInfo) {
 	t.blobStore = mock_blob.NewMockStore(i.MockController, "blobStore")
 	t.reader = mock_io.NewMockReader(i.MockController, "reader")
+	t.fileSaver, _ = NewFileSaver(t.blobStore)
+}
+
+func (t *FileSaverTest) callSaver() {
+	t.scores, t.err = t.fileSaver.Save(t.reader)
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -45,7 +62,21 @@ func (t *FileSaverTest) SetUp(i *TestInfo) {
 ////////////////////////////////////////////////////////////////////////
 
 func (t *FileSaverTest) CallsReadWithExpectedSizeBuffer() {
-	ExpectEq("TODO", "")
+	// Reader
+	var buf []byte
+	saveBuf := func(b []byte) (int, error) {
+		buf = b
+		return 0, fmt.Errorf("foo")
+	}
+
+	ExpectCall(t.reader, "Read")(Any()).
+		WillOnce(Invoke(saveBuf))
+
+	// Call
+	t.callSaver()
+
+	AssertNe(nil, buf)
+	ExpectEq(expectedChunkSize, len(buf))
 }
 
 func (t *FileSaverTest) FirstReadReturnsZeroBytesAndError() {
