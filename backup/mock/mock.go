@@ -7,11 +7,11 @@
 package mock_backup
 
 import (
+	fmt "fmt"
 	backup "github.com/jacobsa/comeback/backup"
 	blob "github.com/jacobsa/comeback/blob"
-	fmt "fmt"
-	io "io"
 	oglemock "github.com/jacobsa/oglemock"
+	io "io"
 	runtime "runtime"
 	unsafe "unsafe"
 )
@@ -22,16 +22,16 @@ type MockFileSaver interface {
 }
 
 type mockFileSaver struct {
-	controller	oglemock.Controller
-	description	string
+	controller  oglemock.Controller
+	description string
 }
 
 func NewMockFileSaver(
 	c oglemock.Controller,
 	desc string) MockFileSaver {
 	return &mockFileSaver{
-		controller:	c,
-		description:	desc,
+		controller:  c,
+		description: desc,
 	}
 }
 
@@ -78,16 +78,16 @@ type MockDirectorySaver interface {
 }
 
 type mockDirectorySaver struct {
-	controller	oglemock.Controller
-	description	string
+	controller  oglemock.Controller
+	description string
 }
 
 func NewMockDirectorySaver(
 	c oglemock.Controller,
 	desc string) MockDirectorySaver {
 	return &mockDirectorySaver{
-		controller:	c,
-		description:	desc,
+		controller:  c,
+		description: desc,
 	}
 }
 

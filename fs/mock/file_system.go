@@ -9,8 +9,8 @@ package mock_fs
 import (
 	fmt "fmt"
 	fs "github.com/jacobsa/comeback/fs"
-	io "io"
 	oglemock "github.com/jacobsa/oglemock"
+	io "io"
 	runtime "runtime"
 	unsafe "unsafe"
 )
@@ -21,16 +21,16 @@ type MockFileSystem interface {
 }
 
 type mockFileSystem struct {
-	controller	oglemock.Controller
-	description	string
+	controller  oglemock.Controller
+	description string
 }
 
 func NewMockFileSystem(
 	c oglemock.Controller,
 	desc string) MockFileSystem {
 	return &mockFileSystem{
-		controller:	c,
-		description:	desc,
+		controller:  c,
+		description: desc,
 	}
 }
 

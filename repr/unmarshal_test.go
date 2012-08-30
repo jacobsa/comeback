@@ -117,7 +117,7 @@ func (t *UnmarshalTest) HashIsTooShort() {
 	}
 
 	blob := listingProto.Entry[1].Blob[1]
-	blob.Hash = blob.Hash[0:len(blob.Hash)-1]
+	blob.Hash = blob.Hash[0 : len(blob.Hash)-1]
 
 	data, err := proto.Marshal(listingProto)
 	AssertEq(nil, err)

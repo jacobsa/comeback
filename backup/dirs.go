@@ -36,7 +36,7 @@ type DirectorySaver interface {
 // This breaks a self-dependency that would be needed to make use of
 // NewNonRecursiveDirectorySaver.
 type onDemandDirSaver struct {
-	createSaver func (wrapped DirectorySaver) DirectorySaver
+	createSaver func(wrapped DirectorySaver) DirectorySaver
 }
 
 func (s *onDemandDirSaver) Save(dirpath string) (score blob.Score, err error) {
@@ -48,7 +48,7 @@ func NewDirectorySaver(
 	blobStore blob.Store,
 	fileSystem fs.FileSystem,
 	fileSaver FileSaver) (DirectorySaver, error) {
-	createSaver := func (wrapped DirectorySaver) DirectorySaver {
+	createSaver := func(wrapped DirectorySaver) DirectorySaver {
 		saver, err := NewNonRecursiveDirectorySaver(
 			blobStore,
 			fileSystem,

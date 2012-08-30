@@ -24,8 +24,8 @@ import (
 	"github.com/jacobsa/comeback/fs"
 	"github.com/jacobsa/comeback/fs/mock"
 	"github.com/jacobsa/comeback/repr"
-	"github.com/jacobsa/oglemock"
 	. "github.com/jacobsa/oglematchers"
+	"github.com/jacobsa/oglemock"
 	. "github.com/jacobsa/ogletest"
 	"testing"
 )
@@ -77,16 +77,16 @@ func makeDirEntry(name string) *fs.DirectoryEntry {
 }
 
 type DirectorySaverTest struct {
-	blobStore mock_blob.MockStore
+	blobStore  mock_blob.MockStore
 	fileSystem mock_fs.MockFileSystem
-	fileSaver mock_backup.MockFileSaver
-	wrapped mock_backup.MockDirectorySaver
+	fileSaver  mock_backup.MockFileSaver
+	wrapped    mock_backup.MockDirectorySaver
 
 	dirSaver backup.DirectorySaver
 
 	dirpath string
-	score blob.Score
-	err error
+	score   blob.Score
+	err     error
 }
 
 func init() { RegisterTestSuite(&DirectorySaverTest{}) }
@@ -159,7 +159,7 @@ func (t *DirectorySaverTest) CallsFileSystemAndFileSaverForFiles() {
 	t.dirpath = "/taco"
 
 	// ReadDir
-	entries := []*fs.DirectoryEntry {
+	entries := []*fs.DirectoryEntry{
 		makeFileEntry("burrito"),
 		makeFileEntry("enchilada"),
 	}
@@ -190,7 +190,7 @@ func (t *DirectorySaverTest) CallsFileSystemAndFileSaverForFiles() {
 
 func (t *DirectorySaverTest) FileSystemReturnsErrorForOneFile() {
 	// ReadDir
-	entries := []*fs.DirectoryEntry {
+	entries := []*fs.DirectoryEntry{
 		makeFileEntry(""),
 		makeFileEntry(""),
 		makeFileEntry(""),
@@ -221,7 +221,7 @@ func (t *DirectorySaverTest) FileSystemReturnsErrorForOneFile() {
 
 func (t *DirectorySaverTest) FileSaverReturnsErrorForOneFile() {
 	// ReadDir
-	entries := []*fs.DirectoryEntry {
+	entries := []*fs.DirectoryEntry{
 		makeFileEntry(""),
 		makeFileEntry(""),
 		makeFileEntry(""),
@@ -256,7 +256,7 @@ func (t *DirectorySaverTest) CallsDirSaverForDirs() {
 	t.dirpath = "/taco"
 
 	// ReadDir
-	entries := []*fs.DirectoryEntry {
+	entries := []*fs.DirectoryEntry{
 		makeDirEntry("burrito"),
 		makeDirEntry("enchilada"),
 	}
@@ -279,7 +279,7 @@ func (t *DirectorySaverTest) CallsDirSaverForDirs() {
 
 func (t *DirectorySaverTest) DirSaverReturnsErrorForOneDir() {
 	// ReadDir
-	entries := []*fs.DirectoryEntry {
+	entries := []*fs.DirectoryEntry{
 		makeDirEntry(""),
 		makeDirEntry(""),
 		makeDirEntry(""),
@@ -303,7 +303,7 @@ func (t *DirectorySaverTest) DirSaverReturnsErrorForOneDir() {
 
 func (t *DirectorySaverTest) OneTypeIsUnsupported() {
 	// ReadDir
-	entries := []*fs.DirectoryEntry {
+	entries := []*fs.DirectoryEntry{
 		makeDirEntry(""),
 		makeDirEntry(""),
 		makeDirEntry(""),
@@ -329,7 +329,7 @@ func (t *DirectorySaverTest) OneTypeIsUnsupported() {
 
 func (t *DirectorySaverTest) CallsBlobStore() {
 	// ReadDir
-	entries := []*fs.DirectoryEntry {
+	entries := []*fs.DirectoryEntry{
 		makeFileEntry("taco"),
 		makeDirEntry("burrito"),
 		makeDirEntry("enchilada"),
@@ -394,8 +394,7 @@ func (t *DirectorySaverTest) CallsBlobStore() {
 
 func (t *DirectorySaverTest) BlobStoreReturnsError() {
 	// ReadDir
-	entries := []*fs.DirectoryEntry {
-	}
+	entries := []*fs.DirectoryEntry{}
 
 	ExpectCall(t.fileSystem, "ReadDir")(Any()).
 		WillOnce(oglemock.Return(entries, nil))
@@ -414,8 +413,7 @@ func (t *DirectorySaverTest) BlobStoreReturnsError() {
 
 func (t *DirectorySaverTest) BlobStoreSucceeds() {
 	// ReadDir
-	entries := []*fs.DirectoryEntry {
-	}
+	entries := []*fs.DirectoryEntry{}
 
 	ExpectCall(t.fileSystem, "ReadDir")(Any()).
 		WillOnce(oglemock.Return(entries, nil))
