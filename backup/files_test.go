@@ -188,7 +188,22 @@ func (t *FileSaverTest) OneSmallerSizedChunk() {
 }
 
 func (t *FileSaverTest) OneFullSizedChunk() {
-	ExpectEq("TODO", "")
+	// Chunks
+	chunk0 := makeChunk('a')
+
+	// Reader
+	t.reader = io.MultiReader(
+		bytes.NewReader(chunk0),
+	)
+
+	// Blob store
+	score0 := blob.ComputeScore([]byte(""))
+
+	ExpectCall(t.blobStore, "Store")(DeepEquals(chunk0)).
+		WillOnce(oglemock.Return(score0, nil))
+
+	// Call
+	t.callSaver()
 }
 
 func (t *FileSaverTest) OneFullSizedChunkPlusOneByte() {
