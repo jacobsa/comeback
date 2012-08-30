@@ -41,7 +41,8 @@ message DirectoryEntryProto {
   }
   optional Type type = 1;
 
-  // The permissions bits for this entry.
+  // The permissions bits for this entry, as described in the documentation for
+  // fs.DirectoryEntry, with values as in the golang os package.
   optional uint32 permissions = 2;
 
   // The name of this entry.
@@ -53,6 +54,9 @@ message DirectoryEntryProto {
   // The zero or more blobs that make up a regular file's contents, to be
   // concatenated in order.
   repeated BlobInfoProto blob = 5;
+
+  // The target, if this is a symlink.
+  optional string target = 6;
 }
 
 message DirectoryListingProto {
