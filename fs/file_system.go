@@ -21,6 +21,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"path"
 )
 
 // FileSystem represents operations performed on a real file system, but is an
@@ -66,9 +67,9 @@ func convertFileInfo(fi os.FileInfo) (*DirectoryEntry, error) {
 	return entry, nil
 }
 
-func (f *fileSystem) ReadDir(path string) (entries []*DirectoryEntry, err error) {
+func (f *fileSystem) ReadDir(dirpath string) (entries []*DirectoryEntry, err error) {
 	// Call ioutil.
-	fileInfos, err := ioutil.ReadDir(path)
+	fileInfos, err := ioutil.ReadDir(dirpath)
 	if err != nil {
 		return nil, err
 	}
@@ -79,6 +80,14 @@ func (f *fileSystem) ReadDir(path string) (entries []*DirectoryEntry, err error)
 		entry, err := convertFileInfo(fileInfo)
 		if err != nil {
 			return nil, err
+		}
+
+		// Handle symlinks.
+		if entry.Type == TypeSymlink {
+			linkPath := path.Join(dirpath, entry.Name)
+			if entry.Target, err = os.Readlink(linkPath); err != nil {
+				return nil, err
+			}
 		}
 
 		entries = append(entries, entry)
