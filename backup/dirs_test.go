@@ -21,6 +21,7 @@ import (
 	"github.com/jacobsa/comeback/backup/mock"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/blob/mock"
+	"github.com/jacobsa/comeback/fs"
 	"github.com/jacobsa/comeback/fs/mock"
 	"github.com/jacobsa/oglemock"
 	. "github.com/jacobsa/oglematchers"
@@ -95,7 +96,16 @@ func (t *DirectorySaverTest) ReadDirReturnsError() {
 }
 
 func (t *DirectorySaverTest) NoEntriesInDirectory() {
-	ExpectEq("TODO", "")
+	// ReadDir
+	ExpectCall(t.fileSystem, "ReadDir")(Any()).
+		WillOnce(oglemock.Return([]*fs.DirectoryEntry{}, nil))
+
+	// Blob store
+	ExpectCall(t.blobStore, "Store")(DeepEquals([]byte{})).
+		WillOnce(oglemock.Return(nil, errors.New("")))
+
+	// Call
+	t.callSaver()
 }
 
 func (t *DirectorySaverTest) CallsFileSaverForFiles() {
@@ -118,6 +128,14 @@ func (t *DirectorySaverTest) OneTypeIsUnsupported() {
 	ExpectEq("TODO", "")
 }
 
-func (t *DirectorySaverTest) EverythingSucceeds() {
+func (t *DirectorySaverTest) CallsBlobStore() {
+	ExpectEq("TODO", "")
+}
+
+func (t *DirectorySaverTest) BlobStoreReturnsError() {
+	ExpectEq("TODO", "")
+}
+
+func (t *DirectorySaverTest) BlobStoreSucceeds() {
 	ExpectEq("TODO", "")
 }
