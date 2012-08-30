@@ -61,41 +61,31 @@ func (t *FileSaverTest) callSaver() {
 // Tests
 ////////////////////////////////////////////////////////////////////////
 
-func (t *FileSaverTest) CallsReadWithExpectedSizeBuffer() {
-	// Reader
-	var buf []byte
-	saveBuf := func(b []byte) (int, error) {
-		buf = b
-		return 0, fmt.Errorf("foo")
-	}
-
-	ExpectCall(t.reader, "Read")(Any()).
-		WillOnce(Invoke(saveBuf))
-
-	// Call
-	t.callSaver()
-
-	AssertNe(nil, buf)
-	ExpectEq(expectedChunkSize, len(buf))
-}
-
-func (t *FileSaverTest) FirstReadReturnsZeroBytesAndError() {
+func (t *FileSaverTest) NoDataInReader() {
 	ExpectEq("TODO", "")
 }
 
-func (t *FileSaverTest) FirstReadReturnsNonZeroBytesAndError() {
+func (t *FileSaverTest) ImmediateReadError() {
 	ExpectEq("TODO", "")
 }
 
-func (t *FileSaverTest) FirstReadReturnsZeroBytesAndEof() {
+func (t *FileSaverTest) ReadErrorInFirstChunk() {
 	ExpectEq("TODO", "")
 }
 
-func (t *FileSaverTest) FirstReadReturnsZeroBytesAndNilSecondEof() {
+func (t *FileSaverTest) ReadErrorInSecondChunk() {
 	ExpectEq("TODO", "")
 }
 
-func (t *FileSaverTest) ErrorOnSubsequentRead() {
+func (t *FileSaverTest) CopesWithShortReads() {
+	ExpectEq("TODO", "")
+}
+
+func (t *FileSaverTest) CopesWithEofAndZeroData() {
+	ExpectEq("TODO", "")
+}
+
+func (t *FileSaverTest) CopesWithEofAndNonZeroData() {
 	ExpectEq("TODO", "")
 }
 
@@ -120,10 +110,6 @@ func (t *FileSaverTest) MultipleChunksWithSmallRemainder() {
 }
 
 func (t *FileSaverTest) MultipleChunksWithLargeRemainder() {
-	ExpectEq("TODO", "")
-}
-
-func (t *FileSaverTest) EofWithZeroSizedRead() {
 	ExpectEq("TODO", "")
 }
 
