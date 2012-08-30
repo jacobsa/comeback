@@ -145,8 +145,8 @@ func (t *RoundtripTest) PreservesPermissions() {
 		makeLegalEntry(),
 	}
 
-	in[0].Permissions = 0644
-	in[1].Permissions = 0755
+	in[0].Permissions = 0644|os.ModeSticky|os.ModeSetuid
+	in[1].Permissions = 0755|os.ModeSetgid
 
 	// Marshal
 	d, err := repr.Marshal(in)
@@ -225,4 +225,31 @@ func (t *RoundtripTest) PreservesScores() {
 
 	AssertThat(out[1].Scores, ElementsAre(Any()))
 	ExpectThat(out[1].Scores[0].Sha1Hash(), DeepEquals(score10.Sha1Hash()))
+}
+
+func (t *RoundtripTest) PreservesTargets() {
+	// Input
+	in := []*fs.DirectoryEntry{
+		makeLegalEntry(),
+		makeLegalEntry(),
+	}
+
+	in[0].Target = "taco"
+	in[1].Target = "burrito"
+
+	// Marshal
+	d, err := repr.Marshal(in)
+	AssertEq(nil, err)
+	AssertNe(nil, d)
+
+	// Unmarshal
+	out, err := repr.Unmarshal(d)
+	AssertEq(nil, err)
+	AssertNe(nil, out)
+
+	// Output
+	AssertThat(out, ElementsAre(Any(), Any()))
+
+	ExpectEq(in[0].Target, out[0].Target)
+	ExpectEq(in[1].Target, out[1].Target)
 }
