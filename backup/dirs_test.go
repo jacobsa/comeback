@@ -63,6 +63,38 @@ func (t *DirectorySaverTest) SetUp(i *TestInfo) {
 // Tests
 ////////////////////////////////////////////////////////////////////////
 
-func (t *DirectorySaverTest) DoesFoo() {
+func (t *DirectorySaverTest) CallsReadDir() {
+	ExpectEq("TODO", "")
+}
+
+func (t *DirectorySaverTest) ReadDirReturnsError() {
+	ExpectEq("TODO", "")
+}
+
+func (t *DirectorySaverTest) NoEntriesInDirectory() {
+	ExpectEq("TODO", "")
+}
+
+func (t *DirectorySaverTest) CallsFileSaverForFiles() {
+	ExpectEq("TODO", "")
+}
+
+func (t *DirectorySaverTest) FileSaverReturnsErrorForOneFile() {
+	ExpectEq("TODO", "")
+}
+
+func (t *DirectorySaverTest) CallsDirSaverForDirs() {
+	ExpectEq("TODO", "")
+}
+
+func (t *DirectorySaverTest) DirSaverReturnsErrorForOneDir() {
+	ExpectEq("TODO", "")
+}
+
+func (t *DirectorySaverTest) OneTypeIsUnsupported() {
+	ExpectEq("TODO", "")
+}
+
+func (t *DirectorySaverTest) EverythingSucceeds() {
 	ExpectEq("TODO", "")
 }
