@@ -63,6 +63,25 @@ func setModTime(path string, mtime time.Time) error {
 	return nil
 }
 
+// Like os.Chmod, but don't follow symlinks.
+func setPermissions(path string, permissions uint32) error {
+	// Open the file without following symlinks.
+	fd, err := syscall.Open(path, syscall.O_RDONLY | syscall.O_SYMLINK, 0)
+	if err != nil {
+		return err
+	}
+
+	defer syscall.Close(fd)
+
+	// Call fchmod.
+	err = syscall.Fchmod(fd, permissions)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 ////////////////////////////////////////////////////////////////////////
 // ReadDir
 ////////////////////////////////////////////////////////////////////////
@@ -212,6 +231,9 @@ func (t *ReadDirTest) Symlinks() {
 	err = os.Symlink("/foo/burrito", path0)
 	AssertEq(nil, err)
 
+	err = setPermissions(path0, 0751)
+	AssertEq(nil, err)
+
 	mtime0 := time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)
 	err = setModTime(path0, mtime0)
 	AssertEq(nil, err)
@@ -219,6 +241,9 @@ func (t *ReadDirTest) Symlinks() {
 	// Link 1
 	path1 := path.Join(t.baseDir, "enchilada")
 	err = os.Symlink("/foo/enchilada", path1)
+	AssertEq(nil, err)
+
+	err = setPermissions(path1, 0711)
 	AssertEq(nil, err)
 
 	mtime1 := time.Date(1985, time.March, 18, 15, 33, 0, 0, time.Local)
@@ -260,7 +285,7 @@ func (t *ReadDirTest) SetuidBit() {
 	err = ioutil.WriteFile(path1, []byte("burrito"), 0454)
 	AssertEq(nil, err)
 
-	err = os.Chmod(path1, 0600 | os.ModeSetuid)
+	err = setPermissions(path1, 0600 | syscall.S_ISUID)
 	AssertEq(nil, err)
 
 	// Dir 2
@@ -273,7 +298,7 @@ func (t *ReadDirTest) SetuidBit() {
 	err = os.Mkdir(path3, 0700)
 	AssertEq(nil, err)
 
-	err = os.Chmod(path3, 0700 | os.ModeSetuid)
+	err = setPermissions(path3, 0700 | syscall.S_ISUID)
 	AssertEq(nil, err)
 
 	// Call
@@ -300,7 +325,7 @@ func (t *ReadDirTest) SetgidBit() {
 	err = ioutil.WriteFile(path1, []byte("burrito"), 0454)
 	AssertEq(nil, err)
 
-	err = os.Chmod(path1, 0600 | os.ModeSetgid)
+	err = setPermissions(path1, 0600 | syscall.S_ISGID)
 	AssertEq(nil, err)
 
 	// Dir 2
@@ -313,7 +338,7 @@ func (t *ReadDirTest) SetgidBit() {
 	err = os.Mkdir(path3, 0700)
 	AssertEq(nil, err)
 
-	err = os.Chmod(path3, 0700 | os.ModeSetgid)
+	err = setPermissions(path3, 0700 | syscall.S_ISGID)
 	AssertEq(nil, err)
 
 	// Call
@@ -340,7 +365,7 @@ func (t *ReadDirTest) StickyBit() {
 	err = ioutil.WriteFile(path1, []byte("burrito"), 0454)
 	AssertEq(nil, err)
 
-	err = os.Chmod(path1, 0600 | os.ModeSticky)
+	err = setPermissions(path1, 0600 | syscall.S_ISVTX)
 	AssertEq(nil, err)
 
 	// Dir 2
@@ -353,7 +378,7 @@ func (t *ReadDirTest) StickyBit() {
 	err = os.Mkdir(path3, 0700)
 	AssertEq(nil, err)
 
-	err = os.Chmod(path3, 0700 | os.ModeSticky)
+	err = setPermissions(path3, 0700 | syscall.S_ISVTX)
 	AssertEq(nil, err)
 
 	// Call
