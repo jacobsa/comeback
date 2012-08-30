@@ -20,6 +20,7 @@ package repr
 import (
 	"code.google.com/p/goprotobuf/proto"
 	"fmt"
+	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/fs"
 	"time"
 )
@@ -41,6 +42,18 @@ func convertTimeProto(timeProto *TimeProto) (time.Time, error) {
 	return time.Unix(timeProto.GetSecond(), int64(timeProto.GetNanosecond())), nil
 }
 
+type score struct {
+	hash []byte
+}
+
+func (s *score) Sha1Hash() []byte {
+	return s.hash
+}
+
+func convertBlobInfoProto(p *BlobInfoProto) (blob.Score, error) {
+	return nil, fmt.Errorf("TODO SCORE")
+}
+
 func convertEntryProto(entryProto *DirectoryEntryProto) (entry *fs.DirectoryEntry, err error) {
 	entry = &fs.DirectoryEntry{}
 
@@ -57,6 +70,16 @@ func convertEntryProto(entryProto *DirectoryEntryProto) (entry *fs.DirectoryEntr
 	entry.MTime, err = convertTimeProto(entryProto.GetMtime())
 	if err != nil {
 		return nil, err
+	}
+
+	// Attempt to convert each score proto.
+	for _, blobInfoProto := range entryProto.Blob {
+		score, err := convertBlobInfoProto(blobInfoProto)
+		if err != nil {
+			return nil, err
+		}
+
+		entry.Scores = append(entry.Scores, score)
 	}
 
 	return entry, nil
