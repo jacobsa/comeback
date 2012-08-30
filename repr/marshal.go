@@ -80,9 +80,3 @@ func Marshal(entries []*fs.DirectoryEntry) (d []byte, err error) {
 	listingProto := &DirectoryListingProto{Entry: entryProtos}
 	return proto.Marshal(listingProto)
 }
-
-// Unmarshal recovers a list of directory entries from bytes previously
-// returned by Marshal.
-func Unmarshal(d []byte) (entries []*fs.DirectoryEntry, err error) {
-	return nil, fmt.Errorf("TODO")
-}
