@@ -301,15 +301,30 @@ func (t *ReadDirTest) SetuidBit() {
 	err = setPermissions(path3, 0700 | syscall.S_ISUID)
 	AssertEq(nil, err)
 
+	// Link 4
+	path4 := path.Join(t.baseDir, "tortillas0")
+	err = os.Symlink("/foo/tortillas0", path4)
+	AssertEq(nil, err)
+
+	// Link 5
+	path5 := path.Join(t.baseDir, "tortillas1")
+	err = os.Symlink("/foo/tortillas1", path5)
+	AssertEq(nil, err)
+
+	err = setPermissions(path5, 0600 | syscall.S_ISUID)
+	AssertEq(nil, err)
+
 	// Call
 	entries, err := t.fileSystem.ReadDir(t.baseDir)
 	AssertEq(nil, err)
-	AssertThat(entries, ElementsAre(Any(), Any(), Any(), Any()))
+	AssertEq(6, len(entries))
 
 	ExpectFalse(entries[0].Setuid)
 	ExpectTrue(entries[1].Setuid)
 	ExpectFalse(entries[2].Setuid)
 	ExpectTrue(entries[3].Setuid)
+	ExpectFalse(entries[4].Setuid)
+	ExpectTrue(entries[5].Setuid)
 }
 
 func (t *ReadDirTest) SetgidBit() {
