@@ -16,12 +16,14 @@
 package main
 
 import (
+	"bytes"
 	"encoding/hex"
 	"fmt"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/disk"
 	"github.com/jacobsa/comeback/fs"
 	"github.com/jacobsa/comeback/repr"
+	"io"
 	"log"
 	"os"
 	"path"
@@ -53,7 +55,30 @@ func fromHexHash(h string) (blob.Score, error) {
 // Restore the file whose contents are described by the referenced blobs to the
 // supplied target, whose parent must already exist.
 func restoreFile(target string, scores []blob.Score) error {
-	return fmt.Errorf("TODO: restoreFile")
+	// Open the file.
+	f, err := os.Create(target)
+	defer f.Close()
+
+	if err != nil {
+		return fmt.Errorf("Create: %v", err)
+	}
+
+	// Process each blob.
+	for _, score := range scores {
+		// Load the blob.
+		blob, err := blobStore.Load(score)
+		if err != nil {
+			return fmt.Errorf("Loading blob: %v", err)
+		}
+
+		// Write out its contents.
+		_, err = io.Copy(f, bytes.NewReader(blob))
+		if err != nil {
+			return fmt.Errorf("Copy: %v", err)
+		}
+	}
+
+	return nil
 }
 
 // Restore the directory whose contents are described by the referenced blob to
