@@ -17,6 +17,9 @@ package fs_test
 
 import (
 	. "github.com/jacobsa/ogletest"
+	"io/ioutil"
+	"log"
+	"os"
 	"testing"
 )
 
@@ -27,9 +30,25 @@ func TestFileSystemTest(t *testing.T) { RunTests(t) }
 ////////////////////////////////////////////////////////////////////////
 
 type ReadDirTest struct {
+	baseDir string
 }
 
 func init() { RegisterTestSuite(&ReadDirTest{}) }
+
+func (t *ReadDirTest) SetUp(i *TestInfo) {
+	var err error
+	t.baseDir, err = ioutil.TempDir("", "ReadDirTest_")
+	if err != nil {
+		log.Fatalf("Creating baseDir: %v", err)
+	}
+}
+
+func (t *ReadDirTest) TearDown() {
+	err := os.RemoveAll(t.baseDir)
+	if err != nil {
+		log.Fatalf("Couldn't remove: %s", t.baseDir)
+	}
+}
 
 func (t *ReadDirTest) NonExistentPath() {
 	ExpectEq("TODO", "")
