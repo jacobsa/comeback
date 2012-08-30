@@ -106,5 +106,30 @@ func (t *UnmarshalTest) HashIsTooShort() {
 }
 
 func (t *UnmarshalTest) HashIsTooLong() {
-	ExpectEq("TODO", "")
+	// Input
+	listingProto := &repr.DirectoryListingProto{
+		Entry: []*repr.DirectoryEntryProto{
+			makeLegalEntryProto(),
+			makeLegalEntryProto(),
+			makeLegalEntryProto(),
+		},
+	}
+
+	listingProto.Entry[1].Blob = []*repr.BlobInfoProto{
+		&repr.BlobInfoProto{Hash: blob.ComputeScore([]byte{}).Sha1Hash()},
+		&repr.BlobInfoProto{Hash: blob.ComputeScore([]byte{}).Sha1Hash()},
+		&repr.BlobInfoProto{Hash: blob.ComputeScore([]byte{}).Sha1Hash()},
+	}
+
+	blob := listingProto.Entry[1].Blob[1]
+	blob.Hash = append(blob.Hash, 0x01)
+
+	data, err := proto.Marshal(listingProto)
+	AssertEq(nil, err)
+
+	// Call
+	_, err = repr.Unmarshal(data)
+
+	ExpectThat(err, Error(HasSubstr("hash length")))
+	ExpectThat(err, Error(HasSubstr("21")))
 }
