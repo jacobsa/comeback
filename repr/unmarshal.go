@@ -26,6 +26,7 @@ func convertEntryProto(entryProto *DirectoryEntryProto) (*fs.DirectoryEntry, err
 	entry := &fs.DirectoryEntry{}
 
 	if entryProto.Name != nil { entry.Name = *entryProto.Name }
+	if entryProto.Permissions != nil { entry.Permissions = *entryProto.Permissions }
 
 	return entry, nil
 }
