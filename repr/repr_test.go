@@ -35,5 +35,38 @@ func init() { RegisterTestSuite(&MarshalTest{}) }
 // Tests
 ////////////////////////////////////////////////////////////////////////
 
-func (t *MarshalTest) DoesFoo() {
+func (t *MarshalTest) NoEntries() {
+	ExpectEq("TODO", "")
+}
+
+func (t *MarshalTest) UnknownType() {
+	ExpectEq("TODO", "")
+}
+
+func (t *MarshalTest) PreservesTypes() {
+	ExpectEq("TODO", "")
+}
+
+func (t *MarshalTest) PreservesNames() {
+	ExpectEq("TODO", "")
+}
+
+func (t *MarshalTest) PreservesPermissions() {
+	ExpectEq("TODO", "")
+}
+
+func (t *MarshalTest) UnrepresentableModTime() {
+	ExpectEq("TODO", "")
+}
+
+func (t *MarshalTest) PreservesModTimes() {
+	ExpectEq("TODO", "")
+}
+
+func (t *MarshalTest) CopesWithLocationsInModTimes() {
+	ExpectEq("TODO", "")
+}
+
+func (t *MarshalTest) PreservesScores() {
+	ExpectEq("TODO", "")
 }
