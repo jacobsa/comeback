@@ -23,6 +23,7 @@ import (
 	"github.com/jacobsa/comeback/blob/mock"
 	"github.com/jacobsa/comeback/fs/mock"
 	"github.com/jacobsa/oglemock"
+	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
 	"testing"
 )
@@ -82,7 +83,15 @@ func (t *DirectorySaverTest) CallsReadDir() {
 }
 
 func (t *DirectorySaverTest) ReadDirReturnsError() {
-	ExpectEq("TODO", "")
+	// ReadDir
+	ExpectCall(t.fileSystem, "ReadDir")(Any()).
+		WillOnce(oglemock.Return(nil, errors.New("taco")))
+
+	// Call
+	t.callSaver()
+
+	ExpectThat(t.err, Error(HasSubstr("Listing")))
+	ExpectThat(t.err, Error(HasSubstr("taco")))
 }
 
 func (t *DirectorySaverTest) NoEntriesInDirectory() {
