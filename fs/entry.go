@@ -39,8 +39,14 @@ type DirectoryEntry struct {
 	Name string
 
 	// The permission bits for this entry, i.e. the low-order nine bits of
-	// FileMode. This does *not* include flags such as the sticky bit.
+	// FileMode. This does *not* include flags such as the sticky bit, which are
+	// represented below.
 	Permissions os.FileMode
+
+	// Whether various permissions bits are set.
+	Setgid bool
+	Setuid bool
+	Sticky bool
 
 	// The modification time of this entry.
 	MTime time.Time
