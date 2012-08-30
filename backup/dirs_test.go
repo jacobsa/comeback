@@ -16,11 +16,13 @@
 package backup_test
 
 import (
+	"errors"
 	"github.com/jacobsa/comeback/backup"
 	"github.com/jacobsa/comeback/backup/mock"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/blob/mock"
 	"github.com/jacobsa/comeback/fs/mock"
+	"github.com/jacobsa/oglemock"
 	. "github.com/jacobsa/ogletest"
 	"testing"
 )
@@ -39,6 +41,7 @@ type DirectorySaverTest struct {
 
 	dirSaver backup.DirectorySaver
 
+	dirpath string
 	score blob.Score
 	err error
 }
@@ -59,12 +62,23 @@ func (t *DirectorySaverTest) SetUp(i *TestInfo) {
 	)
 }
 
+func (t *DirectorySaverTest) callSaver() {
+	t.score, t.err = t.dirSaver.Save(t.dirpath)
+}
+
 ////////////////////////////////////////////////////////////////////////
 // Tests
 ////////////////////////////////////////////////////////////////////////
 
 func (t *DirectorySaverTest) CallsReadDir() {
-	ExpectEq("TODO", "")
+	t.dirpath = "taco"
+
+	// ReadDir
+	ExpectCall(t.fileSystem, "ReadDir")("taco").
+		WillOnce(oglemock.Return(nil, errors.New("")))
+
+	// Call
+	t.callSaver()
 }
 
 func (t *DirectorySaverTest) ReadDirReturnsError() {
