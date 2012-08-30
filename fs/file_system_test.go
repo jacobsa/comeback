@@ -65,7 +65,13 @@ func (t *ReadDirTest) NonExistentPath() {
 }
 
 func (t *ReadDirTest) NotADirectory() {
-	ExpectEq("TODO", "")
+	dirpath := path.Join(t.baseDir, "foo.txt")
+	err := ioutil.WriteFile(dirpath, []byte("foo"), 0400)
+	AssertEq(nil, err)
+
+	_, err = t.fileSystem.ReadDir(dirpath)
+	ExpectThat(err, Error(HasSubstr("readdirent")))
+	ExpectThat(err, Error(HasSubstr("invalid argument")))
 }
 
 func (t *ReadDirTest) NoReadPermissions() {
