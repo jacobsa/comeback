@@ -19,14 +19,28 @@ package repr
 
 import (
 	"code.google.com/p/goprotobuf/proto"
+	"fmt"
 	"github.com/jacobsa/comeback/fs"
 )
+
+func convertProtoType(t DirectoryEntryProto_Type) (fs.EntryType, error) {
+	switch t {
+	case DirectoryEntryProto_TYPE_FILE:
+		return fs.TypeFile, nil
+	case DirectoryEntryProto_TYPE_DIRECTORY:
+		return fs.TypeDirectory, nil
+	case DirectoryEntryProto_TYPE_SYMLINK:
+		return fs.TypeSymlink, nil
+	}
+
+	return 0, fmt.Errorf("Unrecognized DirectoryEntryProto_Type: %v", t)
+}
 
 func convertEntryProto(entryProto *DirectoryEntryProto) (*fs.DirectoryEntry, error) {
 	entry := &fs.DirectoryEntry{}
 
-	if entryProto.Name != nil { entry.Name = *entryProto.Name }
-	if entryProto.Permissions != nil { entry.Permissions = *entryProto.Permissions }
+	entry.Name = entryProto.GetName()
+	entry.Permissions = entryProto.GetPermissions()
 
 	return entry, nil
 }
