@@ -332,7 +332,70 @@ func (t *DirectorySaverTest) OneTypeIsUnsupported() {
 }
 
 func (t *DirectorySaverTest) CallsBlobStore() {
-	ExpectEq("TODO", "")
+	t.dirpath = "/taco"
+
+	// ReadDir
+	entries := []*fs.DirectoryEntry {
+		makeFileEntry("taco"),
+		makeDirEntry("burrito"),
+		makeDirEntry("enchilada"),
+	}
+
+	ExpectCall(t.fileSystem, "ReadDir")(Any()).
+		WillOnce(oglemock.Return(entries, nil))
+
+	// OpenForReading
+	file0 := &readCloser{}
+
+	ExpectCall(t.fileSystem, "OpenForReading")(Any()).
+		WillOnce(oglemock.Return(file0, nil))
+
+	// File saver
+	score0 := blob.ComputeScore([]byte("nachos"))
+	score1 := blob.ComputeScore([]byte("carnitas"))
+
+	ExpectCall(t.fileSaver, "Save")(Any()).
+		WillOnce(oglemock.Return([]blob.Score{score0, score1}, nil))
+
+	// Wrapped directory saver
+	score2 := blob.ComputeScore([]byte("queso"))
+	score3 := blob.ComputeScore([]byte("tortilla"))
+
+	ExpectCall(t.wrapped, "Save")(Any()).
+		WillOnce(oglemock.Return(score1, nil)).
+		WillOnce(oglemock.Return(score2, nil))
+
+	// Blob store
+	var blob []byte
+	ExpectCall(t.blobStore, "Store")(Any()).
+		WillOnce(saveBlob(&blob))
+
+	// Call
+	t.callSaver()
+
+	AssertNe(nil, blob)
+	resultEntries, err := repr.Unmarshal(blob)
+	AssertEq(nil, err)
+	AssertThat(resultEntries, ElementsAre(Any(), Any(), Any()))
+
+	entry := resultEntries[0]
+	ExpectEq(fs.TypeFile, entry.Type)
+	ExpectEq("taco", entry.Name)
+	AssertThat(entry.Scores, ElementsAre(Any(), Any()))
+	ExpectThat(entry.Scores[0].Sha1Hash(), DeepEquals(score0.Sha1Hash()))
+	ExpectThat(entry.Scores[1].Sha1Hash(), DeepEquals(score1.Sha1Hash()))
+
+	entry = resultEntries[1]
+	ExpectEq(fs.TypeDirectory, entry.Type)
+	ExpectEq("burrito", entry.Name)
+	AssertThat(entry.Scores, ElementsAre(Any()))
+	ExpectThat(entry.Scores[0].Sha1Hash(), DeepEquals(score2.Sha1Hash()))
+
+	entry = resultEntries[2]
+	ExpectEq(fs.TypeDirectory, entry.Type)
+	ExpectEq("enchilada", entry.Name)
+	AssertThat(entry.Scores, ElementsAre(Any()))
+	ExpectThat(entry.Scores[0].Sha1Hash(), DeepEquals(score3.Sha1Hash()))
 }
 
 func (t *DirectorySaverTest) BlobStoreReturnsError() {
