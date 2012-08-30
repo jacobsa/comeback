@@ -144,7 +144,10 @@ func (t *ReadDirTest) RegularFiles() {
 
 	// File 0
 	path0 := path.Join(t.baseDir, "burrito.txt")
-	err = ioutil.WriteFile(path0, []byte("burrito"), 0714)
+	err = ioutil.WriteFile(path0, []byte(""), 0600)
+	AssertEq(nil, err)
+
+	err = setPermissions(path0, 0714|syscall.S_ISGID)
 	AssertEq(nil, err)
 
 	mtime0 := time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)
@@ -153,7 +156,10 @@ func (t *ReadDirTest) RegularFiles() {
 
 	// File 1
 	path1 := path.Join(t.baseDir, "enchilada.txt")
-	err = ioutil.WriteFile(path1, []byte("enchilada"), 0454)
+	err = ioutil.WriteFile(path1, []byte(""), 0600)
+	AssertEq(nil, err)
+
+	err = setPermissions(path1, 0454|syscall.S_ISVTX|syscall.S_ISUID)
 	AssertEq(nil, err)
 
 	mtime1 := time.Date(1985, time.March, 18, 15, 33, 0, 0, time.Local)
@@ -168,14 +174,14 @@ func (t *ReadDirTest) RegularFiles() {
 	entry = entries[0]
 	ExpectEq(fs.TypeFile, entry.Type)
 	ExpectEq("burrito.txt", entry.Name)
-	ExpectEq(os.FileMode(0714), entry.Permissions)
+	ExpectEq(0714|os.ModeSetgid, entry.Permissions)
 	ExpectTrue(entry.MTime.Equal(mtime0), "%v", entry.MTime)
 	ExpectThat(entry.Scores, ElementsAre())
 
 	entry = entries[1]
 	ExpectEq(fs.TypeFile, entry.Type)
 	ExpectEq("enchilada.txt", entry.Name)
-	ExpectEq(os.FileMode(0454), entry.Permissions)
+	ExpectEq(0454|os.ModeSetuid|os.ModeSticky, entry.Permissions)
 	ExpectTrue(entry.MTime.Equal(mtime1), "%v", entry.MTime)
 	ExpectThat(entry.Scores, ElementsAre())
 }
@@ -186,7 +192,10 @@ func (t *ReadDirTest) Directories() {
 
 	// Dir 0
 	path0 := path.Join(t.baseDir, "burrito")
-	err = os.Mkdir(path0, 0751)
+	err = os.Mkdir(path0, 0700)
+	AssertEq(nil, err)
+
+	err = setPermissions(path0, 0751|syscall.S_ISGID)
 	AssertEq(nil, err)
 
 	mtime0 := time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)
@@ -195,7 +204,10 @@ func (t *ReadDirTest) Directories() {
 
 	// Dir 1
 	path1 := path.Join(t.baseDir, "enchilada")
-	err = os.Mkdir(path1, 0711)
+	err = os.Mkdir(path1, 0700)
+	AssertEq(nil, err)
+
+	err = setPermissions(path1, 0711|syscall.S_ISVTX|syscall.S_ISUID)
 	AssertEq(nil, err)
 
 	mtime1 := time.Date(1985, time.March, 18, 15, 33, 0, 0, time.Local)
@@ -210,14 +222,14 @@ func (t *ReadDirTest) Directories() {
 	entry = entries[0]
 	ExpectEq(fs.TypeDirectory, entry.Type)
 	ExpectEq("burrito", entry.Name)
-	ExpectEq(os.FileMode(0751), entry.Permissions)
+	ExpectEq(0751|syscall.S_ISGID, entry.Permissions)
 	ExpectTrue(entry.MTime.Equal(mtime0), "%v", entry.MTime)
 	ExpectThat(entry.Scores, ElementsAre())
 
 	entry = entries[1]
 	ExpectEq(fs.TypeDirectory, entry.Type)
 	ExpectEq("enchilada", entry.Name)
-	ExpectEq(os.FileMode(0711), entry.Permissions)
+	ExpectEq(0711|syscall.S_ISVTX|syscall.S_ISUID, entry.Permissions)
 	ExpectTrue(entry.MTime.Equal(mtime1), "%v", entry.MTime)
 	ExpectThat(entry.Scores, ElementsAre())
 }
@@ -231,7 +243,7 @@ func (t *ReadDirTest) Symlinks() {
 	err = os.Symlink("/foo/burrito", path0)
 	AssertEq(nil, err)
 
-	err = setPermissions(path0, 0751)
+	err = setPermissions(path0, 0714|syscall.S_ISGID)
 	AssertEq(nil, err)
 
 	mtime0 := time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)
@@ -243,7 +255,7 @@ func (t *ReadDirTest) Symlinks() {
 	err = os.Symlink("/foo/enchilada", path1)
 	AssertEq(nil, err)
 
-	err = setPermissions(path1, 0711)
+	err = setPermissions(path1, 0454|syscall.S_ISVTX|syscall.S_ISUID)
 	AssertEq(nil, err)
 
 	mtime1 := time.Date(1985, time.March, 18, 15, 33, 0, 0, time.Local)
@@ -259,7 +271,7 @@ func (t *ReadDirTest) Symlinks() {
 	ExpectEq(fs.TypeSymlink, entry.Type)
 	ExpectEq("burrito", entry.Name)
 	ExpectEq("/foo/burrito", entry.Target)
-	ExpectEq(os.FileMode(0751), entry.Permissions)
+	ExpectEq(0714|os.ModeSetgid, entry.Permissions)
 	ExpectTrue(entry.MTime.Equal(mtime0), "%v", entry.MTime)
 	ExpectThat(entry.Scores, ElementsAre())
 
@@ -267,174 +279,9 @@ func (t *ReadDirTest) Symlinks() {
 	ExpectEq(fs.TypeSymlink, entry.Type)
 	ExpectEq("enchilada", entry.Name)
 	ExpectEq("/foo/enchilada", entry.Target)
-	ExpectEq(os.FileMode(0711), entry.Permissions)
+	ExpectEq(0454|os.ModeSetuid|os.ModeSticky, entry.Permissions)
 	ExpectTrue(entry.MTime.Equal(mtime1), "%v", entry.MTime)
 	ExpectThat(entry.Scores, ElementsAre())
-}
-
-func (t *ReadDirTest) SetuidBit() {
-	var err error
-
-	// File 0
-	path0 := path.Join(t.baseDir, "burrito.txt")
-	err = ioutil.WriteFile(path0, []byte(""), 0714)
-	AssertEq(nil, err)
-
-	// File 1
-	path1 := path.Join(t.baseDir, "enchilada.txt")
-	err = ioutil.WriteFile(path1, []byte("burrito"), 0454)
-	AssertEq(nil, err)
-
-	err = setPermissions(path1, 0600|syscall.S_ISUID)
-	AssertEq(nil, err)
-
-	// Dir 2
-	path2 := path.Join(t.baseDir, "queso")
-	err = os.Mkdir(path2, 0700)
-	AssertEq(nil, err)
-
-	// Dir 3
-	path3 := path.Join(t.baseDir, "taco")
-	err = os.Mkdir(path3, 0700)
-	AssertEq(nil, err)
-
-	err = setPermissions(path3, 0700|syscall.S_ISUID)
-	AssertEq(nil, err)
-
-	// Link 4
-	path4 := path.Join(t.baseDir, "tortillas0")
-	err = os.Symlink("/foo/tortillas0", path4)
-	AssertEq(nil, err)
-
-	// Link 5
-	path5 := path.Join(t.baseDir, "tortillas1")
-	err = os.Symlink("/foo/tortillas1", path5)
-	AssertEq(nil, err)
-
-	err = setPermissions(path5, 0600|syscall.S_ISUID)
-	AssertEq(nil, err)
-
-	// Call
-	entries, err := t.fileSystem.ReadDir(t.baseDir)
-	AssertEq(nil, err)
-	AssertEq(6, len(entries))
-
-	ExpectFalse(entries[0].Setuid)
-	ExpectTrue(entries[1].Setuid)
-	ExpectFalse(entries[2].Setuid)
-	ExpectTrue(entries[3].Setuid)
-	ExpectFalse(entries[4].Setuid)
-	ExpectTrue(entries[5].Setuid)
-}
-
-func (t *ReadDirTest) SetgidBit() {
-	var err error
-
-	// File 0
-	path0 := path.Join(t.baseDir, "burrito.txt")
-	err = ioutil.WriteFile(path0, []byte(""), 0714)
-	AssertEq(nil, err)
-
-	// File 1
-	path1 := path.Join(t.baseDir, "enchilada.txt")
-	err = ioutil.WriteFile(path1, []byte("burrito"), 0454)
-	AssertEq(nil, err)
-
-	err = setPermissions(path1, 0600|syscall.S_ISGID)
-	AssertEq(nil, err)
-
-	// Dir 2
-	path2 := path.Join(t.baseDir, "queso")
-	err = os.Mkdir(path2, 0700)
-	AssertEq(nil, err)
-
-	// Dir 3
-	path3 := path.Join(t.baseDir, "taco")
-	err = os.Mkdir(path3, 0700)
-	AssertEq(nil, err)
-
-	err = setPermissions(path3, 0700|syscall.S_ISGID)
-	AssertEq(nil, err)
-
-	// Link 4
-	path4 := path.Join(t.baseDir, "tortillas0")
-	err = os.Symlink("/foo/tortillas0", path4)
-	AssertEq(nil, err)
-
-	// Link 5
-	path5 := path.Join(t.baseDir, "tortillas1")
-	err = os.Symlink("/foo/tortillas1", path5)
-	AssertEq(nil, err)
-
-	err = setPermissions(path5, 0600|syscall.S_ISGID)
-	AssertEq(nil, err)
-
-	// Call
-	entries, err := t.fileSystem.ReadDir(t.baseDir)
-	AssertEq(nil, err)
-	AssertEq(6, len(entries))
-
-	ExpectFalse(entries[0].Setgid)
-	ExpectTrue(entries[1].Setgid)
-	ExpectFalse(entries[2].Setgid)
-	ExpectTrue(entries[3].Setgid)
-	ExpectFalse(entries[4].Setgid)
-	ExpectTrue(entries[5].Setgid)
-}
-
-func (t *ReadDirTest) StickyBit() {
-	var err error
-
-	// File 0
-	path0 := path.Join(t.baseDir, "burrito.txt")
-	err = ioutil.WriteFile(path0, []byte(""), 0714)
-	AssertEq(nil, err)
-
-	// File 1
-	path1 := path.Join(t.baseDir, "enchilada.txt")
-	err = ioutil.WriteFile(path1, []byte("burrito"), 0454)
-	AssertEq(nil, err)
-
-	err = setPermissions(path1, 0600|syscall.S_ISVTX)
-	AssertEq(nil, err)
-
-	// Dir 2
-	path2 := path.Join(t.baseDir, "queso")
-	err = os.Mkdir(path2, 0700)
-	AssertEq(nil, err)
-
-	// Dir 3
-	path3 := path.Join(t.baseDir, "taco")
-	err = os.Mkdir(path3, 0700)
-	AssertEq(nil, err)
-
-	err = setPermissions(path3, 0700|syscall.S_ISVTX)
-	AssertEq(nil, err)
-
-	// Link 4
-	path4 := path.Join(t.baseDir, "tortillas0")
-	err = os.Symlink("/foo/tortillas0", path4)
-	AssertEq(nil, err)
-
-	// Link 5
-	path5 := path.Join(t.baseDir, "tortillas1")
-	err = os.Symlink("/foo/tortillas1", path5)
-	AssertEq(nil, err)
-
-	err = setPermissions(path5, 0600|syscall.S_ISVTX)
-	AssertEq(nil, err)
-
-	// Call
-	entries, err := t.fileSystem.ReadDir(t.baseDir)
-	AssertEq(nil, err)
-	AssertEq(6, len(entries))
-
-	ExpectFalse(entries[0].Sticky)
-	ExpectTrue(entries[1].Sticky)
-	ExpectFalse(entries[2].Sticky)
-	ExpectTrue(entries[3].Sticky)
-	ExpectFalse(entries[4].Sticky)
-	ExpectTrue(entries[5].Sticky)
 }
 
 func (t *ReadDirTest) SortsByName() {
