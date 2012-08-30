@@ -361,9 +361,35 @@ func (t *FileSaverTest) ResultForEmptyReader() {
 	t.callSaver()
 
 	AssertEq(nil, t.err)
-	ExpectThat(t.scores, DeepEquals([]blob.Score{}))
+	ExpectThat(t.scores, ElementsAre())
 }
 
 func (t *FileSaverTest) AllStoresSuccessful() {
-	ExpectEq("TODO", "")
+	// Chunks
+	chunk0 := makeChunk('a')
+	chunk1 := makeChunk('b')
+	chunk2 := makeChunk('c')
+
+	// Reader
+	t.reader = io.MultiReader(
+		bytes.NewReader(chunk0),
+		bytes.NewReader(chunk1),
+		bytes.NewReader(chunk2),
+	)
+
+	// Blob store
+	score0 := blob.ComputeScore([]byte("taco"))
+	score1 := blob.ComputeScore([]byte("burrito"))
+	score2 := blob.ComputeScore([]byte("enchilada"))
+
+	ExpectCall(t.blobStore, "Store")(Any()).
+		WillOnce(oglemock.Return(score0, nil)).
+		WillOnce(oglemock.Return(score1, nil)).
+		WillOnce(oglemock.Return(score2, nil))
+
+	// Call
+	t.callSaver()
+
+	AssertEq(nil, t.err)
+	ExpectThat(t.scores, ElementsAre(score0, score1, score2))
 }
