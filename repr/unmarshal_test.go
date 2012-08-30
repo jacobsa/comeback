@@ -35,6 +35,18 @@ func init() { RegisterTestSuite(&UnmarshalTest{}) }
 // Tests
 ////////////////////////////////////////////////////////////////////////
 
-func (t *UnmarshalTest) DoesFoo() {
+func (t *UnmarshalTest) JunkWireData() {
+	ExpectEq("TODO", "")
+}
+
+func (t *UnmarshalTest) UnknownTypeValue() {
+	ExpectEq("TODO", "")
+}
+
+func (t *UnmarshalTest) HashIsTooShort() {
+	ExpectEq("TODO", "")
+}
+
+func (t *UnmarshalTest) HashIsTooLong() {
 	ExpectEq("TODO", "")
 }
