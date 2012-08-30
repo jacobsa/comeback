@@ -165,10 +165,6 @@ func (t *RoundtripTest) PreservesPermissions() {
 	ExpectEq(in[1].Permissions, out[1].Permissions)
 }
 
-func (t *RoundtripTest) UnrepresentableModTime() {
-	ExpectEq("TODO", "")
-}
-
 func (t *RoundtripTest) PreservesModTimes() {
 	// Input
 	in := []*fs.DirectoryEntry{
