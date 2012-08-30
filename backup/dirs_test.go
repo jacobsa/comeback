@@ -413,5 +413,21 @@ func (t *DirectorySaverTest) BlobStoreReturnsError() {
 }
 
 func (t *DirectorySaverTest) BlobStoreSucceeds() {
-	ExpectEq("TODO", "")
+	// ReadDir
+	entries := []*fs.DirectoryEntry {
+	}
+
+	ExpectCall(t.fileSystem, "ReadDir")(Any()).
+		WillOnce(oglemock.Return(entries, nil))
+
+	// Blob store
+	score := blob.ComputeScore([]byte("hello"))
+	ExpectCall(t.blobStore, "Store")(Any()).
+		WillOnce(oglemock.Return(score, nil))
+
+	// Call
+	t.callSaver()
+
+	AssertEq(nil, t.err)
+	ExpectEq(score, t.score)
 }
