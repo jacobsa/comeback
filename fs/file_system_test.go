@@ -128,7 +128,45 @@ func (t *ReadDirTest) RegularFiles() {
 }
 
 func (t *ReadDirTest) Directories() {
-	ExpectEq("TODO", "")
+	var err error
+	var entry *fs.DirectoryEntry
+
+	// Dir 0
+	path0 := path.Join(t.baseDir, "burrito")
+	err = os.Mkdir(path0, 0751)
+	AssertEq(nil, err)
+
+	mtime0 := time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)
+	err = os.Chtimes(path0, time.Now(), mtime0)
+	AssertEq(nil, err)
+
+	// File 1
+	path1 := path.Join(t.baseDir, "enchilada")
+	err = os.Mkdir(path1, 0711)
+	AssertEq(nil, err)
+
+	mtime1 := time.Date(1985, time.March, 18, 15, 33, 0, 0, time.Local)
+	err = os.Chtimes(path1, time.Now(), mtime1)
+	AssertEq(nil, err)
+
+	// Call
+	entries, err := t.fileSystem.ReadDir(t.baseDir)
+	AssertEq(nil, err)
+	AssertThat(entries, ElementsAre(Any(), Any()))
+
+	entry = entries[0]
+	ExpectEq(fs.TypeDirectory, entry.Type)
+	ExpectEq("burrito", entry.Name)
+	ExpectEq(os.FileMode(0751), entry.Permissions)
+	ExpectTrue(entry.MTime.Equal(mtime0), "%v", entry.MTime)
+	ExpectThat(entry.Scores, ElementsAre())
+
+	entry = entries[1]
+	ExpectEq(fs.TypeDirectory, entry.Type)
+	ExpectEq("enchilada", entry.Name)
+	ExpectEq(os.FileMode(0711), entry.Permissions)
+	ExpectTrue(entry.MTime.Equal(mtime1), "%v", entry.MTime)
+	ExpectThat(entry.Scores, ElementsAre())
 }
 
 func (t *ReadDirTest) Symlinks() {
