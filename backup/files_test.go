@@ -19,9 +19,11 @@ import (
 	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
 	"bytes"
+	"errors"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/blob/mock"
 	"github.com/jacobsa/comeback/io/mock"
+	"github.com/jacobsa/oglemock"
 	"io"
 	"testing"
 	"testing/iotest"
@@ -41,6 +43,11 @@ func makeChunk(char int) []byte {
 	charStr := string(char)
 	AssertEq(1, len(charStr), "Invalid character: %d", char)
 	return bytes.Repeat([]byte(charStr), expectedChunkSize)
+}
+
+func returnStoreError(err string) oglemock.Action {
+	f := func(b []byte) (blob.Score, error) { return nil, errors.New(err) }
+	return oglemock.Invoke(f)
 }
 
 type FileSaverTest struct {
@@ -148,7 +155,24 @@ func (t *FileSaverTest) ReadErrorInSecondChunk() {
 	ExpectThat(t.err, Error(HasSubstr(iotest.ErrTimeout.Error())))
 }
 
-func (t *FileSaverTest) CopesWithShortReads() {
+func (t *FileSaverTest) CopesWithShortReadsWithinFullSizeChunks() {
+	// Chunks
+	chunk0 := makeChunk('a')
+
+	// Reader
+	t.reader = io.MultiReader(
+		iotest.OneByteReader(bytes.NewReader(chunk0)),
+	)
+
+	// Blob store
+	ExpectCall(t.blobStore, "Store")(DeepEquals(chunk0)).
+		WillOnce(returnStoreError(""))
+
+	// Call
+	t.callSaver()
+}
+
+func (t *FileSaverTest) CopesWithShortChunks() {
 	ExpectEq("TODO", "")
 }
 
