@@ -107,19 +107,10 @@ func (t *ReadDirTest) RegularFiles() {
 	err = os.Chtimes(path1, time.Now(), mtime1)
 	AssertEq(nil, err)
 
-	// File 2
-	path2 := path.Join(t.baseDir, "taco.txt")
-	err = ioutil.WriteFile(path2, []byte("taco"), 0111)
-	AssertEq(nil, err)
-
-	mtime2 := time.Date(1970, time.January, 1, 0, 0, 0, 0, time.UTC)
-	err = os.Chtimes(path2, time.Now(), mtime2)
-	AssertEq(nil, err)
-
 	// Call
 	entries, err := t.fileSystem.ReadDir(t.baseDir)
 	AssertEq(nil, err)
-	AssertThat(entries, ElementsAre(Any(), Any(), Any()))
+	AssertThat(entries, ElementsAre(Any(), Any()))
 
 	entry = entries[0]
 	ExpectEq(fs.TypeFile, entry.Type)
@@ -133,13 +124,6 @@ func (t *ReadDirTest) RegularFiles() {
 	ExpectEq("enchilada.txt", entry.Name)
 	ExpectEq(os.FileMode(0454), entry.Permissions)
 	ExpectTrue(entry.MTime.Equal(mtime1), "%v", entry.MTime)
-	ExpectThat(entry.Scores, ElementsAre())
-
-	entry = entries[2]
-	ExpectEq(fs.TypeFile, entry.Type)
-	ExpectEq("taco.txt", entry.Name)
-	ExpectEq(os.FileMode(0111), entry.Permissions)
-	ExpectTrue(entry.MTime.Equal(mtime2), "%v", entry.MTime)
 	ExpectThat(entry.Scores, ElementsAre())
 }
 
