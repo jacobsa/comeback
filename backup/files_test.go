@@ -29,7 +29,7 @@ import (
 )
 
 const (
-	expectedChunkSize = 1 << 24
+	chunkSize = 1 << 14
 )
 
 func TestRegisterFilesTest(t *testing.T) { RunTests(t) }
@@ -41,7 +41,7 @@ func TestRegisterFilesTest(t *testing.T) { RunTests(t) }
 func makeChunk(char int) []byte {
 	charStr := string(char)
 	AssertEq(1, len(charStr), "Invalid character: %d", char)
-	return bytes.Repeat([]byte(charStr), expectedChunkSize)
+	return bytes.Repeat([]byte(charStr), chunkSize)
 }
 
 func returnStoreError(err string) oglemock.Action {
@@ -62,7 +62,7 @@ func init() { RegisterTestSuite(&FileSaverTest{}) }
 
 func (t *FileSaverTest) SetUp(i *TestInfo) {
 	t.blobStore = mock_blob.NewMockStore(i.MockController, "blobStore")
-	t.fileSaver, _ = NewFileSaver(t.blobStore)
+	t.fileSaver, _ = NewFileSaver(t.blobStore, chunkSize)
 }
 
 func (t *FileSaverTest) callSaver() {
@@ -72,6 +72,12 @@ func (t *FileSaverTest) callSaver() {
 ////////////////////////////////////////////////////////////////////////
 // Tests
 ////////////////////////////////////////////////////////////////////////
+
+func (t *FileSaverTest) ZeroChunkSize() {
+	_, err := NewFileSaver(t.blobStore, 0)
+	ExpectThat(err, Error(HasSubstr("size")))
+	ExpectThat(err, Error(HasSubstr("positive")))
+}
 
 func (t *FileSaverTest) NoDataInReader() {
 	// Reader

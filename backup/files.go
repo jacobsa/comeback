@@ -30,18 +30,25 @@ type FileSaver interface {
 	Save(r io.Reader) (scores []blob.Score, err error)
 }
 
-func NewFileSaver(store blob.Store) (FileSaver, error) {
-	return &fileSaver{blobStore: store}, nil
+// Create a file saver that uses the supplied blob store, splitting files into
+// chunks of the specified size.
+func NewFileSaver(store blob.Store, chunkSize uint32) (FileSaver, error) {
+	if chunkSize == 0 {
+		return nil, fmt.Errorf("Chunk size must be positive.")
+	}
+
+	return &fileSaver{blobStore: store, chunkSize: chunkSize}, nil
 }
 
 type fileSaver struct {
 	blobStore blob.Store
+	chunkSize uint32
 }
 
 // Read 16 MiB from the supplied reader, returning less iff the reader returns
 // an error (including EOF). Do not treat EOF as an error condition.
-func getChunk(r io.Reader) ([]byte, error) {
-	r = io.LimitReader(r, 1<<24)
+func getChunk(r io.Reader, chunkSize uint32) ([]byte, error) {
+	r = io.LimitReader(r, int64(chunkSize))
 	return ioutil.ReadAll(r)
 }
 
@@ -49,7 +56,7 @@ func (s *fileSaver) Save(r io.Reader) (scores []blob.Score, err error) {
 	// Turn the file into chunks, saving each to the blob store.
 	scores = []blob.Score{}
 	for {
-		chunk, err := getChunk(r)
+		chunk, err := getChunk(r, s.chunkSize)
 		if err != nil {
 			return nil, fmt.Errorf("Reading chunk: %v", err)
 		}

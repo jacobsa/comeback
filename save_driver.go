@@ -32,7 +32,7 @@ func main() {
 	}
 
 	// Create the file saver.
-	fileSaver, err := backup.NewFileSaver(blobStore)
+	fileSaver, err := backup.NewFileSaver(blobStore, 1<<24)
 	if err != nil {
 		log.Fatalf("Creating file saver: %v", err)
 	}
