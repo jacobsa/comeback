@@ -18,12 +18,38 @@
 package repr
 
 import (
-	"fmt"
+	"code.google.com/p/goprotobuf/proto"
 	"github.com/jacobsa/comeback/fs"
 )
+
+func convertEntryProto(entryProto *DirectoryEntryProto) (*fs.DirectoryEntry, error) {
+	entry := &fs.DirectoryEntry{}
+
+	entry.Name = *entryProto.Name
+
+	return entry, nil
+}
 
 // Unmarshal recovers a list of directory entries from bytes previously
 // returned by Marshal.
 func Unmarshal(d []byte) (entries []*fs.DirectoryEntry, err error) {
-	return nil, fmt.Errorf("TODO")
+	// Parse the protocol buffer.
+	listingProto := new(DirectoryListingProto)
+	err = proto.Unmarshal(d, listingProto)
+	if err != nil {
+		return
+	}
+
+	// Convert each entry.
+	entries = []*fs.DirectoryEntry{}
+	for _, entryProto := range listingProto.Entry {
+		entry, err := convertEntryProto(entryProto)
+		if err != nil {
+			return nil, err
+		}
+
+		entries = append(entries, entry)
+	}
+
+	return
 }
