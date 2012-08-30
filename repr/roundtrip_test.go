@@ -191,8 +191,8 @@ func (t *RoundtripTest) PreservesModTimes() {
 	// Output
 	AssertThat(out, ElementsAre(Any(), Any()))
 
-	ExpectEq(in[0].MTime, out[0].MTime)
-	ExpectEq(in[1].MTime, out[1].MTime)
+	ExpectTrue(in[0].MTime.Equal(out[0].MTime), "%v", out[0].MTime)
+	ExpectTrue(in[1].MTime.Equal(out[1].MTime), "%v", out[1].MTime)
 }
 
 func (t *RoundtripTest) CopesWithLocationsInModTimes() {
