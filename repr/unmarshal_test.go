@@ -22,6 +22,7 @@ import (
 	"github.com/jacobsa/comeback/repr/proto"
 	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
+	"os"
 	"testing"
 )
 
@@ -156,4 +157,39 @@ func (t *UnmarshalTest) HashIsTooLong() {
 
 	ExpectThat(err, Error(HasSubstr("hash length")))
 	ExpectThat(err, Error(HasSubstr("21")))
+}
+
+// Catch changes to the layout of os.FileMode, which we have hard-coded by
+// virtue of relying on its bit placement in stable storage.
+func (t *UnmarshalTest) PermissionsRegressionTest() {
+	AssertEq(0777, os.ModePerm)
+
+	// Input
+	listingProto := &repr_proto.DirectoryListingProto{
+		Entry: []*repr_proto.DirectoryEntryProto{
+			makeLegalEntryProto(),
+			makeLegalEntryProto(),
+			makeLegalEntryProto(),
+		},
+	}
+
+	setuid := 1 << 23
+	setgid := 1 << 22
+	sticky := 1 << 20
+
+	listingProto.Entry[0].Permissions = proto.Uint32(uint32(0751 | setuid))
+	listingProto.Entry[1].Permissions = proto.Uint32(uint32(0157 | setgid))
+	listingProto.Entry[2].Permissions = proto.Uint32(uint32(0000 | sticky))
+
+	data, err := proto.Marshal(listingProto)
+	AssertEq(nil, err)
+
+	// Call
+	entries, err := repr.Unmarshal(data)
+	AssertEq(nil, err)
+
+	AssertThat(entries, ElementsAre(Any(), Any(), Any()))
+	ExpectEq(0751|os.ModeSetuid, entries[0].Permissions)
+	ExpectEq(0157|os.ModeSetgid, entries[1].Permissions)
+	ExpectEq(0000|os.ModeSticky, entries[2].Permissions)
 }
