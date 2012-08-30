@@ -16,6 +16,9 @@
 package repr_test
 
 import (
+	"github.com/jacobsa/comeback/fs"
+	"github.com/jacobsa/comeback/repr"
+	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
 	"testing"
 )
@@ -36,7 +39,21 @@ func init() { RegisterTestSuite(&MarshalTest{}) }
 ////////////////////////////////////////////////////////////////////////
 
 func (t *MarshalTest) NoEntries() {
-	ExpectEq("TODO", "")
+	// Input
+	in := []*fs.DirectoryEntry{}
+
+	// Marshal
+	d, err := repr.Marshal(in)
+	AssertEq(nil, err)
+	AssertNe(nil, d)
+
+	// Unmarshal
+	out, err := repr.Unmarshal(d)
+	AssertEq(nil, err)
+	AssertNe(nil, out)
+
+	// Output
+	ExpectThat(out, ElementsAre())
 }
 
 func (t *MarshalTest) UnknownType() {
