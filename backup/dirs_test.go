@@ -124,6 +124,10 @@ func (t *DirectorySaverTest) NoEntriesInDirectory() {
 	ExpectThat(entries, ElementsAre())
 }
 
+func (t *DirectorySaverTest) CallsFileSystemForFiles() {
+	ExpectEq("TODO", "")
+}
+
 func (t *DirectorySaverTest) CallsFileSaverForFiles() {
 	ExpectEq("TODO", "")
 }
