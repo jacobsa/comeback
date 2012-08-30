@@ -38,15 +38,10 @@ type DirectoryEntry struct {
 	// The name of this entry within its directory.
 	Name string
 
-	// The permission bits for this entry, i.e. the low-order nine bits of
-	// FileMode. This does *not* include flags such as the sticky bit, which are
-	// represented below.
+	// The permissions for this entry, including the {setuid,setgid,sticky} bits.
+	// That is, the things that chmod(2) cares about. This does *not* include
+	// type information such as os.ModeDevice or options such as os.ModeAppend.
 	Permissions os.FileMode
-
-	// Whether various permissions bits are set.
-	Setgid bool
-	Setuid bool
-	Sticky bool
 
 	// The modification time of this entry.
 	MTime time.Time
