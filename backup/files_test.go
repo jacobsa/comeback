@@ -32,7 +32,7 @@ const (
 	expectedChunkSize = 1 << 24
 )
 
-func TestRegister(t *testing.T) { RunTests(t) }
+func TestRegisterFilesTest(t *testing.T) { RunTests(t) }
 
 ////////////////////////////////////////////////////////////////////////
 // Helpers
