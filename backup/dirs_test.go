@@ -13,9 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package backup
+package backup_test
 
 import (
+	"github.com/jacobsa/comeback/backup/mock"
+	"github.com/jacobsa/comeback/blob"
+	"github.com/jacobsa/comeback/blob/mock"
+	"github.com/jacobsa/comeback/fs/mock"
 	. "github.com/jacobsa/ogletest"
 	"testing"
 )
@@ -27,6 +31,13 @@ func TestRegisterDirsTest(t *testing.T) { RunTests(t) }
 ////////////////////////////////////////////////////////////////////////
 
 type DirectorySaverTest struct {
+	blobStore mock_blob.MockStore
+	fileSystem mock_fs.MockFileSystem
+	fileSaver mock_backup.MockFileSaver
+	wrapped mock_backup.MockDirectorySaver
+
+	score blob.Score
+	err error
 }
 
 func init() { RegisterTestSuite(&DirectorySaverTest{}) }
