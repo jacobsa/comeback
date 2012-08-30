@@ -24,6 +24,7 @@ import (
 	"github.com/jacobsa/comeback/io/mock"
 	"io"
 	"testing"
+	"testing/iotest"
 )
 
 const (
@@ -109,7 +110,20 @@ func (t *FileSaverTest) ChunksAreSizedAsExpected() {
 }
 
 func (t *FileSaverTest) ReadErrorInFirstChunk() {
-	ExpectEq("TODO", "")
+	// Chunks
+	chunk0 := makeChunk('a')
+
+	// Reader
+	t.reader = io.MultiReader(
+		iotest.TimeoutReader(bytes.NewReader(chunk0)),
+	)
+
+	// Call
+	t.callSaver()
+
+	ExpectThat(t.err, Error(HasSubstr("Reading")))
+	ExpectThat(t.err, Error(HasSubstr("chunk")))
+	ExpectThat(t.err, Error(HasSubstr(iotest.ErrTimeout.Error())))
 }
 
 func (t *FileSaverTest) ReadErrorInSecondChunk() {
