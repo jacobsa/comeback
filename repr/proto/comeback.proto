@@ -25,9 +25,9 @@ message TimeProto {
   // The number of seconds since the Unix time epoch.
   optional int64 second = 1;
 
-	// A nanosecond in the second specified above. This must be in the range
-	// [0, 1e9).
-	optional uint32 nanosecond = 2;
+  // A nanosecond in the second specified above. This must be in the range
+  // [0, 1e9).
+  optional uint32 nanosecond = 2;
 }
 
 message DirectoryEntryProto {
