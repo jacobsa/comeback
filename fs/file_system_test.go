@@ -82,18 +82,12 @@ func setPermissions(path string, permissions uint32) error {
 	return nil
 }
 
-////////////////////////////////////////////////////////////////////////
-// ReadDir
-////////////////////////////////////////////////////////////////////////
-
-type ReadDirTest struct {
+type fileSystemTest struct {
 	fileSystem fs.FileSystem
 	baseDir    string
 }
 
-func init() { RegisterTestSuite(&ReadDirTest{}) }
-
-func (t *ReadDirTest) SetUp(i *TestInfo) {
+func (t *fileSystemTest) SetUp(i *TestInfo) {
 	t.fileSystem = fs.NewFileSystem()
 
 	// Create a temporary directory.
@@ -104,12 +98,22 @@ func (t *ReadDirTest) SetUp(i *TestInfo) {
 	}
 }
 
-func (t *ReadDirTest) TearDown() {
+func (t *fileSystemTest) TearDown() {
 	err := os.RemoveAll(t.baseDir)
 	if err != nil {
 		log.Fatalf("Couldn't remove: %s", t.baseDir)
 	}
 }
+
+////////////////////////////////////////////////////////////////////////
+// ReadDir
+////////////////////////////////////////////////////////////////////////
+
+type ReadDirTest struct {
+	fileSystemTest
+}
+
+func init() { RegisterTestSuite(&ReadDirTest{}) }
 
 func (t *ReadDirTest) NonExistentPath() {
 	dirpath := path.Join(t.baseDir, "foobar")
@@ -317,6 +321,7 @@ func (t *ReadDirTest) SortsByName() {
 ////////////////////////////////////////////////////////////////////////
 
 type OpenForReadingTest struct {
+	fileSystemTest
 }
 
 func init() { RegisterTestSuite(&OpenForReadingTest{}) }
