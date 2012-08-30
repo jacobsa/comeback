@@ -45,6 +45,22 @@ func saveBlob(res *[]byte) oglemock.Action {
 	return oglemock.Invoke(f)
 }
 
+type readCloser struct {
+	closed bool
+}
+
+func (r *readCloser) Read(b []byte) (int, error) {
+	panic("Shouldn't be called.")
+}
+
+func (r *readCloser) Close() {
+	if r.closed {
+		panic("Close called twice.")
+	}
+
+	r.closed = true
+}
+
 type DirectorySaverTest struct {
 	blobStore mock_blob.MockStore
 	fileSystem mock_fs.MockFileSystem
@@ -124,15 +140,52 @@ func (t *DirectorySaverTest) NoEntriesInDirectory() {
 	ExpectThat(entries, ElementsAre())
 }
 
-func (t *DirectorySaverTest) CallsFileSystemForFiles() {
-	ExpectEq("TODO", "")
+func (t *DirectorySaverTest) CallsFileSystemAndFileSaverForFiles() {
+	t.dirpath = "/taco"
+
+	// ReadDir
+	entries := []*fs.DirectoryEntry {
+		&fs.DirectoryEntry{Name: "burrito"},
+		&fs.DirectoryEntry{Name: "enchilada"},
+	}
+
+	ExpectCall(t.fileSystem, "ReadDir")(Any()).
+		WillOnce(oglemock.Return(entries, nil))
+
+	// OpenForReading
+	file0 := &readCloser{}
+	file1 := &readCloser{}
+
+	ExpectCall(t.fileSystem, "OpenForReading")("/taco/burrito").
+		WillOnce(oglemock.Return(file0, nil))
+
+	ExpectCall(t.fileSystem, "OpenForReading")("/taco/enchilada").
+		WillOnce(oglemock.Return(file1, nil))
+
+	// File saver
+	ExpectCall(t.fileSaver, "Save")(file0).
+		WillOnce(oglemock.Return([]blob.Score{}, nil))
+
+	ExpectCall(t.fileSaver, "Save")(file1).
+		WillOnce(oglemock.Return(nil, errors.New("")))
+
+	// Call
+	t.callSaver()
 }
 
-func (t *DirectorySaverTest) CallsFileSaverForFiles() {
+func (t *DirectorySaverTest) FileSystemReturnsErrorForOneFile() {
 	ExpectEq("TODO", "")
 }
 
 func (t *DirectorySaverTest) FileSaverReturnsErrorForOneFile() {
+	ExpectEq("TODO", "")
+}
+
+func (t *DirectorySaverTest) ClosesFilesOnError() {
+	ExpectEq("TODO", "")
+}
+
+func (t *DirectorySaverTest) ClosesFilesOnSuccess() {
 	ExpectEq("TODO", "")
 }
 
