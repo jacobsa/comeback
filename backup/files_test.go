@@ -263,11 +263,66 @@ func (t *FileSaverTest) MultipleChunksWithNoRemainder() {
 }
 
 func (t *FileSaverTest) MultipleChunksWithSmallRemainder() {
-	ExpectEq("TODO", "")
+	// Chunks
+	chunk0 := makeChunk('a')
+	chunk1 := makeChunk('b')
+	chunk2 := []byte{0xde, 0xad}
+
+	// Reader
+	t.reader = io.MultiReader(
+		bytes.NewReader(chunk0),
+		bytes.NewReader(chunk1),
+		bytes.NewReader(chunk2),
+	)
+
+	// Blob store
+	score0 := blob.ComputeScore([]byte(""))
+	score1 := blob.ComputeScore([]byte(""))
+	score2 := blob.ComputeScore([]byte(""))
+
+	ExpectCall(t.blobStore, "Store")(DeepEquals(chunk0)).
+		WillOnce(oglemock.Return(score0, nil))
+
+	ExpectCall(t.blobStore, "Store")(DeepEquals(chunk1)).
+		WillOnce(oglemock.Return(score1, nil))
+
+	ExpectCall(t.blobStore, "Store")(DeepEquals(chunk2)).
+		WillOnce(oglemock.Return(score2, nil))
+
+	// Call
+	t.callSaver()
 }
 
 func (t *FileSaverTest) MultipleChunksWithLargeRemainder() {
-	ExpectEq("TODO", "")
+	// Chunks
+	chunk0 := makeChunk('a')
+	chunk1 := makeChunk('b')
+	chunk2 := makeChunk('c')
+	chunk2 = chunk2[0:len(chunk2)-1]
+
+	// Reader
+	t.reader = io.MultiReader(
+		bytes.NewReader(chunk0),
+		bytes.NewReader(chunk1),
+		bytes.NewReader(chunk2),
+	)
+
+	// Blob store
+	score0 := blob.ComputeScore([]byte(""))
+	score1 := blob.ComputeScore([]byte(""))
+	score2 := blob.ComputeScore([]byte(""))
+
+	ExpectCall(t.blobStore, "Store")(DeepEquals(chunk0)).
+		WillOnce(oglemock.Return(score0, nil))
+
+	ExpectCall(t.blobStore, "Store")(DeepEquals(chunk1)).
+		WillOnce(oglemock.Return(score1, nil))
+
+	ExpectCall(t.blobStore, "Store")(DeepEquals(chunk2)).
+		WillOnce(oglemock.Return(score2, nil))
+
+	// Call
+	t.callSaver()
 }
 
 func (t *FileSaverTest) ErrorStoringOneChunk() {
