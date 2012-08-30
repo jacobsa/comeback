@@ -52,29 +52,6 @@ type dirSaver struct {
 	wrapped    DirectorySaver
 }
 
-func convertCommon(fi os.FileInfo) (fs.DirectoryEntry, error) {
-	entry := fs.DirectoryEntry{
-		Permissions: uint32(fi.Mode() & os.ModePerm),
-		Name:        fi.Name(),
-		MTime:       fi.ModTime(),
-	}
-
-	// Convert the type.
-	typeBits := fi.Mode() & os.ModeType
-	switch typeBits {
-	case 0:
-		entry.Type = fs.TypeFile
-	case os.ModeDir:
-		entry.Type = fs.TypeDirectory
-	case os.ModeSymlink:
-		entry.Type = fs.TypeSymlink
-	default:
-		return entry, fmt.Errorf("Unhandled mode: %v", fi.Mode())
-	}
-
-	return entry, nil
-}
-
 func (s *dirSaver) saveDir(parent string, fi os.FileInfo) ([]blob.Score, error) {
 	// Recurse.
 	score, err := s.wrapped.Save(path.Join(parent, fi.Name()))
@@ -98,35 +75,9 @@ func (s *dirSaver) saveFile(parent string, fi os.FileInfo) ([]blob.Score, error)
 
 func (s *dirSaver) Save(dirpath string) (score blob.Score, err error) {
 	// Grab a listing for the directory.
-	fileInfos, err := s.fileSystem.ReadDir(dirpath)
+	entries, err := s.fileSystem.ReadDir(dirpath)
 	if err != nil {
 		return nil, fmt.Errorf("Listing directory: %v", err)
-	}
-
-	// Process each entry in the directory, building a list of DirectoryEntry
-	// structs.
-	entries := []fs.DirectoryEntry{}
-	for _, fileInfo := range fileInfos {
-		entry, err := convertCommon(fileInfo)
-		if err != nil {
-			return nil, err
-		}
-
-		// Call the appropriate method based on this entry's type.
-		switch entry.Type {
-		case fs.TypeFile:
-			entry.Scores, err = s.saveFile(dirpath, fileInfo)
-		case fs.TypeDirectory:
-			entry.Scores, err = s.saveDir(dirpath, fileInfo)
-		default:
-			err = fmt.Errorf("Unhandled type: %v", entry.Type)
-		}
-
-		if err != nil {
-			return nil, err
-		}
-
-		entries = append(entries, entry)
 	}
 
 	// Create a serialized version of this information.

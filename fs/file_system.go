@@ -17,6 +17,7 @@
 package fs
 
 import (
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -26,7 +27,8 @@ import (
 // interface for mockability.
 type FileSystem interface {
 	// Read the contents of the directory named by the supplied path, returning
-	// an array of directory entries sorted by name.
+	// an array of directory entries sorted by name. The entries will contain no
+	// scores.
 	ReadDir(path string) (entries []*DirectoryEntry, err error)
 
 	// Open the file named by the supplied path for reading.
@@ -41,8 +43,48 @@ func NewFileSystem() FileSystem {
 type fileSystem struct {
 }
 
+func convertFileInfo(fi os.FileInfo) (*DirectoryEntry, error) {
+	entry := &DirectoryEntry{
+		Permissions: uint32(fi.Mode() & os.ModePerm),
+		Name:        fi.Name(),
+		MTime:       fi.ModTime(),
+	}
+
+	// Convert the type.
+	typeBits := fi.Mode() & os.ModeType
+	switch typeBits {
+	case 0:
+		entry.Type = TypeFile
+	case os.ModeDir:
+		entry.Type = TypeDirectory
+	case os.ModeSymlink:
+		entry.Type = TypeSymlink
+	default:
+		return entry, fmt.Errorf("Unhandled mode: %v", fi.Mode())
+	}
+
+	return entry, nil
+}
+
 func (f *fileSystem) ReadDir(path string) (entries []*DirectoryEntry, err error) {
-	return ioutil.ReadDir(path)
+	// Call ioutil.
+	fileInfos, err := ioutil.ReadDir(path)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert each entry.
+	entries = []*DirectoryEntry{}
+	for _, fileInfo := range fileInfos {
+		entry, err := convertFileInfo(fileInfo)
+		if err != nil {
+			return nil, err
+		}
+
+		entries = append(entries, entry)
+	}
+
+	return entries, nil
 }
 
 func (f *fileSystem) OpenForReading(path string) (r io.Reader, err error) {
