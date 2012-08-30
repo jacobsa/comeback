@@ -25,7 +25,7 @@ import (
 func convertEntryProto(entryProto *DirectoryEntryProto) (*fs.DirectoryEntry, error) {
 	entry := &fs.DirectoryEntry{}
 
-	entry.Name = *entryProto.Name
+	if entryProto.Name != nil { entry.Name = *entryProto.Name }
 
 	return entry, nil
 }
