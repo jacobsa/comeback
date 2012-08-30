@@ -36,11 +36,17 @@ func convertProtoType(t DirectoryEntryProto_Type) (fs.EntryType, error) {
 	return 0, fmt.Errorf("Unrecognized DirectoryEntryProto_Type: %v", t)
 }
 
-func convertEntryProto(entryProto *DirectoryEntryProto) (*fs.DirectoryEntry, error) {
-	entry := &fs.DirectoryEntry{}
+func convertEntryProto(entryProto *DirectoryEntryProto) (entry *fs.DirectoryEntry, err error) {
+	entry = &fs.DirectoryEntry{}
 
 	entry.Name = entryProto.GetName()
 	entry.Permissions = entryProto.GetPermissions()
+
+	// Attempt to convert the type.
+	entry.Type, err = convertProtoType(entryProto.GetType())
+	if err != nil {
+		return nil, err
+	}
 
 	return entry, nil
 }
