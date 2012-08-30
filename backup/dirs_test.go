@@ -16,6 +16,7 @@
 package backup_test
 
 import (
+	"github.com/jacobsa/comeback/backup"
 	"github.com/jacobsa/comeback/backup/mock"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/blob/mock"
@@ -36,11 +37,27 @@ type DirectorySaverTest struct {
 	fileSaver mock_backup.MockFileSaver
 	wrapped mock_backup.MockDirectorySaver
 
+	dirSaver backup.DirectorySaver
+
 	score blob.Score
 	err error
 }
 
 func init() { RegisterTestSuite(&DirectorySaverTest{}) }
+
+func (t *DirectorySaverTest) SetUp(i *TestInfo) {
+	t.blobStore = mock_blob.NewMockStore(i.MockController, "blobStore")
+	t.fileSystem = mock_fs.NewMockFileSystem(i.MockController, "fileSystem")
+	t.fileSaver = mock_backup.NewMockFileSaver(i.MockController, "fileSaver")
+	t.wrapped = mock_backup.NewMockDirectorySaver(i.MockController, "wrapped")
+
+	t.dirSaver, _ = backup.NewDirectorySaver(
+		t.blobStore,
+		t.fileSystem,
+		t.fileSaver,
+		t.wrapped,
+	)
+}
 
 ////////////////////////////////////////////////////////////////////////
 // Tests
