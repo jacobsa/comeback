@@ -190,12 +190,21 @@ func (t *FileSaverTest) CopesWithShortChunks() {
 	t.callSaver()
 }
 
-func (t *FileSaverTest) CopesWithEofAndZeroData() {
-	ExpectEq("TODO", "")
-}
-
 func (t *FileSaverTest) CopesWithEofAndNonZeroData() {
-	ExpectEq("TODO", "")
+	// Chunks
+	chunk0 := makeChunk('a')
+
+	// Reader
+	t.reader = io.MultiReader(
+		iotest.DataErrReader(bytes.NewReader(chunk0)),
+	)
+
+	// Blob store
+	ExpectCall(t.blobStore, "Store")(DeepEquals(chunk0)).
+		WillOnce(returnStoreError(""))
+
+	// Call
+	t.callSaver()
 }
 
 func (t *FileSaverTest) OneSmallerSizedChunk() {
