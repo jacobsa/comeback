@@ -17,6 +17,7 @@ package repr_test
 
 import (
 	"code.google.com/p/goprotobuf/proto"
+	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/repr"
 	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
@@ -62,7 +63,7 @@ func (t *UnmarshalTest) UnknownTypeValue() {
 		},
 	}
 
-	listingProto.Entry[0].Type = repr.DirectoryEntryProto_Type(17).Enum()
+	listingProto.Entry[1].Type = repr.DirectoryEntryProto_Type(17).Enum()
 
 	data, err := proto.Marshal(listingProto)
 	AssertEq(nil, err)
@@ -76,7 +77,32 @@ func (t *UnmarshalTest) UnknownTypeValue() {
 }
 
 func (t *UnmarshalTest) HashIsTooShort() {
-	ExpectEq("TODO", "")
+	// Input
+	listingProto := &repr.DirectoryListingProto{
+		Entry: []*repr.DirectoryEntryProto{
+			makeLegalEntryProto(),
+			makeLegalEntryProto(),
+			makeLegalEntryProto(),
+		},
+	}
+
+	listingProto.Entry[1].Blob = []*repr.BlobInfoProto{
+		&repr.BlobInfoProto{Hash: blob.ComputeScore([]byte{}).Sha1Hash()},
+		&repr.BlobInfoProto{Hash: blob.ComputeScore([]byte{}).Sha1Hash()},
+		&repr.BlobInfoProto{Hash: blob.ComputeScore([]byte{}).Sha1Hash()},
+	}
+
+	blob := listingProto.Entry[1].Blob[1]
+	blob.Hash = blob.Hash[0:len(blob.Hash)-1]
+
+	data, err := proto.Marshal(listingProto)
+	AssertEq(nil, err)
+
+	// Call
+	_, err = repr.Unmarshal(data)
+
+	ExpectThat(err, Error(HasSubstr("hash length")))
+	ExpectThat(err, Error(HasSubstr("19")))
 }
 
 func (t *UnmarshalTest) HashIsTooLong() {
