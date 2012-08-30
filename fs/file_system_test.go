@@ -222,14 +222,14 @@ func (t *ReadDirTest) Directories() {
 	entry = entries[0]
 	ExpectEq(fs.TypeDirectory, entry.Type)
 	ExpectEq("burrito", entry.Name)
-	ExpectEq(0751|syscall.S_ISGID, entry.Permissions)
+	ExpectEq(0751|os.ModeSetgid, entry.Permissions)
 	ExpectTrue(entry.MTime.Equal(mtime0), "%v", entry.MTime)
 	ExpectThat(entry.Scores, ElementsAre())
 
 	entry = entries[1]
 	ExpectEq(fs.TypeDirectory, entry.Type)
 	ExpectEq("enchilada", entry.Name)
-	ExpectEq(0711|syscall.S_ISVTX|syscall.S_ISUID, entry.Permissions)
+	ExpectEq(0711|os.ModeSetgid|os.ModeSetuid, entry.Permissions)
 	ExpectTrue(entry.MTime.Equal(mtime1), "%v", entry.MTime)
 	ExpectThat(entry.Scores, ElementsAre())
 }
