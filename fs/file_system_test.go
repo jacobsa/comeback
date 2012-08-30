@@ -151,10 +151,6 @@ func (t *ReadDirTest) Symlinks() {
 	ExpectEq("TODO", "")
 }
 
-func (t *ReadDirTest) StickyBit() {
-	ExpectEq("TODO", "")
-}
-
 func (t *ReadDirTest) SetuidBit() {
 	var err error
 
@@ -233,6 +229,46 @@ func (t *ReadDirTest) SetgidBit() {
 	ExpectTrue(entries[1].Setgid)
 	ExpectFalse(entries[2].Setgid)
 	ExpectTrue(entries[3].Setgid)
+}
+
+func (t *ReadDirTest) StickyBit() {
+	var err error
+
+	// File 0
+	path0 := path.Join(t.baseDir, "burrito.txt")
+	err = ioutil.WriteFile(path0, []byte(""), 0714)
+	AssertEq(nil, err)
+
+	// File 1
+	path1 := path.Join(t.baseDir, "enchilada.txt")
+	err = ioutil.WriteFile(path1, []byte("burrito"), 0454)
+	AssertEq(nil, err)
+
+	err = os.Chmod(path1, 0600 | os.ModeSticky)
+	AssertEq(nil, err)
+
+	// Dir 2
+	path2 := path.Join(t.baseDir, "queso")
+	err = os.Mkdir(path2, 0700)
+	AssertEq(nil, err)
+
+	// Dir 3
+	path3 := path.Join(t.baseDir, "taco")
+	err = os.Mkdir(path3, 0700)
+	AssertEq(nil, err)
+
+	err = os.Chmod(path3, 0700 | os.ModeSticky)
+	AssertEq(nil, err)
+
+	// Call
+	entries, err := t.fileSystem.ReadDir(t.baseDir)
+	AssertEq(nil, err)
+	AssertThat(entries, ElementsAre(Any(), Any(), Any(), Any()))
+
+	ExpectFalse(entries[0].Sticky)
+	ExpectTrue(entries[1].Sticky)
+	ExpectFalse(entries[2].Sticky)
+	ExpectTrue(entries[3].Sticky)
 }
 
 func (t *ReadDirTest) SortsByName() {
