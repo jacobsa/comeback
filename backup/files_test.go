@@ -13,11 +13,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package backup
+package backup_test
 
 import (
 	"bytes"
 	"errors"
+	"github.com/jacobsa/comeback/backup"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/blob/mock"
 	. "github.com/jacobsa/oglematchers"
@@ -52,7 +53,7 @@ func returnStoreError(err string) oglemock.Action {
 type FileSaverTest struct {
 	blobStore mock_blob.MockStore
 	reader    io.Reader
-	fileSaver FileSaver
+	fileSaver backup.FileSaver
 
 	scores []blob.Score
 	err    error
@@ -62,7 +63,7 @@ func init() { RegisterTestSuite(&FileSaverTest{}) }
 
 func (t *FileSaverTest) SetUp(i *TestInfo) {
 	t.blobStore = mock_blob.NewMockStore(i.MockController, "blobStore")
-	t.fileSaver, _ = NewFileSaver(t.blobStore, chunkSize)
+	t.fileSaver, _ = backup.NewFileSaver(t.blobStore, chunkSize)
 }
 
 func (t *FileSaverTest) callSaver() {
@@ -74,7 +75,7 @@ func (t *FileSaverTest) callSaver() {
 ////////////////////////////////////////////////////////////////////////
 
 func (t *FileSaverTest) ZeroChunkSize() {
-	_, err := NewFileSaver(t.blobStore, 0)
+	_, err := backup.NewFileSaver(t.blobStore, 0)
 	ExpectThat(err, Error(HasSubstr("size")))
 	ExpectThat(err, Error(HasSubstr("positive")))
 }
