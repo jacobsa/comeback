@@ -16,6 +16,7 @@
 package repr_test
 
 import (
+	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/fs"
 	"github.com/jacobsa/comeback/repr"
 	. "github.com/jacobsa/oglematchers"
@@ -195,10 +196,33 @@ func (t *RoundtripTest) PreservesModTimes() {
 	ExpectTrue(in[1].MTime.Equal(out[1].MTime), "%v", out[1].MTime)
 }
 
-func (t *RoundtripTest) CopesWithLocationsInModTimes() {
-	ExpectEq("TODO", "")
-}
-
 func (t *RoundtripTest) PreservesScores() {
-	ExpectEq("TODO", "")
+	// Input
+	in := []*fs.DirectoryEntry{
+		makeLegalEntry(),
+		makeLegalEntry(),
+	}
+
+	score00 := blob.ComputeScore([]byte("taco"))
+	score01 := blob.ComputeScore([]byte("burrito"))
+	score10 := blob.ComputeScore([]byte("enchilada"))
+
+	in[0].Scores = []blob.Score{score00, score01}
+	in[1].Scores = []blob.Score{score10}
+
+	// Marshal
+	d, err := repr.Marshal(in)
+	AssertEq(nil, err)
+	AssertNe(nil, d)
+
+	// Unmarshal
+	out, err := repr.Unmarshal(d)
+	AssertEq(nil, err)
+	AssertNe(nil, out)
+
+	// Output
+	AssertThat(out, ElementsAre(Any(), Any()))
+
+	ExpectThat(out[0].Scores, ElementsAre(DeepEquals(score00), DeepEquals(score01)))
+	ExpectThat(out[1].Scores, ElementsAre(DeepEquals(score10)))
 }
