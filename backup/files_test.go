@@ -17,6 +17,8 @@ package backup
 
 import (
 	. "github.com/jacobsa/ogletest"
+	"github.com/jacobsa/comeback/blob/mock"
+	"github.com/jacobsa/comeback/io/mock"
 	"testing"
 )
 
@@ -26,8 +28,17 @@ func TestRegister(t *testing.T) { RunTests(t) }
 // Helpers
 ////////////////////////////////////////////////////////////////////////
 
-type FileSaverTest struct {}
+type FileSaverTest struct {
+	blobStore mock_blob.MockStore
+	reader mock_io.MockReader
+}
+
 func init() { RegisterTestSuite(&FileSaverTest{}) }
+
+func (t *FileSaverTest) SetUp(i *TestInfo) {
+	t.blobStore = mock_blob.NewMockStore(i.MockController, "blobStore")
+	t.reader = mock_io.NewMockReader(i.MockController, "reader")
+}
 
 ////////////////////////////////////////////////////////////////////////
 // Tests
