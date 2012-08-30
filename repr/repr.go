@@ -36,7 +36,7 @@ func convertType(t fs.EntryType) DirectoryEntryProto_Type {
 	panic(fmt.Sprintf("Unrecognized EntryType: %v", t))
 }
 
-func makeEntryProto(entry fs.DirectoryEntry) *DirectoryEntryProto {
+func makeEntryProto(entry *fs.DirectoryEntry) *DirectoryEntryProto {
 	blobs := []*BlobInfoProto{}
 	for _, score := range entry.Scores {
 		proto := &BlobInfoProto{Hash: score.Sha1Hash()}
@@ -57,7 +57,7 @@ func makeEntryProto(entry fs.DirectoryEntry) *DirectoryEntryProto {
 
 // Marshal turns a list of directory entries into bytes that can later be used
 // with Unmarshal.
-func Marshal(entries []fs.DirectoryEntry) (d []byte, err error) {
+func Marshal(entries []*fs.DirectoryEntry) (d []byte, err error) {
 	entryProtos := []*DirectoryEntryProto{}
 	for _, entry := range entries {
 		entryProtos = append(entryProtos, makeEntryProto(entry))
@@ -69,6 +69,6 @@ func Marshal(entries []fs.DirectoryEntry) (d []byte, err error) {
 
 // Unmarshal recovers a list of directory entries from bytes previously
 // returned by Marshal.
-func Unmarshal(d []byte) (entries []fs.DirectoryEntry, err error) {
+func Unmarshal(d []byte) (entries []*fs.DirectoryEntry, err error) {
 	return nil, fmt.Errorf("TODO")
 }
