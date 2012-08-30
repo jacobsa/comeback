@@ -201,6 +201,8 @@ func (t *DirectorySaverTest) FileSystemReturnsErrorForOneFile() {
 
 	ExpectThat(t.err, Error(HasSubstr("Opening")))
 	ExpectThat(t.err, Error(HasSubstr("taco")))
+
+	ExpectTrue(file0.closed)
 }
 
 func (t *DirectorySaverTest) FileSaverReturnsErrorForOneFile() {
@@ -231,14 +233,9 @@ func (t *DirectorySaverTest) FileSaverReturnsErrorForOneFile() {
 	t.callSaver()
 
 	ExpectThat(t.err, Error(HasSubstr("taco")))
-}
 
-func (t *DirectorySaverTest) ClosesFilesOnError() {
-	ExpectEq("TODO", "")
-}
-
-func (t *DirectorySaverTest) ClosesFilesOnSuccess() {
-	ExpectEq("TODO", "")
+	ExpectTrue(file0.closed)
+	ExpectTrue(file1.closed)
 }
 
 func (t *DirectorySaverTest) CallsDirSaverForDirs() {
