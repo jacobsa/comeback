@@ -229,7 +229,7 @@ func (t *ReadDirTest) Directories() {
 	entry = entries[1]
 	ExpectEq(fs.TypeDirectory, entry.Type)
 	ExpectEq("enchilada", entry.Name)
-	ExpectEq(0711|os.ModeSetgid|os.ModeSetuid, entry.Permissions)
+	ExpectEq(0711|os.ModeSticky|os.ModeSetuid, entry.Permissions)
 	ExpectTrue(entry.MTime.Equal(mtime1), "%v", entry.MTime)
 	ExpectThat(entry.Scores, ElementsAre())
 }
