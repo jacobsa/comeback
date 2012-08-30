@@ -24,6 +24,7 @@ import (
 	"os"
 	"path"
 	"testing"
+	"time"
 )
 
 func TestFileSystemTest(t *testing.T) { RunTests(t) }
@@ -85,7 +86,61 @@ func (t *ReadDirTest) NoReadPermissions() {
 }
 
 func (t *ReadDirTest) RegularFiles() {
-	ExpectEq("TODO", "")
+	var err error
+	var entry *fs.DirectoryEntry
+
+	// File 0
+	path0 := path.Join(t.baseDir, "taco.txt")
+	err = ioutil.WriteFile(path0, []byte("taco"), 0714 | os.ModeSetuid)
+	AssertEq(nil, err)
+
+	mtime0 := time.Date(2009, time.November, 10, 23, 0, 0, 123e6, time.UTC)
+	err = os.Chtimes(path0, time.Now(), mtime0)
+	AssertEq(nil, err)
+
+	// File 1
+	path1 := path.Join(t.baseDir, "burrito.txt")
+	err = ioutil.WriteFile(path1, []byte("burrito"), 0464 | os.ModeSetuid | os.ModeSetgid)
+	AssertEq(nil, err)
+
+	mtime1 := time.Date(1985, time.March, 18, 15, 33, 0, 17e6, time.Local)
+	err = os.Chtimes(path1, time.Now(), mtime1)
+	AssertEq(nil, err)
+
+	// File 2
+	path2 := path.Join(t.baseDir, "enchilada.txt")
+	err = ioutil.WriteFile(path2, []byte("enchilada"), 0111 | os.ModeSticky)
+	AssertEq(nil, err)
+
+	mtime2 := time.Date(1970, time.January, 1, 0, 0, 0, 0, time.UTC)
+	err = os.Chtimes(path2, time.Now(), mtime2)
+	AssertEq(nil, err)
+
+	// Call
+	entries, err := t.fileSystem.ReadDir(t.baseDir)
+	AssertEq(nil, err)
+	AssertThat(entries, ElementsAre(Any(), Any(), Any()))
+
+	entry = entries[0]
+	ExpectEq(fs.TypeFile, entry.Type)
+	ExpectEq("burrito.txt", entry.Name)
+	ExpectEq(0464 | os.ModeSetuid | os.ModeSetgid, entry.Permissions)
+	ExpectTrue(entry.MTime.Equal(mtime1), "%v", entry.MTime)
+	ExpectThat(entry.Scores, ElementsAre())
+
+	entry = entries[1]
+	ExpectEq(fs.TypeFile, entry.Type)
+	ExpectEq("enchilada.txt", entry.Name)
+	ExpectEq(0111 | os.ModeSticky, entry.Permissions)
+	ExpectTrue(entry.MTime.Equal(mtime2), "%v", entry.MTime)
+	ExpectThat(entry.Scores, ElementsAre())
+
+	entry = entries[2]
+	ExpectEq(fs.TypeFile, entry.Type)
+	ExpectEq("taco.txt", entry.Name)
+	ExpectEq(0714 | os.ModeSetuid, entry.Permissions)
+	ExpectTrue(entry.MTime.Equal(mtime0), "%v", entry.MTime)
+	ExpectThat(entry.Scores, ElementsAre())
 }
 
 func (t *ReadDirTest) Directories() {
