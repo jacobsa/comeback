@@ -65,6 +65,11 @@ func convertEntryProto(entryProto *repr_proto.DirectoryEntryProto) (entry *fs.Di
 	entry.Name = entryProto.GetName()
 	entry.Permissions = os.FileMode(entryProto.GetPermissions())
 
+	// Copy symlink targets.
+	if entryProto.Target != nil {
+		entry.Target = *entryProto.Target
+	}
+
 	// Attempt to convert the type.
 	entry.Type, err = convertProtoType(entryProto.GetType())
 	if err != nil {

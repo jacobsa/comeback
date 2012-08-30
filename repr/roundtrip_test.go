@@ -228,12 +228,15 @@ func (t *RoundtripTest) PreservesScores() {
 	ExpectThat(out[1].Scores[0].Sha1Hash(), DeepEquals(score10.Sha1Hash()))
 }
 
-func (t *RoundtripTest) PreservesTargets() {
+func (t *RoundtripTest) PreservesSymlinkTargets() {
 	// Input
 	in := []*fs.DirectoryEntry{
 		makeLegalEntry(),
 		makeLegalEntry(),
 	}
+
+	in[0].Type = fs.TypeSymlink
+	in[1].Type = fs.TypeSymlink
 
 	in[0].Target = "taco"
 	in[1].Target = "burrito"

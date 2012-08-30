@@ -52,6 +52,11 @@ func makeEntryProto(entry *fs.DirectoryEntry) (*repr_proto.DirectoryEntryProto, 
 		Blob: blobs,
 	}
 
+	// Handle symlink targets.
+	if entry.Type == fs.TypeSymlink {
+		entryProto.Target = proto.String(entry.Target)
+	}
+
 	// Convert the entry's type.
 	typeEnum, err := convertType(entry.Type)
 	if err != nil {
