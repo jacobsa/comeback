@@ -53,12 +53,13 @@ func (r *readCloser) Read(b []byte) (int, error) {
 	panic("Shouldn't be called.")
 }
 
-func (r *readCloser) Close() {
+func (r *readCloser) Close() error {
 	if r.closed {
 		panic("Close called twice.")
 	}
 
 	r.closed = true
+	return nil
 }
 
 type DirectorySaverTest struct {
