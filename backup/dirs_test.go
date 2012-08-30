@@ -97,7 +97,7 @@ func (t *DirectorySaverTest) SetUp(i *TestInfo) {
 	t.fileSaver = mock_backup.NewMockFileSaver(i.MockController, "fileSaver")
 	t.wrapped = mock_backup.NewMockDirectorySaver(i.MockController, "wrapped")
 
-	t.dirSaver, _ = backup.NewDirectorySaver(
+	t.dirSaver, _ = backup.NewNonRecursiveDirectorySaver(
 		t.blobStore,
 		t.fileSystem,
 		t.fileSaver,

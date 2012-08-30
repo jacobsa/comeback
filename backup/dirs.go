@@ -32,7 +32,42 @@ type DirectorySaver interface {
 	Save(dirpath string) (score blob.Score, err error)
 }
 
+// A directory saver that creates a new directory saver for each call to Save.
+// This breaks a self-dependency that would be needed to make use of
+// NewNonRecursiveDirectorySaver.
+type onDemandDirSaver struct {
+	createSaver func (wrapped DirectorySaver) DirectorySaver
+}
+
+func (s *onDemandDirSaver) Save(dirpath string) (score blob.Score, err error) {
+	return s.createSaver(s).Save(dirpath)
+}
+
+// Return a directory saver that makes use of the supplied dependencies.
 func NewDirectorySaver(
+	blobStore blob.Store,
+	fileSystem fs.FileSystem,
+	fileSaver FileSaver) (DirectorySaver, error) {
+	createSaver := func (wrapped DirectorySaver) DirectorySaver {
+		saver, err := NewNonRecursiveDirectorySaver(
+			blobStore,
+			fileSystem,
+			fileSaver,
+			wrapped)
+
+		if err != nil {
+			panic(err)
+		}
+
+		return saver
+	}
+
+	return &onDemandDirSaver{createSaver}, nil
+}
+
+// Equivalent to NewDirectorySaver, but with an injectable wrapped directory
+// saver to aid with testability. You should not use this function.
+func NewNonRecursiveDirectorySaver(
 	store blob.Store,
 	fileSystem fs.FileSystem,
 	fileSaver FileSaver,
