@@ -16,6 +16,7 @@
 package repr_test
 
 import (
+	"code.google.com/p/goprotobuf/proto"
 	"github.com/jacobsa/comeback/repr"
 	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
@@ -27,6 +28,10 @@ func TestUnmarshalTest(t *testing.T) { RunTests(t) }
 ////////////////////////////////////////////////////////////////////////
 // Helpers
 ////////////////////////////////////////////////////////////////////////
+
+func makeLegalEntryProto() *repr.DirectoryEntryProto {
+	return &repr.DirectoryEntryProto{}
+}
 
 type UnmarshalTest struct {
 }
@@ -48,7 +53,26 @@ func (t *UnmarshalTest) JunkWireData() {
 }
 
 func (t *UnmarshalTest) UnknownTypeValue() {
-	ExpectEq("TODO", "")
+	// Input
+	listingProto := &repr.DirectoryListingProto{
+		Entry: []*repr.DirectoryEntryProto{
+			makeLegalEntryProto(),
+			makeLegalEntryProto(),
+			makeLegalEntryProto(),
+		},
+	}
+
+	listingProto.Entry[0].Type = repr.DirectoryEntryProto_Type(17).Enum()
+
+	data, err := proto.Marshal(listingProto)
+	AssertEq(nil, err)
+
+	// Call
+	_, err = repr.Unmarshal(data)
+
+	ExpectThat(err, Error(HasSubstr("Unrecognized")))
+	ExpectThat(err, Error(HasSubstr("DirectoryEntryProto_Type")))
+	ExpectThat(err, Error(HasSubstr("17")))
 }
 
 func (t *UnmarshalTest) HashIsTooShort() {
