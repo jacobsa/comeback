@@ -37,11 +37,11 @@ const (
 type DirectoryEntry struct {
 	Type EntryType
 
-	// The permission bits for this entry.
-	Permissions uint32
-
 	// The name of this entry within its directory.
 	Name string
+
+	// The permission bits for this entry.
+	Permissions uint32
 
 	// The modification time of this entry.
 	MTime time.Time
@@ -57,7 +57,7 @@ type DirectoryEntry struct {
 type FileSystem interface {
 	// Read the contents of the directory named by the supplied path, returning
 	// an array of directory entries sorted by name.
-	ReadDir(path string) (fi []os.FileInfo, err error)
+	ReadDir(path string) (entries []*DirectoryEntry, err error)
 
 	// Open the file named by the supplied path for reading.
 	OpenForReading(path string) (r io.Reader, err error)
@@ -71,7 +71,7 @@ func NewFileSystem() FileSystem {
 type fileSystem struct {
 }
 
-func (f *fileSystem) ReadDir(path string) (fi []os.FileInfo, err error) {
+func (f *fileSystem) ReadDir(path string) (entries []*DirectoryEntry, err error) {
 	return ioutil.ReadDir(path)
 }
 
