@@ -17,12 +17,12 @@ package backup
 
 import (
 	. "github.com/jacobsa/oglematchers"
-	. "github.com/jacobsa/oglemock"
 	. "github.com/jacobsa/ogletest"
-	"fmt"
+	"bytes"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/blob/mock"
 	"github.com/jacobsa/comeback/io/mock"
+	"io"
 	"testing"
 )
 
@@ -38,8 +38,11 @@ func TestRegister(t *testing.T) { RunTests(t) }
 
 type FileSaverTest struct {
 	blobStore mock_blob.MockStore
-	reader mock_io.MockReader
+	mockReader mock_io.MockReader
 	fileSaver FileSaver
+
+	// Will be used instead of mockReader if non-nil.
+	buffer io.Reader
 
 	scores []blob.Score
 	err error
@@ -49,12 +52,17 @@ func init() { RegisterTestSuite(&FileSaverTest{}) }
 
 func (t *FileSaverTest) SetUp(i *TestInfo) {
 	t.blobStore = mock_blob.NewMockStore(i.MockController, "blobStore")
-	t.reader = mock_io.NewMockReader(i.MockController, "reader")
+	t.mockReader = mock_io.NewMockReader(i.MockController, "reader")
 	t.fileSaver, _ = NewFileSaver(t.blobStore)
 }
 
 func (t *FileSaverTest) callSaver() {
-	t.scores, t.err = t.fileSaver.Save(t.reader)
+	var reader io.Reader = t.mockReader
+	if t.buffer != nil {
+		reader = t.buffer
+	}
+
+	t.scores, t.err = t.fileSaver.Save(reader)
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -62,7 +70,14 @@ func (t *FileSaverTest) callSaver() {
 ////////////////////////////////////////////////////////////////////////
 
 func (t *FileSaverTest) NoDataInReader() {
-	ExpectEq("TODO", "")
+	// Reader
+	t.buffer = new(bytes.Buffer)
+
+	// Call
+	t.callSaver()
+
+	AssertEq(nil, t.err)
+	ExpectThat(t.scores, ElementsAre())
 }
 
 func (t *FileSaverTest) ImmediateReadError() {
