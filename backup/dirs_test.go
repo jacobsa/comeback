@@ -204,7 +204,33 @@ func (t *DirectorySaverTest) FileSystemReturnsErrorForOneFile() {
 }
 
 func (t *DirectorySaverTest) FileSaverReturnsErrorForOneFile() {
-	ExpectEq("TODO", "")
+	// ReadDir
+	entries := []*fs.DirectoryEntry {
+		&fs.DirectoryEntry{},
+		&fs.DirectoryEntry{},
+		&fs.DirectoryEntry{},
+	}
+
+	ExpectCall(t.fileSystem, "ReadDir")(Any()).
+		WillOnce(oglemock.Return(entries, nil))
+
+	// OpenForReading
+	file0 := &readCloser{}
+	file1 := &readCloser{}
+
+	ExpectCall(t.fileSystem, "OpenForReading")(Any()).
+		WillOnce(oglemock.Return(file0, nil)).
+		WillOnce(oglemock.Return(file1, nil))
+
+	// File saver
+	ExpectCall(t.fileSaver, "Save")(Any()).
+		WillOnce(oglemock.Return([]blob.Score{}, nil)).
+		WillOnce(oglemock.Return(nil, errors.New("taco")))
+
+	// Call
+	t.callSaver()
+
+	ExpectThat(t.err, Error(HasSubstr("taco")))
 }
 
 func (t *DirectorySaverTest) ClosesFilesOnError() {
