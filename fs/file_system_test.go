@@ -23,18 +23,27 @@ import (
 func TestFileSystemTest(t *testing.T) { RunTests(t) }
 
 ////////////////////////////////////////////////////////////////////////
-// Helpers
+// ReadDir
 ////////////////////////////////////////////////////////////////////////
 
-type FileSystemTest struct {
+type ReadDirTest struct {
 }
 
-func init() { RegisterTestSuite(&FileSystemTest{}) }
+func init() { RegisterTestSuite(&ReadDirTest{}) }
+
+func (t *ReadDirTest) DoesFoo() {
+	ExpectEq("TODO", "")
+}
 
 ////////////////////////////////////////////////////////////////////////
-// Tests
+// OpenForReading
 ////////////////////////////////////////////////////////////////////////
 
-func (t *FileSystemTest) DoesFoo() {
+type OpenForReadingTest struct {
+}
+
+func init() { RegisterTestSuite(&OpenForReadingTest{}) }
+
+func (t *OpenForReadingTest) DoesFoo() {
 	ExpectEq("TODO", "")
 }
