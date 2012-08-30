@@ -223,6 +223,10 @@ func (t *RoundtripTest) PreservesScores() {
 	// Output
 	AssertThat(out, ElementsAre(Any(), Any()))
 
-	ExpectThat(out[0].Scores, ElementsAre(DeepEquals(score00), DeepEquals(score01)))
-	ExpectThat(out[1].Scores, ElementsAre(DeepEquals(score10)))
+	AssertThat(out[0].Scores, ElementsAre(Any(), Any()))
+	ExpectThat(out[0].Scores[0].Sha1Hash(), DeepEquals(score00.Sha1Hash()))
+	ExpectThat(out[0].Scores[1].Sha1Hash(), DeepEquals(score01.Sha1Hash()))
+
+	AssertThat(out[1].Scores, ElementsAre(Any()))
+	ExpectThat(out[1].Scores[0].Sha1Hash(), DeepEquals(score10.Sha1Hash()))
 }
