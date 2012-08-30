@@ -94,28 +94,6 @@ func (t *FileSaverTest) NoDataInReader() {
 	ExpectThat(t.scores, ElementsAre())
 }
 
-func (t *FileSaverTest) ChunksAreSizedAsExpected() {
-	// Chunks
-	chunk0 := makeChunk('a')
-	chunk1 := makeChunk('b')
-	chunk2 := makeChunk('c')
-
-	// Reader
-	t.reader = io.MultiReader(
-		bytes.NewReader(chunk0),
-		bytes.NewReader(chunk1),
-		bytes.NewReader(chunk2),
-	)
-
-	// Blob store
-	ExpectCall(t.blobStore, "Store")(DeepEquals(chunk0))
-	ExpectCall(t.blobStore, "Store")(DeepEquals(chunk1))
-	ExpectCall(t.blobStore, "Store")(DeepEquals(chunk2))
-
-	// Call
-	t.callSaver()
-}
-
 func (t *FileSaverTest) ReadErrorInFirstChunk() {
 	// Chunks
 	chunk0 := makeChunk('a')
@@ -200,8 +178,10 @@ func (t *FileSaverTest) OneSmallerSizedChunk() {
 	)
 
 	// Blob store
+	score0 := blob.ComputeScore([]byte(""))
+
 	ExpectCall(t.blobStore, "Store")(DeepEquals(chunk0)).
-		WillOnce(returnStoreError(""))
+		WillOnce(oglemock.Return(score0, nil))
 
 	// Call
 	t.callSaver()
