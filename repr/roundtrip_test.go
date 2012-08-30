@@ -21,6 +21,7 @@ import (
 	"github.com/jacobsa/comeback/repr"
 	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
+	"os"
 	"testing"
 	"time"
 )

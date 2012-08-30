@@ -22,6 +22,7 @@ import (
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/fs"
 	"github.com/jacobsa/comeback/repr/proto"
+	"os"
 	"time"
 )
 
@@ -62,7 +63,7 @@ func convertEntryProto(entryProto *repr_proto.DirectoryEntryProto) (entry *fs.Di
 	entry = &fs.DirectoryEntry{}
 
 	entry.Name = entryProto.GetName()
-	entry.Permissions = entryProto.GetPermissions()
+	entry.Permissions = os.FileMode(entryProto.GetPermissions())
 
 	// Attempt to convert the type.
 	entry.Type, err = convertProtoType(entryProto.GetType())

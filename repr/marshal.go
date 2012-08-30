@@ -43,7 +43,7 @@ func makeEntryProto(entry *fs.DirectoryEntry) (*repr_proto.DirectoryEntryProto, 
 	}
 
 	entryProto := &repr_proto.DirectoryEntryProto{
-		Permissions: proto.Uint32(entry.Permissions),
+		Permissions: proto.Uint32(uint32(entry.Permissions)),
 		Name:        proto.String(entry.Name),
 		Mtime: &repr_proto.TimeProto{
 			Second:     proto.Int64(entry.MTime.Unix()),
