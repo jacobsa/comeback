@@ -21,6 +21,7 @@ import (
 	"code.google.com/p/goprotobuf/proto"
 	"fmt"
 	"github.com/jacobsa/comeback/fs"
+	"time"
 )
 
 func convertProtoType(t DirectoryEntryProto_Type) (fs.EntryType, error) {
@@ -36,6 +37,10 @@ func convertProtoType(t DirectoryEntryProto_Type) (fs.EntryType, error) {
 	return 0, fmt.Errorf("Unrecognized DirectoryEntryProto_Type: %v", t)
 }
 
+func convertTimeProto(timeProto *TimeProto) (time.Time, error) {
+	return time.Unix(timeProto.GetSecond(), int64(timeProto.GetNanosecond())), nil
+}
+
 func convertEntryProto(entryProto *DirectoryEntryProto) (entry *fs.DirectoryEntry, err error) {
 	entry = &fs.DirectoryEntry{}
 
@@ -44,6 +49,12 @@ func convertEntryProto(entryProto *DirectoryEntryProto) (entry *fs.DirectoryEntr
 
 	// Attempt to convert the type.
 	entry.Type, err = convertProtoType(entryProto.GetType())
+	if err != nil {
+		return nil, err
+	}
+
+	// Attempt to convert the modification time.
+	entry.MTime, err = convertTimeProto(entryProto.GetMtime())
 	if err != nil {
 		return nil, err
 	}
