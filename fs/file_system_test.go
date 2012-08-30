@@ -356,15 +356,30 @@ func (t *ReadDirTest) SetgidBit() {
 	err = setPermissions(path3, 0700 | syscall.S_ISGID)
 	AssertEq(nil, err)
 
+	// Link 4
+	path4 := path.Join(t.baseDir, "tortillas0")
+	err = os.Symlink("/foo/tortillas0", path4)
+	AssertEq(nil, err)
+
+	// Link 5
+	path5 := path.Join(t.baseDir, "tortillas1")
+	err = os.Symlink("/foo/tortillas1", path5)
+	AssertEq(nil, err)
+
+	err = setPermissions(path5, 0600 | syscall.S_ISGID)
+	AssertEq(nil, err)
+
 	// Call
 	entries, err := t.fileSystem.ReadDir(t.baseDir)
 	AssertEq(nil, err)
-	AssertThat(entries, ElementsAre(Any(), Any(), Any(), Any()))
+	AssertEq(6, len(entries))
 
 	ExpectFalse(entries[0].Setgid)
 	ExpectTrue(entries[1].Setgid)
 	ExpectFalse(entries[2].Setgid)
 	ExpectTrue(entries[3].Setgid)
+	ExpectFalse(entries[4].Setgid)
+	ExpectTrue(entries[5].Setgid)
 }
 
 func (t *ReadDirTest) StickyBit() {
@@ -396,15 +411,30 @@ func (t *ReadDirTest) StickyBit() {
 	err = setPermissions(path3, 0700 | syscall.S_ISVTX)
 	AssertEq(nil, err)
 
+	// Link 4
+	path4 := path.Join(t.baseDir, "tortillas0")
+	err = os.Symlink("/foo/tortillas0", path4)
+	AssertEq(nil, err)
+
+	// Link 5
+	path5 := path.Join(t.baseDir, "tortillas1")
+	err = os.Symlink("/foo/tortillas1", path5)
+	AssertEq(nil, err)
+
+	err = setPermissions(path5, 0600 | syscall.S_ISVTX)
+	AssertEq(nil, err)
+
 	// Call
 	entries, err := t.fileSystem.ReadDir(t.baseDir)
 	AssertEq(nil, err)
-	AssertThat(entries, ElementsAre(Any(), Any(), Any(), Any()))
+	AssertEq(6, len(entries))
 
 	ExpectFalse(entries[0].Sticky)
 	ExpectTrue(entries[1].Sticky)
 	ExpectFalse(entries[2].Sticky)
 	ExpectTrue(entries[3].Sticky)
+	ExpectFalse(entries[4].Sticky)
+	ExpectTrue(entries[5].Sticky)
 }
 
 func (t *ReadDirTest) SortsByName() {
