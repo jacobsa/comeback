@@ -94,7 +94,7 @@ func (t *ReadDirTest) RegularFiles() {
 	err = ioutil.WriteFile(path0, []byte("taco"), 0714)
 	AssertEq(nil, err)
 
-	mtime0 := time.Date(2009, time.November, 10, 23, 0, 0, 123e6, time.UTC)
+	mtime0 := time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)
 	err = os.Chtimes(path0, time.Now(), mtime0)
 	AssertEq(nil, err)
 
@@ -103,7 +103,7 @@ func (t *ReadDirTest) RegularFiles() {
 	err = ioutil.WriteFile(path1, []byte("burrito"), 0454)
 	AssertEq(nil, err)
 
-	mtime1 := time.Date(1985, time.March, 18, 15, 33, 0, 17e6, time.Local)
+	mtime1 := time.Date(1985, time.March, 18, 15, 33, 0, 0, time.Local)
 	err = os.Chtimes(path1, time.Now(), mtime1)
 	AssertEq(nil, err)
 
