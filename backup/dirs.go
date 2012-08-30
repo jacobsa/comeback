@@ -20,7 +20,6 @@ import (
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/fs"
 	"github.com/jacobsa/comeback/repr"
-	"os"
 	"path"
 )
 
@@ -64,10 +63,11 @@ func (s *dirSaver) saveDir(parent string, entry *fs.DirectoryEntry) ([]blob.Scor
 
 func (s *dirSaver) saveFile(parent string, entry *fs.DirectoryEntry) ([]blob.Score, error) {
 	// Open the file.
-	f, err := os.Open(path.Join(parent, entry.Name))
+	f, err := s.fileSystem.OpenForReading(path.Join(parent, entry.Name))
 	if err != nil {
 		return nil, fmt.Errorf("Opening file: %v", err)
 	}
+	defer f.Close()
 
 	// Defer to the file saver.
 	return s.fileSaver.Save(f)

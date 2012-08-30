@@ -32,7 +32,7 @@ type FileSystem interface {
 	ReadDir(path string) (entries []*DirectoryEntry, err error)
 
 	// Open the file named by the supplied path for reading.
-	OpenForReading(path string) (r io.Reader, err error)
+	OpenForReading(path string) (r io.ReadCloser, err error)
 }
 
 // Return a FileSystem that uses the read file system.
@@ -87,6 +87,6 @@ func (f *fileSystem) ReadDir(path string) (entries []*DirectoryEntry, err error)
 	return entries, nil
 }
 
-func (f *fileSystem) OpenForReading(path string) (r io.Reader, err error) {
+func (f *fileSystem) OpenForReading(path string) (r io.ReadCloser, err error) {
 	return os.Open(path)
 }
