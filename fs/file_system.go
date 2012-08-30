@@ -45,7 +45,7 @@ type fileSystem struct {
 
 func convertFileInfo(fi os.FileInfo) (*DirectoryEntry, error) {
 	entry := &DirectoryEntry{
-		Permissions: uint32(fi.Mode() & os.ModePerm),
+		Permissions: fi.Mode() & os.ModePerm,
 		Name:        fi.Name(),
 		MTime:       fi.ModTime(),
 	}

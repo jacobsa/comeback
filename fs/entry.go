@@ -18,6 +18,7 @@ package fs
 
 import (
 	"github.com/jacobsa/comeback/blob"
+	"os"
 	"time"
 )
 
@@ -37,8 +38,9 @@ type DirectoryEntry struct {
 	// The name of this entry within its directory.
 	Name string
 
-	// The permission bits for this entry.
-	Permissions uint32
+	// The permission bits for this entry, i.e. the low-order nine bits of
+	// FileMode. This does *not* include flags such as the sticky bit.
+	Permissions os.FileMode
 
 	// The modification time of this entry.
 	MTime time.Time
