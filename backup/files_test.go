@@ -354,7 +354,14 @@ func (t *FileSaverTest) ErrorStoringOneChunk() {
 }
 
 func (t *FileSaverTest) ResultForEmptyReader() {
-	ExpectEq("TODO", "")
+	// Reader
+	t.reader = io.MultiReader()
+
+	// Call
+	t.callSaver()
+
+	AssertEq(nil, t.err)
+	ExpectThat(t.scores, DeepEquals([]blob.Score{}))
 }
 
 func (t *FileSaverTest) AllStoresSuccessful() {
