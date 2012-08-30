@@ -36,6 +36,12 @@ func TestRegister(t *testing.T) { RunTests(t) }
 // Helpers
 ////////////////////////////////////////////////////////////////////////
 
+func makeChunk(char int) []byte {
+	charStr := string(char)
+	AssertEq(1, len(charStr), "Invalid character: %d", char)
+	return bytes.Repeat([]byte(charStr), expectedChunkSize)
+}
+
 type FileSaverTest struct {
 	blobStore mock_blob.MockStore
 	mockReader mock_io.MockReader
@@ -46,6 +52,15 @@ type FileSaverTest struct {
 
 	scores []blob.Score
 	err error
+}
+
+func elementsAreSlice(bytes []byte) Matcher {
+	interfaceSlice := []interface{}{}
+	for _, b := range bytes {
+		interfaceSlice = append(interfaceSlice, b)
+	}
+
+	return ElementsAre(interfaceSlice...)
 }
 
 func init() { RegisterTestSuite(&FileSaverTest{}) }
@@ -80,8 +95,26 @@ func (t *FileSaverTest) NoDataInReader() {
 	ExpectThat(t.scores, ElementsAre())
 }
 
-func (t *FileSaverTest) ImmediateReadError() {
-	ExpectEq("TODO", "")
+func (t *FileSaverTest) ChunksAreSizedAsExpected() {
+	// Chunks
+	chunk0 := makeChunk('a')
+	chunk1 := makeChunk('b')
+	chunk2 := makeChunk('c')
+
+	// Reader
+	t.buffer = io.MultiReader(
+		bytes.NewReader(chunk0),
+		bytes.NewReader(chunk1),
+		bytes.NewReader(chunk2),
+	)
+
+	// Blob store
+	ExpectCall(t.blobStore, "Store")(elementsAreSlice(chunk0))
+	ExpectCall(t.blobStore, "Store")(elementsAreSlice(chunk1))
+	ExpectCall(t.blobStore, "Store")(elementsAreSlice(chunk2))
+
+	// Call
+	t.callSaver()
 }
 
 func (t *FileSaverTest) ReadErrorInFirstChunk() {
