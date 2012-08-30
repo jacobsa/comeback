@@ -333,12 +333,14 @@ func (t *OpenForReadingTest) NonExistentFile() {
 	ExpectThat(err, Error(HasSubstr("no such")))
 }
 
-func (t *OpenForReadingTest) NotAFile() {
-	ExpectEq("TODO", "")
-}
-
 func (t *OpenForReadingTest) NoReadPermissions() {
-	ExpectEq("TODO", "")
+	filepath := path.Join(t.baseDir, "foo.txt")
+	err := ioutil.WriteFile(filepath, []byte("foo"), 0300)
+	AssertEq(nil, err)
+
+	_, err = t.fileSystem.OpenForReading(filepath)
+	ExpectThat(err, Error(HasSubstr("permission")))
+	ExpectThat(err, Error(HasSubstr("denied")))
 }
 
 func (t *OpenForReadingTest) EmptyFile() {
