@@ -24,7 +24,7 @@ import (
 	"time"
 )
 
-func TestReprTest(t *testing.T) { RunTests(t) }
+func TestRoundtripTest(t *testing.T) { RunTests(t) }
 
 ////////////////////////////////////////////////////////////////////////
 // Helpers
@@ -36,16 +36,16 @@ func makeLegalEntry() *fs.DirectoryEntry {
 	return entry
 }
 
-type MarshalTest struct {
+type RoundtripTest struct {
 }
 
-func init() { RegisterTestSuite(&MarshalTest{}) }
+func init() { RegisterTestSuite(&RoundtripTest{}) }
 
 ////////////////////////////////////////////////////////////////////////
 // Tests
 ////////////////////////////////////////////////////////////////////////
 
-func (t *MarshalTest) NoEntries() {
+func (t *RoundtripTest) NoEntries() {
 	// Input
 	in := []*fs.DirectoryEntry{}
 
@@ -63,7 +63,7 @@ func (t *MarshalTest) NoEntries() {
 	ExpectThat(out, ElementsAre())
 }
 
-func (t *MarshalTest) UnknownType() {
+func (t *RoundtripTest) UnknownType() {
 	// Input
 	in := []*fs.DirectoryEntry{
 		makeLegalEntry(),
@@ -80,7 +80,7 @@ func (t *MarshalTest) UnknownType() {
 	ExpectThat(err, Error(HasSubstr("17")))
 }
 
-func (t *MarshalTest) PreservesTypes() {
+func (t *RoundtripTest) PreservesTypes() {
 	// Input
 	in := []*fs.DirectoryEntry{
 		makeLegalEntry(),
@@ -110,7 +110,7 @@ func (t *MarshalTest) PreservesTypes() {
 	ExpectEq(in[2].Type, out[2].Type)
 }
 
-func (t *MarshalTest) PreservesNames() {
+func (t *RoundtripTest) PreservesNames() {
 	// Input
 	in := []*fs.DirectoryEntry{
 		makeLegalEntry(),
@@ -137,7 +137,7 @@ func (t *MarshalTest) PreservesNames() {
 	ExpectEq(in[1].Name, out[1].Name)
 }
 
-func (t *MarshalTest) PreservesPermissions() {
+func (t *RoundtripTest) PreservesPermissions() {
 	// Input
 	in := []*fs.DirectoryEntry{
 		makeLegalEntry(),
@@ -164,11 +164,11 @@ func (t *MarshalTest) PreservesPermissions() {
 	ExpectEq(in[1].Permissions, out[1].Permissions)
 }
 
-func (t *MarshalTest) UnrepresentableModTime() {
+func (t *RoundtripTest) UnrepresentableModTime() {
 	ExpectEq("TODO", "")
 }
 
-func (t *MarshalTest) PreservesModTimes() {
+func (t *RoundtripTest) PreservesModTimes() {
 	// Input
 	in := []*fs.DirectoryEntry{
 		makeLegalEntry(),
@@ -195,10 +195,10 @@ func (t *MarshalTest) PreservesModTimes() {
 	ExpectEq(in[1].MTime, out[1].MTime)
 }
 
-func (t *MarshalTest) CopesWithLocationsInModTimes() {
+func (t *RoundtripTest) CopesWithLocationsInModTimes() {
 	ExpectEq("TODO", "")
 }
 
-func (t *MarshalTest) PreservesScores() {
+func (t *RoundtripTest) PreservesScores() {
 	ExpectEq("TODO", "")
 }
