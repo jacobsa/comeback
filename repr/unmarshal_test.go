@@ -19,6 +19,7 @@ import (
 	"code.google.com/p/goprotobuf/proto"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/repr"
+	"github.com/jacobsa/comeback/repr/proto"
 	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
 	"testing"
@@ -30,8 +31,8 @@ func TestUnmarshalTest(t *testing.T) { RunTests(t) }
 // Helpers
 ////////////////////////////////////////////////////////////////////////
 
-func makeLegalEntryProto() *repr.DirectoryEntryProto {
-	return &repr.DirectoryEntryProto{}
+func makeLegalEntryProto() *repr_proto.DirectoryEntryProto {
+	return &repr_proto.DirectoryEntryProto{}
 }
 
 type UnmarshalTest struct {
@@ -55,15 +56,15 @@ func (t *UnmarshalTest) JunkWireData() {
 
 func (t *UnmarshalTest) UnknownTypeValue() {
 	// Input
-	listingProto := &repr.DirectoryListingProto{
-		Entry: []*repr.DirectoryEntryProto{
+	listingProto := &repr_proto.DirectoryListingProto{
+		Entry: []*repr_proto.DirectoryEntryProto{
 			makeLegalEntryProto(),
 			makeLegalEntryProto(),
 			makeLegalEntryProto(),
 		},
 	}
 
-	listingProto.Entry[1].Type = repr.DirectoryEntryProto_Type(17).Enum()
+	listingProto.Entry[1].Type = repr_proto.DirectoryEntryProto_Type(17).Enum()
 
 	data, err := proto.Marshal(listingProto)
 	AssertEq(nil, err)
@@ -78,18 +79,18 @@ func (t *UnmarshalTest) UnknownTypeValue() {
 
 func (t *UnmarshalTest) HashIsTooShort() {
 	// Input
-	listingProto := &repr.DirectoryListingProto{
-		Entry: []*repr.DirectoryEntryProto{
+	listingProto := &repr_proto.DirectoryListingProto{
+		Entry: []*repr_proto.DirectoryEntryProto{
 			makeLegalEntryProto(),
 			makeLegalEntryProto(),
 			makeLegalEntryProto(),
 		},
 	}
 
-	listingProto.Entry[1].Blob = []*repr.BlobInfoProto{
-		&repr.BlobInfoProto{Hash: blob.ComputeScore([]byte{}).Sha1Hash()},
-		&repr.BlobInfoProto{Hash: blob.ComputeScore([]byte{}).Sha1Hash()},
-		&repr.BlobInfoProto{Hash: blob.ComputeScore([]byte{}).Sha1Hash()},
+	listingProto.Entry[1].Blob = []*repr_proto.BlobInfoProto{
+		&repr_proto.BlobInfoProto{Hash: blob.ComputeScore([]byte{}).Sha1Hash()},
+		&repr_proto.BlobInfoProto{Hash: blob.ComputeScore([]byte{}).Sha1Hash()},
+		&repr_proto.BlobInfoProto{Hash: blob.ComputeScore([]byte{}).Sha1Hash()},
 	}
 
 	blob := listingProto.Entry[1].Blob[1]
@@ -107,18 +108,18 @@ func (t *UnmarshalTest) HashIsTooShort() {
 
 func (t *UnmarshalTest) HashIsTooLong() {
 	// Input
-	listingProto := &repr.DirectoryListingProto{
-		Entry: []*repr.DirectoryEntryProto{
+	listingProto := &repr_proto.DirectoryListingProto{
+		Entry: []*repr_proto.DirectoryEntryProto{
 			makeLegalEntryProto(),
 			makeLegalEntryProto(),
 			makeLegalEntryProto(),
 		},
 	}
 
-	listingProto.Entry[1].Blob = []*repr.BlobInfoProto{
-		&repr.BlobInfoProto{Hash: blob.ComputeScore([]byte{}).Sha1Hash()},
-		&repr.BlobInfoProto{Hash: blob.ComputeScore([]byte{}).Sha1Hash()},
-		&repr.BlobInfoProto{Hash: blob.ComputeScore([]byte{}).Sha1Hash()},
+	listingProto.Entry[1].Blob = []*repr_proto.BlobInfoProto{
+		&repr_proto.BlobInfoProto{Hash: blob.ComputeScore([]byte{}).Sha1Hash()},
+		&repr_proto.BlobInfoProto{Hash: blob.ComputeScore([]byte{}).Sha1Hash()},
+		&repr_proto.BlobInfoProto{Hash: blob.ComputeScore([]byte{}).Sha1Hash()},
 	}
 
 	blob := listingProto.Entry[1].Blob[1]

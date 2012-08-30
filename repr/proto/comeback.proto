@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package repr;
+package repr_proto;
 
 message BlobInfoProto {
   // The SHA-1 hash of the blob, in 20-byte 'raw' form.

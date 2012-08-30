@@ -21,32 +21,33 @@ import (
 	"code.google.com/p/goprotobuf/proto"
 	"fmt"
 	"github.com/jacobsa/comeback/fs"
+	"github.com/jacobsa/comeback/repr/proto"
 )
 
-func convertType(t fs.EntryType) (DirectoryEntryProto_Type, error) {
+func convertType(t fs.EntryType) (repr_proto.DirectoryEntryProto_Type, error) {
 	switch t {
 	case fs.TypeFile:
-		return DirectoryEntryProto_TYPE_FILE, nil
+		return repr_proto.DirectoryEntryProto_TYPE_FILE, nil
 	case fs.TypeDirectory:
-		return DirectoryEntryProto_TYPE_DIRECTORY, nil
+		return repr_proto.DirectoryEntryProto_TYPE_DIRECTORY, nil
 	case fs.TypeSymlink:
-		return DirectoryEntryProto_TYPE_SYMLINK, nil
+		return repr_proto.DirectoryEntryProto_TYPE_SYMLINK, nil
 	}
 
 	return 0, fmt.Errorf("Unrecognized EntryType: %v", t)
 }
 
-func makeEntryProto(entry *fs.DirectoryEntry) (*DirectoryEntryProto, error) {
-	blobs := []*BlobInfoProto{}
+func makeEntryProto(entry *fs.DirectoryEntry) (*repr_proto.DirectoryEntryProto, error) {
+	blobs := []*repr_proto.BlobInfoProto{}
 	for _, score := range entry.Scores {
-		proto := &BlobInfoProto{Hash: score.Sha1Hash()}
+		proto := &repr_proto.BlobInfoProto{Hash: score.Sha1Hash()}
 		blobs = append(blobs, proto)
 	}
 
-	entryProto := &DirectoryEntryProto{
+	entryProto := &repr_proto.DirectoryEntryProto{
 		Permissions: proto.Uint32(entry.Permissions),
 		Name:        proto.String(entry.Name),
-		Mtime: &TimeProto{
+		Mtime: &repr_proto.TimeProto{
 			Second:     proto.Int64(entry.MTime.Unix()),
 			Nanosecond: proto.Uint32(uint32(entry.MTime.Nanosecond())),
 		},
@@ -67,7 +68,7 @@ func makeEntryProto(entry *fs.DirectoryEntry) (*DirectoryEntryProto, error) {
 // Marshal turns a list of directory entries into bytes that can later be used
 // with Unmarshal.
 func Marshal(entries []*fs.DirectoryEntry) (d []byte, err error) {
-	entryProtos := []*DirectoryEntryProto{}
+	entryProtos := []*repr_proto.DirectoryEntryProto{}
 	for _, entry := range entries {
 		entryProto, err := makeEntryProto(entry)
 		if err != nil {
@@ -77,6 +78,6 @@ func Marshal(entries []*fs.DirectoryEntry) (d []byte, err error) {
 		entryProtos = append(entryProtos, entryProto)
 	}
 
-	listingProto := &DirectoryListingProto{Entry: entryProtos}
+	listingProto := &repr_proto.DirectoryListingProto{Entry: entryProtos}
 	return proto.Marshal(listingProto)
 }

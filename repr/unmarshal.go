@@ -23,23 +23,24 @@ import (
 	"fmt"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/fs"
+	"github.com/jacobsa/comeback/repr/proto"
 	"time"
 )
 
-func convertProtoType(t DirectoryEntryProto_Type) (fs.EntryType, error) {
+func convertProtoType(t repr_proto.DirectoryEntryProto_Type) (fs.EntryType, error) {
 	switch t {
-	case DirectoryEntryProto_TYPE_FILE:
+	case repr_proto.DirectoryEntryProto_TYPE_FILE:
 		return fs.TypeFile, nil
-	case DirectoryEntryProto_TYPE_DIRECTORY:
+	case repr_proto.DirectoryEntryProto_TYPE_DIRECTORY:
 		return fs.TypeDirectory, nil
-	case DirectoryEntryProto_TYPE_SYMLINK:
+	case repr_proto.DirectoryEntryProto_TYPE_SYMLINK:
 		return fs.TypeSymlink, nil
 	}
 
 	return 0, fmt.Errorf("Unrecognized DirectoryEntryProto_Type: %v", t)
 }
 
-func convertTimeProto(timeProto *TimeProto) (time.Time, error) {
+func convertTimeProto(timeProto *repr_proto.TimeProto) (time.Time, error) {
 	return time.Unix(timeProto.GetSecond(), int64(timeProto.GetNanosecond())), nil
 }
 
@@ -51,7 +52,7 @@ func (s *score) Sha1Hash() []byte {
 	return s.hash
 }
 
-func convertBlobInfoProto(p *BlobInfoProto) (blob.Score, error) {
+func convertBlobInfoProto(p *repr_proto.BlobInfoProto) (blob.Score, error) {
 	if len(p.Hash) != 20 {
 		return nil, fmt.Errorf("Illegal hash length: %d", len(p.Hash))
 	}
@@ -59,7 +60,7 @@ func convertBlobInfoProto(p *BlobInfoProto) (blob.Score, error) {
 	return &score{p.Hash}, nil
 }
 
-func convertEntryProto(entryProto *DirectoryEntryProto) (entry *fs.DirectoryEntry, err error) {
+func convertEntryProto(entryProto *repr_proto.DirectoryEntryProto) (entry *fs.DirectoryEntry, err error) {
 	entry = &fs.DirectoryEntry{}
 
 	entry.Name = entryProto.GetName()
@@ -94,7 +95,7 @@ func convertEntryProto(entryProto *DirectoryEntryProto) (entry *fs.DirectoryEntr
 // returned by Marshal.
 func Unmarshal(d []byte) (entries []*fs.DirectoryEntry, err error) {
 	// Parse the protocol buffer.
-	listingProto := new(DirectoryListingProto)
+	listingProto := new(repr_proto.DirectoryListingProto)
 	err = proto.Unmarshal(d, listingProto)
 	if err != nil {
 		return nil, errors.New("Parsing data: " + err.Error())
