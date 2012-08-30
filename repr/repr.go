@@ -23,28 +23,27 @@ import (
 	"github.com/jacobsa/comeback/fs"
 )
 
-func convertType(t fs.EntryType) DirectoryEntryProto_Type {
+func convertType(t fs.EntryType) (DirectoryEntryProto_Type, error) {
 	switch t {
 	case fs.TypeFile:
-		return DirectoryEntryProto_TYPE_FILE
+		return DirectoryEntryProto_TYPE_FILE, nil
 	case fs.TypeDirectory:
-		return DirectoryEntryProto_TYPE_DIRECTORY
+		return DirectoryEntryProto_TYPE_DIRECTORY, nil
 	case fs.TypeSymlink:
-		return DirectoryEntryProto_TYPE_SYMLINK
+		return DirectoryEntryProto_TYPE_SYMLINK, nil
 	}
 
-	panic(fmt.Sprintf("Unrecognized EntryType: %v", t))
+	return 0, fmt.Errorf("Unrecognized EntryType: %v", t)
 }
 
-func makeEntryProto(entry *fs.DirectoryEntry) *DirectoryEntryProto {
+func makeEntryProto(entry *fs.DirectoryEntry) (*DirectoryEntryProto, error) {
 	blobs := []*BlobInfoProto{}
 	for _, score := range entry.Scores {
 		proto := &BlobInfoProto{Hash: score.Sha1Hash()}
 		blobs = append(blobs, proto)
 	}
 
-	return &DirectoryEntryProto{
-		Type:        convertType(entry.Type).Enum(),
+	entryProto := &DirectoryEntryProto{
 		Permissions: proto.Uint32(entry.Permissions),
 		Name:        proto.String(entry.Name),
 		Mtime: &TimeProto{
@@ -53,6 +52,16 @@ func makeEntryProto(entry *fs.DirectoryEntry) *DirectoryEntryProto {
 		},
 		Blob: blobs,
 	}
+
+	// Convert the entry's type.
+	typeEnum, err := convertType(entry.Type)
+	if err != nil {
+		return nil, err
+	}
+
+	entryProto.Type = typeEnum.Enum()
+
+	return entryProto, nil
 }
 
 // Marshal turns a list of directory entries into bytes that can later be used
@@ -60,7 +69,12 @@ func makeEntryProto(entry *fs.DirectoryEntry) *DirectoryEntryProto {
 func Marshal(entries []*fs.DirectoryEntry) (d []byte, err error) {
 	entryProtos := []*DirectoryEntryProto{}
 	for _, entry := range entries {
-		entryProtos = append(entryProtos, makeEntryProto(entry))
+		entryProto, err := makeEntryProto(entry)
+		if err != nil {
+			return nil, err
+		}
+
+		entryProtos = append(entryProtos, entryProto)
 	}
 
 	listingProto := &DirectoryListingProto{Entry: entryProtos}

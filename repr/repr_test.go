@@ -75,7 +75,7 @@ func (t *MarshalTest) UnknownType() {
 	// Marshal
 	_, err := repr.Marshal(in)
 
-	ExpectThat(err, Error(HasSubstr("type")))
+	ExpectThat(err, Error(HasSubstr("EntryType")))
 	ExpectThat(err, Error(HasSubstr("17")))
 }
 
