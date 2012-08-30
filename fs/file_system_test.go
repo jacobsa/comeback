@@ -438,7 +438,31 @@ func (t *ReadDirTest) StickyBit() {
 }
 
 func (t *ReadDirTest) SortsByName() {
-	ExpectEq("TODO", "")
+	var err error
+
+	// File 0
+	path0 := path.Join(t.baseDir, "enchilada")
+	err = ioutil.WriteFile(path0, []byte(""), 0600)
+	AssertEq(nil, err)
+
+	// File 1
+	path1 := path.Join(t.baseDir, "burrito")
+	err = ioutil.WriteFile(path1, []byte(""), 0600)
+	AssertEq(nil, err)
+
+	// File 2
+	path2 := path.Join(t.baseDir, "taco")
+	err = ioutil.WriteFile(path2, []byte(""), 0600)
+	AssertEq(nil, err)
+
+	// Call
+	entries, err := t.fileSystem.ReadDir(t.baseDir)
+	AssertEq(nil, err)
+	AssertThat(entries, ElementsAre(Any(), Any(), Any()))
+
+	ExpectEq("burrito", entries[0].Name)
+	ExpectEq("enchilada", entries[1].Name)
+	ExpectEq("taco", entries[2].Name)
 }
 
 ////////////////////////////////////////////////////////////////////////
