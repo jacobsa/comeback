@@ -33,6 +33,66 @@ func init() { RegisterTestSuite(&FileSaverTest{}) }
 // Tests
 ////////////////////////////////////////////////////////////////////////
 
-func (t *FileSaverTest) DoesFoo() {
+func (t *FileSaverTest) CallsReadWithExpectedSizeBuffer() {
+	ExpectEq("TODO", "")
+}
+
+func (t *FileSaverTest) FirstReadReturnsZeroBytesAndError() {
+	ExpectEq("TODO", "")
+}
+
+func (t *FileSaverTest) FirstReadReturnsNonZeroBytesAndError() {
+	ExpectEq("TODO", "")
+}
+
+func (t *FileSaverTest) FirstReadReturnsZeroBytesAndEof() {
+	ExpectEq("TODO", "")
+}
+
+func (t *FileSaverTest) FirstReadReturnsZeroBytesAndNilSecondEof() {
+	ExpectEq("TODO", "")
+}
+
+func (t *FileSaverTest) ErrorOnSubsequentRead() {
+	ExpectEq("TODO", "")
+}
+
+func (t *FileSaverTest) OneSmallerSizedChunk() {
+	ExpectEq("TODO", "")
+}
+
+func (t *FileSaverTest) OneFullSizedChunk() {
+	ExpectEq("TODO", "")
+}
+
+func (t *FileSaverTest) OneFullSizedChunkPlusOneByte() {
+	ExpectEq("TODO", "")
+}
+
+func (t *FileSaverTest) MultipleChunksWithNoRemainder() {
+	ExpectEq("TODO", "")
+}
+
+func (t *FileSaverTest) MultipleChunksWithSmallRemainder() {
+	ExpectEq("TODO", "")
+}
+
+func (t *FileSaverTest) MultipleChunksWithLargeRemainder() {
+	ExpectEq("TODO", "")
+}
+
+func (t *FileSaverTest) EofWithZeroSizedRead() {
+	ExpectEq("TODO", "")
+}
+
+func (t *FileSaverTest) ErrorStoringOneChunk() {
+	ExpectEq("TODO", "")
+}
+
+func (t *FileSaverTest) ResultForEmptyReader() {
+	ExpectEq("TODO", "")
+}
+
+func (t *FileSaverTest) AllStoresSuccessful() {
 	ExpectEq("TODO", "")
 }
