@@ -278,7 +278,29 @@ func (t *DirectorySaverTest) CallsDirSaverForDirs() {
 }
 
 func (t *DirectorySaverTest) DirSaverReturnsErrorForOneDir() {
-	ExpectEq("TODO", "")
+	t.dirpath = "/taco"
+
+	// ReadDir
+	entries := []*fs.DirectoryEntry {
+		makeDirEntry(""),
+		makeDirEntry(""),
+		makeDirEntry(""),
+	}
+
+	ExpectCall(t.fileSystem, "ReadDir")(Any()).
+		WillOnce(oglemock.Return(entries, nil))
+
+	// Wrapped directory saver
+	score0 := blob.ComputeScore([]byte(""))
+
+	ExpectCall(t.wrapped, "Save")(Any()).
+		WillOnce(oglemock.Return(score0, nil)).
+		WillOnce(oglemock.Return(nil, errors.New("taco")))
+
+	// Call
+	t.callSaver()
+
+	ExpectThat(t.err, Error(HasSubstr("taco")))
 }
 
 func (t *DirectorySaverTest) OneTypeIsUnsupported() {
