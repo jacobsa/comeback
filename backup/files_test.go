@@ -22,7 +22,6 @@ import (
 	"errors"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/blob/mock"
-	"github.com/jacobsa/comeback/io/mock"
 	"github.com/jacobsa/oglemock"
 	"io"
 	"testing"
@@ -52,11 +51,8 @@ func returnStoreError(err string) oglemock.Action {
 
 type FileSaverTest struct {
 	blobStore mock_blob.MockStore
-	mockReader mock_io.MockReader
-	fileSaver FileSaver
-
-	// Will be used instead of mockReader if non-nil.
 	reader io.Reader
+	fileSaver FileSaver
 
 	scores []blob.Score
 	err error
@@ -66,17 +62,11 @@ func init() { RegisterTestSuite(&FileSaverTest{}) }
 
 func (t *FileSaverTest) SetUp(i *TestInfo) {
 	t.blobStore = mock_blob.NewMockStore(i.MockController, "blobStore")
-	t.mockReader = mock_io.NewMockReader(i.MockController, "reader")
 	t.fileSaver, _ = NewFileSaver(t.blobStore)
 }
 
 func (t *FileSaverTest) callSaver() {
-	var reader io.Reader = t.mockReader
-	if t.reader != nil {
-		reader = t.reader
-	}
-
-	t.scores, t.err = t.fileSaver.Save(reader)
+	t.scores, t.err = t.fileSaver.Save(t.reader)
 }
 
 ////////////////////////////////////////////////////////////////////////
