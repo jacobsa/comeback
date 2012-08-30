@@ -21,6 +21,7 @@ import (
 	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
 	"testing"
+	"time"
 )
 
 func TestReprTest(t *testing.T) { RunTests(t) }
@@ -168,7 +169,30 @@ func (t *MarshalTest) UnrepresentableModTime() {
 }
 
 func (t *MarshalTest) PreservesModTimes() {
-	ExpectEq("TODO", "")
+	// Input
+	in := []*fs.DirectoryEntry{
+		makeLegalEntry(),
+		makeLegalEntry(),
+	}
+
+	in[0].MTime = time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)
+	in[1].MTime = time.Date(1985, time.March, 18, 15, 33, 0, 0, time.UTC)
+
+	// Marshal
+	d, err := repr.Marshal(in)
+	AssertEq(nil, err)
+	AssertNe(nil, d)
+
+	// Unmarshal
+	out, err := repr.Unmarshal(d)
+	AssertEq(nil, err)
+	AssertNe(nil, out)
+
+	// Output
+	AssertThat(out, ElementsAre(Any(), Any()))
+
+	ExpectEq(in[0].MTime, out[0].MTime)
+	ExpectEq(in[1].MTime, out[1].MTime)
 }
 
 func (t *MarshalTest) CopesWithLocationsInModTimes() {
