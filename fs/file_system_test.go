@@ -23,11 +23,45 @@ import (
 	"log"
 	"os"
 	"path"
+	"syscall"
 	"testing"
 	"time"
 )
 
 func TestFileSystemTest(t *testing.T) { RunTests(t) }
+
+////////////////////////////////////////////////////////////////////////
+// Helpers
+////////////////////////////////////////////////////////////////////////
+
+// Set the modification time for the supplied path without following symlinks
+// (as syscall.Chtimes and therefore os.Chtimes do).
+//
+// c.f. http://stackoverflow.com/questions/10608724/set-modification-date-on-symbolic-link-in-cocoa
+func setModTime(path string, mtime time.Time) error {
+	// Open the file without following symlinks.
+	fd, err := syscall.Open(path, syscall.O_RDONLY | syscall.O_SYMLINK, 0)
+	if err != nil {
+		return err
+	}
+
+	defer syscall.Close(fd)
+
+	// Call futimes.
+	var utimes [2]syscall.Timeval
+	atime := time.Now()
+	atime_ns := atime.Unix()*1e9 + int64(atime.Nanosecond())
+	mtime_ns := mtime.Unix()*1e9 + int64(mtime.Nanosecond())
+	utimes[0] = syscall.NsecToTimeval(atime_ns)
+	utimes[1] = syscall.NsecToTimeval(mtime_ns)
+
+	err = syscall.Futimes(fd, utimes[0:])
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
 
 ////////////////////////////////////////////////////////////////////////
 // ReadDir
@@ -95,7 +129,7 @@ func (t *ReadDirTest) RegularFiles() {
 	AssertEq(nil, err)
 
 	mtime0 := time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)
-	err = os.Chtimes(path0, time.Now(), mtime0)
+	err = setModTime(path0, mtime0)
 	AssertEq(nil, err)
 
 	// File 1
@@ -104,7 +138,7 @@ func (t *ReadDirTest) RegularFiles() {
 	AssertEq(nil, err)
 
 	mtime1 := time.Date(1985, time.March, 18, 15, 33, 0, 0, time.Local)
-	err = os.Chtimes(path1, time.Now(), mtime1)
+	err = setModTime(path1, mtime1)
 	AssertEq(nil, err)
 
 	// Call
@@ -137,7 +171,7 @@ func (t *ReadDirTest) Directories() {
 	AssertEq(nil, err)
 
 	mtime0 := time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)
-	err = os.Chtimes(path0, time.Now(), mtime0)
+	err = setModTime(path0, mtime0)
 	AssertEq(nil, err)
 
 	// Dir 1
@@ -146,7 +180,7 @@ func (t *ReadDirTest) Directories() {
 	AssertEq(nil, err)
 
 	mtime1 := time.Date(1985, time.March, 18, 15, 33, 0, 0, time.Local)
-	err = os.Chtimes(path1, time.Now(), mtime1)
+	err = setModTime(path1, mtime1)
 	AssertEq(nil, err)
 
 	// Call
@@ -179,7 +213,7 @@ func (t *ReadDirTest) Symlinks() {
 	AssertEq(nil, err)
 
 	mtime0 := time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)
-	err = os.Chtimes(path0, time.Now(), mtime0)
+	err = setModTime(path0, mtime0)
 	AssertEq(nil, err)
 
 	// Link 1
@@ -188,7 +222,7 @@ func (t *ReadDirTest) Symlinks() {
 	AssertEq(nil, err)
 
 	mtime1 := time.Date(1985, time.March, 18, 15, 33, 0, 0, time.Local)
-	err = os.Chtimes(path1, time.Now(), mtime1)
+	err = setModTime(path1, mtime1)
 	AssertEq(nil, err)
 
 	// Call
