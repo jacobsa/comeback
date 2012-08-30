@@ -278,8 +278,6 @@ func (t *DirectorySaverTest) CallsDirSaverForDirs() {
 }
 
 func (t *DirectorySaverTest) DirSaverReturnsErrorForOneDir() {
-	t.dirpath = "/taco"
-
 	// ReadDir
 	entries := []*fs.DirectoryEntry {
 		makeDirEntry(""),
@@ -304,8 +302,6 @@ func (t *DirectorySaverTest) DirSaverReturnsErrorForOneDir() {
 }
 
 func (t *DirectorySaverTest) OneTypeIsUnsupported() {
-	t.dirpath = "/taco"
-
 	// ReadDir
 	entries := []*fs.DirectoryEntry {
 		makeDirEntry(""),
@@ -332,8 +328,6 @@ func (t *DirectorySaverTest) OneTypeIsUnsupported() {
 }
 
 func (t *DirectorySaverTest) CallsBlobStore() {
-	t.dirpath = "/taco"
-
 	// ReadDir
 	entries := []*fs.DirectoryEntry {
 		makeFileEntry("taco"),
@@ -399,7 +393,23 @@ func (t *DirectorySaverTest) CallsBlobStore() {
 }
 
 func (t *DirectorySaverTest) BlobStoreReturnsError() {
-	ExpectEq("TODO", "")
+	// ReadDir
+	entries := []*fs.DirectoryEntry {
+	}
+
+	ExpectCall(t.fileSystem, "ReadDir")(Any()).
+		WillOnce(oglemock.Return(entries, nil))
+
+	// Blob store
+	ExpectCall(t.blobStore, "Store")(Any()).
+		WillOnce(oglemock.Return(nil, errors.New("taco")))
+
+	// Call
+	t.callSaver()
+
+	ExpectThat(t.err, Error(HasSubstr("Storing")))
+	ExpectThat(t.err, Error(HasSubstr("blob")))
+	ExpectThat(t.err, Error(HasSubstr("taco")))
 }
 
 func (t *DirectorySaverTest) BlobStoreSucceeds() {
