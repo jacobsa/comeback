@@ -344,7 +344,18 @@ func (t *OpenForReadingTest) NoReadPermissions() {
 }
 
 func (t *OpenForReadingTest) EmptyFile() {
-	ExpectEq("TODO", "")
+	filepath := path.Join(t.baseDir, "foo.txt")
+	contents := []byte{}
+	err := ioutil.WriteFile(filepath, contents, 0400)
+	AssertEq(nil, err)
+
+	f, err := t.fileSystem.OpenForReading(filepath)
+	AssertEq(nil, err)
+	defer f.Close()
+
+	data, err := ioutil.ReadAll(f)
+	AssertEq(nil, err)
+	ExpectThat(data, DeepEquals(contents))
 }
 
 func (t *OpenForReadingTest) FileWithContents() {
