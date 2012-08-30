@@ -16,10 +16,10 @@
 package blob
 
 import (
-	. "github.com/jacobsa/oglematchers"
-	. "github.com/jacobsa/ogletest"
 	"encoding/hex"
 	"fmt"
+	. "github.com/jacobsa/oglematchers"
+	. "github.com/jacobsa/ogletest"
 	"testing"
 )
 
@@ -49,7 +49,8 @@ func matchesHexHash(hexHash string) Matcher {
 	return ElementsAre(interfaceSlice...)
 }
 
-type ScoreTest struct {}
+type ScoreTest struct{}
+
 func init() { RegisterTestSuite(&ScoreTest{}) }
 
 ////////////////////////////////////////////////////////////////////////

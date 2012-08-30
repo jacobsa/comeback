@@ -16,20 +16,20 @@
 package backup
 
 import (
-	. "github.com/jacobsa/oglematchers"
-	. "github.com/jacobsa/ogletest"
 	"bytes"
 	"errors"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/blob/mock"
+	. "github.com/jacobsa/oglematchers"
 	"github.com/jacobsa/oglemock"
+	. "github.com/jacobsa/ogletest"
 	"io"
 	"testing"
 	"testing/iotest"
 )
 
 const (
-	expectedChunkSize = 1<<24
+	expectedChunkSize = 1 << 24
 )
 
 func TestRegister(t *testing.T) { RunTests(t) }
@@ -51,11 +51,11 @@ func returnStoreError(err string) oglemock.Action {
 
 type FileSaverTest struct {
 	blobStore mock_blob.MockStore
-	reader io.Reader
+	reader    io.Reader
 	fileSaver FileSaver
 
 	scores []blob.Score
-	err error
+	err    error
 }
 
 func init() { RegisterTestSuite(&FileSaverTest{}) }
@@ -160,7 +160,7 @@ func (t *FileSaverTest) CopesWithEofAndNonZeroData() {
 func (t *FileSaverTest) OneSmallerSizedChunk() {
 	// Chunks
 	chunk0 := makeChunk('a')
-	chunk0 = chunk0[0:len(chunk0)-10]
+	chunk0 = chunk0[0 : len(chunk0)-10]
 
 	// Reader
 	t.reader = io.MultiReader(
@@ -288,7 +288,7 @@ func (t *FileSaverTest) MultipleChunksWithLargeRemainder() {
 	chunk0 := makeChunk('a')
 	chunk1 := makeChunk('b')
 	chunk2 := makeChunk('c')
-	chunk2 = chunk2[0:len(chunk2)-1]
+	chunk2 = chunk2[0 : len(chunk2)-1]
 
 	// Reader
 	t.reader = io.MultiReader(
