@@ -327,7 +327,10 @@ type OpenForReadingTest struct {
 func init() { RegisterTestSuite(&OpenForReadingTest{}) }
 
 func (t *OpenForReadingTest) NonExistentFile() {
-	ExpectEq("TODO", "")
+	filepath := path.Join(t.baseDir, "foobar")
+
+	_, err := t.fileSystem.OpenForReading(filepath)
+	ExpectThat(err, Error(HasSubstr("no such")))
 }
 
 func (t *OpenForReadingTest) NotAFile() {
