@@ -18,9 +18,6 @@ package fs
 
 import (
 	"github.com/jacobsa/comeback/blob"
-	"io"
-	"io/ioutil"
-	"os"
 	"time"
 )
 
@@ -50,31 +47,4 @@ type DirectoryEntry struct {
 	// to be concatenated in order. For directories, this is exactly one blob
 	// whose contents can be processed using repr.Unmarshal.
 	Scores []blob.Score
-}
-
-// FileSystem represents operations performed on a real file system, but is an
-// interface for mockability.
-type FileSystem interface {
-	// Read the contents of the directory named by the supplied path, returning
-	// an array of directory entries sorted by name.
-	ReadDir(path string) (entries []*DirectoryEntry, err error)
-
-	// Open the file named by the supplied path for reading.
-	OpenForReading(path string) (r io.Reader, err error)
-}
-
-// Return a FileSystem that uses the read file system.
-func NewFileSystem() FileSystem {
-	return &fileSystem{}
-}
-
-type fileSystem struct {
-}
-
-func (f *fileSystem) ReadDir(path string) (entries []*DirectoryEntry, err error) {
-	return ioutil.ReadDir(path)
-}
-
-func (f *fileSystem) OpenForReading(path string) (r io.Reader, err error) {
-	return os.Open(path)
 }
