@@ -173,7 +173,21 @@ func (t *FileSaverTest) CopesWithShortReadsWithinFullSizeChunks() {
 }
 
 func (t *FileSaverTest) CopesWithShortChunks() {
-	ExpectEq("TODO", "")
+	// Chunks
+	chunk0 := makeChunk('a')
+	chunk0 = chunk0[0:len(chunk0)-10]
+
+	// Reader
+	t.reader = io.MultiReader(
+		bytes.NewReader(chunk0),
+	)
+
+	// Blob store
+	ExpectCall(t.blobStore, "Store")(DeepEquals(chunk0)).
+		WillOnce(returnStoreError(""))
+
+	// Call
+	t.callSaver()
 }
 
 func (t *FileSaverTest) CopesWithEofAndZeroData() {
