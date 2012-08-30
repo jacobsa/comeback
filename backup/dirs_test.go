@@ -23,6 +23,7 @@ import (
 	"github.com/jacobsa/comeback/blob/mock"
 	"github.com/jacobsa/comeback/fs"
 	"github.com/jacobsa/comeback/fs/mock"
+	"github.com/jacobsa/comeback/repr"
 	"github.com/jacobsa/oglemock"
 	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
@@ -34,6 +35,15 @@ func TestRegisterDirsTest(t *testing.T) { RunTests(t) }
 ////////////////////////////////////////////////////////////////////////
 // Helpers
 ////////////////////////////////////////////////////////////////////////
+
+func saveBlob(res *[]byte) oglemock.Action {
+	f := func(b []byte) (blob.Score, error) {
+		*res = b
+		return nil, errors.New("foo")
+	}
+
+	return oglemock.Invoke(f)
+}
 
 type DirectorySaverTest struct {
 	blobStore mock_blob.MockStore
@@ -101,11 +111,17 @@ func (t *DirectorySaverTest) NoEntriesInDirectory() {
 		WillOnce(oglemock.Return([]*fs.DirectoryEntry{}, nil))
 
 	// Blob store
-	ExpectCall(t.blobStore, "Store")(DeepEquals([]byte{})).
-		WillOnce(oglemock.Return(nil, errors.New("")))
+	var blob []byte
+	ExpectCall(t.blobStore, "Store")(Any()).
+		WillOnce(saveBlob(&blob))
 
 	// Call
 	t.callSaver()
+
+	AssertNe(nil, blob)
+	entries, err := repr.Unmarshal(blob)
+	AssertEq(nil, err)
+	ExpectThat(entries, ElementsAre())
 }
 
 func (t *DirectorySaverTest) CallsFileSaverForFiles() {
