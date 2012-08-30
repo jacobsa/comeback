@@ -80,7 +80,33 @@ func (t *MarshalTest) UnknownType() {
 }
 
 func (t *MarshalTest) PreservesTypes() {
-	ExpectEq("TODO", "")
+	// Input
+	in := []*fs.DirectoryEntry{
+		makeLegalEntry(),
+		makeLegalEntry(),
+		makeLegalEntry(),
+	}
+
+	in[0].Type = fs.TypeFile
+	in[1].Type = fs.TypeDirectory
+	in[2].Type = fs.TypeSymlink
+
+	// Marshal
+	d, err := repr.Marshal(in)
+	AssertEq(nil, err)
+	AssertNe(nil, d)
+
+	// Unmarshal
+	out, err := repr.Unmarshal(d)
+	AssertEq(nil, err)
+	AssertNe(nil, out)
+
+	// Output
+	AssertThat(out, ElementsAre(Any(), Any(), Any()))
+
+	ExpectEq(in[0].Type, out[0].Type)
+	ExpectEq(in[1].Type, out[1].Type)
+	ExpectEq(in[2].Type, out[2].Type)
 }
 
 func (t *MarshalTest) PreservesNames() {
