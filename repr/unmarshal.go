@@ -51,7 +51,11 @@ func (s *score) Sha1Hash() []byte {
 }
 
 func convertBlobInfoProto(p *BlobInfoProto) (blob.Score, error) {
-	return nil, fmt.Errorf("TODO SCORE")
+	if len(p.Hash) != 20 {
+		return nil, fmt.Errorf("Illegal hash length: %d", len(p.Hash))
+	}
+
+	return &score{p.Hash}, nil
 }
 
 func convertEntryProto(entryProto *DirectoryEntryProto) (entry *fs.DirectoryEntry, err error) {
