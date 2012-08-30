@@ -13,8 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package repr contains functions useful for serializing and deserializing
-// directory listing structs.
 package repr
 
 import (
