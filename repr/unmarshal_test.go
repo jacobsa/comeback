@@ -54,7 +54,7 @@ func (t *UnmarshalTest) JunkWireData() {
 	ExpectThat(err, Error(HasSubstr("Parsing data")))
 }
 
-func (t *UnmarshalTest) UnknownTypeValue() {
+func (t *UnmarshalTest) InvalidTypeValue() {
 	// Input
 	listingProto := &repr_proto.DirectoryListingProto{
 		Entry: []*repr_proto.DirectoryEntryProto{
@@ -75,6 +75,29 @@ func (t *UnmarshalTest) UnknownTypeValue() {
 	ExpectThat(err, Error(HasSubstr("Unrecognized")))
 	ExpectThat(err, Error(HasSubstr("DirectoryEntryProto_Type")))
 	ExpectThat(err, Error(HasSubstr("17")))
+}
+
+func (t *UnmarshalTest) UnknownTypeValue() {
+	// Input
+	listingProto := &repr_proto.DirectoryListingProto{
+		Entry: []*repr_proto.DirectoryEntryProto{
+			makeLegalEntryProto(),
+			makeLegalEntryProto(),
+			makeLegalEntryProto(),
+		},
+	}
+
+	listingProto.Entry[1].Type = repr_proto.DirectoryEntryProto_TYPE_UNKNOWN.Enum()
+
+	data, err := proto.Marshal(listingProto)
+	AssertEq(nil, err)
+
+	// Call
+	_, err = repr.Unmarshal(data)
+
+	ExpectThat(err, Error(HasSubstr("Unrecognized")))
+	ExpectThat(err, Error(HasSubstr("DirectoryEntryProto_Type")))
+	ExpectThat(err, Error(HasSubstr("TYPE_UNKNOWN")))
 }
 
 func (t *UnmarshalTest) HashIsTooShort() {
