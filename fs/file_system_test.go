@@ -16,10 +16,13 @@
 package fs_test
 
 import (
+	"github.com/jacobsa/comeback/fs"
+	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
 	"io/ioutil"
 	"log"
 	"os"
+	"path"
 	"testing"
 )
 
@@ -30,12 +33,16 @@ func TestFileSystemTest(t *testing.T) { RunTests(t) }
 ////////////////////////////////////////////////////////////////////////
 
 type ReadDirTest struct {
+	fileSystem fs.FileSystem
 	baseDir string
 }
 
 func init() { RegisterTestSuite(&ReadDirTest{}) }
 
 func (t *ReadDirTest) SetUp(i *TestInfo) {
+	t.fileSystem = fs.NewFileSystem()
+
+	// Create a temporary directory.
 	var err error
 	t.baseDir, err = ioutil.TempDir("", "ReadDirTest_")
 	if err != nil {
@@ -51,7 +58,10 @@ func (t *ReadDirTest) TearDown() {
 }
 
 func (t *ReadDirTest) NonExistentPath() {
-	ExpectEq("TODO", "")
+	dirpath := path.Join(t.baseDir, "foobar")
+
+	_, err := t.fileSystem.ReadDir(dirpath)
+	ExpectThat(err, Error(HasSubstr("no such")))
 }
 
 func (t *ReadDirTest) NotADirectory() {
