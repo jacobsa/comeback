@@ -52,9 +52,9 @@ type dirSaver struct {
 	wrapped    DirectorySaver
 }
 
-func (s *dirSaver) saveDir(parent string, fi os.FileInfo) ([]blob.Score, error) {
+func (s *dirSaver) saveDir(parent string, entry *fs.DirectoryEntry) ([]blob.Score, error) {
 	// Recurse.
-	score, err := s.wrapped.Save(path.Join(parent, fi.Name()))
+	score, err := s.wrapped.Save(path.Join(parent, entry.Name))
 	if err != nil {
 		return nil, err
 	}
@@ -62,9 +62,9 @@ func (s *dirSaver) saveDir(parent string, fi os.FileInfo) ([]blob.Score, error) 
 	return []blob.Score{score}, nil
 }
 
-func (s *dirSaver) saveFile(parent string, fi os.FileInfo) ([]blob.Score, error) {
+func (s *dirSaver) saveFile(parent string, entry *fs.DirectoryEntry) ([]blob.Score, error) {
 	// Open the file.
-	f, err := os.Open(path.Join(parent, fi.Name()))
+	f, err := os.Open(path.Join(parent, entry.Name))
 	if err != nil {
 		return nil, fmt.Errorf("Opening file: %v", err)
 	}
@@ -78,6 +78,23 @@ func (s *dirSaver) Save(dirpath string) (score blob.Score, err error) {
 	entries, err := s.fileSystem.ReadDir(dirpath)
 	if err != nil {
 		return nil, fmt.Errorf("Listing directory: %v", err)
+	}
+
+	// Save the data for each entry.
+	for _, entry := range entries {
+		// Call the appropriate method based on this entry's type.
+		switch entry.Type {
+		case fs.TypeFile:
+			entry.Scores, err = s.saveFile(dirpath, entry)
+		case fs.TypeDirectory:
+			entry.Scores, err = s.saveDir(dirpath, entry)
+		default:
+			err = fmt.Errorf("Unhandled type: %v", entry.Type)
+		}
+
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// Create a serialized version of this information.
