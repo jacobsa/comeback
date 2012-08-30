@@ -127,7 +127,25 @@ func (t *FileSaverTest) ReadErrorInFirstChunk() {
 }
 
 func (t *FileSaverTest) ReadErrorInSecondChunk() {
-	ExpectEq("TODO", "")
+	// Chunks
+	chunk0 := makeChunk('a')
+	chunk1 := makeChunk('b')
+
+	// Reader
+	t.reader = io.MultiReader(
+		bytes.NewReader(chunk0),
+		iotest.TimeoutReader(bytes.NewReader(chunk1)),
+	)
+
+	// Blob store
+	ExpectCall(t.blobStore, "Store")(Any()).Times(1)
+
+	// Call
+	t.callSaver()
+
+	ExpectThat(t.err, Error(HasSubstr("Reading")))
+	ExpectThat(t.err, Error(HasSubstr("chunk")))
+	ExpectThat(t.err, Error(HasSubstr(iotest.ErrTimeout.Error())))
 }
 
 func (t *FileSaverTest) CopesWithShortReads() {
