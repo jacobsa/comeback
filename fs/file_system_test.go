@@ -31,7 +31,27 @@ type ReadDirTest struct {
 
 func init() { RegisterTestSuite(&ReadDirTest{}) }
 
-func (t *ReadDirTest) DoesFoo() {
+func (t *ReadDirTest) NonExistentPath() {
+	ExpectEq("TODO", "")
+}
+
+func (t *ReadDirTest) NotADirectory() {
+	ExpectEq("TODO", "")
+}
+
+func (t *ReadDirTest) NoReadPermissions() {
+	ExpectEq("TODO", "")
+}
+
+func (t *ReadDirTest) RegularFiles() {
+	ExpectEq("TODO", "")
+}
+
+func (t *ReadDirTest) Directories() {
+	ExpectEq("TODO", "")
+}
+
+func (t *ReadDirTest) Symlinks() {
 	ExpectEq("TODO", "")
 }
 
@@ -44,6 +64,22 @@ type OpenForReadingTest struct {
 
 func init() { RegisterTestSuite(&OpenForReadingTest{}) }
 
-func (t *OpenForReadingTest) DoesFoo() {
+func (t *OpenForReadingTest) NonExistentFile() {
+	ExpectEq("TODO", "")
+}
+
+func (t *OpenForReadingTest) NotAFile() {
+	ExpectEq("TODO", "")
+}
+
+func (t *OpenForReadingTest) NoReadPermissions() {
+	ExpectEq("TODO", "")
+}
+
+func (t *OpenForReadingTest) EmptyFile() {
+	ExpectEq("TODO", "")
+}
+
+func (t *OpenForReadingTest) FileWithContents() {
 	ExpectEq("TODO", "")
 }
