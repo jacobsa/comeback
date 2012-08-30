@@ -137,7 +137,30 @@ func (t *MarshalTest) PreservesNames() {
 }
 
 func (t *MarshalTest) PreservesPermissions() {
-	ExpectEq("TODO", "")
+	// Input
+	in := []*fs.DirectoryEntry{
+		makeLegalEntry(),
+		makeLegalEntry(),
+	}
+
+	in[0].Permissions = 0644
+	in[1].Permissions = 0755
+
+	// Marshal
+	d, err := repr.Marshal(in)
+	AssertEq(nil, err)
+	AssertNe(nil, d)
+
+	// Unmarshal
+	out, err := repr.Unmarshal(d)
+	AssertEq(nil, err)
+	AssertNe(nil, out)
+
+	// Output
+	AssertThat(out, ElementsAre(Any(), Any()))
+
+	ExpectEq(in[0].Permissions, out[0].Permissions)
+	ExpectEq(in[1].Permissions, out[1].Permissions)
 }
 
 func (t *MarshalTest) UnrepresentableModTime() {
