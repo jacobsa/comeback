@@ -24,6 +24,11 @@ import (
 	"path"
 )
 
+const (
+	// A permissions bit mask that matches chmod(2)'s notion of permissions.
+	permissionBits os.FileMode = os.ModePerm|os.ModeSetuid|os.ModeSetgid|os.ModeSticky
+)
+
 // FileSystem represents operations performed on a real file system, but is an
 // interface for mockability.
 type FileSystem interface {
@@ -46,7 +51,7 @@ type fileSystem struct {
 
 func convertFileInfo(fi os.FileInfo) (*DirectoryEntry, error) {
 	entry := &DirectoryEntry{
-		Permissions: fi.Mode() & os.ModePerm,
+		Permissions: fi.Mode() & permissionBits,
 		Name:        fi.Name(),
 		MTime:       fi.ModTime(),
 	}
