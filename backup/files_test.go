@@ -48,7 +48,7 @@ type FileSaverTest struct {
 	fileSaver FileSaver
 
 	// Will be used instead of mockReader if non-nil.
-	buffer io.Reader
+	reader io.Reader
 
 	scores []blob.Score
 	err error
@@ -64,8 +64,8 @@ func (t *FileSaverTest) SetUp(i *TestInfo) {
 
 func (t *FileSaverTest) callSaver() {
 	var reader io.Reader = t.mockReader
-	if t.buffer != nil {
-		reader = t.buffer
+	if t.reader != nil {
+		reader = t.reader
 	}
 
 	t.scores, t.err = t.fileSaver.Save(reader)
@@ -77,7 +77,7 @@ func (t *FileSaverTest) callSaver() {
 
 func (t *FileSaverTest) NoDataInReader() {
 	// Reader
-	t.buffer = new(bytes.Buffer)
+	t.reader = new(bytes.Buffer)
 
 	// Call
 	t.callSaver()
@@ -93,7 +93,7 @@ func (t *FileSaverTest) ChunksAreSizedAsExpected() {
 	chunk2 := makeChunk('c')
 
 	// Reader
-	t.buffer = io.MultiReader(
+	t.reader = io.MultiReader(
 		bytes.NewReader(chunk0),
 		bytes.NewReader(chunk1),
 		bytes.NewReader(chunk2),
