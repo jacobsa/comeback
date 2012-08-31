@@ -58,6 +58,10 @@ type DirectoryEntry struct {
 	// The modification time of this entry.
 	MTime time.Time
 
+	// The containing device's device number, and the inode on the device.
+	ContainingDevice int32
+	Inode uint64
+
 	// The scores of zero or more blobs that make up a regular file's contents,
 	// to be concatenated in order. For directories, this is exactly one blob
 	// whose contents can be processed using repr.Unmarshal.
@@ -65,9 +69,9 @@ type DirectoryEntry struct {
 	// Scores are present only if HardLinkTarget is not present.
 	Scores []blob.Score
 
-	// If this entry belongs to a backup containing another file to which it is
-	// hard linked, this is the target of the hard link relative to the root of
-	// the backup.
+	// If this regular file belongs to a backup containing another regular file
+	// to which it is hard linked, this is the target of the hard link relative
+	// to the root of the backup.
 	HardLinkTarget *string
 
 	// The target, if this is a symlink.

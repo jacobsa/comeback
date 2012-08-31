@@ -85,7 +85,7 @@ func makeEntryProto(entry *fs.DirectoryEntry) (*repr_proto.DirectoryEntryProto, 
 }
 
 // Marshal turns a list of directory entries into bytes that can later be used
-// with Unmarshal.
+// with Unmarshal. Note that ContainingDevice and Inode fields are lost.
 func Marshal(entries []*fs.DirectoryEntry) (d []byte, err error) {
 	entryProtos := []*repr_proto.DirectoryEntryProto{}
 	for _, entry := range entries {
