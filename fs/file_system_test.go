@@ -20,7 +20,9 @@ import (
 	"github.com/jacobsa/comeback/fs"
 	"github.com/jacobsa/comeback/sys"
 	"github.com/jacobsa/comeback/sys/group"
+	"github.com/jacobsa/comeback/sys/mock"
 	. "github.com/jacobsa/oglematchers"
+	"github.com/jacobsa/oglemock"
 	. "github.com/jacobsa/ogletest"
 	"io/ioutil"
 	"log"
@@ -104,8 +106,9 @@ func makeNamedPipe(path string, permissions uint32) error {
 }
 
 type fileSystemTest struct {
-	userRegistry UserRegistry
-	groupRegistry GroupRegistry
+	mockController oglemock.Controller
+	userRegistry sys.UserRegistry
+	groupRegistry sys.GroupRegistry
 	fileSystem  fs.FileSystem
 	baseDir     string
 	myUid       sys.UserId
@@ -123,6 +126,8 @@ func (t *fileSystemTest) setUpFileSystem() {
 
 func (t *fileSystemTest) SetUp(i *TestInfo) {
 	var err error
+
+	t.mockController = i.MockController
 
 	if t.userRegistry, err = sys.NewUserRegistry(); err != nil {
 		log.Fatalf("Creating user registry: %v", err)
@@ -220,8 +225,11 @@ func (t *ReadDirTest) NoReadPermissions() {
 }
 
 func (t *ReadDirTest) ErrorLookingUpOwnerId() {
+	var err error
+
 	// Create a mock user registry, and a new file system that uses it.
-	t.userRegistry = mock_sys.NewMockUserRegistry(t.mockController, "registry")
+	mockRegistry := mock_sys.NewMockUserRegistry(t.mockController, "registry")
+	t.userRegistry = mockRegistry
 	t.setUpFileSystem()
 
 	// Create a file.
@@ -230,11 +238,11 @@ func (t *ReadDirTest) ErrorLookingUpOwnerId() {
 	AssertEq(nil, err)
 
 	// Registry
-	ExpectCall(t.userRegistry, "FindById")(t.myUid).
+	ExpectCall(mockRegistry, "FindById")(t.myUid).
 		WillOnce(oglemock.Return("", errors.New("taco")))
 
 	// Call
-	_, err = t.fileSystem.ReadDir(dirpath)
+	_, err = t.fileSystem.ReadDir(t.baseDir)
 	ExpectThat(err, Error(HasSubstr("Looking up")))
 	ExpectThat(err, Error(HasSubstr("user")))
 	ExpectThat(err, Error(HasSubstr("taco")))
