@@ -169,8 +169,9 @@ func restoreFile(target string, scores []blob.Score) error {
 func setPermissions(path string, permissions os.FileMode) error {
 	mode := syscallPermissions(permissions)
 
-	// Open the file without following symlinks.
-	fd, err := syscall.Open(path, syscall.O_RDONLY|syscall.O_SYMLINK, 0)
+	// Open the file without following symlinks. Use O_NONBLOCK to allow opening
+	// of named pipes without a writer.
+	fd, err := syscall.Open(path, syscall.O_NONBLOCK|syscall.O_SYMLINK, 0)
 	if err != nil {
 		return err
 	}
