@@ -82,6 +82,7 @@ func NewNonRecursiveDirectorySaver(
 		fileSystem: fileSystem,
 		fileSaver:  fileSaver,
 		wrapped:    wrapped,
+		linkResolver: linkResolver,
 	}, nil
 }
 
@@ -90,6 +91,7 @@ type dirSaver struct {
 	fileSystem fs.FileSystem
 	fileSaver  FileSaver
 	wrapped    DirectorySaver
+	linkResolver LinkResolver
 }
 
 func (s *dirSaver) saveDir(basePath string, relPath string, entry *fs.DirectoryEntry) ([]blob.Score, error) {
@@ -128,7 +130,16 @@ func (s *dirSaver) Save(basePath, relPath string) (score blob.Score, err error) 
 		// Call the appropriate method based on this entry's type.
 		switch entry.Type {
 		case fs.TypeFile:
-			entry.Scores, err = s.saveFile(dirpath, entry)
+			// Make sure this isn't a hard link to something we've already saved.
+			entry.HardLinkTarget = s.linkResolver.Register(
+				entry.ContainingDevice,
+				entry.Inode,
+				path.Join(relPath, entry.Name))
+
+			if entry.HardLinkTarget == nil {
+				entry.Scores, err = s.saveFile(dirpath, entry)
+			}
+
 		case fs.TypeDirectory:
 			entry.Scores, err = s.saveDir(basePath, relPath, entry)
 		case fs.TypeSymlink:
