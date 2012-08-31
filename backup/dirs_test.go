@@ -62,16 +62,9 @@ func (r *readCloser) Close() error {
 	return nil
 }
 
-func makeFileEntry(name string) *fs.DirectoryEntry {
+func makeEntry(name string, t fs.EntryType) *fs.DirectoryEntry {
 	return &fs.DirectoryEntry{
-		Type: fs.TypeFile,
-		Name: name,
-	}
-}
-
-func makeDirEntry(name string) *fs.DirectoryEntry {
-	return &fs.DirectoryEntry{
-		Type: fs.TypeDirectory,
+		Type: t,
 		Name: name,
 	}
 }
@@ -160,8 +153,8 @@ func (t *DirectorySaverTest) CallsFileSystemAndFileSaverForFiles() {
 
 	// ReadDir
 	entries := []*fs.DirectoryEntry{
-		makeFileEntry("burrito"),
-		makeFileEntry("enchilada"),
+		makeEntry("burrito", fs.TypeFile),
+		makeEntry("enchilada", fs.TypeFile),
 	}
 
 	ExpectCall(t.fileSystem, "ReadDir")(Any()).
@@ -191,9 +184,9 @@ func (t *DirectorySaverTest) CallsFileSystemAndFileSaverForFiles() {
 func (t *DirectorySaverTest) FileSystemReturnsErrorForOneFile() {
 	// ReadDir
 	entries := []*fs.DirectoryEntry{
-		makeFileEntry(""),
-		makeFileEntry(""),
-		makeFileEntry(""),
+		makeEntry("", fs.TypeFile),
+		makeEntry("", fs.TypeFile),
+		makeEntry("", fs.TypeFile),
 	}
 
 	ExpectCall(t.fileSystem, "ReadDir")(Any()).
@@ -222,9 +215,9 @@ func (t *DirectorySaverTest) FileSystemReturnsErrorForOneFile() {
 func (t *DirectorySaverTest) FileSaverReturnsErrorForOneFile() {
 	// ReadDir
 	entries := []*fs.DirectoryEntry{
-		makeFileEntry(""),
-		makeFileEntry(""),
-		makeFileEntry(""),
+		makeEntry("", fs.TypeFile),
+		makeEntry("", fs.TypeFile),
+		makeEntry("", fs.TypeFile),
 	}
 
 	ExpectCall(t.fileSystem, "ReadDir")(Any()).
@@ -257,8 +250,8 @@ func (t *DirectorySaverTest) CallsDirSaverForDirs() {
 
 	// ReadDir
 	entries := []*fs.DirectoryEntry{
-		makeDirEntry("burrito"),
-		makeDirEntry("enchilada"),
+		makeEntry("burrito", fs.TypeDirectory),
+		makeEntry("enchilada", fs.TypeDirectory),
 	}
 
 	ExpectCall(t.fileSystem, "ReadDir")(Any()).
@@ -280,9 +273,9 @@ func (t *DirectorySaverTest) CallsDirSaverForDirs() {
 func (t *DirectorySaverTest) DirSaverReturnsErrorForOneDir() {
 	// ReadDir
 	entries := []*fs.DirectoryEntry{
-		makeDirEntry(""),
-		makeDirEntry(""),
-		makeDirEntry(""),
+		makeEntry("", fs.TypeDirectory),
+		makeEntry("", fs.TypeDirectory),
+		makeEntry("", fs.TypeDirectory),
 	}
 
 	ExpectCall(t.fileSystem, "ReadDir")(Any()).
@@ -304,9 +297,9 @@ func (t *DirectorySaverTest) DirSaverReturnsErrorForOneDir() {
 func (t *DirectorySaverTest) OneTypeIsUnsupported() {
 	// ReadDir
 	entries := []*fs.DirectoryEntry{
-		makeDirEntry(""),
-		makeDirEntry(""),
-		makeDirEntry(""),
+		makeEntry("", fs.TypeDirectory),
+		makeEntry("", fs.TypeDirectory),
+		makeEntry("", fs.TypeDirectory),
 	}
 
 	entries[1].Type = fs.TypeSymlink
@@ -330,9 +323,12 @@ func (t *DirectorySaverTest) OneTypeIsUnsupported() {
 func (t *DirectorySaverTest) CallsBlobStore() {
 	// ReadDir
 	entries := []*fs.DirectoryEntry{
-		makeFileEntry("taco"),
-		makeDirEntry("burrito"),
-		makeDirEntry("enchilada"),
+		makeEntry("taco", fs.TypeFile),
+		makeEntry("burrito", fs.TypeDirectory),
+		makeEntry("enchilada", fs.TypeDirectory),
+		makeEntry("queso", fs.TypeBlockDevice),
+		makeEntry("tortilla", fs.TypeCharDevice),
+		makeEntry("nachos", fs.TypeNamedPipe),
 	}
 
 	ExpectCall(t.fileSystem, "ReadDir")(Any()).
@@ -370,7 +366,7 @@ func (t *DirectorySaverTest) CallsBlobStore() {
 	AssertNe(nil, blob)
 	resultEntries, err := repr.Unmarshal(blob)
 	AssertEq(nil, err)
-	AssertThat(resultEntries, ElementsAre(Any(), Any(), Any()))
+	AssertEq(6, len(resultEntries))
 
 	entry := resultEntries[0]
 	ExpectEq(fs.TypeFile, entry.Type)
@@ -390,6 +386,18 @@ func (t *DirectorySaverTest) CallsBlobStore() {
 	ExpectEq("enchilada", entry.Name)
 	AssertThat(entry.Scores, ElementsAre(Any()))
 	ExpectThat(entry.Scores[0].Sha1Hash(), DeepEquals(score3.Sha1Hash()))
+
+	entry = resultEntries[3]
+	ExpectEq(fs.TypeBlockDevice, entry.Type)
+	ExpectEq("queso", entry.Name)
+
+	entry = resultEntries[4]
+	ExpectEq(fs.TypeCharDevice, entry.Type)
+	ExpectEq("tortilla", entry.Name)
+
+	entry = resultEntries[5]
+	ExpectEq(fs.TypeNamedPipe, entry.Type)
+	ExpectEq("nachos", entry.Name)
 }
 
 func (t *DirectorySaverTest) BlobStoreReturnsError() {
