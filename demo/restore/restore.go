@@ -129,7 +129,13 @@ func restoreDir(target string, score blob.Score) error {
 			}
 
 		case fs.TypeNamedPipe:
-			err = makeNamedPipe(entryPath, syscallPermissions(entry.Permissions))
+			err = makeNamedPipe(entryPath, entry.Permissions)
+			if err != nil {
+				return err
+			}
+
+		case fs.TypeBlockDevice:
+			err = makeBlockDevice(entryPath, entry.Permissions)
 			if err != nil {
 				return err
 			}
@@ -163,8 +169,18 @@ func syscallPermissions(permissions os.FileMode) (o uint32) {
 }
 
 // Create a named pipe at the supplied path.
-func makeNamedPipe(path string, permissions uint32) error {
-	return syscall.Mkfifo(path, permissions)
+func makeNamedPipe(path string, permissions os.FileMode) error {
+	return syscall.Mkfifo(path, syscallPermissions(permissions))
+}
+
+// Create a block device at the supplied path.
+func makeBlockDevice(path string, permissions os.FileMode) error {
+	// TODO(jacobsa): Support device numbers.
+	if err := syscall.Mknod(path, syscallPermissions(permissions), 0); err != nil {
+		return fmt.Errorf("syscall.Mknod: %v", err)
+	}
+
+	return nil
 }
 
 func main() {
