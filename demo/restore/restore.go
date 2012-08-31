@@ -269,9 +269,12 @@ func restoreDir(target string, score blob.Score) error {
 			return fmt.Errorf("Chown: %v", err)
 		}
 
-		// Fix permissions.
-		if err := setPermissions(entryPath, entry.Permissions); err != nil {
-			return fmt.Errorf("setPermissions(%s): %v", entryPath, err)
+		// Fix permissions, but not on devices (otherwise we get resource busy
+		// errors).
+		if entry.Type != fs.TypeBlockDevice && entry.Type != fs.TypeCharDevice {
+			if err := setPermissions(entryPath, entry.Permissions); err != nil {
+				return fmt.Errorf("setPermissions(%s): %v", entryPath, err)
+			}
 		}
 
 		// Fix modification time, but not on devices (otherwise we get resource
