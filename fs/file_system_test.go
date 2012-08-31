@@ -316,7 +316,7 @@ func (t *ReadDirTest) BlockDevices() {
 	ExpectEq("", entry.Target)
 	ExpectEq(os.FileMode(0666), entry.Permissions)
 	ExpectGe(time.Since(entry.MTime), 0)
-	ExpectLt(time.Since(entry.MTime), time.Hour)
+	ExpectLt(time.Since(entry.MTime), 365*24*time.Hour)
 }
 
 func (t *ReadDirTest) CharDevices() {
@@ -333,7 +333,7 @@ func (t *ReadDirTest) CharDevices() {
 	ExpectEq("", entry.Target)
 	ExpectEq(os.FileMode(0640), entry.Permissions)
 	ExpectGe(time.Since(entry.MTime), 0)
-	ExpectLt(time.Since(entry.MTime), time.Hour)
+	ExpectLt(time.Since(entry.MTime), 365*24*time.Hour)
 }
 
 func (t *ReadDirTest) SortsByName() {
