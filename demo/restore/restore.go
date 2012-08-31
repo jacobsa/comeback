@@ -29,6 +29,7 @@ import (
 	"os"
 	"path"
 	"syscall"
+	"time"
 )
 
 const (
@@ -100,6 +101,36 @@ func chooseGroupId(gid sys.GroupId, groupname *string) (sys.GroupId, error) {
 	}
 
 	return betterGid, nil
+}
+
+// Set the modification time for the supplied path without following symlinks
+// (as syscall.Chtimes and therefore os.Chtimes do).
+//
+// c.f. http://stackoverflow.com/questions/10608724/set-modification-date-on-symbolic-link-in-cocoa
+func setModTime(path string, mtime time.Time) error {
+	// Open the file without following symlinks. Use O_NONBLOCK to allow opening
+	// of named pipes without a writer.
+	fd, err := syscall.Open(path, syscall.O_NONBLOCK|syscall.O_SYMLINK, 0)
+	if err != nil {
+		return err
+	}
+
+	defer syscall.Close(fd)
+
+	// Call futimes.
+	var utimes [2]syscall.Timeval
+	atime := time.Now()
+	atime_ns := atime.Unix()*1e9 + int64(atime.Nanosecond())
+	mtime_ns := mtime.Unix()*1e9 + int64(mtime.Nanosecond())
+	utimes[0] = syscall.NsecToTimeval(atime_ns)
+	utimes[1] = syscall.NsecToTimeval(mtime_ns)
+
+	err = syscall.Futimes(fd, utimes[0:])
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Restore the file whose contents are described by the referenced blobs to the
@@ -236,6 +267,11 @@ func restoreDir(target string, score blob.Score) error {
 
 		if err = os.Lchown(entryPath, int(uid), int(gid)); err != nil {
 			return fmt.Errorf("Chown: %v", err)
+		}
+
+		// Fix modification time.
+		if err = setModTime(entryPath, entry.MTime); err != nil {
+			return fmt.Errorf("setModTime(%s): %v", entryPath, err)
 		}
 	}
 
