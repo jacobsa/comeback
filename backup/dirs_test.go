@@ -74,6 +74,7 @@ type DirectorySaverTest struct {
 	fileSystem mock_fs.MockFileSystem
 	fileSaver  mock_backup.MockFileSaver
 	wrapped    mock_backup.MockDirectorySaver
+	linkResolver    mock_backup.MockLinkResolver
 
 	dirSaver backup.DirectorySaver
 
@@ -89,12 +90,14 @@ func (t *DirectorySaverTest) SetUp(i *TestInfo) {
 	t.fileSystem = mock_fs.NewMockFileSystem(i.MockController, "fileSystem")
 	t.fileSaver = mock_backup.NewMockFileSaver(i.MockController, "fileSaver")
 	t.wrapped = mock_backup.NewMockDirectorySaver(i.MockController, "wrapped")
+	t.linkResolver = mock_backup.NewMockLinkResolver(i.MockController, "resolver")
 
 	t.dirSaver, _ = backup.NewNonRecursiveDirectorySaver(
 		t.blobStore,
 		t.fileSystem,
 		t.fileSaver,
 		t.wrapped,
+		t.linkResolver,
 	)
 }
 
@@ -148,7 +151,7 @@ func (t *DirectorySaverTest) NoEntriesInDirectory() {
 	ExpectThat(entries, ElementsAre())
 }
 
-func (t *DirectorySaverTest) CallsFileSystemAndFileSaverForFiles() {
+func (t *DirectorySaverTest) CallsLinkResolverFileSystemAndFileSaverForFiles() {
 	t.dirpath = "/taco"
 
 	// ReadDir
@@ -179,6 +182,10 @@ func (t *DirectorySaverTest) CallsFileSystemAndFileSaverForFiles() {
 
 	// Call
 	t.callSaver()
+}
+
+func (t *DirectorySaverTest) OneFileIsHardLinkedToAnother() {
+	ExpectEq("TODO", "")
 }
 
 func (t *DirectorySaverTest) FileSystemReturnsErrorForOneFile() {
