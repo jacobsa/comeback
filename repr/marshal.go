@@ -63,6 +63,11 @@ func makeEntryProto(entry *fs.DirectoryEntry) (*repr_proto.DirectoryEntryProto, 
 		entryProto.Target = proto.String(entry.Target)
 	}
 
+	// Handle device numbers.
+	if entry.Type == fs.TypeBlockDevice || entry.Type == fs.TypeCharDevice {
+		entryProto.Device = proto.Int32(entry.Device)
+	}
+
 	// Convert the entry's type.
 	typeEnum, err := convertType(entry.Type)
 	if err != nil {
