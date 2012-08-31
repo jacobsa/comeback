@@ -18,6 +18,7 @@ package fs
 
 import (
 	"github.com/jacobsa/comeback/blob"
+	"github.com/jacobsa/comeback/sys"
 	"os"
 	"time"
 )
@@ -45,6 +46,14 @@ type DirectoryEntry struct {
 	// That is, the things that chmod(2) cares about. This does *not* include
 	// type information such as os.ModeDevice or options such as os.ModeAppend.
 	Permissions os.FileMode
+
+	// The owning user's UID, and their username if known.
+	Uid sys.UserId
+	Username *string
+
+	// The owning group's GID, and its groupname if known.
+	Gid sys.UserId
+	Groupname *string
 
 	// The modification time of this entry.
 	MTime time.Time
