@@ -34,6 +34,16 @@ func TestFileSystemTest(t *testing.T) { RunTests(t) }
 // Helpers
 ////////////////////////////////////////////////////////////////////////
 
+func findEntry(entries []*fs.DirectoryEntry, name string) *fs.DirectoryEntry {
+	for _, entry := range entries {
+		if entry.Name == name {
+			return entry
+		}
+	}
+
+	return nil
+}
+
 // Set the modification time for the supplied path without following symlinks
 // (as syscall.Chtimes and therefore os.Chtimes do).
 //
