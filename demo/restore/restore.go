@@ -271,7 +271,7 @@ func restoreDir(target string, score blob.Score) error {
 
 		// Fix permissions.
 		if err := setPermissions(entryPath, entry.Permissions); err != nil {
-			return fmt.Errorf("setPermissions: %v", err)
+			return fmt.Errorf("setPermissions(%s): %v", entryPath, err)
 		}
 
 		// Fix modification time, but not on devices (otherwise we get resource
