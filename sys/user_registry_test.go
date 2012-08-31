@@ -83,7 +83,6 @@ func (t *UserRegistryTest) LookUpRootUser() {
 
 	osUid, err := strconv.Atoi(osUser.Uid)
 	AssertEq(nil, err)
-	AssertNe(0, osUid)
 
 	// Look it up in both ways.
 	username, err := t.registry.FindById(sys.UserId(osUid))
