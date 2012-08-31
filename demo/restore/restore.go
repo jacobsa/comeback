@@ -27,6 +27,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"syscall"
 )
 
 const (
@@ -127,12 +128,43 @@ func restoreDir(target string, score blob.Score) error {
 				return err
 			}
 
+		case fs.TypeNamedPipe:
+			err = makeNamedPipe(entryPath, syscallPermissions(entry.Permissions))
+			if err != nil {
+				return err
+			}
+
 		default:
 			return fmt.Errorf("Don't know how to deal with entry: %v", entry)
 		}
 	}
 
 	return nil
+}
+
+func syscallPermissions(permissions os.FileMode) (o uint32) {
+	// Include r/w/x permission bits.
+	o = uint32(permissions & os.ModePerm)
+
+	// Also include setuid/setgid/sticky bits.
+	if permissions & os.ModeSetuid != 0 {
+		o |= syscall.S_ISUID
+	}
+
+	if permissions & os.ModeSetgid != 0 {
+		o |= syscall.S_ISGID
+	}
+
+	if permissions & os.ModeSticky != 0 {
+		o |= syscall.S_ISVTX
+	}
+
+	return
+}
+
+// Create a named pipe at the supplied path.
+func makeNamedPipe(path string, permissions uint32) error {
+	return syscall.Mkfifo(path, permissions)
 }
 
 func main() {
