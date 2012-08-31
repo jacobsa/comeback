@@ -18,7 +18,7 @@ package backup
 import ()
 
 // A stateful object that knows how to keep track of files that are hard-linked
-// together.
+// together. This is an implementation detail; you should not touch it.
 type LinkResolver interface {
 	// Register the supplied path, which points to the given inode on the given
 	// containing device. Return a path that has already been registered here, if
@@ -26,8 +26,9 @@ type LinkResolver interface {
 	Register(containingDevice int32, inode uint64, path string) *string
 }
 
-// Create an empty link resolver.
-func newLinkResolver() LinkResolver {
+// Create an empty link resolver. This is an implementation detail; you should
+// not touch it.
+func NewLinkResolver() LinkResolver {
 	// TODO
 	return nil
 }
