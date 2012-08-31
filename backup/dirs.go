@@ -124,6 +124,7 @@ func (s *dirSaver) Save(dirpath string) (score blob.Score, err error) {
 			entry.Scores, err = s.saveFile(dirpath, entry)
 		case fs.TypeDirectory:
 			entry.Scores, err = s.saveDir(dirpath, entry)
+		case fs.TypeSymlink:
 		case fs.TypeBlockDevice:
 		case fs.TypeCharDevice:
 		case fs.TypeNamedPipe:

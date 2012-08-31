@@ -326,6 +326,7 @@ func (t *DirectorySaverTest) CallsBlobStore() {
 		makeEntry("taco", fs.TypeFile),
 		makeEntry("burrito", fs.TypeDirectory),
 		makeEntry("enchilada", fs.TypeDirectory),
+		makeEntry("carnitas", fs.TypeSymlink),
 		makeEntry("queso", fs.TypeBlockDevice),
 		makeEntry("tortilla", fs.TypeCharDevice),
 		makeEntry("nachos", fs.TypeNamedPipe),
@@ -366,7 +367,7 @@ func (t *DirectorySaverTest) CallsBlobStore() {
 	AssertNe(nil, blob, "Saver error: %v", t.err)
 	resultEntries, err := repr.Unmarshal(blob)
 	AssertEq(nil, err)
-	AssertEq(6, len(resultEntries))
+	AssertEq(7, len(resultEntries))
 
 	entry := resultEntries[0]
 	ExpectEq(fs.TypeFile, entry.Type)
@@ -388,14 +389,18 @@ func (t *DirectorySaverTest) CallsBlobStore() {
 	ExpectThat(entry.Scores[0].Sha1Hash(), DeepEquals(score3.Sha1Hash()))
 
 	entry = resultEntries[3]
+	ExpectEq(fs.TypeSymlink, entry.Type)
+	ExpectEq("carnitas", entry.Name)
+
+	entry = resultEntries[4]
 	ExpectEq(fs.TypeBlockDevice, entry.Type)
 	ExpectEq("queso", entry.Name)
 
-	entry = resultEntries[4]
+	entry = resultEntries[5]
 	ExpectEq(fs.TypeCharDevice, entry.Type)
 	ExpectEq("tortilla", entry.Name)
 
-	entry = resultEntries[5]
+	entry = resultEntries[6]
 	ExpectEq(fs.TypeNamedPipe, entry.Type)
 	ExpectEq("nachos", entry.Name)
 }
