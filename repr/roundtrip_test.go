@@ -175,6 +175,33 @@ func (t *RoundtripTest) PreservesPermissions() {
 	ExpectEq(in[1].Permissions, out[1].Permissions)
 }
 
+func (t *RoundtripTest) PreservesUids() {
+	// Input
+	in := []*fs.DirectoryEntry{
+		makeLegalEntry(),
+		makeLegalEntry(),
+	}
+
+	in[0].Uid = 17
+	in[1].Uid = 19
+
+	// Marshal
+	d, err := repr.Marshal(in)
+	AssertEq(nil, err)
+	AssertNe(nil, d)
+
+	// Unmarshal
+	out, err := repr.Unmarshal(d)
+	AssertEq(nil, err)
+	AssertNe(nil, out)
+
+	// Output
+	AssertThat(out, ElementsAre(Any(), Any()))
+
+	ExpectEq(in[0].Uid, out[0].Uid)
+	ExpectEq(in[1].Uid, out[1].Uid)
+}
+
 func (t *RoundtripTest) PreservesModTimes() {
 	// Input
 	in := []*fs.DirectoryEntry{
