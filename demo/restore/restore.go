@@ -210,7 +210,7 @@ func restoreDir(target string, score blob.Score) error {
 		switch entry.Type {
 		case fs.TypeFile:
 			if err := restoreFile(entryPath, entry.Scores); err != nil {
-				return err
+				return fmt.Errorf("restoreFile: %v", err)
 			}
 
 		case fs.TypeDirectory:
@@ -219,35 +219,35 @@ func restoreDir(target string, score blob.Score) error {
 			}
 
 			if err = os.Mkdir(entryPath, 0700); err != nil {
-				return err
+				return fmt.Errorf("Mkdir: %v", err)
 			}
 
 			if err = restoreDir(entryPath, entry.Scores[0]); err != nil {
-				return err
+				return fmt.Errorf("restoreDir: %v", err)
 			}
 
 		case fs.TypeSymlink:
 			err = os.Symlink(entry.Target, entryPath)
 			if err != nil {
-				return err
+				return fmt.Errorf("Symlink: %v", err)
 			}
 
 		case fs.TypeNamedPipe:
 			err = makeNamedPipe(entryPath, entry.Permissions)
 			if err != nil {
-				return err
+				return fmt.Errorf("makeNamedPipe: %v", err)
 			}
 
 		case fs.TypeBlockDevice:
 			err = makeBlockDevice(entryPath, entry.Permissions, entry.Device)
 			if err != nil {
-				return err
+				return fmt.Errorf("makeBlockDevice: %v", err)
 			}
 
 		case fs.TypeCharDevice:
 			err = makeCharDevice(entryPath, entry.Permissions, entry.Device)
 			if err != nil {
-				return err
+				return fmt.Errorf("makeCharDevice: %v", err)
 			}
 
 		default:
@@ -271,7 +271,7 @@ func restoreDir(target string, score blob.Score) error {
 
 		// Fix permissions.
 		if err := setPermissions(entryPath, entry.Permissions); err != nil {
-			return err
+			return fmt.Errorf("setPermissions: %v", err)
 		}
 
 		// Fix modification time, but not on devices (otherwise we get resource
