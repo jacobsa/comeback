@@ -43,6 +43,14 @@ func (t *UserRegistryTest) SetUp(i *TestInfo) {
 	}
 }
 
+func (t *UserRegistryTest) UnknownUsername() {
+	ExpectEq("TODO", "")
+}
+
+func (t *UserRegistryTest) UnknownUserId() {
+	ExpectEq("TODO", "")
+}
+
 func (t *UserRegistryTest) LookUpCurrentUser() {
 	// Ask the os package for the current user.
 	osUser, err := user.Current()
@@ -61,6 +69,28 @@ func (t *UserRegistryTest) LookUpCurrentUser() {
 	ExpectEq(osUser.Name, username)
 
 	uid, err := t.registry.FindByName(osUser.Name)
+	AssertEq(nil, err)
+	ExpectEq(sys.UserId(osUid), uid)
+}
+
+func (t *UserRegistryTest) LookUpRootUser() {
+	// Ask the os package for the root user.
+	osUser, err := user.Lookup("root")
+	AssertEq(nil, err)
+
+	AssertNe("", osUser.Name)
+	AssertNe("", osUser.Uid)
+
+	osUid, err := strconv.Atoi(osUser.Uid)
+	AssertEq(nil, err)
+	AssertNe(0, osUid)
+
+	// Look it up in both ways.
+	username, err := t.registry.FindById(sys.UserId(osUid))
+	AssertEq(nil, err)
+	ExpectEq("root", username)
+
+	uid, err := t.registry.FindByName("root")
 	AssertEq(nil, err)
 	ExpectEq(sys.UserId(osUid), uid)
 }
