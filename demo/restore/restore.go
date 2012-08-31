@@ -82,6 +82,27 @@ func restoreFile(target string, scores []blob.Score) error {
 	return nil
 }
 
+// Like os.Chmod, but don't follow symlinks.
+func setPermissions(path string, permissions os.FileMode) error {
+	mode := syscallPermissions(permissions)
+
+	// Open the file without following symlinks.
+	fd, err := syscall.Open(path, syscall.O_RDONLY|syscall.O_SYMLINK, 0)
+	if err != nil {
+		return err
+	}
+
+	defer syscall.Close(fd)
+
+	// Call fchmod.
+	err = syscall.Fchmod(fd, mode)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // Restore the directory whose contents are described by the referenced blob to
 // the supplied target, which must already exist.
 func restoreDir(target string, score blob.Score) error {
@@ -104,8 +125,11 @@ func restoreDir(target string, score blob.Score) error {
 		// Switch on type.
 		switch entry.Type {
 		case fs.TypeFile:
-			err = restoreFile(entryPath, entry.Scores)
-			if err != nil {
+			if err := restoreFile(entryPath, entry.Scores); err != nil {
+				return err
+			}
+
+			if err := setPermissions(entryPath, entry.Permissions); err != nil {
 				return err
 			}
 
