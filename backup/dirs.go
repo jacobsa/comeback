@@ -28,7 +28,7 @@ import (
 type DirectorySaver interface {
 	// Recursively save the contents of the supplied directory to the underlying
 	// storage, returning the score of a blob representing the directory's
-	// listing in a format hat can be recovered with repr.Unmarshal.
+	// listing in a format that can be recovered with repr.Unmarshal.
 	Save(dirpath string) (score blob.Score, err error)
 }
 
