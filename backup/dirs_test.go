@@ -363,7 +363,7 @@ func (t *DirectorySaverTest) CallsBlobStore() {
 	// Call
 	t.callSaver()
 
-	AssertNe(nil, blob)
+	AssertNe(nil, blob, "Saver error: %v", t.err)
 	resultEntries, err := repr.Unmarshal(blob)
 	AssertEq(nil, err)
 	AssertEq(6, len(resultEntries))
