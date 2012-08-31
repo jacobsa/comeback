@@ -15,8 +15,7 @@
 
 package backup
 
-import (
-)
+import ()
 
 // A stateful object that knows how to keep track of files that are hard-linked
 // together.
@@ -25,4 +24,10 @@ type LinkResolver interface {
 	// containing device. Return a path that has already been registered here, if
 	// any.
 	Register(containingDevice int32, inode uint64, path string) *string
+}
+
+// Create an empty link resolver.
+func newLinkResolver() LinkResolver {
+	// TODO
+	return nil
 }

@@ -53,7 +53,8 @@ func NewDirectorySaver(
 			blobStore,
 			fileSystem,
 			fileSaver,
-			wrapped)
+			wrapped,
+			newLinkResolver())
 
 		if err != nil {
 			panic(err)
@@ -73,7 +74,7 @@ func NewNonRecursiveDirectorySaver(
 	fileSystem fs.FileSystem,
 	fileSaver FileSaver,
 	wrapped DirectorySaver,
-  linkResolver LinkResolver) (DirectorySaver, error) {
+	linkResolver LinkResolver) (DirectorySaver, error) {
 	return &dirSaver{
 		blobStore:  store,
 		fileSystem: fileSystem,
