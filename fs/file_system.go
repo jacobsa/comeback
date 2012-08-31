@@ -67,7 +67,7 @@ type fileSystem struct {
 	groupRegistry sys.GroupRegistry
 }
 
-func convertFileInfo(fi os.FileInfo) (*DirectoryEntry, error) {
+func (fs *fileSystem) convertFileInfo(fi os.FileInfo) (entry *DirectoryEntry, err error) {
 	// Grab system-specific info.
 	statT, ok := fi.Sys().(*syscall.Stat_t)
 	if !ok {
@@ -75,13 +75,21 @@ func convertFileInfo(fi os.FileInfo) (*DirectoryEntry, error) {
 	}
 
 	// Create the basic entry.
-	entry := &DirectoryEntry{
+	entry = &DirectoryEntry{
 		Permissions: fi.Mode() & permissionBits,
 		Name:        fi.Name(),
 		MTime:       fi.ModTime(),
 		Uid:         sys.UserId(statT.Uid),
 		Gid:         sys.GroupId(statT.Gid),
 	}
+
+	// Attempt to look up user info.
+	username, err := fs.userRegistry.FindById(entry.Uid)
+	if err != nil {
+		return nil, err
+	}
+
+	entry.Username = &username
 
 	// Convert the type.
 	typeBits := fi.Mode() & (os.ModeType | os.ModeCharDevice)
@@ -107,7 +115,7 @@ func convertFileInfo(fi os.FileInfo) (*DirectoryEntry, error) {
 	return entry, nil
 }
 
-func (f *fileSystem) ReadDir(dirpath string) (entries []*DirectoryEntry, err error) {
+func (fs *fileSystem) ReadDir(dirpath string) (entries []*DirectoryEntry, err error) {
 	// Call ioutil.
 	fileInfos, err := ioutil.ReadDir(dirpath)
 	if err != nil {
@@ -117,7 +125,7 @@ func (f *fileSystem) ReadDir(dirpath string) (entries []*DirectoryEntry, err err
 	// Convert each entry.
 	entries = []*DirectoryEntry{}
 	for _, fileInfo := range fileInfos {
-		entry, err := convertFileInfo(fileInfo)
+		entry, err := fs.convertFileInfo(fileInfo)
 		if err != nil {
 			return nil, err
 		}

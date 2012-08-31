@@ -203,6 +203,14 @@ func (t *ReadDirTest) NoReadPermissions() {
 	ExpectThat(err, Error(HasSubstr("denied")))
 }
 
+func (t *ReadDirTest) ErrorLookingUpOwnerId() {
+	ExpectEq("TODO", "")
+}
+
+func (t *ReadDirTest) ErrorLookingUpGroupId() {
+	ExpectEq("TODO", "")
+}
+
 func (t *ReadDirTest) UnknownOwnerId() {
 	ExpectEq("TODO", "")
 }
