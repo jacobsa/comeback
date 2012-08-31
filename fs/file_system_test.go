@@ -49,8 +49,9 @@ func findEntry(entries []*fs.DirectoryEntry, name string) *fs.DirectoryEntry {
 //
 // c.f. http://stackoverflow.com/questions/10608724/set-modification-date-on-symbolic-link-in-cocoa
 func setModTime(path string, mtime time.Time) error {
-	// Open the file without following symlinks.
-	fd, err := syscall.Open(path, syscall.O_RDONLY|syscall.O_SYMLINK, 0)
+	// Open the file without following symlinks. Use O_NONBLOCK to allow opening
+	// of named pipes without a writer.
+	fd, err := syscall.Open(path, syscall.O_NONBLOCK|syscall.O_SYMLINK, 0)
 	if err != nil {
 		return err
 	}
