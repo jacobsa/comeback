@@ -139,7 +139,7 @@ func main() {
 	}
 
 	// Parse the score.
-	score, err := fromHexHash("ee905ccc3416d120c962dc983023c28401ae39ae")
+	score, err := fromHexHash("feb26f438b5706fe93281dd6d2c453eca9416c42")
 	if err != nil {
 		log.Fatalf("Parsing score: %v", err)
 	}
