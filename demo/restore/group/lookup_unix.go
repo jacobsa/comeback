@@ -33,20 +33,20 @@ static int mygetpwuid_r(int uid, struct passwd *pwd,
 */
 import "C"
 
-// Current returns the current user. 
-func Current() (*User, error) {
+// Current returns the current group. 
+func Current() (*Group, error) {
 	return lookup(syscall.Getuid(), "", false)
 }
 
-// Lookup looks up a user by username. If the user cannot be found,
-// the returned error is of type UnknownUserError.
-func Lookup(username string) (*User, error) {
-	return lookup(-1, username, true)
+// Lookup looks up a group by groupname. If the group cannot be found,
+// the returned error is of type UnknownGroupError.
+func Lookup(groupname string) (*Group, error) {
+	return lookup(-1, groupname, true)
 }
 
-// LookupId looks up a user by userid. If the user cannot be found,
-// the returned error is of type UnknownUserIdError.
-func LookupId(uid string) (*User, error) {
+// LookupId looks up a group by groupid. If the group cannot be found,
+// the returned error is of type UnknownGroupIdError.
+func LookupId(uid string) (*Group, error) {
 	i, e := strconv.Atoi(uid)
 	if e != nil {
 		return nil, e
@@ -54,7 +54,7 @@ func LookupId(uid string) (*User, error) {
 	return lookup(i, "", false)
 }
 
-func lookup(uid int, username string, lookupByName bool) (*User, error) {
+func lookup(uid int, groupname string, lookupByName bool) (*Group, error) {
 	var pwd C.struct_passwd
 	var result *C.struct_passwd
 
@@ -67,14 +67,14 @@ func lookup(uid int, username string, lookupByName bool) (*User, error) {
 	} else {
 		bufSize = C.sysconf(C._SC_GETPW_R_SIZE_MAX)
 		if bufSize <= 0 || bufSize > 1<<20 {
-			return nil, fmt.Errorf("user: unreasonable _SC_GETPW_R_SIZE_MAX of %d", bufSize)
+			return nil, fmt.Errorf("group: unreasonable _SC_GETPW_R_SIZE_MAX of %d", bufSize)
 		}
 	}
 	buf := C.malloc(C.size_t(bufSize))
 	defer C.free(buf)
 	var rv C.int
 	if lookupByName {
-		nameC := C.CString(username)
+		nameC := C.CString(groupname)
 		defer C.free(unsafe.Pointer(nameC))
 		rv = C.getpwnam_r(nameC,
 			&pwd,
@@ -82,10 +82,10 @@ func lookup(uid int, username string, lookupByName bool) (*User, error) {
 			C.size_t(bufSize),
 			&result)
 		if rv != 0 {
-			return nil, fmt.Errorf("user: lookup username %s: %s", username, syscall.Errno(rv))
+			return nil, fmt.Errorf("group: lookup groupname %s: %s", groupname, syscall.Errno(rv))
 		}
 		if result == nil {
-			return nil, UnknownUserError(username)
+			return nil, UnknownGroupError(groupname)
 		}
 	} else {
 		// mygetpwuid_r is a wrapper around getpwuid_r to
@@ -97,16 +97,16 @@ func lookup(uid int, username string, lookupByName bool) (*User, error) {
 			C.size_t(bufSize),
 			&result)
 		if rv != 0 {
-			return nil, fmt.Errorf("user: lookup userid %d: %s", uid, syscall.Errno(rv))
+			return nil, fmt.Errorf("group: lookup groupid %d: %s", uid, syscall.Errno(rv))
 		}
 		if result == nil {
-			return nil, UnknownUserIdError(uid)
+			return nil, UnknownGroupIdError(uid)
 		}
 	}
-	u := &User{
+	u := &Group{
 		Uid:      strconv.Itoa(int(pwd.pw_uid)),
 		Gid:      strconv.Itoa(int(pwd.pw_gid)),
-		Username: C.GoString(pwd.pw_name),
+		Groupname: C.GoString(pwd.pw_name),
 		Name:     C.GoString(pwd.pw_gecos),
 		HomeDir:  C.GoString(pwd.pw_dir),
 	}
