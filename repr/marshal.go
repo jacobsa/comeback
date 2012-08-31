@@ -34,6 +34,8 @@ func convertType(t fs.EntryType) (repr_proto.DirectoryEntryProto_Type, error) {
 		return repr_proto.DirectoryEntryProto_TYPE_BLOCK_DEVICE, nil
 	case fs.TypeCharDevice:
 		return repr_proto.DirectoryEntryProto_TYPE_CHAR_DEVICE, nil
+	case fs.TypeNamedPipe:
+		return repr_proto.DirectoryEntryProto_TYPE_NAMED_PIPE, nil
 	}
 
 	return 0, fmt.Errorf("Unrecognized EntryType: %v", t)

@@ -40,6 +40,7 @@ message DirectoryEntryProto {
     TYPE_SYMLINK      =  2;
     TYPE_BLOCK_DEVICE =  3;
     TYPE_CHAR_DEVICE  =  4;
+    TYPE_NAMED_PIPE   =  5;
   }
   optional Type type = 1;
 

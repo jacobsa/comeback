@@ -38,6 +38,8 @@ func convertProtoType(t repr_proto.DirectoryEntryProto_Type) (fs.EntryType, erro
 		return fs.TypeBlockDevice, nil
 	case repr_proto.DirectoryEntryProto_TYPE_CHAR_DEVICE:
 		return fs.TypeCharDevice, nil
+	case repr_proto.DirectoryEntryProto_TYPE_NAMED_PIPE:
+		return fs.TypeNamedPipe, nil
 	}
 
 	return 0, fmt.Errorf("Unrecognized DirectoryEntryProto_Type: %v", t)

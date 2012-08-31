@@ -21,6 +21,7 @@ const (
 	DirectoryEntryProto_TYPE_SYMLINK      DirectoryEntryProto_Type = 2
 	DirectoryEntryProto_TYPE_BLOCK_DEVICE DirectoryEntryProto_Type = 3
 	DirectoryEntryProto_TYPE_CHAR_DEVICE  DirectoryEntryProto_Type = 4
+	DirectoryEntryProto_TYPE_NAMED_PIPE   DirectoryEntryProto_Type = 5
 )
 
 var DirectoryEntryProto_Type_name = map[int32]string{
@@ -30,6 +31,7 @@ var DirectoryEntryProto_Type_name = map[int32]string{
 	2:  "TYPE_SYMLINK",
 	3:  "TYPE_BLOCK_DEVICE",
 	4:  "TYPE_CHAR_DEVICE",
+	5:  "TYPE_NAMED_PIPE",
 }
 var DirectoryEntryProto_Type_value = map[string]int32{
 	"TYPE_UNKNOWN":      -1,
@@ -38,6 +40,7 @@ var DirectoryEntryProto_Type_value = map[string]int32{
 	"TYPE_SYMLINK":      2,
 	"TYPE_BLOCK_DEVICE": 3,
 	"TYPE_CHAR_DEVICE":  4,
+	"TYPE_NAMED_PIPE":   5,
 }
 
 func (x DirectoryEntryProto_Type) Enum() *DirectoryEntryProto_Type {
