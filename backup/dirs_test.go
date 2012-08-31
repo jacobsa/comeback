@@ -154,6 +154,7 @@ func (t *DirectorySaverTest) NoEntriesInDirectory() {
 }
 
 func (t *DirectorySaverTest) CallsLinkResolverFileSystemAndFileSaverForFiles() {
+	t.basePath = "/tortilla"
 	t.relPath = "taco/queso"
 
 	// ReadDir
@@ -182,10 +183,10 @@ func (t *DirectorySaverTest) CallsLinkResolverFileSystemAndFileSaverForFiles() {
 	file0 := &readCloser{}
 	file1 := &readCloser{}
 
-	ExpectCall(t.fileSystem, "OpenForReading")("/taco/burrito").
+	ExpectCall(t.fileSystem, "OpenForReading")("/tortilla/taco/queso/burrito").
 		WillOnce(oglemock.Return(file0, nil))
 
-	ExpectCall(t.fileSystem, "OpenForReading")("/taco/enchilada").
+	ExpectCall(t.fileSystem, "OpenForReading")("/tortilla/taco/queso/enchilada").
 		WillOnce(oglemock.Return(file1, nil))
 
 	// File saver
