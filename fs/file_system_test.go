@@ -112,10 +112,13 @@ type fileSystemTest struct {
 }
 
 func (t *fileSystemTest) SetUp(i *TestInfo) {
-	t.fileSystem = fs.NewFileSystem()
+	var err error
+
+	if t.fileSystem, err = fs.NewFileSystem(); err != nil {
+		log.Fatalf("Creating file system: %v", err)
+	}
 
 	// Create a temporary directory.
-	var err error
 	t.baseDir, err = ioutil.TempDir("", "ReadDirTest_")
 	if err != nil {
 		log.Fatalf("Creating baseDir: %v", err)

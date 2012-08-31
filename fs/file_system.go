@@ -18,6 +18,7 @@ package fs
 
 import (
 	"fmt"
+	"github.com/jacobsa/comeback/sys"
 	"io"
 	"io/ioutil"
 	"os"
@@ -42,12 +43,28 @@ type FileSystem interface {
 	OpenForReading(path string) (r io.ReadCloser, err error)
 }
 
-// Return a FileSystem that uses the read file system.
-func NewFileSystem() FileSystem {
-	return &fileSystem{}
+// Return a FileSystem that uses the real file system.
+func NewFileSystem() (fs FileSystem, err error) {
+	fsStruct := &fileSystem{}
+
+	// Create a user registry.
+	if fsStruct.userRegistry, err = sys.NewUserRegistry(); err != nil {
+		err = fmt.Errorf("Creating user registry: %v", err)
+		return
+	}
+
+	// Create a group registry.
+	if fsStruct.groupRegistry, err = sys.NewGroupRegistry(); err != nil {
+		err = fmt.Errorf("Creating group registry: %v", err)
+		return
+	}
+
+	return fsStruct, nil
 }
 
 type fileSystem struct {
+	userRegistry sys.UserRegistry
+	groupRegistry sys.GroupRegistry
 }
 
 func convertFileInfo(fi os.FileInfo) (*DirectoryEntry, error) {
