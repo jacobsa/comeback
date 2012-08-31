@@ -269,9 +269,12 @@ func restoreDir(target string, score blob.Score) error {
 			return fmt.Errorf("Chown: %v", err)
 		}
 
-		// Fix modification time.
-		if err = setModTime(entryPath, entry.MTime); err != nil {
-			return fmt.Errorf("setModTime(%s): %v", entryPath, err)
+		// Fix modification time, but not on devices (otherwise we get resource
+		// busy errors).
+		if entry.Type != fs.TypeBlockDevice && entry.Type != fs.TypeCharDevice {
+			if err = setModTime(entryPath, entry.MTime); err != nil {
+				return fmt.Errorf("setModTime(%s): %v", entryPath, err)
+			}
 		}
 	}
 
