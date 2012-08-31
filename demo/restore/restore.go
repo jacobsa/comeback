@@ -137,6 +137,9 @@ func setModTime(path string, mtime time.Time) error {
 // supplied target, whose parent must already exist.
 func restoreFile(target string, scores []blob.Score) error {
 	// Open the file.
+	//
+	// TODO(jacobsa): Fix permissions race condition here, since we create the
+	// file with 0666.
 	f, err := os.Create(target)
 	defer f.Close()
 
@@ -209,10 +212,6 @@ func restoreDir(target string, score blob.Score) error {
 				return err
 			}
 
-			if err := setPermissions(entryPath, entry.Permissions); err != nil {
-				return err
-			}
-
 		case fs.TypeDirectory:
 			if len(entry.Scores) != 1 {
 				return fmt.Errorf("Wrong number of scores: %v", entry)
@@ -267,6 +266,11 @@ func restoreDir(target string, score blob.Score) error {
 
 		if err = os.Lchown(entryPath, int(uid), int(gid)); err != nil {
 			return fmt.Errorf("Chown: %v", err)
+		}
+
+		// Fix permissions.
+		if err := setPermissions(entryPath, entry.Permissions); err != nil {
+			return err
 		}
 
 		// Fix modification time, but not on devices (otherwise we get resource
