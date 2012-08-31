@@ -68,10 +68,19 @@ type fileSystem struct {
 }
 
 func convertFileInfo(fi os.FileInfo) (*DirectoryEntry, error) {
+	// Grab system-specific info.
+	statT, ok := fi.Sys().(*syscall.Stat_t)
+	if !ok {
+		return nil, fmt.Errorf("Unexpected sys value: %v", fi.Sys())
+	}
+
+	// Create the basic entry.
 	entry := &DirectoryEntry{
 		Permissions: fi.Mode() & permissionBits,
 		Name:        fi.Name(),
 		MTime:       fi.ModTime(),
+		Uid:         sys.UserId(statT.Uid),
+		Gid:         sys.GroupId(statT.Gid),
 	}
 
 	// Convert the type.
@@ -85,18 +94,10 @@ func convertFileInfo(fi os.FileInfo) (*DirectoryEntry, error) {
 		entry.Type = TypeSymlink
 	case os.ModeDevice:
 		entry.Type = TypeBlockDevice
-		sys, ok := fi.Sys().(*syscall.Stat_t)
-		if !ok {
-			return nil, fmt.Errorf("Unexpected sys value: %v", fi.Sys())
-		}
-		entry.Device = sys.Dev
+		entry.Device = statT.Dev
 	case os.ModeDevice | os.ModeCharDevice:
 		entry.Type = TypeCharDevice
-		sys, ok := fi.Sys().(*syscall.Stat_t)
-		if !ok {
-			return nil, fmt.Errorf("Unexpected sys value: %v", fi.Sys())
-		}
-		entry.Device = sys.Dev
+		entry.Device = statT.Dev
 	case os.ModeNamedPipe:
 		entry.Type = TypeNamedPipe
 	default:
