@@ -9,14 +9,13 @@
 package group
 
 import (
-	"os"
 	"runtime"
 	"testing"
 )
 
 func skip(t *testing.T) bool {
 	if !implemented {
-		t.Logf("user: not implemented; skipping tests")
+		t.Logf("group: not implemented; skipping tests")
 		return true
 	}
 
@@ -25,7 +24,7 @@ func skip(t *testing.T) bool {
 		return false
 	}
 
-	t.Logf("user: Lookup not implemented on %s; skipping test", runtime.GOOS)
+	t.Logf("group: Lookup not implemented on %s; skipping test", runtime.GOOS)
 	return true
 }
 
@@ -34,39 +33,21 @@ func TestCurrent(t *testing.T) {
 		return
 	}
 
-	u, err := Current()
+	g, err := Current()
 	if err != nil {
 		t.Fatalf("Current: %v", err)
 	}
-	fi, err := os.Stat(u.HomeDir)
-	if err != nil || !fi.IsDir() {
-		t.Errorf("expected a valid HomeDir; stat(%q): err=%v", u.HomeDir, err)
-	}
-	if u.Username == "" {
-		t.Fatalf("didn't get a username")
+	if g.Groupname == "" {
+		t.Fatalf("didn't get a groupname")
 	}
 }
 
-func compare(t *testing.T, want, got *User) {
-	if want.Uid != got.Uid {
-		t.Errorf("got Uid=%q; want %q", got.Uid, want.Uid)
-	}
-	if want.Username != got.Username {
-		t.Errorf("got Username=%q; want %q", got.Username, want.Username)
-	}
-	if want.Name != got.Name {
-		t.Errorf("got Name=%q; want %q", got.Name, want.Name)
-	}
-	// TODO(brainman): fix it once we know how.
-	if runtime.GOOS == "windows" {
-		t.Log("skipping Gid and HomeDir comparisons")
-		return
+func compare(t *testing.T, want, got *Group) {
+	if want.Groupname != got.Groupname {
+		t.Errorf("got Groupname=%q; want %q", got.Groupname, want.Groupname)
 	}
 	if want.Gid != got.Gid {
 		t.Errorf("got Gid=%q; want %q", got.Gid, want.Gid)
-	}
-	if want.HomeDir != got.HomeDir {
-		t.Errorf("got HomeDir=%q; want %q", got.HomeDir, want.HomeDir)
 	}
 }
 
@@ -79,7 +60,7 @@ func TestLookup(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Current: %v", err)
 	}
-	got, err := Lookup(want.Username)
+	got, err := Lookup(want.Groupname)
 	if err != nil {
 		t.Fatalf("Lookup: %v", err)
 	}
@@ -95,7 +76,7 @@ func TestLookupId(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Current: %v", err)
 	}
-	got, err := LookupId(want.Uid)
+	got, err := LookupId(want.Gid)
 	if err != nil {
 		t.Fatalf("LookupId: %v", err)
 	}
