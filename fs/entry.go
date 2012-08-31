@@ -58,7 +58,8 @@ type DirectoryEntry struct {
 	// The modification time of this entry.
 	MTime time.Time
 
-	// The containing device's device number, and the inode on the device.
+	// The containing device's device number, and the inode on the device. These
+	// are defined only for regular files.
 	ContainingDevice int32
 	Inode uint64
 
