@@ -49,13 +49,13 @@ func makeEntryProto(entry *fs.DirectoryEntry) (*repr_proto.DirectoryEntryProto, 
 	}
 
 	entryProto := &repr_proto.DirectoryEntryProto{
-		Permissions: proto.Uint32(uint32(entry.Permissions)),
-		Uid:         proto.Uint32(uint32(entry.Uid)),
-		Username:    entry.Username,
-		Gid:         proto.Uint32(uint32(entry.Gid)),
-		Groupname:   entry.Groupname,
-		HardLinkTarget:    entry.HardLinkTarget,
-		Name:        proto.String(entry.Name),
+		Permissions:    proto.Uint32(uint32(entry.Permissions)),
+		Uid:            proto.Uint32(uint32(entry.Uid)),
+		Username:       entry.Username,
+		Gid:            proto.Uint32(uint32(entry.Gid)),
+		Groupname:      entry.Groupname,
+		HardLinkTarget: entry.HardLinkTarget,
+		Name:           proto.String(entry.Name),
 		Mtime: &repr_proto.TimeProto{
 			Second:     proto.Int64(entry.MTime.Unix()),
 			Nanosecond: proto.Uint32(uint32(entry.MTime.Nanosecond())),

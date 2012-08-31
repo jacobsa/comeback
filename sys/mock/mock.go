@@ -8,9 +8,9 @@ package mock_sys
 
 import (
 	fmt "fmt"
+	sys "github.com/jacobsa/comeback/sys"
 	oglemock "github.com/jacobsa/oglemock"
 	runtime "runtime"
-	sys "github.com/jacobsa/comeback/sys"
 	unsafe "unsafe"
 )
 
@@ -20,16 +20,16 @@ type MockUserRegistry interface {
 }
 
 type mockUserRegistry struct {
-	controller	oglemock.Controller
-	description	string
+	controller  oglemock.Controller
+	description string
 }
 
 func NewMockUserRegistry(
 	c oglemock.Controller,
 	desc string) MockUserRegistry {
 	return &mockUserRegistry{
-		controller:	c,
-		description:	desc,
+		controller:  c,
+		description: desc,
 	}
 }
 
@@ -105,16 +105,16 @@ type MockGroupRegistry interface {
 }
 
 type mockGroupRegistry struct {
-	controller	oglemock.Controller
-	description	string
+	controller  oglemock.Controller
+	description string
 }
 
 func NewMockGroupRegistry(
 	c oglemock.Controller,
 	desc string) MockGroupRegistry {
 	return &mockGroupRegistry{
-		controller:	c,
-		description:	desc,
+		controller:  c,
+		description: desc,
 	}
 }
 

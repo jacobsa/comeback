@@ -52,7 +52,7 @@ func NewFileSystem(
 }
 
 type fileSystem struct {
-	userRegistry sys.UserRegistry
+	userRegistry  sys.UserRegistry
 	groupRegistry sys.GroupRegistry
 }
 

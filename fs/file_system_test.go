@@ -106,17 +106,17 @@ func makeNamedPipe(path string, permissions uint32) error {
 }
 
 type fileSystemTest struct {
-	mockController oglemock.Controller
-	userRegistry sys.UserRegistry
-	groupRegistry sys.GroupRegistry
-	fileSystem  fs.FileSystem
-	baseDir     string
+	mockController          oglemock.Controller
+	userRegistry            sys.UserRegistry
+	groupRegistry           sys.GroupRegistry
+	fileSystem              fs.FileSystem
+	baseDir                 string
 	baseDirContainingDevice int32
-	baseDirInode uint64
-	myUid       sys.UserId
-	myUsername  string
-	myGid       sys.GroupId
-	myGroupname string
+	baseDirInode            uint64
+	myUid                   sys.UserId
+	myUsername              string
+	myGid                   sys.GroupId
+	myGroupname             string
 }
 
 func (t *fileSystemTest) setUpFileSystem() {

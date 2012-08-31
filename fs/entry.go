@@ -61,7 +61,7 @@ type DirectoryEntry struct {
 	// The containing device's device number, and the inode on the device. These
 	// are defined only for regular files.
 	ContainingDevice int32
-	Inode uint64
+	Inode            uint64
 
 	// The scores of zero or more blobs that make up a regular file's contents,
 	// to be concatenated in order. For directories, this is exactly one blob
