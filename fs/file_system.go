@@ -57,7 +57,7 @@ func convertFileInfo(fi os.FileInfo) (*DirectoryEntry, error) {
 	}
 
 	// Convert the type.
-	typeBits := fi.Mode() & os.ModeType
+	typeBits := fi.Mode() & (os.ModeType | os.ModeCharDevice)
 	switch typeBits {
 	case 0:
 		entry.Type = TypeFile
@@ -65,8 +65,12 @@ func convertFileInfo(fi os.FileInfo) (*DirectoryEntry, error) {
 		entry.Type = TypeDirectory
 	case os.ModeSymlink:
 		entry.Type = TypeSymlink
+	case os.ModeDevice:
+		entry.Type = TypeBlockDevice
+	case os.ModeDevice | os.ModeCharDevice:
+		entry.Type = TypeCharDevice
 	default:
-		return entry, fmt.Errorf("Unhandled mode: %v", fi.Mode())
+		return entry, fmt.Errorf("Unhandled mode: %v %u", fi.Mode(), fi.Mode())
 	}
 
 	return entry, nil
