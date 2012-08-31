@@ -48,6 +48,14 @@ message DirectoryEntryProto {
   // fs.DirectoryEntry, with values as in the golang os package.
   optional uint32 permissions = 2;
 
+	// The owning user's UID, and their username if known.
+  optional uint32 uid = 8;
+  optional string username = 9;
+
+	// The owning user's GID, and their groupname if known.
+  optional uint32 gid = 10;
+  optional string groupname = 11;
+
   // The name of this entry.
   optional string name = 3;
 

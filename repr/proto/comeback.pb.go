@@ -106,6 +106,10 @@ func (this *TimeProto) GetNanosecond() uint32 {
 type DirectoryEntryProto struct {
 	Type             *DirectoryEntryProto_Type `protobuf:"varint,1,opt,name=type,enum=repr_proto.DirectoryEntryProto_Type" json:"type,omitempty"`
 	Permissions      *uint32                   `protobuf:"varint,2,opt,name=permissions" json:"permissions,omitempty"`
+	Uid              *uint32                   `protobuf:"varint,8,opt,name=uid" json:"uid,omitempty"`
+	Username         *string                   `protobuf:"bytes,9,opt,name=username" json:"username,omitempty"`
+	Gid              *uint32                   `protobuf:"varint,10,opt,name=gid" json:"gid,omitempty"`
+	Groupname        *string                   `protobuf:"bytes,11,opt,name=groupname" json:"groupname,omitempty"`
 	Name             *string                   `protobuf:"bytes,3,opt,name=name" json:"name,omitempty"`
 	Mtime            *TimeProto                `protobuf:"bytes,4,opt,name=mtime" json:"mtime,omitempty"`
 	Blob             []*BlobInfoProto          `protobuf:"bytes,5,rep,name=blob" json:"blob,omitempty"`
@@ -130,6 +134,34 @@ func (this *DirectoryEntryProto) GetPermissions() uint32 {
 		return *this.Permissions
 	}
 	return 0
+}
+
+func (this *DirectoryEntryProto) GetUid() uint32 {
+	if this != nil && this.Uid != nil {
+		return *this.Uid
+	}
+	return 0
+}
+
+func (this *DirectoryEntryProto) GetUsername() string {
+	if this != nil && this.Username != nil {
+		return *this.Username
+	}
+	return ""
+}
+
+func (this *DirectoryEntryProto) GetGid() uint32 {
+	if this != nil && this.Gid != nil {
+		return *this.Gid
+	}
+	return 0
+}
+
+func (this *DirectoryEntryProto) GetGroupname() string {
+	if this != nil && this.Groupname != nil {
+		return *this.Groupname
+	}
+	return ""
 }
 
 func (this *DirectoryEntryProto) GetName() string {

@@ -22,6 +22,7 @@ import (
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/fs"
 	"github.com/jacobsa/comeback/repr/proto"
+	"github.com/jacobsa/comeback/sys"
 	"os"
 	"time"
 )
@@ -70,6 +71,10 @@ func convertEntryProto(entryProto *repr_proto.DirectoryEntryProto) (entry *fs.Di
 
 	entry.Name = entryProto.GetName()
 	entry.Permissions = os.FileMode(entryProto.GetPermissions())
+	entry.Uid = sys.UserId(entryProto.GetUid())
+	entry.Username = entryProto.Username
+	entry.Gid = sys.GroupId(entryProto.GetGid())
+	entry.Groupname = entryProto.Groupname
 
 	// Copy symlink targets.
 	entry.Target = entryProto.GetTarget()

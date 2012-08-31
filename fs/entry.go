@@ -52,7 +52,7 @@ type DirectoryEntry struct {
 	Username *string
 
 	// The owning group's GID, and its groupname if known.
-	Gid sys.UserId
+	Gid sys.GroupId
 	Groupname *string
 
 	// The modification time of this entry.
