@@ -56,7 +56,7 @@ func (t *UserRegistryTest) LookUpCurrentUser() {
 	osUser, err := user.Current()
 	AssertEq(nil, err)
 
-	AssertNe("", osUser.Name)
+	AssertNe("", osUser.Username)
 	AssertNe("", osUser.Uid)
 
 	osUid, err := strconv.Atoi(osUser.Uid)
@@ -66,9 +66,9 @@ func (t *UserRegistryTest) LookUpCurrentUser() {
 	// Look it up in both ways.
 	username, err := t.registry.FindById(sys.UserId(osUid))
 	AssertEq(nil, err)
-	ExpectEq(osUser.Name, username)
+	ExpectEq(osUser.Username, username)
 
-	uid, err := t.registry.FindByName(osUser.Name)
+	uid, err := t.registry.FindByName(osUser.Username)
 	AssertEq(nil, err)
 	ExpectEq(sys.UserId(osUid), uid)
 }
@@ -78,7 +78,7 @@ func (t *UserRegistryTest) LookUpRootUser() {
 	osUser, err := user.Lookup("root")
 	AssertEq(nil, err)
 
-	AssertNe("", osUser.Name)
+	AssertNe("", osUser.Username)
 	AssertNe("", osUser.Uid)
 
 	osUid, err := strconv.Atoi(osUser.Uid)
