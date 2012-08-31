@@ -414,9 +414,9 @@ func (t *ReadDirTest) BlockDevices() {
 	ExpectNe(0, entry.Device)
 	ExpectEq(os.FileMode(0666), entry.Permissions)
 	ExpectEq(0, entry.Uid)
-	ExpectThat("root", Pointee(Equals(t.myUsername)))
+	ExpectThat(entry.Username, Pointee(Equals("root")))
 	ExpectEq(0, entry.Gid)
-	ExpectThat("wheel", Pointee(Equals(t.myGroupname)))
+	ExpectThat(entry.Groupname, Pointee(Equals("wheel")))
 	ExpectGe(time.Since(entry.MTime), 0)
 	ExpectLt(time.Since(entry.MTime), 365*24*time.Hour)
 }
@@ -436,9 +436,9 @@ func (t *ReadDirTest) CharDevices() {
 	ExpectNe(0, entry.Device)
 	ExpectEq(os.FileMode(0640), entry.Permissions)
 	ExpectEq(0, entry.Uid)
-	ExpectThat("root", Pointee(Equals(t.myUsername)))
+	ExpectThat(entry.Username, Pointee(Equals("root")))
 	ExpectEq(0, entry.Gid)
-	ExpectThat("wheel", Pointee(Equals(t.myGroupname)))
+	ExpectThat(entry.Groupname, Pointee(Equals("wheel")))
 	ExpectGe(time.Since(entry.MTime), 0)
 	ExpectLt(time.Since(entry.MTime), 365*24*time.Hour)
 }
