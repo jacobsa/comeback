@@ -124,6 +124,9 @@ func (s *dirSaver) Save(dirpath string) (score blob.Score, err error) {
 			entry.Scores, err = s.saveFile(dirpath, entry)
 		case fs.TypeDirectory:
 			entry.Scores, err = s.saveDir(dirpath, entry)
+		case fs.TypeBlockDevice:
+		case fs.TypeCharDevice:
+		case fs.TypeNamedPipe:
 		default:
 			err = fmt.Errorf("Unhandled type: %v", entry.Type)
 		}
