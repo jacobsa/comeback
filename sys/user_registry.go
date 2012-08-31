@@ -43,8 +43,8 @@ type userRegistry struct {}
 func (r *userRegistry) FindById(id UserId) (string, error) {
 	osResult, err := user.LookupId(strconv.FormatUint(uint64(id), 10))
 
-	if unknownErr, ok := err.(user.UnknownUserError); ok {
-		return "", NotFoundError(unknownErr)
+	if unknownErr, ok := err.(user.UnknownUserIdError); ok {
+		return "", NotFoundError(unknownErr.Error())
 	}
 
 	if err != nil {
