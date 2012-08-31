@@ -69,6 +69,8 @@ func convertFileInfo(fi os.FileInfo) (*DirectoryEntry, error) {
 		entry.Type = TypeBlockDevice
 	case os.ModeDevice | os.ModeCharDevice:
 		entry.Type = TypeCharDevice
+	case os.ModeNamedPipe:
+		entry.Type = TypeNamedPipe
 	default:
 		return entry, fmt.Errorf("Unhandled mode: %v %u", fi.Mode(), fi.Mode())
 	}
