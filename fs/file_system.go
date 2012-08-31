@@ -43,23 +43,12 @@ type FileSystem interface {
 	OpenForReading(path string) (r io.ReadCloser, err error)
 }
 
-// Return a FileSystem that uses the real file system.
-func NewFileSystem() (fs FileSystem, err error) {
-	fsStruct := &fileSystem{}
-
-	// Create a user registry.
-	if fsStruct.userRegistry, err = sys.NewUserRegistry(); err != nil {
-		err = fmt.Errorf("Creating user registry: %v", err)
-		return
-	}
-
-	// Create a group registry.
-	if fsStruct.groupRegistry, err = sys.NewGroupRegistry(); err != nil {
-		err = fmt.Errorf("Creating group registry: %v", err)
-		return
-	}
-
-	return fsStruct, nil
+// Return a FileSystem that uses the real file system, along with the supplied
+// registries.
+func NewFileSystem(
+	userRegistry sys.UserRegistry,
+	groupRegistry sys.GroupRegistry) (fs FileSystem, err error) {
+	return &fileSystem{userRegistry, groupRegistry}, nil
 }
 
 type fileSystem struct {

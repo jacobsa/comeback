@@ -114,7 +114,17 @@ type fileSystemTest struct {
 func (t *fileSystemTest) SetUp(i *TestInfo) {
 	var err error
 
-	if t.fileSystem, err = fs.NewFileSystem(); err != nil {
+	userRegistry, err := sys.NewUserRegistry()
+	if err != nil {
+		log.Fatalf("Creating user registry: %v", err)
+	}
+
+	groupRegistry, err := sys.NewGroupRegistry()
+	if err != nil {
+		log.Fatalf("Creating group registry: %v", err)
+	}
+
+	if t.fileSystem, err = fs.NewFileSystem(userRegistry, groupRegistry); err != nil {
 		log.Fatalf("Creating file system: %v", err)
 	}
 
