@@ -121,6 +121,12 @@ func restoreDir(target string, score blob.Score) error {
 				return err
 			}
 
+		case fs.TypeSymlink:
+			err = os.Symlink(entry.Target, entryPath)
+			if err != nil {
+				return err
+			}
+
 		default:
 			return fmt.Errorf("Don't know how to deal with entry: %v", entry)
 		}
