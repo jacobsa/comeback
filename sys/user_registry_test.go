@@ -46,12 +46,11 @@ func (t *UserRegistryTest) SetUp(i *TestInfo) {
 
 func (t *UserRegistryTest) UnknownUsername() {
 	_, err := t.registry.FindByName("jksdlhfy9823h4bnkqjsahdjkahsd")
-	AssertNe(nil, err)
 
 	notFoundErr, ok := err.(sys.NotFoundError)
 	AssertTrue(ok, "%v", err)
 	ExpectThat(notFoundErr, HasSubstr("jksdlhfy9823h4bnkqjsahdjkahsd"))
-	ExpectThat(notFoundErr, HasSubstr("not found"))
+	ExpectThat(notFoundErr, HasSubstr("unknown"))
 }
 
 func (t *UserRegistryTest) UnknownUserId() {

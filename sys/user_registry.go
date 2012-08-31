@@ -58,7 +58,7 @@ func (r *userRegistry) FindByName(name string) (UserId, error) {
 	osResult, err := user.Lookup(name)
 
 	if unknownErr, ok := err.(user.UnknownUserError); ok {
-		return 0, NotFoundError(unknownErr)
+		return 0, NotFoundError(unknownErr.Error())
 	}
 
 	if err != nil {
