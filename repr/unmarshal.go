@@ -34,6 +34,10 @@ func convertProtoType(t repr_proto.DirectoryEntryProto_Type) (fs.EntryType, erro
 		return fs.TypeDirectory, nil
 	case repr_proto.DirectoryEntryProto_TYPE_SYMLINK:
 		return fs.TypeSymlink, nil
+	case repr_proto.DirectoryEntryProto_TYPE_BLOCK_DEVICE:
+		return fs.TypeBlockDevice, nil
+	case repr_proto.DirectoryEntryProto_TYPE_CHAR_DEVICE:
+		return fs.TypeCharDevice, nil
 	}
 
 	return 0, fmt.Errorf("Unrecognized DirectoryEntryProto_Type: %v", t)

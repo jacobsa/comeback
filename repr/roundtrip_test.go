@@ -114,8 +114,8 @@ func (t *RoundtripTest) PreservesTypes() {
 	ExpectEq(in[0].Type, out[0].Type)
 	ExpectEq(in[1].Type, out[1].Type)
 	ExpectEq(in[2].Type, out[2].Type)
-	ExpectEq(in[3].Type, out[2].Type)
-	ExpectEq(in[4].Type, out[2].Type)
+	ExpectEq(in[3].Type, out[3].Type)
+	ExpectEq(in[4].Type, out[4].Type)
 }
 
 func (t *RoundtripTest) PreservesNames() {

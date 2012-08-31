@@ -33,11 +33,13 @@ message TimeProto {
 message DirectoryEntryProto {
   enum Type {
     // Sentinel for a missing value.
-    TYPE_UNKNOWN   = -1;
+    TYPE_UNKNOWN      = -1;
 
-    TYPE_FILE      =  0;
-    TYPE_DIRECTORY =  1;
-    TYPE_SYMLINK   =  2;
+    TYPE_FILE         =  0;
+    TYPE_DIRECTORY    =  1;
+    TYPE_SYMLINK      =  2;
+    TYPE_BLOCK_DEVICE =  3;
+    TYPE_CHAR_DEVICE  =  4;
   }
   optional Type type = 1;
 

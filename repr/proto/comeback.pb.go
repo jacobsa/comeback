@@ -15,10 +15,12 @@ var _ = math.Inf
 type DirectoryEntryProto_Type int32
 
 const (
-	DirectoryEntryProto_TYPE_UNKNOWN   DirectoryEntryProto_Type = -1
-	DirectoryEntryProto_TYPE_FILE      DirectoryEntryProto_Type = 0
-	DirectoryEntryProto_TYPE_DIRECTORY DirectoryEntryProto_Type = 1
-	DirectoryEntryProto_TYPE_SYMLINK   DirectoryEntryProto_Type = 2
+	DirectoryEntryProto_TYPE_UNKNOWN      DirectoryEntryProto_Type = -1
+	DirectoryEntryProto_TYPE_FILE         DirectoryEntryProto_Type = 0
+	DirectoryEntryProto_TYPE_DIRECTORY    DirectoryEntryProto_Type = 1
+	DirectoryEntryProto_TYPE_SYMLINK      DirectoryEntryProto_Type = 2
+	DirectoryEntryProto_TYPE_BLOCK_DEVICE DirectoryEntryProto_Type = 3
+	DirectoryEntryProto_TYPE_CHAR_DEVICE  DirectoryEntryProto_Type = 4
 )
 
 var DirectoryEntryProto_Type_name = map[int32]string{
@@ -26,12 +28,16 @@ var DirectoryEntryProto_Type_name = map[int32]string{
 	0:  "TYPE_FILE",
 	1:  "TYPE_DIRECTORY",
 	2:  "TYPE_SYMLINK",
+	3:  "TYPE_BLOCK_DEVICE",
+	4:  "TYPE_CHAR_DEVICE",
 }
 var DirectoryEntryProto_Type_value = map[string]int32{
-	"TYPE_UNKNOWN":   -1,
-	"TYPE_FILE":      0,
-	"TYPE_DIRECTORY": 1,
-	"TYPE_SYMLINK":   2,
+	"TYPE_UNKNOWN":      -1,
+	"TYPE_FILE":         0,
+	"TYPE_DIRECTORY":    1,
+	"TYPE_SYMLINK":      2,
+	"TYPE_BLOCK_DEVICE": 3,
+	"TYPE_CHAR_DEVICE":  4,
 }
 
 func (x DirectoryEntryProto_Type) Enum() *DirectoryEntryProto_Type {
