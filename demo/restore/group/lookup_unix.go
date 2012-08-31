@@ -22,19 +22,14 @@ import (
 /*
 #include <unistd.h>
 #include <sys/types.h>
-#include <pwd.h>
+#include <grp.h>
 #include <stdlib.h>
-
-static int mygetpwuid_r(int uid, struct passwd *pwd,
-	char *buf, size_t buflen, struct passwd **result) {
- return getpwuid_r(uid, pwd, buf, buflen, result);
-}
 */
 import "C"
 
 // Current returns the current group. 
 func Current() (*Group, error) {
-	return lookup(syscall.Getuid(), "", false)
+	return lookup(syscall.Getgid(), "", false)
 }
 
 // Lookup looks up a group by groupname. If the group cannot be found,
@@ -45,28 +40,25 @@ func Lookup(groupname string) (*Group, error) {
 
 // LookupId looks up a group by groupid. If the group cannot be found,
 // the returned error is of type UnknownGroupIdError.
-func LookupId(uid string) (*Group, error) {
-	i, e := strconv.Atoi(uid)
+func LookupId(gid string) (*Group, error) {
+	i, e := strconv.Atoi(gid)
 	if e != nil {
 		return nil, e
 	}
 	return lookup(i, "", false)
 }
 
-func lookup(uid int, groupname string, lookupByName bool) (*Group, error) {
-	var pwd C.struct_passwd
-	var result *C.struct_passwd
+func lookup(gid int, groupname string, lookupByName bool) (*Group, error) {
+	var grp C.struct_group
+	var result *C.struct_group
 
 	var bufSize C.long
 	if runtime.GOOS == "freebsd" {
-		// FreeBSD doesn't have _SC_GETPW_R_SIZE_MAX
-		// and just returns -1.  So just use the same
-		// size that Linux returns
-		bufSize = 1024
+		panic("Don't know how to deal with freebsd.")
 	} else {
-		bufSize = C.sysconf(C._SC_GETPW_R_SIZE_MAX)
+		bufSize = C.sysconf(C._SC_GETGR_R_SIZE_MAX)
 		if bufSize <= 0 || bufSize > 1<<20 {
-			return nil, fmt.Errorf("group: unreasonable _SC_GETPW_R_SIZE_MAX of %d", bufSize)
+			return nil, fmt.Errorf("group: unreasonable _SC_GETGR_R_SIZE_MAX of %d", bufSize)
 		}
 	}
 	buf := C.malloc(C.size_t(bufSize))
@@ -75,8 +67,8 @@ func lookup(uid int, groupname string, lookupByName bool) (*Group, error) {
 	if lookupByName {
 		nameC := C.CString(groupname)
 		defer C.free(unsafe.Pointer(nameC))
-		rv = C.getpwnam_r(nameC,
-			&pwd,
+		rv = C.getgrnam_r(nameC,
+			&grp,
 			(*C.char)(buf),
 			C.size_t(bufSize),
 			&result)
@@ -87,24 +79,21 @@ func lookup(uid int, groupname string, lookupByName bool) (*Group, error) {
 			return nil, UnknownGroupError(groupname)
 		}
 	} else {
-		// mygetpwuid_r is a wrapper around getpwuid_r to
-		// to avoid using uid_t because C.uid_t(uid) for
-		// unknown reasons doesn't work on linux.
-		rv = C.mygetpwuid_r(C.int(uid),
-			&pwd,
+		rv = C.getgrgid_r(C.gid_t(gid),
+			&grp,
 			(*C.char)(buf),
 			C.size_t(bufSize),
 			&result)
 		if rv != 0 {
-			return nil, fmt.Errorf("group: lookup groupid %d: %s", uid, syscall.Errno(rv))
+			return nil, fmt.Errorf("group: lookup groupid %d: %s", gid, syscall.Errno(rv))
 		}
 		if result == nil {
-			return nil, UnknownGroupIdError(uid)
+			return nil, UnknownGroupIdError(gid)
 		}
 	}
 	u := &Group{
-		Gid:      strconv.Itoa(int(pwd.pw_gid)),
-		Groupname: C.GoString(pwd.pw_name),
+		Gid:      strconv.Itoa(int(grp.gr_gid)),
+		Groupname: C.GoString(grp.gr_name),
 	}
 	return u, nil
 }
