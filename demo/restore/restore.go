@@ -23,6 +23,7 @@ import (
 	"github.com/jacobsa/comeback/disk"
 	"github.com/jacobsa/comeback/fs"
 	"github.com/jacobsa/comeback/repr"
+	"github.com/jacobsa/comeback/sys"
 	"io"
 	"log"
 	"os"
@@ -51,6 +52,54 @@ func fromHexHash(h string) (blob.Score, error) {
 	}
 
 	return &score{b}, nil
+}
+
+func chooseUserId(uid sys.UserId, username *string) (sys.UserId, error) {
+	// If there is no symbolic username, just return the UID.
+	if username == nil {
+		return uid, nil
+	}
+
+	// Create a user registry.
+	registry, err := sys.NewUserRegistry()
+	if err != nil {
+		return 0, fmt.Errorf("Creating user registry: %v", err)
+	}
+
+	// Attempt to look up the username. If it's not found, return the UID.
+	betterUid, err := registry.FindByName(*username)
+
+	if _, ok := err.(sys.NotFoundError); ok {
+		return uid, nil
+	} else if err != nil {
+		return 0, fmt.Errorf("Looking up user: %v", err)
+	}
+
+	return betterUid, nil
+}
+
+func chooseGroupId(gid sys.GroupId, groupname *string) (sys.GroupId, error) {
+	// If there is no symbolic groupname, just return the GID.
+	if groupname == nil {
+		return gid, nil
+	}
+
+	// Create a group registry.
+	registry, err := sys.NewGroupRegistry()
+	if err != nil {
+		return 0, fmt.Errorf("Creating group registry: %v", err)
+	}
+
+	// Attempt to look up the groupname. If it's not found, return the GID.
+	betterGid, err := registry.FindByName(*groupname)
+
+	if _, ok := err.(sys.NotFoundError); ok {
+		return gid, nil
+	} else if err != nil {
+		return 0, fmt.Errorf("Looking up group: %v", err)
+	}
+
+	return betterGid, nil
 }
 
 // Restore the file whose contents are described by the referenced blobs to the
@@ -172,6 +221,21 @@ func restoreDir(target string, score blob.Score) error {
 
 		default:
 			return fmt.Errorf("Don't know how to deal with entry: %v", entry)
+		}
+
+		// Fix ownership.
+		uid, err := chooseUserId(entry.Uid, entry.Username)
+		if err != nil {
+			return fmt.Errorf("chooseUserId: %v", err)
+		}
+
+		gid, err := chooseGroupId(entry.Gid, entry.Groupname)
+		if err != nil {
+			return fmt.Errorf("chooseGroupId: %v", err)
+		}
+
+		if err = os.Chown(entryPath, int(uid), int(gid)); err != nil {
+			return fmt.Errorf("Chown: %v", err)
 		}
 	}
 
