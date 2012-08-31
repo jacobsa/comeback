@@ -302,7 +302,7 @@ func (t *DirectorySaverTest) OneTypeIsUnsupported() {
 		makeEntry("", fs.TypeDirectory),
 	}
 
-	entries[1].Type = fs.TypeSymlink
+	entries[1].Type = 17
 
 	ExpectCall(t.fileSystem, "ReadDir")(Any()).
 		WillOnce(oglemock.Return(entries, nil))
