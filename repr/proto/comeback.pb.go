@@ -110,6 +110,7 @@ type DirectoryEntryProto struct {
 	Mtime            *TimeProto                `protobuf:"bytes,4,opt,name=mtime" json:"mtime,omitempty"`
 	Blob             []*BlobInfoProto          `protobuf:"bytes,5,rep,name=blob" json:"blob,omitempty"`
 	Target           *string                   `protobuf:"bytes,6,opt,name=target" json:"target,omitempty"`
+	Device           *int32                    `protobuf:"varint,7,opt,name=device" json:"device,omitempty"`
 	XXX_unrecognized []byte                    `json:"-"`
 }
 
@@ -150,6 +151,13 @@ func (this *DirectoryEntryProto) GetTarget() string {
 		return *this.Target
 	}
 	return ""
+}
+
+func (this *DirectoryEntryProto) GetDevice() int32 {
+	if this != nil && this.Device != nil {
+		return *this.Device
+	}
+	return 0
 }
 
 type DirectoryListingProto struct {

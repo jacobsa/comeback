@@ -59,3 +59,23 @@ func (t *MarshalTest) LeavesOutTargetForNonSymlinks() {
 	ExpectEq(nil, listingProto.Entry[0].Target)
 	ExpectEq(nil, listingProto.Entry[1].Target)
 }
+
+func (t *MarshalTest) LeavesOutDeviceNumberForNonDevices() {
+	// Input
+	entries := []*fs.DirectoryEntry{
+		&fs.DirectoryEntry{Type: fs.TypeFile},
+		&fs.DirectoryEntry{Type: fs.TypeDirectory},
+	}
+
+	// Call
+	data, err := repr.Marshal(entries)
+	AssertEq(nil, err)
+
+	listingProto := new(repr_proto.DirectoryListingProto)
+	err = proto.Unmarshal(data, listingProto)
+	AssertEq(nil, err)
+
+	AssertThat(listingProto.Entry, ElementsAre(Any(), Any()))
+	ExpectEq(nil, listingProto.Entry[0].Device)
+	ExpectEq(nil, listingProto.Entry[1].Device)
+}

@@ -60,6 +60,9 @@ message DirectoryEntryProto {
 
   // The target, if this is a symlink.
   optional string target = 6;
+
+  // The device number in a system-dependent format, if this is a device.
+  optional int32 device = 7;
 }
 
 message DirectoryListingProto {
