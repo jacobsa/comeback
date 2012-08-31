@@ -211,6 +211,10 @@ func (t *DirectorySaverTest) FileSystemReturnsErrorForOneFile() {
 	ExpectCall(t.fileSystem, "ReadDir")(Any()).
 		WillOnce(oglemock.Return(entries, nil))
 
+  // Link resolver
+	ExpectCall(t.linkResolver, "Register")(Any(), Any(), Any()).
+		WillRepeatedly(oglemock.Return(nil))
+
 	// OpenForReading
 	file0 := &readCloser{}
 
@@ -241,6 +245,10 @@ func (t *DirectorySaverTest) FileSaverReturnsErrorForOneFile() {
 
 	ExpectCall(t.fileSystem, "ReadDir")(Any()).
 		WillOnce(oglemock.Return(entries, nil))
+
+  // Link resolver
+	ExpectCall(t.linkResolver, "Register")(Any(), Any(), Any()).
+		WillRepeatedly(oglemock.Return(nil))
 
 	// OpenForReading
 	file0 := &readCloser{}
@@ -354,6 +362,10 @@ func (t *DirectorySaverTest) CallsBlobStore() {
 
 	ExpectCall(t.fileSystem, "ReadDir")(Any()).
 		WillOnce(oglemock.Return(entries, nil))
+
+  // Link resolver
+	ExpectCall(t.linkResolver, "Register")(Any(), Any(), Any()).
+		WillRepeatedly(oglemock.Return(nil))
 
 	// OpenForReading
 	file0 := &readCloser{}
