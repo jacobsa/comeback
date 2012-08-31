@@ -234,7 +234,7 @@ func restoreDir(target string, score blob.Score) error {
 			return fmt.Errorf("chooseGroupId: %v", err)
 		}
 
-		if err = os.Chown(entryPath, int(uid), int(gid)); err != nil {
+		if err = os.Lchown(entryPath, int(uid), int(gid)); err != nil {
 			return fmt.Errorf("Chown: %v", err)
 		}
 	}
