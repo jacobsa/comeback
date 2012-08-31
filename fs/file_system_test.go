@@ -111,6 +111,8 @@ type fileSystemTest struct {
 	groupRegistry sys.GroupRegistry
 	fileSystem  fs.FileSystem
 	baseDir     string
+	baseDirContainingDevice int32
+	baseDirInode uint64
 	myUid       sys.UserId
 	myUsername  string
 	myGid       sys.GroupId
@@ -127,6 +129,7 @@ func (t *fileSystemTest) setUpFileSystem() {
 func (t *fileSystemTest) SetUp(i *TestInfo) {
 	var err error
 
+	// Set up dependencies.
 	t.mockController = i.MockController
 
 	if t.userRegistry, err = sys.NewUserRegistry(); err != nil {
@@ -137,6 +140,7 @@ func (t *fileSystemTest) SetUp(i *TestInfo) {
 		log.Fatalf("Creating group registry: %v", err)
 	}
 
+	// Set up the file system.
 	t.setUpFileSystem()
 
 	// Create a temporary directory.
@@ -144,6 +148,23 @@ func (t *fileSystemTest) SetUp(i *TestInfo) {
 	if err != nil {
 		log.Fatalf("Creating baseDir: %v", err)
 	}
+
+	// Grab device and inode info for the directory.
+	fi, err := os.Stat(t.baseDir)
+	if err != nil {
+		log.Fatalf("Statting baseDir: %v", err)
+	}
+
+	sysInfo, ok := fi.Sys().(*syscall.Stat_t)
+	if !ok {
+		log.Fatalf("Bad sys info: %v", fi.Sys())
+	}
+
+	t.baseDirContainingDevice = sysInfo.Dev
+	t.baseDirInode = sysInfo.Ino
+
+	AssertNe(0, t.baseDirContainingDevice)
+	AssertNe(0, t.baseDirInode)
 
 	// Find user info.
 	currentUser, err := user.Current()
@@ -357,6 +378,7 @@ func (t *ReadDirTest) RegularFiles() {
 	AssertEq(nil, err)
 	AssertThat(entries, ElementsAre(Any(), Any()))
 
+	// Entry 0
 	entry = entries[0]
 	ExpectEq(fs.TypeFile, entry.Type)
 	ExpectEq("burrito.txt", entry.Name)
@@ -370,6 +392,13 @@ func (t *ReadDirTest) RegularFiles() {
 	ExpectTrue(entry.MTime.Equal(mtime0), "%v", entry.MTime)
 	ExpectThat(entry.Scores, ElementsAre())
 
+	AssertNe(0, entry.ContainingDevice)
+	AssertNe(0, entry.Inode)
+
+	ExpectNe(t.baseDirContainingDevice, entry.ContainingDevice)
+	ExpectNe(t.baseDirInode, entry.Inode)
+
+	// Entry 1
 	entry = entries[1]
 	ExpectEq(fs.TypeFile, entry.Type)
 	ExpectEq("enchilada.txt", entry.Name)
@@ -382,6 +411,12 @@ func (t *ReadDirTest) RegularFiles() {
 	ExpectThat(entry.Groupname, Pointee(Equals(t.myGroupname)))
 	ExpectTrue(entry.MTime.Equal(mtime1), "%v", entry.MTime)
 	ExpectThat(entry.Scores, ElementsAre())
+
+	AssertNe(0, entry.ContainingDevice)
+	AssertNe(0, entry.Inode)
+
+	ExpectNe(t.baseDirContainingDevice, entry.ContainingDevice)
+	ExpectNe(t.baseDirInode, entry.Inode)
 }
 
 func (t *ReadDirTest) Directories() {
