@@ -415,8 +415,8 @@ func (t *RoundtripTest) PreservesDeviceNumbers() {
 	in[0].Type = fs.TypeCharDevice
 	in[1].Type = fs.TypeBlockDevice
 
-	in[0].Device = 17
-	in[1].Device = 19
+	in[0].DeviceNumber = 17
+	in[1].DeviceNumber = 19
 
 	// Marshal
 	d, err := repr.Marshal(in)
@@ -431,6 +431,6 @@ func (t *RoundtripTest) PreservesDeviceNumbers() {
 	// Output
 	AssertThat(out, ElementsAre(Any(), Any()))
 
-	ExpectEq(in[0].Device, out[0].Device)
-	ExpectEq(in[1].Device, out[1].Device)
+	ExpectEq(in[0].DeviceNumber, out[0].DeviceNumber)
+	ExpectEq(in[1].DeviceNumber, out[1].DeviceNumber)
 }

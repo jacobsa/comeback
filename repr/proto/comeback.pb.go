@@ -115,7 +115,7 @@ type DirectoryEntryProto struct {
 	Blob             []*BlobInfoProto          `protobuf:"bytes,9,rep,name=blob" json:"blob,omitempty"`
 	HardLinkTarget   *string                   `protobuf:"bytes,10,opt,name=hard_link_target" json:"hard_link_target,omitempty"`
 	Target           *string                   `protobuf:"bytes,11,opt,name=target" json:"target,omitempty"`
-	Device           *int32                    `protobuf:"varint,12,opt,name=device" json:"device,omitempty"`
+	DeviceNumber     *int32                    `protobuf:"varint,12,opt,name=device_number" json:"device_number,omitempty"`
 	XXX_unrecognized []byte                    `json:"-"`
 }
 
@@ -193,9 +193,9 @@ func (this *DirectoryEntryProto) GetTarget() string {
 	return ""
 }
 
-func (this *DirectoryEntryProto) GetDevice() int32 {
-	if this != nil && this.Device != nil {
-		return *this.Device
+func (this *DirectoryEntryProto) GetDeviceNumber() int32 {
+	if this != nil && this.DeviceNumber != nil {
+		return *this.DeviceNumber
 	}
 	return 0
 }

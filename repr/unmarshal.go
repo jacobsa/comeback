@@ -81,7 +81,7 @@ func convertEntryProto(entryProto *repr_proto.DirectoryEntryProto) (entry *fs.Di
 	entry.Target = entryProto.GetTarget()
 
 	// Copy device numbers.
-	entry.Device = entryProto.GetDevice()
+	entry.DeviceNumber = entryProto.GetDeviceNumber()
 
 	// Attempt to convert the type.
 	entry.Type, err = convertProtoType(entryProto.GetType())

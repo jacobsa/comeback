@@ -76,6 +76,6 @@ func (t *MarshalTest) LeavesOutDeviceNumberForNonDevices() {
 	AssertEq(nil, err)
 
 	AssertThat(listingProto.Entry, ElementsAre(Any(), Any()))
-	ExpectEq(nil, listingProto.Entry[0].Device)
-	ExpectEq(nil, listingProto.Entry[1].Device)
+	ExpectEq(nil, listingProto.Entry[0].DeviceNumber)
+	ExpectEq(nil, listingProto.Entry[1].DeviceNumber)
 }

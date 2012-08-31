@@ -76,7 +76,7 @@ message DirectoryEntryProto {
   optional string target = 11;
 
   // The device number in a system-dependent format, if this is a device.
-  optional int32 device = 12;
+  optional int32 device_number = 12;
 }
 
 message DirectoryListingProto {

@@ -70,7 +70,7 @@ func makeEntryProto(entry *fs.DirectoryEntry) (*repr_proto.DirectoryEntryProto, 
 
 	// Handle device numbers.
 	if entry.Type == fs.TypeBlockDevice || entry.Type == fs.TypeCharDevice {
-		entryProto.Device = proto.Int32(entry.Device)
+		entryProto.DeviceNumber = proto.Int32(entry.DeviceNumber)
 	}
 
 	// Convert the entry's type.

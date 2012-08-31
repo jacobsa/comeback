@@ -239,13 +239,13 @@ func restoreDir(target string, score blob.Score) error {
 			}
 
 		case fs.TypeBlockDevice:
-			err = makeBlockDevice(entryPath, entry.Permissions, entry.Device)
+			err = makeBlockDevice(entryPath, entry.Permissions, entry.DeviceNumber)
 			if err != nil {
 				return fmt.Errorf("makeBlockDevice: %v", err)
 			}
 
 		case fs.TypeCharDevice:
-			err = makeCharDevice(entryPath, entry.Permissions, entry.Device)
+			err = makeCharDevice(entryPath, entry.Permissions, entry.DeviceNumber)
 			if err != nil {
 				return fmt.Errorf("makeCharDevice: %v", err)
 			}

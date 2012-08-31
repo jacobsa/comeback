@@ -105,10 +105,10 @@ func (fs *fileSystem) convertFileInfo(fi os.FileInfo) (entry *DirectoryEntry, er
 		entry.Type = TypeSymlink
 	case os.ModeDevice:
 		entry.Type = TypeBlockDevice
-		entry.Device = statT.Rdev
+		entry.DeviceNumber = statT.Rdev
 	case os.ModeDevice | os.ModeCharDevice:
 		entry.Type = TypeCharDevice
-		entry.Device = statT.Rdev
+		entry.DeviceNumber = statT.Rdev
 	case os.ModeNamedPipe:
 		entry.Type = TypeNamedPipe
 	default:

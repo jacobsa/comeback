@@ -74,5 +74,5 @@ type DirectoryEntry struct {
 	Target string
 
 	// The device number, for devices.
-	Device int32
+	DeviceNumber int32
 }

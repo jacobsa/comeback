@@ -361,7 +361,7 @@ func (t *ReadDirTest) RegularFiles() {
 	ExpectEq(fs.TypeFile, entry.Type)
 	ExpectEq("burrito.txt", entry.Name)
 	ExpectEq("", entry.Target)
-	ExpectEq(0, entry.Device)
+	ExpectEq(0, entry.DeviceNumber)
 	ExpectEq(0714|os.ModeSetgid, entry.Permissions)
 	ExpectEq(t.myUid, entry.Uid)
 	ExpectThat(entry.Username, Pointee(Equals(t.myUsername)))
@@ -374,7 +374,7 @@ func (t *ReadDirTest) RegularFiles() {
 	ExpectEq(fs.TypeFile, entry.Type)
 	ExpectEq("enchilada.txt", entry.Name)
 	ExpectEq("", entry.Target)
-	ExpectEq(0, entry.Device)
+	ExpectEq(0, entry.DeviceNumber)
 	ExpectEq(0454|os.ModeSetuid|os.ModeSticky, entry.Permissions)
 	ExpectEq(t.myUid, entry.Uid)
 	ExpectThat(entry.Username, Pointee(Equals(t.myUsername)))
@@ -421,7 +421,7 @@ func (t *ReadDirTest) Directories() {
 	ExpectEq(fs.TypeDirectory, entry.Type)
 	ExpectEq("burrito", entry.Name)
 	ExpectEq("", entry.Target)
-	ExpectEq(0, entry.Device)
+	ExpectEq(0, entry.DeviceNumber)
 	ExpectEq(0751|os.ModeSetgid, entry.Permissions)
 	ExpectEq(t.myUid, entry.Uid)
 	ExpectThat(entry.Username, Pointee(Equals(t.myUsername)))
@@ -434,7 +434,7 @@ func (t *ReadDirTest) Directories() {
 	ExpectEq(fs.TypeDirectory, entry.Type)
 	ExpectEq("enchilada", entry.Name)
 	ExpectEq("", entry.Target)
-	ExpectEq(0, entry.Device)
+	ExpectEq(0, entry.DeviceNumber)
 	ExpectEq(0711|os.ModeSticky|os.ModeSetuid, entry.Permissions)
 	ExpectEq(t.myUid, entry.Uid)
 	ExpectThat(entry.Username, Pointee(Equals(t.myUsername)))
@@ -481,7 +481,7 @@ func (t *ReadDirTest) Symlinks() {
 	ExpectEq(fs.TypeSymlink, entry.Type)
 	ExpectEq("burrito", entry.Name)
 	ExpectEq("/foo/burrito", entry.Target)
-	ExpectEq(0, entry.Device)
+	ExpectEq(0, entry.DeviceNumber)
 	ExpectEq(0714|os.ModeSetgid, entry.Permissions)
 	ExpectEq(t.myUid, entry.Uid)
 	ExpectThat(entry.Username, Pointee(Equals(t.myUsername)))
@@ -494,7 +494,7 @@ func (t *ReadDirTest) Symlinks() {
 	ExpectEq(fs.TypeSymlink, entry.Type)
 	ExpectEq("enchilada", entry.Name)
 	ExpectEq("/foo/enchilada", entry.Target)
-	ExpectEq(0, entry.Device)
+	ExpectEq(0, entry.DeviceNumber)
 	ExpectEq(0454|os.ModeSetuid|os.ModeSticky, entry.Permissions)
 	ExpectEq(t.myUid, entry.Uid)
 	ExpectThat(entry.Username, Pointee(Equals(t.myUsername)))
@@ -516,7 +516,7 @@ func (t *ReadDirTest) BlockDevices() {
 	ExpectEq(fs.TypeCharDevice, entry.Type)
 	ExpectEq("urandom", entry.Name)
 	ExpectEq("", entry.Target)
-	urandomDevNumber := entry.Device
+	urandomDevNumber := entry.DeviceNumber
 	ExpectEq(os.FileMode(0666), entry.Permissions)
 	ExpectEq(0, entry.Uid)
 	ExpectThat(entry.Username, Pointee(Equals("root")))
@@ -527,7 +527,7 @@ func (t *ReadDirTest) BlockDevices() {
 
 	entry = findEntry(entries, "random")
 	AssertNe(nil, entry)
-	randomDevNumber := entry.Device
+	randomDevNumber := entry.DeviceNumber
 
 	ExpectNe(urandomDevNumber, randomDevNumber)
 }
@@ -544,7 +544,7 @@ func (t *ReadDirTest) CharDevices() {
 	ExpectEq(fs.TypeBlockDevice, entry.Type)
 	ExpectEq("disk0", entry.Name)
 	ExpectEq("", entry.Target)
-	disk0DevNumber := entry.Device
+	disk0DevNumber := entry.DeviceNumber
 	ExpectEq(os.FileMode(0640), entry.Permissions)
 	ExpectEq(0, entry.Uid)
 	ExpectThat(entry.Username, Pointee(Equals("root")))
@@ -555,7 +555,7 @@ func (t *ReadDirTest) CharDevices() {
 
 	entry = findEntry(entries, "disk1")
 	AssertNe(nil, entry)
-	disk1DevNumber := entry.Device
+	disk1DevNumber := entry.DeviceNumber
 
 	ExpectNe(disk0DevNumber, disk1DevNumber)
 }
