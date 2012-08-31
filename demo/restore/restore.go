@@ -183,15 +183,15 @@ func syscallPermissions(permissions os.FileMode) (o uint32) {
 	o = uint32(permissions & os.ModePerm)
 
 	// Also include setuid/setgid/sticky bits.
-	if permissions & os.ModeSetuid != 0 {
+	if permissions&os.ModeSetuid != 0 {
 		o |= syscall.S_ISUID
 	}
 
-	if permissions & os.ModeSetgid != 0 {
+	if permissions&os.ModeSetgid != 0 {
 		o |= syscall.S_ISGID
 	}
 
-	if permissions & os.ModeSticky != 0 {
+	if permissions&os.ModeSticky != 0 {
 		o |= syscall.S_ISVTX
 	}
 

@@ -27,7 +27,7 @@ import (
 
 const (
 	// A permissions bit mask that matches chmod(2)'s notion of permissions.
-	permissionBits os.FileMode = os.ModePerm|os.ModeSetuid|os.ModeSetgid|os.ModeSticky
+	permissionBits os.FileMode = os.ModePerm | os.ModeSetuid | os.ModeSetgid | os.ModeSticky
 )
 
 // FileSystem represents operations performed on a real file system, but is an

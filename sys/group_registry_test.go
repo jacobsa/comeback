@@ -104,4 +104,3 @@ func (t *GroupRegistryTest) LookUpWheelGroup() {
 	AssertEq(nil, err)
 	ExpectEq(sys.GroupId(osGid), gid)
 }
-

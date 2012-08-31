@@ -48,11 +48,11 @@ type DirectoryEntry struct {
 	Permissions os.FileMode
 
 	// The owning user's UID, and their username if known.
-	Uid sys.UserId
+	Uid      sys.UserId
 	Username *string
 
 	// The owning group's GID, and its groupname if known.
-	Gid sys.GroupId
+	Gid       sys.GroupId
 	Groupname *string
 
 	// The modification time of this entry.

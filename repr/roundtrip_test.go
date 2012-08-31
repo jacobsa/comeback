@@ -155,8 +155,8 @@ func (t *RoundtripTest) PreservesPermissions() {
 		makeLegalEntry(),
 	}
 
-	in[0].Permissions = 0644|os.ModeSticky|os.ModeSetuid
-	in[1].Permissions = 0755|os.ModeSetgid
+	in[0].Permissions = 0644 | os.ModeSticky | os.ModeSetuid
+	in[1].Permissions = 0755 | os.ModeSetgid
 
 	// Marshal
 	d, err := repr.Marshal(in)

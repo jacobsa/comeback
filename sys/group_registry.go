@@ -38,7 +38,7 @@ func NewGroupRegistry() (GroupRegistry, error) {
 	return &groupRegistry{}, nil
 }
 
-type groupRegistry struct {}
+type groupRegistry struct{}
 
 func (r *groupRegistry) FindById(id GroupId) (string, error) {
 	osResult, err := group.LookupId(strconv.FormatUint(uint64(id), 10))
@@ -73,4 +73,3 @@ func (r *groupRegistry) FindByName(name string) (GroupId, error) {
 
 	return GroupId(gid), nil
 }
-

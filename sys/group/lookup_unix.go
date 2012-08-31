@@ -92,7 +92,7 @@ func lookup(gid int, groupname string, lookupByName bool) (*Group, error) {
 		}
 	}
 	u := &Group{
-		Gid:      strconv.Itoa(int(grp.gr_gid)),
+		Gid:       strconv.Itoa(int(grp.gr_gid)),
 		Groupname: C.GoString(grp.gr_name),
 	}
 	return u, nil
