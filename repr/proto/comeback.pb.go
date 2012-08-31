@@ -106,15 +106,15 @@ func (this *TimeProto) GetNanosecond() uint32 {
 type DirectoryEntryProto struct {
 	Type             *DirectoryEntryProto_Type `protobuf:"varint,1,opt,name=type,enum=repr_proto.DirectoryEntryProto_Type" json:"type,omitempty"`
 	Permissions      *uint32                   `protobuf:"varint,2,opt,name=permissions" json:"permissions,omitempty"`
-	Uid              *uint32                   `protobuf:"varint,8,opt,name=uid" json:"uid,omitempty"`
-	Username         *string                   `protobuf:"bytes,9,opt,name=username" json:"username,omitempty"`
-	Gid              *uint32                   `protobuf:"varint,10,opt,name=gid" json:"gid,omitempty"`
-	Groupname        *string                   `protobuf:"bytes,11,opt,name=groupname" json:"groupname,omitempty"`
-	Name             *string                   `protobuf:"bytes,3,opt,name=name" json:"name,omitempty"`
-	Mtime            *TimeProto                `protobuf:"bytes,4,opt,name=mtime" json:"mtime,omitempty"`
-	Blob             []*BlobInfoProto          `protobuf:"bytes,5,rep,name=blob" json:"blob,omitempty"`
-	Target           *string                   `protobuf:"bytes,6,opt,name=target" json:"target,omitempty"`
-	Device           *int32                    `protobuf:"varint,7,opt,name=device" json:"device,omitempty"`
+	Uid              *uint32                   `protobuf:"varint,3,opt,name=uid" json:"uid,omitempty"`
+	Username         *string                   `protobuf:"bytes,4,opt,name=username" json:"username,omitempty"`
+	Gid              *uint32                   `protobuf:"varint,5,opt,name=gid" json:"gid,omitempty"`
+	Groupname        *string                   `protobuf:"bytes,6,opt,name=groupname" json:"groupname,omitempty"`
+	Name             *string                   `protobuf:"bytes,7,opt,name=name" json:"name,omitempty"`
+	Mtime            *TimeProto                `protobuf:"bytes,8,opt,name=mtime" json:"mtime,omitempty"`
+	Blob             []*BlobInfoProto          `protobuf:"bytes,9,rep,name=blob" json:"blob,omitempty"`
+	Target           *string                   `protobuf:"bytes,10,opt,name=target" json:"target,omitempty"`
+	Device           *int32                    `protobuf:"varint,11,opt,name=device" json:"device,omitempty"`
 	XXX_unrecognized []byte                    `json:"-"`
 }
 
