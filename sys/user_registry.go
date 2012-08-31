@@ -19,6 +19,8 @@ package sys
 
 import (
 	"fmt"
+	"os/user"
+	"strconv"
 )
 
 // A system user ID, aka UID.
@@ -34,4 +36,20 @@ type UserRegistry interface {
 // Return a user registry hooked up to the system's real user registry.
 func NewUserRegistry() (UserRegistry, error) {
 	return nil, fmt.Errorf("TODO")
+}
+
+type userRegistry struct {}
+
+func (r *userRegistry) FindById(id UserId) (string, error) {
+	osResult, err := user.LookupId(strconv.FormatUint(uint64(id), 10))
+
+	if unknownErr, ok := err.(user.UnknownUserError); ok {
+		return "", NotFoundError(unknownErr)
+	}
+
+	if err != nil {
+		return "", err
+	}
+
+	return osResult.Username, nil
 }
