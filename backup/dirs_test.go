@@ -395,18 +395,21 @@ func (t *DirectorySaverTest) CallsBlobStore() {
 	AssertThat(entry.Scores, ElementsAre(Any(), Any()))
 	ExpectThat(entry.Scores[0].Sha1Hash(), DeepEquals(score0.Sha1Hash()))
 	ExpectThat(entry.Scores[1].Sha1Hash(), DeepEquals(score1.Sha1Hash()))
+	ExpectEq(nil, entry.HardLinkTarget)
 
 	entry = resultEntries[1]
 	ExpectEq(fs.TypeDirectory, entry.Type)
 	ExpectEq("burrito", entry.Name)
 	AssertThat(entry.Scores, ElementsAre(Any()))
 	ExpectThat(entry.Scores[0].Sha1Hash(), DeepEquals(score2.Sha1Hash()))
+	ExpectEq(nil, entry.HardLinkTarget)
 
 	entry = resultEntries[2]
 	ExpectEq(fs.TypeDirectory, entry.Type)
 	ExpectEq("enchilada", entry.Name)
 	AssertThat(entry.Scores, ElementsAre(Any()))
 	ExpectThat(entry.Scores[0].Sha1Hash(), DeepEquals(score3.Sha1Hash()))
+	ExpectEq(nil, entry.HardLinkTarget)
 
 	entry = resultEntries[3]
 	ExpectEq(fs.TypeSymlink, entry.Type)
@@ -425,8 +428,48 @@ func (t *DirectorySaverTest) CallsBlobStore() {
 	ExpectEq("nachos", entry.Name)
 }
 
-func (t *DirectorySaverTest) OneFileIsHardLinkedToAnother() {
-	ExpectEq("TODO", "")
+func (t *DirectorySaverTest) FilesAreHardLinked() {
+	// ReadDir
+	entries := []*fs.DirectoryEntry{
+		makeEntry("taco", fs.TypeFile),
+		makeEntry("burrito", fs.TypeFile),
+	}
+
+	ExpectCall(t.fileSystem, "ReadDir")(Any()).
+		WillOnce(oglemock.Return(entries, nil))
+
+  // Link resolver
+	target0 := "/enchilada"
+	target1 := "/queso"
+
+	ExpectCall(t.linkResolver, "Register")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return(&target0)).
+		WillOnce(oglemock.Return(&target1))
+
+	// Blob store
+	var blob []byte
+	ExpectCall(t.blobStore, "Store")(Any()).
+		WillOnce(saveBlob(&blob))
+
+	// Call
+	t.callSaver()
+
+	AssertNe(nil, blob, "Saver error: %v", t.err)
+	resultEntries, err := repr.Unmarshal(blob)
+	AssertEq(nil, err)
+	AssertEq(2, len(resultEntries))
+
+	entry := resultEntries[0]
+	ExpectEq(fs.TypeFile, entry.Type)
+	ExpectEq("taco", entry.Name)
+	AssertThat(entry.Scores, ElementsAre())
+	ExpectThat(entry.HardLinkTarget, Pointee(Equals(target0)))
+
+	entry = resultEntries[1]
+	ExpectEq(fs.TypeFile, entry.Type)
+	ExpectEq("burrito", entry.Name)
+	AssertThat(entry.Scores, ElementsAre())
+	ExpectThat(entry.HardLinkTarget, Pointee(Equals(target1)))
 }
 
 func (t *DirectorySaverTest) BlobStoreReturnsError() {
