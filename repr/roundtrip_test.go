@@ -88,11 +88,15 @@ func (t *RoundtripTest) PreservesTypes() {
 		makeLegalEntry(),
 		makeLegalEntry(),
 		makeLegalEntry(),
+		makeLegalEntry(),
+		makeLegalEntry(),
 	}
 
 	in[0].Type = fs.TypeFile
 	in[1].Type = fs.TypeDirectory
 	in[2].Type = fs.TypeSymlink
+	in[3].Type = fs.TypeBlockDevice
+	in[4].Type = fs.TypeCharDevice
 
 	// Marshal
 	d, err := repr.Marshal(in)
@@ -105,11 +109,13 @@ func (t *RoundtripTest) PreservesTypes() {
 	AssertNe(nil, out)
 
 	// Output
-	AssertThat(out, ElementsAre(Any(), Any(), Any()))
+	AssertEq(5, len(out))
 
 	ExpectEq(in[0].Type, out[0].Type)
 	ExpectEq(in[1].Type, out[1].Type)
 	ExpectEq(in[2].Type, out[2].Type)
+	ExpectEq(in[3].Type, out[2].Type)
+	ExpectEq(in[4].Type, out[2].Type)
 }
 
 func (t *RoundtripTest) PreservesNames() {
