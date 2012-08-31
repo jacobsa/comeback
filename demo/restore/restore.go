@@ -221,7 +221,7 @@ func main() {
 	}
 
 	// Create the target.
-	err = os.Mkdir("/tmp/restore_target", 0700)
+	err = os.Mkdir("/tmp/restore_target", 0755)
 	if err != nil {
 		log.Fatalf("Mkdir: %v", err)
 	}
