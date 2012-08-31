@@ -99,6 +99,8 @@ func (fs *fileSystem) convertFileInfo(fi os.FileInfo) (entry *DirectoryEntry, er
 	switch typeBits {
 	case 0:
 		entry.Type = TypeFile
+		entry.ContainingDevice = statT.Dev
+		entry.Inode = statT.Ino
 	case os.ModeDir:
 		entry.Type = TypeDirectory
 	case os.ModeSymlink:

@@ -392,10 +392,8 @@ func (t *ReadDirTest) RegularFiles() {
 	ExpectTrue(entry.MTime.Equal(mtime0), "%v", entry.MTime)
 	ExpectThat(entry.Scores, ElementsAre())
 
-	AssertNe(0, entry.ContainingDevice)
 	AssertNe(0, entry.Inode)
-
-	ExpectNe(t.baseDirContainingDevice, entry.ContainingDevice)
+	ExpectEq(t.baseDirContainingDevice, entry.ContainingDevice)
 	ExpectNe(t.baseDirInode, entry.Inode)
 
 	// Entry 1
@@ -412,10 +410,8 @@ func (t *ReadDirTest) RegularFiles() {
 	ExpectTrue(entry.MTime.Equal(mtime1), "%v", entry.MTime)
 	ExpectThat(entry.Scores, ElementsAre())
 
-	AssertNe(0, entry.ContainingDevice)
 	AssertNe(0, entry.Inode)
-
-	ExpectNe(t.baseDirContainingDevice, entry.ContainingDevice)
+	ExpectEq(t.baseDirContainingDevice, entry.ContainingDevice)
 	ExpectNe(t.baseDirInode, entry.Inode)
 }
 
