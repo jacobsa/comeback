@@ -63,14 +63,20 @@ message DirectoryEntryProto {
   optional TimeProto mtime = 8;
 
   // The zero or more blobs that make up a regular file's contents, to be
-  // concatenated in order.
+  // concatenated in order. Scores are present only if hard_link_target is not
+  // present.
   repeated BlobInfoProto blob = 9;
 
+  // If this entry belongs to a backup containing another file to which it is
+  // hard linked, this is the target of the hard link relative to the root of
+  // the backup.
+	optional string hard_link_target = 10;
+
   // The target, if this is a symlink.
-  optional string target = 10;
+  optional string target = 11;
 
   // The device number in a system-dependent format, if this is a device.
-  optional int32 device = 11;
+  optional int32 device = 12;
 }
 
 message DirectoryListingProto {

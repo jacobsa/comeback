@@ -113,8 +113,9 @@ type DirectoryEntryProto struct {
 	Name             *string                   `protobuf:"bytes,7,opt,name=name" json:"name,omitempty"`
 	Mtime            *TimeProto                `protobuf:"bytes,8,opt,name=mtime" json:"mtime,omitempty"`
 	Blob             []*BlobInfoProto          `protobuf:"bytes,9,rep,name=blob" json:"blob,omitempty"`
-	Target           *string                   `protobuf:"bytes,10,opt,name=target" json:"target,omitempty"`
-	Device           *int32                    `protobuf:"varint,11,opt,name=device" json:"device,omitempty"`
+	HardLinkTarget   *string                   `protobuf:"bytes,10,opt,name=hard_link_target" json:"hard_link_target,omitempty"`
+	Target           *string                   `protobuf:"bytes,11,opt,name=target" json:"target,omitempty"`
+	Device           *int32                    `protobuf:"varint,12,opt,name=device" json:"device,omitempty"`
 	XXX_unrecognized []byte                    `json:"-"`
 }
 
@@ -176,6 +177,13 @@ func (this *DirectoryEntryProto) GetMtime() *TimeProto {
 		return this.Mtime
 	}
 	return nil
+}
+
+func (this *DirectoryEntryProto) GetHardLinkTarget() string {
+	if this != nil && this.HardLinkTarget != nil {
+		return *this.HardLinkTarget
+	}
+	return ""
 }
 
 func (this *DirectoryEntryProto) GetTarget() string {

@@ -54,6 +54,7 @@ func makeEntryProto(entry *fs.DirectoryEntry) (*repr_proto.DirectoryEntryProto, 
 		Username:    entry.Username,
 		Gid:         proto.Uint32(uint32(entry.Gid)),
 		Groupname:   entry.Groupname,
+		HardLinkTarget:    entry.HardLinkTarget,
 		Name:        proto.String(entry.Name),
 		Mtime: &repr_proto.TimeProto{
 			Second:     proto.Int64(entry.MTime.Unix()),

@@ -75,6 +75,7 @@ func convertEntryProto(entryProto *repr_proto.DirectoryEntryProto) (entry *fs.Di
 	entry.Username = entryProto.Username
 	entry.Gid = sys.GroupId(entryProto.GetGid())
 	entry.Groupname = entryProto.Groupname
+	entry.HardLinkTarget = entryProto.HardLinkTarget
 
 	// Copy symlink targets.
 	entry.Target = entryProto.GetTarget()
