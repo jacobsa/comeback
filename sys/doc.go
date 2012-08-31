@@ -15,7 +15,7 @@
 
 // Package sys contains types and functions useful for finding system
 // information.
-package fs
+package sys
 
 // NotFoundError is returned by registry lookup methods when the requested user
 // or group cannot be found.

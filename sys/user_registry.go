@@ -15,9 +15,10 @@
 
 // Package sys contains types and functions useful for finding system
 // information.
-package fs
+package sys
 
 import (
+	"fmt"
 )
 
 // A system user ID, aka UID.
@@ -26,6 +27,11 @@ type UserId uint32
 // UserRegistry represents an object that knows about user account names and
 // IDs.
 type UserRegistry interface {
-	FindById(id UserId) (string, err)
-	FindByName(name string) (UserId, err)
+	FindById(id UserId) (string, error)
+	FindByName(name string) (UserId, error)
+}
+
+// Return a user registry hooked up to the system's real user registry.
+func NewUserRegistry() (UserRegistry, error) {
+	return nil, fmt.Errorf("TODO")
 }
