@@ -516,7 +516,7 @@ func (t *ReadDirTest) BlockDevices() {
 	ExpectEq(fs.TypeCharDevice, entry.Type)
 	ExpectEq("urandom", entry.Name)
 	ExpectEq("", entry.Target)
-	ExpectNe(0, entry.Device)
+	urandomDevNumber := entry.Device
 	ExpectEq(os.FileMode(0666), entry.Permissions)
 	ExpectEq(0, entry.Uid)
 	ExpectThat(entry.Username, Pointee(Equals("root")))
@@ -524,6 +524,12 @@ func (t *ReadDirTest) BlockDevices() {
 	ExpectThat(entry.Groupname, Pointee(Equals("wheel")))
 	ExpectGe(time.Since(entry.MTime), 0)
 	ExpectLt(time.Since(entry.MTime), 365*24*time.Hour)
+
+	entry = findEntry(entries, "random")
+	AssertNe(nil, entry)
+	randomDevNumber := entry.Device
+
+	ExpectNe(urandomDevNumber, randomDevNumber)
 }
 
 func (t *ReadDirTest) CharDevices() {
@@ -538,7 +544,7 @@ func (t *ReadDirTest) CharDevices() {
 	ExpectEq(fs.TypeBlockDevice, entry.Type)
 	ExpectEq("disk0", entry.Name)
 	ExpectEq("", entry.Target)
-	ExpectNe(0, entry.Device)
+	disk0DevNumber := entry.Device
 	ExpectEq(os.FileMode(0640), entry.Permissions)
 	ExpectEq(0, entry.Uid)
 	ExpectThat(entry.Username, Pointee(Equals("root")))
@@ -546,6 +552,12 @@ func (t *ReadDirTest) CharDevices() {
 	ExpectThat(entry.Groupname, Pointee(Equals("operator")))
 	ExpectGe(time.Since(entry.MTime), 0)
 	ExpectLt(time.Since(entry.MTime), 365*24*time.Hour)
+
+	entry = findEntry(entries, "disk1")
+	AssertNe(nil, entry)
+	disk1DevNumber := entry.Device
+
+	ExpectNe(disk0DevNumber, disk1DevNumber)
 }
 
 func (t *ReadDirTest) NamedPipes() {
