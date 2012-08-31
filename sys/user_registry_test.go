@@ -54,7 +54,12 @@ func (t *UserRegistryTest) UnknownUsername() {
 }
 
 func (t *UserRegistryTest) UnknownUserId() {
-	ExpectEq("TODO", "")
+	_, err := t.registry.FindById(17192325)
+
+	notFoundErr, ok := err.(sys.NotFoundError)
+	AssertTrue(ok, "%v", err)
+	ExpectThat(notFoundErr, HasSubstr("171923"))
+	ExpectThat(notFoundErr, HasSubstr("unknown"))
 }
 
 func (t *UserRegistryTest) LookUpCurrentUser() {
