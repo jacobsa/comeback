@@ -91,6 +91,14 @@ func (fs *fileSystem) convertFileInfo(fi os.FileInfo) (entry *DirectoryEntry, er
 
 	entry.Username = &username
 
+	// Attempt to look up group info.
+	groupname, err := fs.groupRegistry.FindById(entry.Gid)
+	if err != nil {
+		return nil, err
+	}
+
+	entry.Groupname = &groupname
+
 	// Convert the type.
 	typeBits := fi.Mode() & (os.ModeType | os.ModeCharDevice)
 	switch typeBits {
