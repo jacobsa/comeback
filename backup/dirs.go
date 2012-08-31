@@ -66,12 +66,14 @@ func NewDirectorySaver(
 }
 
 // Equivalent to NewDirectorySaver, but with an injectable wrapped directory
-// saver to aid with testability. You should not use this function.
+// saver and link resolver to aid with testability. You should not use this
+// function.
 func NewNonRecursiveDirectorySaver(
 	store blob.Store,
 	fileSystem fs.FileSystem,
 	fileSaver FileSaver,
-	wrapped DirectorySaver) (DirectorySaver, error) {
+	wrapped DirectorySaver,
+  linkResolver LinkResolver) (DirectorySaver, error) {
 	return &dirSaver{
 		blobStore:  store,
 		fileSystem: fileSystem,
