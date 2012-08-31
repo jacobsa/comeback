@@ -61,7 +61,14 @@ type DirectoryEntry struct {
 	// The scores of zero or more blobs that make up a regular file's contents,
 	// to be concatenated in order. For directories, this is exactly one blob
 	// whose contents can be processed using repr.Unmarshal.
+	//
+	// Scores are present only if HardLinkTarget is not present.
 	Scores []blob.Score
+
+	// If this entry belongs to a backup containing another file to which it is
+	// hard linked, this is the target of the hard link relative to the root of
+	// the backup.
+	HardLinkTarget string
 
 	// The target, if this is a symlink.
 	Target string
