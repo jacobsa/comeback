@@ -15,31 +15,26 @@ import (
 
 var implemented = true // set to false by lookup_stubs.go's init
 
-// User represents a user account.
+// Group represents a user group.
 //
-// On posix systems Uid and Gid contain a decimal number
-// representing uid and gid. On windows Uid and Gid
-// contain security identifier (SID) in a string format.
-type User struct {
-	Uid      string // user id
-	Gid      string // primary group id
-	Username string
-	Name     string
-	HomeDir  string
+// On posix systems Gid contains a decimal number representing gid.
+type Group struct {
+	Gid       string
+	Groupname string
 }
 
-// UnknownUserIdError is returned by LookupId when
-// a user cannot be found.
-type UnknownUserIdError int
+// UnknownGroupIdError is returned by LookupId when
+// a group cannot be found.
+type UnknownGroupIdError int
 
-func (e UnknownUserIdError) Error() string {
-	return "user: unknown userid " + strconv.Itoa(int(e))
+func (e UnknownGroupIdError) Error() string {
+	return "group: unknown groupid " + strconv.Itoa(int(e))
 }
 
-// UnknownUserError is returned by Lookup when
-// a user cannot be found.
-type UnknownUserError string
+// UnknownGroupError is returned by Lookup when
+// a group cannot be found.
+type UnknownGroupError string
 
-func (e UnknownUserError) Error() string {
-	return "user: unknown user " + string(e)
+func (e UnknownGroupError) Error() string {
+	return "group: unknown group " + string(e)
 }
