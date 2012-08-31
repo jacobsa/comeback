@@ -437,8 +437,8 @@ func (t *ReadDirTest) CharDevices() {
 	ExpectEq(os.FileMode(0640), entry.Permissions)
 	ExpectEq(0, entry.Uid)
 	ExpectThat(entry.Username, Pointee(Equals("root")))
-	ExpectEq(0, entry.Gid)
-	ExpectThat(entry.Groupname, Pointee(Equals("wheel")))
+	ExpectEq(5, entry.Gid)
+	ExpectThat(entry.Groupname, Pointee(Equals("operator")))
 	ExpectGe(time.Since(entry.MTime), 0)
 	ExpectLt(time.Since(entry.MTime), 365*24*time.Hour)
 }
