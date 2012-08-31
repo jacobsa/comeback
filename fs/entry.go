@@ -56,4 +56,7 @@ type DirectoryEntry struct {
 
 	// The target, if this is a symlink.
 	Target string
+
+	// The device number, for devices.
+	Device int32
 }

@@ -135,7 +135,7 @@ func restoreDir(target string, score blob.Score) error {
 			}
 
 		case fs.TypeBlockDevice:
-			err = makeBlockDevice(entryPath, entry.Permissions)
+			err = makeBlockDevice(entryPath, entry.Permissions, entry.Device)
 			if err != nil {
 				return err
 			}
@@ -174,9 +174,8 @@ func makeNamedPipe(path string, permissions os.FileMode) error {
 }
 
 // Create a block device at the supplied path.
-func makeBlockDevice(path string, permissions os.FileMode) error {
-	// TODO(jacobsa): Support device numbers.
-	if err := syscall.Mknod(path, syscallPermissions(permissions), 0); err != nil {
+func makeBlockDevice(path string, permissions os.FileMode, dev int32) error {
+	if err := syscall.Mknod(path, syscallPermissions(permissions), int(dev)); err != nil {
 		return fmt.Errorf("syscall.Mknod: %v", err)
 	}
 
