@@ -17,12 +17,16 @@ package fs_test
 
 import (
 	"github.com/jacobsa/comeback/fs"
+	"github.com/jacobsa/comeback/sys"
+	"github.com/jacobsa/comeback/sys/group"
 	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
 	"io/ioutil"
 	"log"
 	"os"
+	"os/user"
 	"path"
+	"strconv"
 	"syscall"
 	"testing"
 	"time"
@@ -99,8 +103,12 @@ func makeNamedPipe(path string, permissions uint32) error {
 }
 
 type fileSystemTest struct {
-	fileSystem fs.FileSystem
-	baseDir    string
+	fileSystem  fs.FileSystem
+	baseDir     string
+	myUid       sys.UserId
+	myUsername  string
+	myGid       sys.GroupId
+	myGroupname string
 }
 
 func (t *fileSystemTest) SetUp(i *TestInfo) {
@@ -112,6 +120,40 @@ func (t *fileSystemTest) SetUp(i *TestInfo) {
 	if err != nil {
 		log.Fatalf("Creating baseDir: %v", err)
 	}
+
+	// Find user info.
+	currentUser, err := user.Current()
+	if err != nil {
+		log.Fatalf("Getting current user: %v", err)
+	}
+
+	currentUserId, err := strconv.Atoi(currentUser.Uid)
+	if err != nil {
+		log.Fatalf("Invalid UID: %s", currentUser.Uid)
+	}
+
+	t.myUid = sys.UserId(currentUserId)
+	t.myUsername = currentUser.Username
+
+	AssertNe(0, t.myUid)
+	AssertNe("", t.myUsername)
+
+	// Find group info.
+	currentGroup, err := group.Current()
+	if err != nil {
+		log.Fatalf("Getting current group: %v", err)
+	}
+
+	currentGroupId, err := strconv.Atoi(currentGroup.Gid)
+	if err != nil {
+		log.Fatalf("Invalid GID: %s", currentGroup.Gid)
+	}
+
+	t.myGid = sys.GroupId(currentGroupId)
+	t.myGroupname = currentGroup.Groupname
+
+	AssertNe(0, t.myGid)
+	AssertNe("", t.myGroupname)
 }
 
 func (t *fileSystemTest) TearDown() {
