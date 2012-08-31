@@ -26,10 +26,11 @@ import (
 
 // An object that knows how to save directories to some underlying storage.
 type DirectorySaver interface {
-	// Recursively save the contents of the supplied directory to the underlying
+	// Recursively save the contents of the supplied directory (defined by a base
+	// path of a backup and a relative path within the backup) to the underlying
 	// storage, returning the score of a blob representing the directory's
 	// listing in a format that can be recovered with repr.Unmarshal.
-	Save(dirpath string) (score blob.Score, err error)
+	Save(basePath, relPath string) (score blob.Score, err error)
 }
 
 // A directory saver that creates a new directory saver for each call to Save.

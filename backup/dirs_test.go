@@ -152,7 +152,7 @@ func (t *DirectorySaverTest) NoEntriesInDirectory() {
 }
 
 func (t *DirectorySaverTest) CallsLinkResolverFileSystemAndFileSaverForFiles() {
-	t.dirpath = "/taco"
+	t.relPath = "taco/queso"
 
 	// ReadDir
 	entries := []*fs.DirectoryEntry{
@@ -160,8 +160,21 @@ func (t *DirectorySaverTest) CallsLinkResolverFileSystemAndFileSaverForFiles() {
 		makeEntry("enchilada", fs.TypeFile),
 	}
 
+	entries[0].ContainingDevice = 17
+	entries[0].Inode = 19
+
+	entries[1].ContainingDevice = 23
+	entries[1].Inode = 29
+
 	ExpectCall(t.fileSystem, "ReadDir")(Any()).
 		WillOnce(oglemock.Return(entries, nil))
+
+  // Link resolver
+	ExpectCall(t.linkResolver, "Register")(17, 19, "taco/queso/burrito").
+		WillOnce(oglemock.Return(nil))
+
+	ExpectCall(t.linkResolver, "Register")(23, 29, "taco/queso/enchilada").
+		WillOnce(oglemock.Return(nil))
 
 	// OpenForReading
 	file0 := &readCloser{}
