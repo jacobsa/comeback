@@ -175,7 +175,8 @@ func makeNamedPipe(path string, permissions os.FileMode) error {
 
 // Create a block device at the supplied path.
 func makeBlockDevice(path string, permissions os.FileMode, dev int32) error {
-	if err := syscall.Mknod(path, syscallPermissions(permissions), int(dev)); err != nil {
+	mode := syscallPermissions(permissions) | syscall.S_IFBLK
+	if err := syscall.Mknod(path, mode, int(dev)); err != nil {
 		return fmt.Errorf("syscall.Mknod: %v", err)
 	}
 
