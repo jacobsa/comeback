@@ -230,6 +230,61 @@ func (t *RoundtripTest) PreservesUsernames() {
 	ExpectEq(nil, out[1].Username)
 }
 
+func (t *RoundtripTest) PreservesGids() {
+	// Input
+	in := []*fs.DirectoryEntry{
+		makeLegalEntry(),
+		makeLegalEntry(),
+	}
+
+	in[0].Gid = 17
+	in[1].Gid = 19
+
+	// Marshal
+	d, err := repr.Marshal(in)
+	AssertEq(nil, err)
+	AssertNe(nil, d)
+
+	// Unmarshal
+	out, err := repr.Unmarshal(d)
+	AssertEq(nil, err)
+	AssertNe(nil, out)
+
+	// Output
+	AssertThat(out, ElementsAre(Any(), Any()))
+
+	ExpectEq(in[0].Gid, out[0].Gid)
+	ExpectEq(in[1].Gid, out[1].Gid)
+}
+
+func (t *RoundtripTest) PreservesGroupnames() {
+	// Input
+	in := []*fs.DirectoryEntry{
+		makeLegalEntry(),
+		makeLegalEntry(),
+	}
+
+	s := "taco"
+	in[0].Groupname = &s
+
+	// Marshal
+	d, err := repr.Marshal(in)
+	AssertEq(nil, err)
+	AssertNe(nil, d)
+
+	// Unmarshal
+	out, err := repr.Unmarshal(d)
+	AssertEq(nil, err)
+	AssertNe(nil, out)
+
+	// Output
+	AssertThat(out, ElementsAre(Any(), Any()))
+
+	AssertNe(nil, out[0].Groupname)
+	ExpectEq(*in[0].Groupname, *out[0].Groupname)
+	ExpectEq(nil, out[1].Groupname)
+}
+
 func (t *RoundtripTest) PreservesModTimes() {
 	// Input
 	in := []*fs.DirectoryEntry{
