@@ -68,7 +68,7 @@ type DirectoryEntry struct {
 	// If this entry belongs to a backup containing another file to which it is
 	// hard linked, this is the target of the hard link relative to the root of
 	// the backup.
-	HardLinkTarget string
+	HardLinkTarget *string
 
 	// The target, if this is a symlink.
 	Target string
