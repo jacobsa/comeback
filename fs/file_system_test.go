@@ -309,6 +309,23 @@ func (t *ReadDirTest) BlockDevices() {
 	entries, err := t.fileSystem.ReadDir("/dev")
 	AssertEq(nil, err)
 
+	entry := findEntry(entries, "urandom")
+	AssertNe(nil, entry)
+	ExpectEq(fs.TypeCharDevice, entry.Type)
+	ExpectEq("urandom", entry.Name)
+	ExpectEq("", entry.Target)
+	ExpectEq(os.FileMode(0666), entry.Permissions)
+	ExpectGe(time.Since(entry.MTime), 0)
+	ExpectLt(time.Since(entry.MTime), time.Hour)
+}
+
+func (t *ReadDirTest) CharDevices() {
+	var err error
+
+	// Call
+	entries, err := t.fileSystem.ReadDir("/dev")
+	AssertEq(nil, err)
+
 	entry := findEntry(entries, "disk0")
 	AssertNe(nil, entry)
 	ExpectEq(fs.TypeBlockDevice, entry.Type)
@@ -317,10 +334,6 @@ func (t *ReadDirTest) BlockDevices() {
 	ExpectEq(os.FileMode(0640), entry.Permissions)
 	ExpectGe(time.Since(entry.MTime), 0)
 	ExpectLt(time.Since(entry.MTime), time.Hour)
-}
-
-func (t *ReadDirTest) CharDevices() {
-	ExpectEq("TODO", "")
 }
 
 func (t *ReadDirTest) SortsByName() {
