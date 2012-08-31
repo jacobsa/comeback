@@ -22,6 +22,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"syscall"
 )
 
 const (
@@ -67,8 +68,18 @@ func convertFileInfo(fi os.FileInfo) (*DirectoryEntry, error) {
 		entry.Type = TypeSymlink
 	case os.ModeDevice:
 		entry.Type = TypeBlockDevice
+		sys, ok := fi.Sys().(*syscall.Stat_t)
+		if !ok {
+			return nil, fmt.Errorf("Unexpected sys value: %v", fi.Sys())
+		}
+		entry.Device = sys.Dev
 	case os.ModeDevice | os.ModeCharDevice:
 		entry.Type = TypeCharDevice
+		sys, ok := fi.Sys().(*syscall.Stat_t)
+		if !ok {
+			return nil, fmt.Errorf("Unexpected sys value: %v", fi.Sys())
+		}
+		entry.Device = sys.Dev
 	case os.ModeNamedPipe:
 		entry.Type = TypeNamedPipe
 	default:
