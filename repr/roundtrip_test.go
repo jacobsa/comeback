@@ -347,6 +347,34 @@ func (t *RoundtripTest) PreservesScores() {
 	ExpectThat(out[1].Scores[0].Sha1Hash(), DeepEquals(score10.Sha1Hash()))
 }
 
+func (t *RoundtripTest) PreservesHardLinkTargets() {
+	// Input
+	in := []*fs.DirectoryEntry{
+		makeLegalEntry(),
+		makeLegalEntry(),
+	}
+
+	s := "taco"
+	in[0].HardLinkTarget = &s
+
+	// Marshal
+	d, err := repr.Marshal(in)
+	AssertEq(nil, err)
+	AssertNe(nil, d)
+
+	// Unmarshal
+	out, err := repr.Unmarshal(d)
+	AssertEq(nil, err)
+	AssertNe(nil, out)
+
+	// Output
+	AssertThat(out, ElementsAre(Any(), Any()))
+
+	AssertNe(nil, out[0].HardLinkTarget)
+	ExpectEq(*in[0].HardLinkTarget, *out[0].HardLinkTarget)
+	ExpectEq(nil, out[1].HardLinkTarget)
+}
+
 func (t *RoundtripTest) PreservesSymlinkTargets() {
 	// Input
 	in := []*fs.DirectoryEntry{
