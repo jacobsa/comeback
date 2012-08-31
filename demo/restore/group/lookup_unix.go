@@ -15,7 +15,6 @@ import (
 	"fmt"
 	"runtime"
 	"strconv"
-	"strings"
 	"syscall"
 	"unsafe"
 )
@@ -104,18 +103,8 @@ func lookup(uid int, groupname string, lookupByName bool) (*Group, error) {
 		}
 	}
 	u := &Group{
-		Uid:      strconv.Itoa(int(pwd.pw_uid)),
 		Gid:      strconv.Itoa(int(pwd.pw_gid)),
 		Groupname: C.GoString(pwd.pw_name),
-		Name:     C.GoString(pwd.pw_gecos),
-		HomeDir:  C.GoString(pwd.pw_dir),
-	}
-	// The pw_gecos field isn't quite standardized.  Some docs
-	// say: "It is expected to be a comma separated list of
-	// personal data where the first item is the full name of the
-	// user."
-	if i := strings.Index(u.Name, ","); i >= 0 {
-		u.Name = u.Name[:i]
 	}
 	return u, nil
 }
