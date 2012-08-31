@@ -178,6 +178,7 @@ func (t *ReadDirTest) RegularFiles() {
 	entry = entries[0]
 	ExpectEq(fs.TypeFile, entry.Type)
 	ExpectEq("burrito.txt", entry.Name)
+	ExpectEq("", entry.Target)
 	ExpectEq(0714|os.ModeSetgid, entry.Permissions)
 	ExpectTrue(entry.MTime.Equal(mtime0), "%v", entry.MTime)
 	ExpectThat(entry.Scores, ElementsAre())
@@ -185,6 +186,7 @@ func (t *ReadDirTest) RegularFiles() {
 	entry = entries[1]
 	ExpectEq(fs.TypeFile, entry.Type)
 	ExpectEq("enchilada.txt", entry.Name)
+	ExpectEq("", entry.Target)
 	ExpectEq(0454|os.ModeSetuid|os.ModeSticky, entry.Permissions)
 	ExpectTrue(entry.MTime.Equal(mtime1), "%v", entry.MTime)
 	ExpectThat(entry.Scores, ElementsAre())
@@ -226,6 +228,7 @@ func (t *ReadDirTest) Directories() {
 	entry = entries[0]
 	ExpectEq(fs.TypeDirectory, entry.Type)
 	ExpectEq("burrito", entry.Name)
+	ExpectEq("", entry.Target)
 	ExpectEq(0751|os.ModeSetgid, entry.Permissions)
 	ExpectTrue(entry.MTime.Equal(mtime0), "%v", entry.MTime)
 	ExpectThat(entry.Scores, ElementsAre())
@@ -233,6 +236,7 @@ func (t *ReadDirTest) Directories() {
 	entry = entries[1]
 	ExpectEq(fs.TypeDirectory, entry.Type)
 	ExpectEq("enchilada", entry.Name)
+	ExpectEq("", entry.Target)
 	ExpectEq(0711|os.ModeSticky|os.ModeSetuid, entry.Permissions)
 	ExpectTrue(entry.MTime.Equal(mtime1), "%v", entry.MTime)
 	ExpectThat(entry.Scores, ElementsAre())
@@ -299,6 +303,7 @@ func (t *ReadDirTest) BlockDevices() {
 	AssertNe(nil, entry)
 	ExpectEq(fs.TypeBlockDevice, entry.Type)
 	ExpectEq("disk0", entry.Name)
+	ExpectEq("", entry.Target)
 	ExpectEq(os.FileMode(0640), entry.Permissions)
 	ExpectGe(time.Since(entry.MTime), 0)
 	ExpectLt(time.Since(entry.MTime), time.Hour)
