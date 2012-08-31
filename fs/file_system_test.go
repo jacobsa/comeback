@@ -200,6 +200,14 @@ func (t *ReadDirTest) NoReadPermissions() {
 	ExpectThat(err, Error(HasSubstr("denied")))
 }
 
+func (t *ReadDirTest) UnknownOwnerId() {
+	ExpectEq("TODO", "")
+}
+
+func (t *ReadDirTest) UnknownGroupId() {
+	ExpectEq("TODO", "")
+}
+
 func (t *ReadDirTest) RegularFiles() {
 	var err error
 	var entry *fs.DirectoryEntry
@@ -239,6 +247,10 @@ func (t *ReadDirTest) RegularFiles() {
 	ExpectEq("", entry.Target)
 	ExpectEq(0, entry.Device)
 	ExpectEq(0714|os.ModeSetgid, entry.Permissions)
+	ExpectEq(t.myUid, entry.Uid)
+	ExpectEq(entry.Username, Pointee(Equals(t.myUsername)))
+	ExpectEq(t.myGid, entry.Gid)
+	ExpectEq(entry.Groupname, Pointee(Equals(t.myGroupname)))
 	ExpectTrue(entry.MTime.Equal(mtime0), "%v", entry.MTime)
 	ExpectThat(entry.Scores, ElementsAre())
 
@@ -248,6 +260,10 @@ func (t *ReadDirTest) RegularFiles() {
 	ExpectEq("", entry.Target)
 	ExpectEq(0, entry.Device)
 	ExpectEq(0454|os.ModeSetuid|os.ModeSticky, entry.Permissions)
+	ExpectEq(t.myUid, entry.Uid)
+	ExpectEq(entry.Username, Pointee(Equals(t.myUsername)))
+	ExpectEq(t.myGid, entry.Gid)
+	ExpectEq(entry.Groupname, Pointee(Equals(t.myGroupname)))
 	ExpectTrue(entry.MTime.Equal(mtime1), "%v", entry.MTime)
 	ExpectThat(entry.Scores, ElementsAre())
 }
@@ -291,6 +307,10 @@ func (t *ReadDirTest) Directories() {
 	ExpectEq("", entry.Target)
 	ExpectEq(0, entry.Device)
 	ExpectEq(0751|os.ModeSetgid, entry.Permissions)
+	ExpectEq(t.myUid, entry.Uid)
+	ExpectEq(entry.Username, Pointee(Equals(t.myUsername)))
+	ExpectEq(t.myGid, entry.Gid)
+	ExpectEq(entry.Groupname, Pointee(Equals(t.myGroupname)))
 	ExpectTrue(entry.MTime.Equal(mtime0), "%v", entry.MTime)
 	ExpectThat(entry.Scores, ElementsAre())
 
@@ -300,6 +320,10 @@ func (t *ReadDirTest) Directories() {
 	ExpectEq("", entry.Target)
 	ExpectEq(0, entry.Device)
 	ExpectEq(0711|os.ModeSticky|os.ModeSetuid, entry.Permissions)
+	ExpectEq(t.myUid, entry.Uid)
+	ExpectEq(entry.Username, Pointee(Equals(t.myUsername)))
+	ExpectEq(t.myGid, entry.Gid)
+	ExpectEq(entry.Groupname, Pointee(Equals(t.myGroupname)))
 	ExpectTrue(entry.MTime.Equal(mtime1), "%v", entry.MTime)
 	ExpectThat(entry.Scores, ElementsAre())
 }
@@ -343,6 +367,10 @@ func (t *ReadDirTest) Symlinks() {
 	ExpectEq("/foo/burrito", entry.Target)
 	ExpectEq(0, entry.Device)
 	ExpectEq(0714|os.ModeSetgid, entry.Permissions)
+	ExpectEq(t.myUid, entry.Uid)
+	ExpectEq(entry.Username, Pointee(Equals(t.myUsername)))
+	ExpectEq(t.myGid, entry.Gid)
+	ExpectEq(entry.Groupname, Pointee(Equals(t.myGroupname)))
 	ExpectTrue(entry.MTime.Equal(mtime0), "%v", entry.MTime)
 	ExpectThat(entry.Scores, ElementsAre())
 
@@ -352,6 +380,10 @@ func (t *ReadDirTest) Symlinks() {
 	ExpectEq("/foo/enchilada", entry.Target)
 	ExpectEq(0, entry.Device)
 	ExpectEq(0454|os.ModeSetuid|os.ModeSticky, entry.Permissions)
+	ExpectEq(t.myUid, entry.Uid)
+	ExpectEq(entry.Username, Pointee(Equals(t.myUsername)))
+	ExpectEq(t.myGid, entry.Gid)
+	ExpectEq(entry.Groupname, Pointee(Equals(t.myGroupname)))
 	ExpectTrue(entry.MTime.Equal(mtime1), "%v", entry.MTime)
 	ExpectThat(entry.Scores, ElementsAre())
 }
@@ -370,6 +402,10 @@ func (t *ReadDirTest) BlockDevices() {
 	ExpectEq("", entry.Target)
 	ExpectNe(0, entry.Device)
 	ExpectEq(os.FileMode(0666), entry.Permissions)
+	ExpectEq(0, entry.Uid)
+	ExpectEq("root", Pointee(Equals(t.myUsername)))
+	ExpectEq(0, entry.Gid)
+	ExpectEq("wheel", Pointee(Equals(t.myGroupname)))
 	ExpectGe(time.Since(entry.MTime), 0)
 	ExpectLt(time.Since(entry.MTime), 365*24*time.Hour)
 }
@@ -388,6 +424,10 @@ func (t *ReadDirTest) CharDevices() {
 	ExpectEq("", entry.Target)
 	ExpectNe(0, entry.Device)
 	ExpectEq(os.FileMode(0640), entry.Permissions)
+	ExpectEq(0, entry.Uid)
+	ExpectEq("root", Pointee(Equals(t.myUsername)))
+	ExpectEq(0, entry.Gid)
+	ExpectEq("wheel", Pointee(Equals(t.myGroupname)))
 	ExpectGe(time.Since(entry.MTime), 0)
 	ExpectLt(time.Since(entry.MTime), 365*24*time.Hour)
 }
@@ -424,6 +464,10 @@ func (t *ReadDirTest) NamedPipes() {
 	ExpectEq("burrito", entry.Name)
 	ExpectEq("", entry.Target)
 	ExpectEq(0714|os.ModeSetgid, entry.Permissions)
+	ExpectEq(t.myUid, entry.Uid)
+	ExpectEq(entry.Username, Pointee(Equals(t.myUsername)))
+	ExpectEq(t.myGid, entry.Gid)
+	ExpectEq(entry.Groupname, Pointee(Equals(t.myGroupname)))
 	ExpectTrue(entry.MTime.Equal(mtime0), "%v", entry.MTime)
 	ExpectThat(entry.Scores, ElementsAre())
 
@@ -432,6 +476,10 @@ func (t *ReadDirTest) NamedPipes() {
 	ExpectEq("enchilada", entry.Name)
 	ExpectEq("", entry.Target)
 	ExpectEq(0454|os.ModeSetuid|os.ModeSticky, entry.Permissions)
+	ExpectEq(t.myUid, entry.Uid)
+	ExpectEq(entry.Username, Pointee(Equals(t.myUsername)))
+	ExpectEq(t.myGid, entry.Gid)
+	ExpectEq(entry.Groupname, Pointee(Equals(t.myGroupname)))
 	ExpectTrue(entry.MTime.Equal(mtime1), "%v", entry.MTime)
 	ExpectThat(entry.Scores, ElementsAre())
 }
