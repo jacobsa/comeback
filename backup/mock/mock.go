@@ -99,7 +99,7 @@ func (m *mockDirectorySaver) Oglemock_Description() string {
 	return m.description
 }
 
-func (m *mockDirectorySaver) Save(p0 string) (o0 blob.Score, o1 error) {
+func (m *mockDirectorySaver) Save(p0 string, p1 string) (o0 blob.Score, o1 error) {
 	// Get a file name and line number for the caller.
 	_, file, line, _ := runtime.Caller(1)
 
@@ -109,7 +109,7 @@ func (m *mockDirectorySaver) Save(p0 string) (o0 blob.Score, o1 error) {
 		"Save",
 		file,
 		line,
-		[]interface{}{p0})
+		[]interface{}{p0, p1})
 
 	if len(retVals) != 2 {
 		panic(fmt.Sprintf("mockDirectorySaver.Save: invalid return values: %v", retVals))

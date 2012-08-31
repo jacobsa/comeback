@@ -40,8 +40,8 @@ type onDemandDirSaver struct {
 	createSaver func(wrapped DirectorySaver) DirectorySaver
 }
 
-func (s *onDemandDirSaver) Save(dirpath string) (score blob.Score, err error) {
-	return s.createSaver(s).Save(dirpath)
+func (s *onDemandDirSaver) Save(basePath, relPath string) (score blob.Score, err error) {
+	return s.createSaver(s).Save(basePath, relPath)
 }
 
 // Return a directory saver that makes use of the supplied dependencies.
@@ -49,13 +49,14 @@ func NewDirectorySaver(
 	blobStore blob.Store,
 	fileSystem fs.FileSystem,
 	fileSaver FileSaver) (DirectorySaver, error) {
+	linkResolver := newLinkResolver()
 	createSaver := func(wrapped DirectorySaver) DirectorySaver {
 		saver, err := NewNonRecursiveDirectorySaver(
 			blobStore,
 			fileSystem,
 			fileSaver,
 			wrapped,
-			newLinkResolver())
+			linkResolver)
 
 		if err != nil {
 			panic(err)
@@ -91,9 +92,9 @@ type dirSaver struct {
 	wrapped    DirectorySaver
 }
 
-func (s *dirSaver) saveDir(parent string, entry *fs.DirectoryEntry) ([]blob.Score, error) {
+func (s *dirSaver) saveDir(basePath string, relPath string, entry *fs.DirectoryEntry) ([]blob.Score, error) {
 	// Recurse.
-	score, err := s.wrapped.Save(path.Join(parent, entry.Name))
+	score, err := s.wrapped.Save(basePath, path.Join(relPath, entry.Name))
 	if err != nil {
 		return nil, err
 	}
@@ -113,7 +114,9 @@ func (s *dirSaver) saveFile(parent string, entry *fs.DirectoryEntry) ([]blob.Sco
 	return s.fileSaver.Save(f)
 }
 
-func (s *dirSaver) Save(dirpath string) (score blob.Score, err error) {
+func (s *dirSaver) Save(basePath, relPath string) (score blob.Score, err error) {
+	dirpath := path.Join(basePath, relPath)
+
 	// Grab a listing for the directory.
 	entries, err := s.fileSystem.ReadDir(dirpath)
 	if err != nil {
@@ -127,7 +130,7 @@ func (s *dirSaver) Save(dirpath string) (score blob.Score, err error) {
 		case fs.TypeFile:
 			entry.Scores, err = s.saveFile(dirpath, entry)
 		case fs.TypeDirectory:
-			entry.Scores, err = s.saveDir(dirpath, entry)
+			entry.Scores, err = s.saveDir(basePath, relPath, entry)
 		case fs.TypeSymlink:
 		case fs.TypeBlockDevice:
 		case fs.TypeCharDevice:
