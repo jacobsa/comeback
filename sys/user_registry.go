@@ -35,7 +35,7 @@ type UserRegistry interface {
 
 // Return a user registry hooked up to the system's real user registry.
 func NewUserRegistry() (UserRegistry, error) {
-	return nil, fmt.Errorf("TODO")
+	return &userRegistry{}, nil
 }
 
 type userRegistry struct {}
@@ -52,4 +52,24 @@ func (r *userRegistry) FindById(id UserId) (string, error) {
 	}
 
 	return osResult.Username, nil
+}
+
+func (r *userRegistry) FindByName(name string) (UserId, error) {
+	osResult, err := user.Lookup(name)
+
+	if unknownErr, ok := err.(user.UnknownUserError); ok {
+		return 0, NotFoundError(unknownErr)
+	}
+
+	if err != nil {
+		return 0, err
+	}
+
+	// Attempt to parse the UID.
+	uid, err := strconv.Atoi(osResult.Uid)
+	if err != nil {
+		return 0, fmt.Errorf("Unexpected UID format: %s", osResult.Uid)
+	}
+
+	return UserId(uid), nil
 }
