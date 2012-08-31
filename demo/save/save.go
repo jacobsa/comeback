@@ -21,6 +21,7 @@ import (
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/disk"
 	"github.com/jacobsa/comeback/fs"
+	"github.com/jacobsa/comeback/sys"
 	"log"
 )
 
@@ -37,10 +38,28 @@ func main() {
 		log.Fatalf("Creating file saver: %v", err)
 	}
 
+	// Create a user registry.
+	userRegistry, err := sys.NewUserRegistry()
+	if err != nil {
+		log.Fatalf("Creating user registry: %v", err)
+	}
+
+	// Create a group registry.
+	groupRegistry, err := sys.NewGroupRegistry()
+	if err != nil {
+		log.Fatalf("Creating group registry: %v", err)
+	}
+
+	// Create a file system.
+	fileSystem, err := fs.NewFileSystem(userRegistry, groupRegistry)
+	if err != nil {
+		log.Fatalf("Creating file system: %v", err)
+	}
+
 	// Create a directory saver.
 	dirSaver, err := backup.NewDirectorySaver(
 		blobStore,
-		fs.NewFileSystem(),
+		fileSystem,
 		fileSaver)
 
 	if err != nil {
