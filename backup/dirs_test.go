@@ -78,7 +78,8 @@ type DirectorySaverTest struct {
 
 	dirSaver backup.DirectorySaver
 
-	dirpath string
+	basePath string
+	relPath string
 	score   blob.Score
 	err     error
 }
@@ -102,7 +103,7 @@ func (t *DirectorySaverTest) SetUp(i *TestInfo) {
 }
 
 func (t *DirectorySaverTest) callSaver() {
-	t.score, t.err = t.dirSaver.Save(t.dirpath)
+	t.score, t.err = t.dirSaver.Save(t.basePath, t.relPath)
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -110,10 +111,11 @@ func (t *DirectorySaverTest) callSaver() {
 ////////////////////////////////////////////////////////////////////////
 
 func (t *DirectorySaverTest) CallsReadDir() {
-	t.dirpath = "taco"
+	t.basePath = "/taco"
+	t.relPath = "burrito/enchilada"
 
 	// ReadDir
-	ExpectCall(t.fileSystem, "ReadDir")("taco").
+	ExpectCall(t.fileSystem, "ReadDir")("/taco/burrito/enchilada").
 		WillOnce(oglemock.Return(nil, errors.New("")))
 
 	// Call
@@ -197,10 +199,6 @@ func (t *DirectorySaverTest) CallsLinkResolverFileSystemAndFileSaverForFiles() {
 	t.callSaver()
 }
 
-func (t *DirectorySaverTest) OneFileIsHardLinkedToAnother() {
-	ExpectEq("TODO", "")
-}
-
 func (t *DirectorySaverTest) FileSystemReturnsErrorForOneFile() {
 	// ReadDir
 	entries := []*fs.DirectoryEntry{
@@ -266,7 +264,8 @@ func (t *DirectorySaverTest) FileSaverReturnsErrorForOneFile() {
 }
 
 func (t *DirectorySaverTest) CallsDirSaverForDirs() {
-	t.dirpath = "/taco"
+	t.basePath = "/taco"
+	t.relPath = "queso/tortilla"
 
 	// ReadDir
 	entries := []*fs.DirectoryEntry{
@@ -280,10 +279,10 @@ func (t *DirectorySaverTest) CallsDirSaverForDirs() {
 	// Wrapped directory saver
 	score0 := blob.ComputeScore([]byte(""))
 
-	ExpectCall(t.wrapped, "Save")("/taco/burrito").
+	ExpectCall(t.wrapped, "Save")("/taco", "queso/tortilla/burrito").
 		WillOnce(oglemock.Return(score0, nil))
 
-	ExpectCall(t.wrapped, "Save")("/taco/enchilada").
+	ExpectCall(t.wrapped, "Save")("/taco", "queso/tortilla/enchilada").
 		WillOnce(oglemock.Return(nil, errors.New("")))
 
 	// Call
@@ -304,7 +303,7 @@ func (t *DirectorySaverTest) DirSaverReturnsErrorForOneDir() {
 	// Wrapped directory saver
 	score0 := blob.ComputeScore([]byte(""))
 
-	ExpectCall(t.wrapped, "Save")(Any()).
+	ExpectCall(t.wrapped, "Save")(Any(), Any()).
 		WillOnce(oglemock.Return(score0, nil)).
 		WillOnce(oglemock.Return(nil, errors.New("taco")))
 
@@ -330,7 +329,7 @@ func (t *DirectorySaverTest) OneTypeIsUnsupported() {
 	// Wrapped directory saver
 	score0 := blob.ComputeScore([]byte(""))
 
-	ExpectCall(t.wrapped, "Save")(Any()).
+	ExpectCall(t.wrapped, "Save")(Any(), Any()).
 		WillOnce(oglemock.Return(score0, nil))
 
 	// Call
@@ -372,7 +371,7 @@ func (t *DirectorySaverTest) CallsBlobStore() {
 	score2 := blob.ComputeScore([]byte("queso"))
 	score3 := blob.ComputeScore([]byte("tortilla"))
 
-	ExpectCall(t.wrapped, "Save")(Any()).
+	ExpectCall(t.wrapped, "Save")(Any(), Any()).
 		WillOnce(oglemock.Return(score2, nil)).
 		WillOnce(oglemock.Return(score3, nil))
 
@@ -423,6 +422,10 @@ func (t *DirectorySaverTest) CallsBlobStore() {
 	entry = resultEntries[6]
 	ExpectEq(fs.TypeNamedPipe, entry.Type)
 	ExpectEq("nachos", entry.Name)
+}
+
+func (t *DirectorySaverTest) OneFileIsHardLinkedToAnother() {
+	ExpectEq("TODO", "")
 }
 
 func (t *DirectorySaverTest) BlobStoreReturnsError() {
