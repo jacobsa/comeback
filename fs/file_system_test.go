@@ -92,6 +92,11 @@ func setPermissions(path string, permissions uint32) error {
 	return nil
 }
 
+// Create a named pipe at the supplied path.
+func makeNamedPipe(path string, permissions uint32) error {
+	return syscall.Mkfifo(path, permissions)
+}
+
 type fileSystemTest struct {
 	fileSystem fs.FileSystem
 	baseDir    string
@@ -334,6 +339,50 @@ func (t *ReadDirTest) CharDevices() {
 	ExpectEq(os.FileMode(0640), entry.Permissions)
 	ExpectGe(time.Since(entry.MTime), 0)
 	ExpectLt(time.Since(entry.MTime), 365*24*time.Hour)
+}
+
+func (t *ReadDirTest) NamedPipes() {
+	var err error
+	var entry *fs.DirectoryEntry
+
+	// Pipe 0
+	path0 := path.Join(t.baseDir, "burrito")
+	err = makeNamedPipe(path0, 0714|syscall.S_ISGID)
+	AssertEq(nil, err)
+
+	mtime0 := time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)
+	err = setModTime(path0, mtime0)
+	AssertEq(nil, err)
+
+	// Pipe 1
+	path1 := path.Join(t.baseDir, "enchilada")
+	err = makeNamedPipe(path1, 0454|syscall.S_ISVTX|syscall.S_ISUID)
+	AssertEq(nil, err)
+
+	mtime1 := time.Date(1985, time.March, 18, 15, 33, 0, 0, time.Local)
+	err = setModTime(path1, mtime1)
+	AssertEq(nil, err)
+
+	// Call
+	entries, err := t.fileSystem.ReadDir(t.baseDir)
+	AssertEq(nil, err)
+	AssertThat(entries, ElementsAre(Any(), Any()))
+
+	entry = entries[0]
+	ExpectEq(fs.TypeNamedPipe, entry.Type)
+	ExpectEq("burrito", entry.Name)
+	ExpectEq("", entry.Target)
+	ExpectEq(0714|os.ModeSetgid, entry.Permissions)
+	ExpectTrue(entry.MTime.Equal(mtime0), "%v", entry.MTime)
+	ExpectThat(entry.Scores, ElementsAre())
+
+	entry = entries[1]
+	ExpectEq(fs.TypeNamedPipe, entry.Type)
+	ExpectEq("enchilada", entry.Name)
+	ExpectEq("", entry.Target)
+	ExpectEq(0454|os.ModeSetuid|os.ModeSticky, entry.Permissions)
+	ExpectTrue(entry.MTime.Equal(mtime1), "%v", entry.MTime)
+	ExpectThat(entry.Scores, ElementsAre())
 }
 
 func (t *ReadDirTest) SortsByName() {

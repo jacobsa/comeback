@@ -30,6 +30,7 @@ const (
 	TypeSymlink
 	TypeBlockDevice
 	TypeCharDevice
+	TypeNamedPipe
 )
 
 // DirectoryEntry gives enough information to reconstruct a single entry within
