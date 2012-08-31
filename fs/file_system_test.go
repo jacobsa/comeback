@@ -16,6 +16,7 @@
 package fs_test
 
 import (
+	"errors"
 	"github.com/jacobsa/comeback/fs"
 	"github.com/jacobsa/comeback/sys"
 	"github.com/jacobsa/comeback/sys/group"
@@ -103,6 +104,8 @@ func makeNamedPipe(path string, permissions uint32) error {
 }
 
 type fileSystemTest struct {
+	userRegistry UserRegistry
+	groupRegistry GroupRegistry
 	fileSystem  fs.FileSystem
 	baseDir     string
 	myUid       sys.UserId
@@ -111,22 +114,25 @@ type fileSystemTest struct {
 	myGroupname string
 }
 
+func (t *fileSystemTest) setUpFileSystem() {
+	var err error
+	if t.fileSystem, err = fs.NewFileSystem(t.userRegistry, t.groupRegistry); err != nil {
+		log.Fatalf("Creating file system: %v", err)
+	}
+}
+
 func (t *fileSystemTest) SetUp(i *TestInfo) {
 	var err error
 
-	userRegistry, err := sys.NewUserRegistry()
-	if err != nil {
+	if t.userRegistry, err = sys.NewUserRegistry(); err != nil {
 		log.Fatalf("Creating user registry: %v", err)
 	}
 
-	groupRegistry, err := sys.NewGroupRegistry()
-	if err != nil {
+	if t.groupRegistry, err = sys.NewGroupRegistry(); err != nil {
 		log.Fatalf("Creating group registry: %v", err)
 	}
 
-	if t.fileSystem, err = fs.NewFileSystem(userRegistry, groupRegistry); err != nil {
-		log.Fatalf("Creating file system: %v", err)
-	}
+	t.setUpFileSystem()
 
 	// Create a temporary directory.
 	t.baseDir, err = ioutil.TempDir("", "ReadDirTest_")
@@ -214,7 +220,24 @@ func (t *ReadDirTest) NoReadPermissions() {
 }
 
 func (t *ReadDirTest) ErrorLookingUpOwnerId() {
-	ExpectEq("TODO", "")
+	// Create a mock user registry, and a new file system that uses it.
+	t.userRegistry = mock_sys.NewMockUserRegistry(t.mockController, "registry")
+	t.setUpFileSystem()
+
+	// Create a file.
+	path0 := path.Join(t.baseDir, "burrito.txt")
+	err = ioutil.WriteFile(path0, []byte(""), 0600)
+	AssertEq(nil, err)
+
+	// Registry
+	ExpectCall(t.userRegistry, "FindById")(t.myUid).
+		WillOnce(oglemock.Return("", errors.New("taco")))
+
+	// Call
+	_, err = t.fileSystem.ReadDir(dirpath)
+	ExpectThat(err, Error(HasSubstr("Looking up")))
+	ExpectThat(err, Error(HasSubstr("user")))
+	ExpectThat(err, Error(HasSubstr("taco")))
 }
 
 func (t *ReadDirTest) ErrorLookingUpGroupId() {
