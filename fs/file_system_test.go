@@ -299,7 +299,29 @@ func (t *ReadDirTest) UnknownOwnerId() {
 }
 
 func (t *ReadDirTest) UnknownGroupId() {
-	ExpectEq("TODO", "")
+	var err error
+
+	// Create a mock group registry, and a new file system that uses it.
+	mockRegistry := mock_sys.NewMockGroupRegistry(t.mockController, "registry")
+	t.groupRegistry = mockRegistry
+	t.setUpFileSystem()
+
+	// Create a file.
+	path0 := path.Join(t.baseDir, "burrito.txt")
+	err = ioutil.WriteFile(path0, []byte(""), 0600)
+	AssertEq(nil, err)
+
+	// Registry
+	ExpectCall(mockRegistry, "FindById")(t.myGid).
+		WillOnce(oglemock.Return("", sys.NotFoundError("taco")))
+
+	// Call
+	entries, err := t.fileSystem.ReadDir(t.baseDir)
+	AssertEq(nil, err)
+	AssertThat(entries, ElementsAre(Any()))
+
+	ExpectEq(t.myGid, entries[0].Gid)
+	ExpectEq(nil, entries[0].Groupname)
 }
 
 func (t *ReadDirTest) RegularFiles() {
