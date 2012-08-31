@@ -140,6 +140,12 @@ func restoreDir(target string, score blob.Score) error {
 				return err
 			}
 
+		case fs.TypeCharDevice:
+			err = makeCharDevice(entryPath, entry.Permissions, entry.Device)
+			if err != nil {
+				return err
+			}
+
 		default:
 			return fmt.Errorf("Don't know how to deal with entry: %v", entry)
 		}
@@ -176,6 +182,16 @@ func makeNamedPipe(path string, permissions os.FileMode) error {
 // Create a block device at the supplied path.
 func makeBlockDevice(path string, permissions os.FileMode, dev int32) error {
 	mode := syscallPermissions(permissions) | syscall.S_IFBLK
+	if err := syscall.Mknod(path, mode, int(dev)); err != nil {
+		return fmt.Errorf("syscall.Mknod: %v", err)
+	}
+
+	return nil
+}
+
+// Create a character device at the supplied path.
+func makeCharDevice(path string, permissions os.FileMode, dev int32) error {
+	mode := syscallPermissions(permissions) | syscall.S_IFCHR
 	if err := syscall.Mknod(path, mode, int(dev)); err != nil {
 		return fmt.Errorf("syscall.Mknod: %v", err)
 	}
