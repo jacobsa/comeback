@@ -266,3 +266,33 @@ func (t *RoundtripTest) PreservesSymlinkTargets() {
 	ExpectEq(in[0].Target, out[0].Target)
 	ExpectEq(in[1].Target, out[1].Target)
 }
+
+func (t *RoundtripTest) PreservesDeviceNumbers() {
+	// Input
+	in := []*fs.DirectoryEntry{
+		makeLegalEntry(),
+		makeLegalEntry(),
+	}
+
+	in[0].Type = fs.TypeCharDevice
+	in[1].Type = fs.TypeBlockDevice
+
+	in[0].Device = 17
+	in[1].Device = 19
+
+	// Marshal
+	d, err := repr.Marshal(in)
+	AssertEq(nil, err)
+	AssertNe(nil, d)
+
+	// Unmarshal
+	out, err := repr.Unmarshal(d)
+	AssertEq(nil, err)
+	AssertNe(nil, out)
+
+	// Output
+	AssertThat(out, ElementsAre(Any(), Any()))
+
+	ExpectEq(in[0].Device, out[0].Device)
+	ExpectEq(in[1].Device, out[1].Device)
+}
