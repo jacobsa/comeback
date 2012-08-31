@@ -288,6 +288,26 @@ func (t *ReadDirTest) Symlinks() {
 	ExpectThat(entry.Scores, ElementsAre())
 }
 
+func (t *ReadDirTest) BlockDevices() {
+	var err error
+
+	// Call
+	entries, err := t.fileSystem.ReadDir("/dev")
+	AssertEq(nil, err)
+
+	entry := findEntry(entries, "disk0")
+	AssertNe(nil, entry)
+	ExpectEq(fs.TypeBlockDevice, entry.Type)
+	ExpectEq("disk0", entry.Name)
+	ExpectEq(os.FileMode(0640), entry.Permissions)
+	ExpectGe(time.Since(entry.MTime), 0)
+	ExpectLt(time.Since(entry.MTime), time.Hour)
+}
+
+func (t *ReadDirTest) CharDevices() {
+	ExpectEq("TODO", "")
+}
+
 func (t *ReadDirTest) SortsByName() {
 	var err error
 

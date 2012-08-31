@@ -28,6 +28,8 @@ const (
 	TypeFile EntryType = iota
 	TypeDirectory
 	TypeSymlink
+	TypeBlockDevice
+	TypeCharDevice
 )
 
 // DirectoryEntry gives enough information to reconstruct a single entry within
