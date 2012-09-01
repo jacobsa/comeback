@@ -67,7 +67,7 @@ func main() {
 	}
 
 	// Save a directory.
-	score, err := dirSaver.Save("/Volumes/Src")
+	score, err := dirSaver.Save("/Volumes/Src", "")
 	if err != nil {
 		log.Fatalf("Saving: %v", err)
 	}
