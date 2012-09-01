@@ -35,6 +35,14 @@ func init() { RegisterTestSuite(&LinkResolverTest{}) }
 // Tests
 ////////////////////////////////////////////////////////////////////////
 
-func (t *LinkResolverTest) DoesFoo() {
+func (t *LinkResolverTest) DifferingDevicesSameInode() {
+	ExpectEq("TODO", "")
+}
+
+func (t *LinkResolverTest) DifferingInodesSameDevice() {
+	ExpectEq("TODO", "")
+}
+
+func (t *LinkResolverTest) SameBoth() {
 	ExpectEq("TODO", "")
 }
