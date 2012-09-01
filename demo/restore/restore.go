@@ -189,7 +189,7 @@ func setPermissions(path string, permissions os.FileMode) error {
 
 // Restore the directory whose contents are described by the referenced blob to
 // the supplied target, which must already exist.
-func restoreDir(target string, score blob.Score) error {
+func restoreDir(basePath, relPath string, score blob.Score) error {
 	// Load the appropriate blob.
 	blob, err := blobStore.Load(score)
 	if err != nil {
@@ -204,13 +204,24 @@ func restoreDir(target string, score blob.Score) error {
 
 	// Deal with each entry.
 	for _, entry := range entries {
-		entryPath := path.Join(target, entry.Name)
+		entryRelPath := path.Join(relPath, entry.Name)
+		entryFullPath := path.Join(basePath, entryRelPath)
 
 		// Switch on type.
 		switch entry.Type {
 		case fs.TypeFile:
-			if err := restoreFile(entryPath, entry.Scores); err != nil {
-				return fmt.Errorf("restoreFile: %v", err)
+			// Is this a hard link to another file?
+			if entry.HardLinkTarget != nil {
+				// Create the hard link.
+				targetFullPath := path.Join(basePath, *entry.HardLinkTarget)
+				if err := os.Link(targetFullPath, entryFullPath); err != nil {
+					return fmt.Errorf("os.Link: %v", err)
+				}
+			} else {
+				// Create the file using its blobs.
+				if err := restoreFile(entryFullPath, entry.Scores); err != nil {
+					return fmt.Errorf("restoreFile: %v", err)
+				}
 			}
 
 		case fs.TypeDirectory:
@@ -218,34 +229,34 @@ func restoreDir(target string, score blob.Score) error {
 				return fmt.Errorf("Wrong number of scores: %v", entry)
 			}
 
-			if err = os.Mkdir(entryPath, 0700); err != nil {
+			if err = os.Mkdir(entryFullPath, 0700); err != nil {
 				return fmt.Errorf("Mkdir: %v", err)
 			}
 
-			if err = restoreDir(entryPath, entry.Scores[0]); err != nil {
+			if err = restoreDir(basePath, entryRelPath, entry.Scores[0]); err != nil {
 				return fmt.Errorf("restoreDir: %v", err)
 			}
 
 		case fs.TypeSymlink:
-			err = os.Symlink(entry.Target, entryPath)
+			err = os.Symlink(entry.Target, entryFullPath)
 			if err != nil {
 				return fmt.Errorf("Symlink: %v", err)
 			}
 
 		case fs.TypeNamedPipe:
-			err = makeNamedPipe(entryPath, entry.Permissions)
+			err = makeNamedPipe(entryFullPath, entry.Permissions)
 			if err != nil {
 				return fmt.Errorf("makeNamedPipe: %v", err)
 			}
 
 		case fs.TypeBlockDevice:
-			err = makeBlockDevice(entryPath, entry.Permissions, entry.DeviceNumber)
+			err = makeBlockDevice(entryFullPath, entry.Permissions, entry.DeviceNumber)
 			if err != nil {
 				return fmt.Errorf("makeBlockDevice: %v", err)
 			}
 
 		case fs.TypeCharDevice:
-			err = makeCharDevice(entryPath, entry.Permissions, entry.DeviceNumber)
+			err = makeCharDevice(entryFullPath, entry.Permissions, entry.DeviceNumber)
 			if err != nil {
 				return fmt.Errorf("makeCharDevice: %v", err)
 			}
@@ -265,23 +276,23 @@ func restoreDir(target string, score blob.Score) error {
 			return fmt.Errorf("chooseGroupId: %v", err)
 		}
 
-		if err = os.Lchown(entryPath, int(uid), int(gid)); err != nil {
+		if err = os.Lchown(entryFullPath, int(uid), int(gid)); err != nil {
 			return fmt.Errorf("Chown: %v", err)
 		}
 
 		// Fix permissions, but not on devices (otherwise we get resource busy
 		// errors).
 		if entry.Type != fs.TypeBlockDevice && entry.Type != fs.TypeCharDevice {
-			if err := setPermissions(entryPath, entry.Permissions); err != nil {
-				return fmt.Errorf("setPermissions(%s): %v", entryPath, err)
+			if err := setPermissions(entryFullPath, entry.Permissions); err != nil {
+				return fmt.Errorf("setPermissions(%s): %v", entryFullPath, err)
 			}
 		}
 
 		// Fix modification time, but not on devices (otherwise we get resource
 		// busy errors).
 		if entry.Type != fs.TypeBlockDevice && entry.Type != fs.TypeCharDevice {
-			if err = setModTime(entryPath, entry.MTime); err != nil {
-				return fmt.Errorf("setModTime(%s): %v", entryPath, err)
+			if err = setModTime(entryFullPath, entry.MTime); err != nil {
+				return fmt.Errorf("setModTime(%s): %v", entryFullPath, err)
 			}
 		}
 	}
@@ -362,7 +373,7 @@ func main() {
 	}
 
 	// Attempt a restore.
-	err = restoreDir(gTarget, score)
+	err = restoreDir(gTarget, "", score)
 	if err != nil {
 		log.Fatalf("Restoring: %v", err)
 	}
