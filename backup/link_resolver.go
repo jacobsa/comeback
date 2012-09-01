@@ -29,6 +29,28 @@ type LinkResolver interface {
 // Create an empty link resolver. This is an implementation detail; you should
 // not touch it.
 func NewLinkResolver() LinkResolver {
-	// TODO
+	return &linkResolver{make(map[mapElement]string)}
+}
+
+type mapElement struct {
+	containingDevice int32
+	inode uint64
+}
+
+type linkResolver struct {
+	alreadySeen map[mapElement]string
+}
+
+func (r *linkResolver) Register(containingDevice int32, inode uint64, path string) *string {
+	elem := mapElement{containingDevice, inode}
+
+	// Have we already seen this element?
+	if prevPath, ok := r.alreadySeen[elem]; ok {
+		return &prevPath
+	}
+
+	// This is the first time. Insert it.
+	r.alreadySeen[elem] = path
+
 	return nil
 }
