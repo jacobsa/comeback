@@ -16,6 +16,8 @@
 package backup_test
 
 import (
+	"github.com/jacobsa/comeback/backup"
+	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
 	"testing"
 )
@@ -27,22 +29,32 @@ func TestLinkResolver(t *testing.T) { RunTests(t) }
 ////////////////////////////////////////////////////////////////////////
 
 type LinkResolverTest struct {
+	resolver backup.LinkResolver
 }
 
 func init() { RegisterTestSuite(&LinkResolverTest{}) }
+
+func (t *LinkResolverTest) SetUp(i *TestInfo) {
+	t.resolver = backup.NewLinkResolver()
+}
 
 ////////////////////////////////////////////////////////////////////////
 // Tests
 ////////////////////////////////////////////////////////////////////////
 
 func (t *LinkResolverTest) DifferingDevicesSameInode() {
-	ExpectEq("TODO", "")
+	AssertEq(nil, t.resolver.Register(17, 19, "taco"))
+	ExpectEq(nil, t.resolver.Register(23, 19, "burrito"))
 }
 
 func (t *LinkResolverTest) DifferingInodesSameDevice() {
-	ExpectEq("TODO", "")
+	AssertEq(nil, t.resolver.Register(17, 19, "taco"))
+	ExpectEq(nil, t.resolver.Register(17, 23, "burrito"))
 }
 
 func (t *LinkResolverTest) SameBoth() {
-	ExpectEq("TODO", "")
+	AssertEq(nil, t.resolver.Register(17, 19, "taco"))
+	ExpectThat(t.resolver.Register(17, 19, "burrito"), Pointee(Equals("taco")))
+	ExpectThat(t.resolver.Register(17, 19, "enchilada"), Pointee(Equals("taco")))
+	ExpectThat(t.resolver.Register(17, 19, "queso"), Pointee(Equals("taco")))
 }
