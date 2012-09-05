@@ -122,7 +122,7 @@ func (t *StoreTest) WrappedSucceeds() {
 	score, err := t.store.Store([]byte{})
 	AssertEq(nil, err)
 
-	ExpectEq(expected, score)
+	ExpectThat(score, DeepEquals(expected))
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -139,7 +139,7 @@ func (t *LoadTest) CallsWrapped() {
 	score := blob.ComputeScore([]byte("taco"))
 
 	// Wrapped
-	ExpectCall(t.wrapped, "Load")(score).
+	ExpectCall(t.wrapped, "Load")(DeepEquals(score)).
 		WillOnce(oglemock.Return(nil, errors.New("")))
 
 	// Call
