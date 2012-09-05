@@ -7,8 +7,8 @@
 package mock_blob
 
 import (
-	blob "github.com/jacobsa/comeback/blob"
 	fmt "fmt"
+	blob "github.com/jacobsa/comeback/blob"
 	oglemock "github.com/jacobsa/oglemock"
 	runtime "runtime"
 	unsafe "unsafe"
@@ -20,16 +20,16 @@ type MockStore interface {
 }
 
 type mockStore struct {
-	controller	oglemock.Controller
-	description	string
+	controller  oglemock.Controller
+	description string
 }
 
 func NewMockStore(
 	c oglemock.Controller,
 	desc string) MockStore {
 	return &mockStore{
-		controller:	c,
-		description:	desc,
+		controller:  c,
+		description: desc,
 	}
 }
 
