@@ -29,24 +29,42 @@ func TestEncrypting(t *testing.T) { RunTests(t) }
 // Helpers
 ////////////////////////////////////////////////////////////////////////
 
-type EncryptingStoreTest struct{
+type encryptingStoreTest struct{
 	crypter mock_crypto.MockCrypter
 	wrapped mock_blob.MockStore
 	store blob.Store
 }
 
-func init() { RegisterTestSuite(&EncryptingStoreTest{}) }
-
-func (t *EncryptingStoreTest) SetUp(i *TestInfo) {
+func (t *encryptingStoreTest) SetUp(i *TestInfo) {
 	t.crypter = mock_crypto.NewMockCrypter(i.MockController, "crypter")
 	t.wrapped = mock_blob.NewMockStore(i.MockController, "wrapped")
 	t.store = blob.NewEncryptingStore(t.crypter, t.wrapped)
 }
 
 ////////////////////////////////////////////////////////////////////////
-// Tests
+// Store
 ////////////////////////////////////////////////////////////////////////
 
-func (t *EncryptingStoreTest) DoesFoo() {
+type StoreTest struct {
+	encryptingStoreTest
+}
+
+func init() { RegisterTestSuite(&StoreTest{}) }
+
+func (t *StoreTest) DoesFoo() {
+	ExpectEq("TODO", "")
+}
+
+////////////////////////////////////////////////////////////////////////
+// Load
+////////////////////////////////////////////////////////////////////////
+
+type LoadTest struct {
+	encryptingStoreTest
+}
+
+func init() { RegisterTestSuite(&LoadTest{}) }
+
+func (t *LoadTest) DoesFoo() {
 	ExpectEq("TODO", "")
 }
