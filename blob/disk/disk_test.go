@@ -42,7 +42,7 @@ func (t *diskStoreTest) SetUp(i *TestInfo) {
 	t.fs = mock_fs.NewMockFileSystem(i.MockController, "fs")
 
 	t.store, err = disk.NewDiskBlobStore(t.basePath, t.fs)
-	AssertNe(nil, err)
+	AssertEq(nil, err)
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -55,7 +55,15 @@ type StoreTest struct {
 
 func init() { RegisterTestSuite(&StoreTest{}) }
 
-func (t *StoreTest) DoesFoo() {
+func (t *StoreTest) CallsFileSystem() {
+	ExpectEq("TODO", "")
+}
+
+func (t *StoreTest) FileSystemReturnsError() {
+	ExpectEq("TODO", "")
+}
+
+func (t *StoreTest) FileSystemSaysOkay() {
 	ExpectEq("TODO", "")
 }
 
@@ -69,6 +77,14 @@ type LoadTest struct {
 
 func init() { RegisterTestSuite(&LoadTest{}) }
 
-func (t *LoadTest) DoesFoo() {
+func (t *LoadTest) CallsFileSystem() {
+	ExpectEq("TODO", "")
+}
+
+func (t *LoadTest) FileSystemReturnsError() {
+	ExpectEq("TODO", "")
+}
+
+func (t *LoadTest) FileSystemSucceeds() {
 	ExpectEq("TODO", "")
 }
