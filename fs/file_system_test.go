@@ -739,7 +739,12 @@ type WriteFileTest struct {
 func init() { RegisterTestSuite(&WriteFileTest{}) }
 
 func (t *WriteFileTest) ParentDoesntExist() {
-	ExpectEq("TODO", "")
+	filepath := path.Join(t.baseDir, "foo", "bar")
+	data := []byte{}
+
+	err := t.fileSystem.WriteFile(filepath, data, 0600)
+	ExpectThat(err, Error(HasSubstr("foo/bar")))
+	ExpectThat(err, Error(HasSubstr("no such")))
 }
 
 func (t *WriteFileTest) NoWritePermissionsForParent() {
