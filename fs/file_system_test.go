@@ -760,7 +760,14 @@ func (t *WriteFileTest) NoWritePermissionsForParent() {
 }
 
 func (t *WriteFileTest) NoWritePermissionsForFile() {
-	ExpectEq("TODO", "")
+	filepath := path.Join(t.baseDir, "foo.txt")
+	err := ioutil.WriteFile(filepath, []byte(""), 0400)
+	AssertEq(nil, err)
+
+	data := []byte{}
+
+	err = t.fileSystem.WriteFile(filepath, data, 0600)
+	ExpectThat(err, Error(HasSubstr("permission")))
 }
 
 func (t *WriteFileTest) AlreadyExists() {
