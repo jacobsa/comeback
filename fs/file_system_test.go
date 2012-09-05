@@ -584,11 +584,11 @@ func (t *ReadDirTest) BlockDevices() {
 	ExpectGe(time.Since(entry.MTime), 0)
 	ExpectLt(time.Since(entry.MTime), 365*24*time.Hour)
 
-	entry = findEntry(entries, "disk1")
+	entry = findEntry(entries, "disk0s1")
 	AssertNe(nil, entry)
-	disk1DevNumber := entry.DeviceNumber
+	disk0s1DevNumber := entry.DeviceNumber
 
-	ExpectNe(disk0DevNumber, disk1DevNumber)
+	ExpectNe(disk0DevNumber, disk0s1DevNumber)
 }
 
 func (t *ReadDirTest) NamedPipes() {
