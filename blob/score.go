@@ -21,20 +21,10 @@ import (
 )
 
 // A Score is the identifier for a blob previously stored by a blob store. It
-// consists of a hash of the blob's contents, so that with high probability two
-// blobs have the same contents if and only if they have the same score.
-type Score interface {
-	// Return the 20-byte 'raw' SHA-1 hash of the blob's contents.
-	Sha1Hash() []byte
-}
-
-type score struct {
-	hash []byte
-}
-
-func (s *score) Sha1Hash() []byte {
-	return s.hash
-}
+// consists of a 20-byte SHA-1 hash of the blob's contents, so that with high
+// probability two blobs have the same contents if and only if they have the
+// same score.
+type Score []byte
 
 // Compute the score for the supplied blob. This is primarily intended for use
 // by blob store implementations; users should obtain only scores through calls
