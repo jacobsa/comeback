@@ -20,7 +20,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/jacobsa/comeback/blob"
-	"github.com/jacobsa/comeback/disk"
+	"github.com/jacobsa/comeback/blob/disk"
 	"github.com/jacobsa/comeback/fs"
 	"github.com/jacobsa/comeback/repr"
 	"github.com/jacobsa/comeback/sys"

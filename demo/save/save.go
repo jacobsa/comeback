@@ -18,7 +18,7 @@ package main
 import (
 	"fmt"
 	"github.com/jacobsa/comeback/backup"
-	"github.com/jacobsa/comeback/disk"
+	"github.com/jacobsa/comeback/blob/disk"
 	"github.com/jacobsa/comeback/fs"
 	"github.com/jacobsa/comeback/sys"
 	"log"
