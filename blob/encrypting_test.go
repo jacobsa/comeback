@@ -32,10 +32,10 @@ func TestEncrypting(t *testing.T) { RunTests(t) }
 // Helpers
 ////////////////////////////////////////////////////////////////////////
 
-type encryptingStoreTest struct{
+type encryptingStoreTest struct {
 	crypter mock_crypto.MockCrypter
 	wrapped mock_blob.MockStore
-	store blob.Store
+	store   blob.Store
 }
 
 func (t *encryptingStoreTest) SetUp(i *TestInfo) {

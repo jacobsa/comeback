@@ -34,7 +34,7 @@ func NewLinkResolver() LinkResolver {
 
 type mapElement struct {
 	containingDevice int32
-	inode uint64
+	inode            uint64
 }
 
 type linkResolver struct {

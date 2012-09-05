@@ -7,8 +7,8 @@
 package mock_crypto
 
 import (
-	crypto "github.com/jacobsa/comeback/crypto"
 	fmt "fmt"
+	crypto "github.com/jacobsa/comeback/crypto"
 	oglemock "github.com/jacobsa/oglemock"
 	runtime "runtime"
 	unsafe "unsafe"
@@ -20,16 +20,16 @@ type MockCrypter interface {
 }
 
 type mockCrypter struct {
-	controller	oglemock.Controller
-	description	string
+	controller  oglemock.Controller
+	description string
 }
 
 func NewMockCrypter(
 	c oglemock.Controller,
 	desc string) MockCrypter {
 	return &mockCrypter{
-		controller:	c,
-		description:	desc,
+		controller:  c,
+		description: desc,
 	}
 }
 

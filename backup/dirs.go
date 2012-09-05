@@ -78,19 +78,19 @@ func NewNonRecursiveDirectorySaver(
 	wrapped DirectorySaver,
 	linkResolver LinkResolver) (DirectorySaver, error) {
 	return &dirSaver{
-		blobStore:  store,
-		fileSystem: fileSystem,
-		fileSaver:  fileSaver,
-		wrapped:    wrapped,
+		blobStore:    store,
+		fileSystem:   fileSystem,
+		fileSaver:    fileSaver,
+		wrapped:      wrapped,
 		linkResolver: linkResolver,
 	}, nil
 }
 
 type dirSaver struct {
-	blobStore  blob.Store
-	fileSystem fs.FileSystem
-	fileSaver  FileSaver
-	wrapped    DirectorySaver
+	blobStore    blob.Store
+	fileSystem   fs.FileSystem
+	fileSaver    FileSaver
+	wrapped      DirectorySaver
 	linkResolver LinkResolver
 }
 

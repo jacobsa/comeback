@@ -70,18 +70,18 @@ func makeEntry(name string, t fs.EntryType) *fs.DirectoryEntry {
 }
 
 type DirectorySaverTest struct {
-	blobStore  mock_blob.MockStore
-	fileSystem mock_fs.MockFileSystem
-	fileSaver  mock_backup.MockFileSaver
-	wrapped    mock_backup.MockDirectorySaver
-	linkResolver    mock_backup.MockLinkResolver
+	blobStore    mock_blob.MockStore
+	fileSystem   mock_fs.MockFileSystem
+	fileSaver    mock_backup.MockFileSaver
+	wrapped      mock_backup.MockDirectorySaver
+	linkResolver mock_backup.MockLinkResolver
 
 	dirSaver backup.DirectorySaver
 
 	basePath string
-	relPath string
-	score   blob.Score
-	err     error
+	relPath  string
+	score    blob.Score
+	err      error
 }
 
 func init() { RegisterTestSuite(&DirectorySaverTest{}) }
@@ -172,7 +172,7 @@ func (t *DirectorySaverTest) CallsLinkResolverFileSystemAndFileSaverForFiles() {
 	ExpectCall(t.fileSystem, "ReadDir")(Any()).
 		WillOnce(oglemock.Return(entries, nil))
 
-  // Link resolver
+	// Link resolver
 	ExpectCall(t.linkResolver, "Register")(17, 19, "taco/queso/burrito").
 		WillOnce(oglemock.Return(nil))
 
@@ -211,7 +211,7 @@ func (t *DirectorySaverTest) FileSystemReturnsErrorForOneFile() {
 	ExpectCall(t.fileSystem, "ReadDir")(Any()).
 		WillOnce(oglemock.Return(entries, nil))
 
-  // Link resolver
+	// Link resolver
 	ExpectCall(t.linkResolver, "Register")(Any(), Any(), Any()).
 		WillRepeatedly(oglemock.Return(nil))
 
@@ -246,7 +246,7 @@ func (t *DirectorySaverTest) FileSaverReturnsErrorForOneFile() {
 	ExpectCall(t.fileSystem, "ReadDir")(Any()).
 		WillOnce(oglemock.Return(entries, nil))
 
-  // Link resolver
+	// Link resolver
 	ExpectCall(t.linkResolver, "Register")(Any(), Any(), Any()).
 		WillRepeatedly(oglemock.Return(nil))
 
@@ -363,7 +363,7 @@ func (t *DirectorySaverTest) CallsBlobStore() {
 	ExpectCall(t.fileSystem, "ReadDir")(Any()).
 		WillOnce(oglemock.Return(entries, nil))
 
-  // Link resolver
+	// Link resolver
 	ExpectCall(t.linkResolver, "Register")(Any(), Any(), Any()).
 		WillRepeatedly(oglemock.Return(nil))
 
@@ -450,7 +450,7 @@ func (t *DirectorySaverTest) FilesAreHardLinked() {
 	ExpectCall(t.fileSystem, "ReadDir")(Any()).
 		WillOnce(oglemock.Return(entries, nil))
 
-  // Link resolver
+	// Link resolver
 	target0 := "/enchilada"
 	target1 := "/queso"
 
