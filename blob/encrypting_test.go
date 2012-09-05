@@ -108,7 +108,21 @@ func (t *StoreTest) WrappedReturnsError() {
 }
 
 func (t *StoreTest) WrappedSucceeds() {
-	ExpectEq("TODO", "")
+	// Crypter
+	ExpectCall(t.crypter, "Encrypt")(Any()).
+		WillOnce(oglemock.Return([]byte{}, nil))
+
+	// Wrapped
+	expected := blob.ComputeScore([]byte("taco"))
+
+	ExpectCall(t.wrapped, "Store")(Any()).
+		WillOnce(oglemock.Return(expected, nil))
+
+	// Call
+	score, err := t.store.Store([]byte{})
+	AssertEq(nil, err)
+
+	ExpectEq(expected, score)
 }
 
 ////////////////////////////////////////////////////////////////////////
