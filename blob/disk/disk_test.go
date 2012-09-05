@@ -154,14 +154,16 @@ func (t *LoadTest) FileSystemReturnsError() {
 
 func (t *LoadTest) ReadReturnsError() {
 	// File system
-	f := &fakeFile{r: iotest.TimeoutReader(new(bytes.Buffer))}
+	data := make([]byte, 1024)
+	f := &fakeFile{r: iotest.TimeoutReader(bytes.NewBuffer(data))}
 	ExpectCall(t.fs, "OpenForReading")(Any()).
 		WillOnce(oglemock.Return(f, nil))
 
 	// Call
 	_, err := t.store.Load(blob.ComputeScore([]byte{}))
 
-	ExpectThat(err, Error(HasSubstr("TODO")))
+	ExpectThat(err, Error(HasSubstr("ReadAll")))
+	ExpectThat(err, Error(HasSubstr("timeout")))
 	ExpectTrue(f.closed)
 }
 

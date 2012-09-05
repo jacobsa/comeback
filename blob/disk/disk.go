@@ -47,7 +47,14 @@ func (s *blobStore) Load(score blob.Score) ([]byte, error) {
 		return nil, fmt.Errorf("OpenForReading: %v", err)
 	}
 
-	return ioutil.ReadAll(file)
+	defer file.Close()
+
+	data, err := ioutil.ReadAll(file)
+	if err != nil {
+		return nil, fmt.Errorf("ioutil.ReadAll: %v", err)
+	}
+
+	return data, nil
 }
 
 // Return a blob store that stores its blobs in the directory with the supplied
