@@ -16,6 +16,7 @@
 package blob
 
 import (
+	"fmt"
 	"github.com/jacobsa/comeback/crypto"
 )
 
@@ -23,5 +24,37 @@ import (
 // data as it passes through. The supplied crypter should have deterministic
 // output.
 func NewEncryptingStore(crypter crypto.Crypter, wrapped Store) Store {
-	return nil
+	return &encryptingStore{crypter, wrapped}
+}
+
+type encryptingStore struct {
+	crypter crypto.Crypter
+	wrapped Store
+}
+
+func (s *encryptingStore) Store(blob []byte) (Score, error) {
+	// Encrypt the plaintext blob.
+	ciphertext, err := s.crypter.Encrypt(blob)
+	if err != nil {
+		return nil, fmt.Errorf("Encrypt: %v", err)
+	}
+
+	// Pass on the encrypted blob.
+	return s.wrapped.Store(ciphertext)
+}
+
+func (s *encryptingStore) Load(score Score) ([]byte, error) {
+	// Load the encrypted blob.
+	ciphertext, err := s.wrapped.Load(score)
+	if err != nil {
+		return nil, err
+	}
+
+	// Decrypt the ciphertext.
+	plaintext, err := s.crypter.Decrypt(ciphertext)
+	if err != nil {
+		return nil, fmt.Errorf("Decrypt: %v", err)
+	}
+
+	return plaintext, nil
 }
