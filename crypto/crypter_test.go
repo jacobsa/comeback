@@ -57,10 +57,42 @@ func (t *CrypterTest) LongKey() {
 	ExpectThat(err, Error(HasSubstr("-byte")))
 }
 
-func (t *CrypterTest) Rfc5297TestCaseA1() {
-	ExpectEq("TODO", "")
+func (t *CrypterTest) RoundTrip() {
+	key := make([]byte, 48)
+	crypter, err := crypto.NewCrypter(key)
+	AssertEq(nil, err)
+
+	msg := []byte{0xde, 0xad, 0xbe, 0xef}
+
+	// Encrypt
+	ciphertext, err := crypter.Encrypt(msg)
+	AssertEq(nil, err)
+
+	// Decrypt
+	plaintext, err := crypter.Decrypt(ciphertext)
+	AssertEq(nil, err)
+
+	ExpectThat(plaintext, DeepEquals(msg))
 }
 
 func (t *CrypterTest) CorruptedCiphertext() {
-	ExpectEq("TODO", "")
+	key := make([]byte, 48)
+	crypter, err := crypto.NewCrypter(key)
+	AssertEq(nil, err)
+
+	msg := []byte{0xde, 0xad, 0xbe, 0xef}
+
+	// Encrypt
+	ciphertext, err := crypter.Encrypt(msg)
+	AssertEq(nil, err)
+
+	AssertGt(len(ciphertext), 2)
+	ciphertext[2]++
+
+	// Decrypt
+	_, err = crypter.Decrypt(ciphertext)
+	AssertNe(nil, err)
+
+	_, ok := err.(crypto.NotAuthenticError)
+	ExpectTrue(ok)
 }
