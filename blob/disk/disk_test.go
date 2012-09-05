@@ -84,7 +84,17 @@ func (t *StoreTest) FileSystemReturnsError() {
 }
 
 func (t *StoreTest) FileSystemSaysOkay() {
-	ExpectEq("TODO", "")
+	b := []byte("taco")
+
+	// File system
+	ExpectCall(t.fs, "WriteFile")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return(nil))
+
+	// Call
+	score, err := t.store.Store([]byte{})
+	AssertEq(nil, err)
+
+	ExpectThat(score, DeepEquals(blob.ComputeScore(b)))
 }
 
 ////////////////////////////////////////////////////////////////////////
