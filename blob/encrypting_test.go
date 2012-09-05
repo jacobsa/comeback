@@ -173,9 +173,35 @@ func (t *LoadTest) CallsCrypter() {
 }
 
 func (t *LoadTest) CrypterReturnsError() {
-	ExpectEq("TODO", "")
+	// Wrapped
+	ExpectCall(t.wrapped, "Load")(Any()).
+		WillOnce(oglemock.Return([]byte{}, nil))
+
+	// Crypter
+	ExpectCall(t.crypter, "Decrypt")(Any()).
+		WillOnce(oglemock.Return(nil, errors.New("taco")))
+
+	// Call
+	_, err := t.store.Load(blob.ComputeScore([]byte{}))
+
+	ExpectThat(err, Error(HasSubstr("Decrypt")))
+	ExpectThat(err, Error(HasSubstr("taco")))
 }
 
 func (t *LoadTest) CrypterSucceeds() {
-	ExpectEq("TODO", "")
+	// Wrapped
+	ExpectCall(t.wrapped, "Load")(Any()).
+		WillOnce(oglemock.Return([]byte{}, nil))
+
+	// Crypter
+	expected := []byte{0xde, 0xad}
+
+	ExpectCall(t.crypter, "Decrypt")(Any()).
+		WillOnce(oglemock.Return(expected, nil))
+
+	// Call
+	blob, err := t.store.Load(blob.ComputeScore([]byte{}))
+	AssertEq(nil, err)
+
+	ExpectThat(blob, DeepEquals(expected))
 }
