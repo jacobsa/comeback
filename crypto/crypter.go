@@ -59,5 +59,10 @@ func (c *sivCrypter) Encrypt(plaintext []byte) ([]byte, error) {
 }
 
 func (c *sivCrypter) Decrypt(ciphertext []byte) ([]byte, error) {
-	return siv.Decrypt(c.key, ciphertext, nil)
+	plaintext, err := siv.Decrypt(c.key, ciphertext, nil)
+	if _, ok := err.(*siv.NotAuthenticError); ok {
+		err = &NotAuthenticError{err.Error()}
+	}
+
+	return plaintext, err
 }
