@@ -108,7 +108,15 @@ type LoadTest struct {
 func init() { RegisterTestSuite(&LoadTest{}) }
 
 func (t *LoadTest) CallsFileSystem() {
-	ExpectEq("TODO", "")
+	score := blob.ComputeScore([]byte("taco"))
+
+	// File system
+	expectedPath := path.Join(t.basePath, "9dc4319c27f6479adc842ebef4a324a40759b95c")
+	ExpectCall(t.fs, "OpenForReading")(expectedPath).
+		WillOnce(oglemock.Return(nil, errors.New("")))
+
+	// Call
+	t.store.Load(score)
 }
 
 func (t *LoadTest) FileSystemReturnsError() {
