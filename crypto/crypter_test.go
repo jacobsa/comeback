@@ -16,6 +16,7 @@
 package crypto_test
 
 import (
+	"github.com/jacobsa/comeback/crypto"
 	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
 	"testing"
@@ -36,15 +37,24 @@ func init() { RegisterTestSuite(&CrypterTest{}) }
 ////////////////////////////////////////////////////////////////////////
 
 func (t *CrypterTest) NilKey() {
-	ExpectEq("TODO", "")
+	key := []byte(nil)
+
+	_, err := crypto.NewCrypter(key)
+	ExpectThat(err, Error(HasSubstr("-byte")))
 }
 
 func (t *CrypterTest) ShortKey() {
-	ExpectEq("TODO", "")
+	key := make([]byte, 31)
+
+	_, err := crypto.NewCrypter(key)
+	ExpectThat(err, Error(HasSubstr("-byte")))
 }
 
 func (t *CrypterTest) LongKey() {
-	ExpectEq("TODO", "")
+	key := make([]byte, 65)
+
+	_, err := crypto.NewCrypter(key)
+	ExpectThat(err, Error(HasSubstr("-byte")))
 }
 
 func (t *CrypterTest) Rfc5297TestCaseA1() {
