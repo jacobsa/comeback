@@ -18,12 +18,14 @@ package disk
 
 import (
 	"github.com/jacobsa/comeback/blob"
+	"github.com/jacobsa/comeback/fs"
 	"io/ioutil"
 	"path"
 )
 
 type blobStore struct {
-	basePath string
+	basePath   string
+	fileSystem fs.FileSystem
 }
 
 func (s *blobStore) Store(b []byte) (blob.Score, error) {
@@ -45,6 +47,6 @@ func (s *blobStore) Load(score blob.Score) ([]byte, error) {
 
 // Return a blob store that stores its blobs in the directory with the supplied
 // path.
-func NewBlobStore(path string) (s blob.Store, err error) {
-	return &blobStore{basePath: path}, nil
+func NewDiskBlobStore(path string, fileSystem fs.FileSystem) (blob.Store, error) {
+	return &blobStore{basePath: path, fileSystem: fileSystem}, nil
 }

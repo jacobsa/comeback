@@ -17,6 +17,7 @@ package disk_test
 
 import (
 	"github.com/jacobsa/comeback/blob"
+	"github.com/jacobsa/comeback/blob/disk"
 	"github.com/jacobsa/comeback/fs/mock"
 	. "github.com/jacobsa/ogletest"
 	"testing"
@@ -35,9 +36,13 @@ type diskStoreTest struct {
 }
 
 func (t *diskStoreTest) SetUp(i *TestInfo) {
+	var err error
+
 	t.basePath = "/foo/bar"
 	t.fs = mock_fs.NewMockFileSystem(i.MockController, "fs")
-	t.store = disk.NewDiskBlobStore(basePath, t.fs)
+
+	t.store, err = disk.NewDiskBlobStore(t.basePath, t.fs)
+	AssertNe(nil, err)
 }
 
 ////////////////////////////////////////////////////////////////////////
