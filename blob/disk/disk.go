@@ -34,7 +34,7 @@ func (s *blobStore) Store(b []byte) (blob.Score, error) {
 	filePath := path.Join(s.basePath, score.Hex())
 
 	if err := s.fileSystem.WriteFile(filePath, b, 0600); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("WriteFile: %v", err)
 	}
 
 	return score, nil

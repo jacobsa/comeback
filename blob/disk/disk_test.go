@@ -112,7 +112,7 @@ func (t *StoreTest) FileSystemSaysOkay() {
 		WillOnce(oglemock.Return(nil))
 
 	// Call
-	score, err := t.store.Store([]byte{})
+	score, err := t.store.Store(b)
 	AssertEq(nil, err)
 
 	ExpectThat(score, DeepEquals(blob.ComputeScore(b)))
