@@ -120,7 +120,15 @@ func (t *LoadTest) CallsFileSystem() {
 }
 
 func (t *LoadTest) FileSystemReturnsError() {
-	ExpectEq("TODO", "")
+	// File system
+	ExpectCall(t.fs, "OpenForReading")(Any()).
+		WillOnce(oglemock.Return(nil, errors.New("taco")))
+
+	// Call
+	_, err := t.store.Load(blob.ComputeScore([]byte{}))
+
+	ExpectThat(err, Error(HasSubstr("OpenForReading")))
+	ExpectThat(err, Error(HasSubstr("taco")))
 }
 
 func (t *LoadTest) FileSystemSucceeds() {
