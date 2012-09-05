@@ -9,8 +9,9 @@ package mock_fs
 import (
 	fmt "fmt"
 	fs "github.com/jacobsa/comeback/fs"
-	oglemock "github.com/jacobsa/oglemock"
 	io "io"
+	oglemock "github.com/jacobsa/oglemock"
+	os "os"
 	runtime "runtime"
 	unsafe "unsafe"
 )
@@ -21,16 +22,16 @@ type MockFileSystem interface {
 }
 
 type mockFileSystem struct {
-	controller  oglemock.Controller
-	description string
+	controller	oglemock.Controller
+	description	string
 }
 
 func NewMockFileSystem(
 	c oglemock.Controller,
 	desc string) MockFileSystem {
 	return &mockFileSystem{
-		controller:  c,
-		description: desc,
+		controller:	c,
+		description:	desc,
 	}
 }
 
@@ -95,6 +96,30 @@ func (m *mockFileSystem) ReadDir(p0 string) (o0 []*fs.DirectoryEntry, o1 error) 
 	// o1 error
 	if retVals[1] != nil {
 		o1 = retVals[1].(error)
+	}
+
+	return
+}
+
+func (m *mockFileSystem) WriteFile(p0 string, p1 []uint8, p2 os.FileMode) (o0 error) {
+	// Get a file name and line number for the caller.
+	_, file, line, _ := runtime.Caller(1)
+
+	// Hand the call off to the controller, which does most of the work.
+	retVals := m.controller.HandleMethodCall(
+		m,
+		"WriteFile",
+		file,
+		line,
+		[]interface{}{p0, p1, p2})
+
+	if len(retVals) != 1 {
+		panic(fmt.Sprintf("mockFileSystem.WriteFile: invalid return values: %v", retVals))
+	}
+
+	// o0 error
+	if retVals[0] != nil {
+		o0 = retVals[0].(error)
 	}
 
 	return
