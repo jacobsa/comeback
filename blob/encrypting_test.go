@@ -78,11 +78,33 @@ func (t *StoreTest) CrypterReturnsError() {
 }
 
 func (t *StoreTest) CallsWrapped() {
-	ExpectEq("TODO", "")
+	// Crypter
+	encryptedBlob := []byte{0xde, 0xad}
+
+	ExpectCall(t.crypter, "Encrypt")(Any()).
+		WillOnce(oglemock.Return(encryptedBlob, nil))
+
+	// Wrapped
+	ExpectCall(t.wrapped, "Store")(DeepEquals(encryptedBlob)).
+		WillOnce(oglemock.Return(nil, errors.New("")))
+
+	// Call
+	t.store.Store([]byte{})
 }
 
 func (t *StoreTest) WrappedReturnsError() {
-	ExpectEq("TODO", "")
+	// Crypter
+	ExpectCall(t.crypter, "Encrypt")(Any()).
+		WillOnce(oglemock.Return([]byte{}, nil))
+
+	// Wrapped
+	ExpectCall(t.wrapped, "Store")(Any()).
+		WillOnce(oglemock.Return(nil, errors.New("taco")))
+
+	// Call
+	_, err := t.store.Store([]byte{})
+
+	ExpectThat(err, Error(Equals("taco")))
 }
 
 func (t *StoreTest) WrappedSucceeds() {
