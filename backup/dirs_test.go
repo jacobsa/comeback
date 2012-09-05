@@ -519,5 +519,5 @@ func (t *DirectorySaverTest) BlobStoreSucceeds() {
 	t.callSaver()
 
 	AssertEq(nil, t.err)
-	ExpectEq(score, t.score)
+	ExpectThat(t.score, DeepEquals(score))
 }
