@@ -28,8 +28,7 @@ type blobStore struct {
 
 func (s *blobStore) Store(b []byte) (blob.Score, error) {
 	score := blob.ComputeScore(b)
-	hexScore := blob.HexScore(score)
-	filePath := path.Join(s.basePath, hexScore)
+	filePath := path.Join(s.basePath, score.Hex())
 
 	if err := ioutil.WriteFile(filePath, b, 0600); err != nil {
 		return nil, err
@@ -39,8 +38,7 @@ func (s *blobStore) Store(b []byte) (blob.Score, error) {
 }
 
 func (s *blobStore) Load(score blob.Score) ([]byte, error) {
-	hexScore := blob.HexScore(score)
-	filePath := path.Join(s.basePath, hexScore)
+	filePath := path.Join(s.basePath, score.Hex())
 
 	return ioutil.ReadFile(filePath)
 }
