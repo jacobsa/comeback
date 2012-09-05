@@ -41,6 +41,10 @@ type FileSystem interface {
 
 	// Open the file named by the supplied path for reading.
 	OpenForReading(path string) (r io.ReadCloser, err error)
+
+	// Write out the supplied data to the supplied path, truncating if the file
+	// already exists and creating with the supplied permissions otherwise.
+	WriteFile(path string, data []byte, permissions os.FileMode) error
 }
 
 // Return a FileSystem that uses the real file system, along with the supplied
@@ -151,4 +155,8 @@ func (fs *fileSystem) ReadDir(dirpath string) (entries []*DirectoryEntry, err er
 
 func (f *fileSystem) OpenForReading(path string) (r io.ReadCloser, err error) {
 	return os.Open(path)
+}
+
+func (f *fileSystem) WriteFile(path string, data []byte, perm os.FileMode) error {
+	return ioutil.WriteFile(path, data, perm)
 }

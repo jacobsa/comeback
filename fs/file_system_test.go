@@ -727,3 +727,33 @@ func (t *OpenForReadingTest) FileWithContents() {
 	AssertEq(nil, err)
 	ExpectThat(data, DeepEquals(contents))
 }
+
+////////////////////////////////////////////////////////////////////////
+// WriteFile
+////////////////////////////////////////////////////////////////////////
+
+type WriteFileTest struct {
+	fileSystemTest
+}
+
+func init() { RegisterTestSuite(&WriteFileTest{}) }
+
+func (t *WriteFileTest) ParentDoesntExist() {
+	ExpectEq("TODO", "")
+}
+
+func (t *WriteFileTest) NoWritePermissionsForParent() {
+	ExpectEq("TODO", "")
+}
+
+func (t *WriteFileTest) NoWritePermissionsForFile() {
+	ExpectEq("TODO", "")
+}
+
+func (t *WriteFileTest) AlreadyExists() {
+	ExpectEq("TODO", "")
+}
+
+func (t *WriteFileTest) DoesntYetExist() {
+	ExpectEq("TODO", "")
+}
