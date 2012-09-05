@@ -66,7 +66,15 @@ func (t *StoreTest) CallsCrypter() {
 }
 
 func (t *StoreTest) CrypterReturnsError() {
-	ExpectEq("TODO", "")
+	// Crypter
+	ExpectCall(t.crypter, "Encrypt")(Any()).
+		WillOnce(oglemock.Return(nil, errors.New("taco")))
+
+	// Call
+	_, err := t.store.Store([]byte{})
+
+	ExpectThat(err, Error(HasSubstr("Encrypt")))
+	ExpectThat(err, Error(HasSubstr("taco")))
 }
 
 func (t *StoreTest) CallsWrapped() {
