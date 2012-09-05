@@ -147,11 +147,29 @@ func (t *LoadTest) CallsWrapped() {
 }
 
 func (t *LoadTest) WrappedReturnsError() {
-	ExpectEq("TODO", "")
+	// Wrapped
+	ExpectCall(t.wrapped, "Load")(Any()).
+		WillOnce(oglemock.Return(nil, errors.New("taco")))
+
+	// Call
+	_, err := t.store.Load(blob.ComputeScore([]byte{}))
+
+	ExpectThat(err, Error(Equals("taco")))
 }
 
 func (t *LoadTest) CallsCrypter() {
-	ExpectEq("TODO", "")
+	// Wrapped
+	ciphertext := []byte{0xde, 0xad}
+
+	ExpectCall(t.wrapped, "Load")(Any()).
+		WillOnce(oglemock.Return(ciphertext, nil))
+
+	// Crypter
+	ExpectCall(t.crypter, "Decrypt")(DeepEquals(ciphertext)).
+		WillOnce(oglemock.Return(nil, errors.New("")))
+
+	// Call
+	t.store.Load(blob.ComputeScore([]byte{}))
 }
 
 func (t *LoadTest) CrypterReturnsError() {
