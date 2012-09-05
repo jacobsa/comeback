@@ -38,17 +38,6 @@ func fromHex(h string) []byte {
 	return b
 }
 
-func matchesHexHash(hexHash string) Matcher {
-	buf := fromHex(hexHash)
-	interfaceSlice := []interface{}{}
-
-	for _, b := range buf {
-		interfaceSlice = append(interfaceSlice, b)
-	}
-
-	return ElementsAre(interfaceSlice...)
-}
-
 type ScoreTest struct{}
 
 func init() { RegisterTestSuite(&ScoreTest{}) }
@@ -62,14 +51,10 @@ func (t *ScoreTest) EmptySlice() {
 	golden := "da39a3ee5e6b4b0d3255bfef95601890afd80709"
 
 	score := ComputeScore(data)
-	AssertNe(nil, score)
+	AssertEq(20, len(score))
 
-	hash := score.Sha1Hash()
-	AssertNe(nil, hash)
-	AssertEq(20, len(hash))
-	ExpectThat(hash, matchesHexHash(golden))
-
-	AssertEq(golden, HexScore(score))
+	ExpectEq(golden, score.Hex())
+	ExpectThat(score, DeepEquals(fromHex(golden)))
 }
 
 func (t *ScoreTest) HashStartsWithZero() {
@@ -77,14 +62,10 @@ func (t *ScoreTest) HashStartsWithZero() {
 	golden := "086766b9ba6a30e3792c05b00c5fb0e85a18a040"
 
 	score := ComputeScore(data)
-	AssertNe(nil, score)
+	AssertEq(20, len(score))
 
-	hash := score.Sha1Hash()
-	AssertNe(nil, hash)
-	AssertEq(20, len(hash))
-	ExpectThat(hash, matchesHexHash(golden))
-
-	AssertEq(golden, HexScore(score))
+	ExpectEq(golden, score.Hex())
+	ExpectThat(score, DeepEquals(fromHex(golden)))
 }
 
 func (t *ScoreTest) HexHashStartsWithNonZeroNumber() {
@@ -92,14 +73,10 @@ func (t *ScoreTest) HexHashStartsWithNonZeroNumber() {
 	golden := "3966a6c98206d4cda8fd000656ed4f279a35726b"
 
 	score := ComputeScore(data)
-	AssertNe(nil, score)
+	AssertEq(20, len(score))
 
-	hash := score.Sha1Hash()
-	AssertNe(nil, hash)
-	AssertEq(20, len(hash))
-	ExpectThat(hash, matchesHexHash(golden))
-
-	AssertEq(golden, HexScore(score))
+	ExpectEq(golden, score.Hex())
+	ExpectThat(score, DeepEquals(fromHex(golden)))
 }
 
 func (t *ScoreTest) HexHashStartsWithLetter() {
@@ -107,14 +84,10 @@ func (t *ScoreTest) HexHashStartsWithLetter() {
 	golden := "ccf73cc0bfe964b652934764f847699e4005205e"
 
 	score := ComputeScore(data)
-	AssertNe(nil, score)
+	AssertEq(20, len(score))
 
-	hash := score.Sha1Hash()
-	AssertNe(nil, hash)
-	AssertEq(20, len(hash))
-	ExpectThat(hash, matchesHexHash(golden))
-
-	AssertEq(golden, HexScore(score))
+	ExpectEq(golden, score.Hex())
+	ExpectThat(score, DeepEquals(fromHex(golden)))
 }
 
 func (t *ScoreTest) DataContainsNonUtf8() {
@@ -122,12 +95,8 @@ func (t *ScoreTest) DataContainsNonUtf8() {
 	golden := "2feba26855d9f4e8b76d36c34dc385c8afe622c8"
 
 	score := ComputeScore(data)
-	AssertNe(nil, score)
+	AssertEq(20, len(score))
 
-	hash := score.Sha1Hash()
-	AssertNe(nil, hash)
-	AssertEq(20, len(hash))
-	ExpectThat(hash, matchesHexHash(golden))
-
-	AssertEq(golden, HexScore(score))
+	ExpectEq(golden, score.Hex())
+	ExpectThat(score, DeepEquals(fromHex(golden)))
 }
