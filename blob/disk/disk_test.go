@@ -16,10 +16,14 @@
 package disk_test
 
 import (
+	"errors"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/blob/disk"
 	"github.com/jacobsa/comeback/fs/mock"
+	. "github.com/jacobsa/oglematchers"
+	"github.com/jacobsa/oglemock"
 	. "github.com/jacobsa/ogletest"
+	"path"
 	"testing"
 )
 
@@ -56,7 +60,15 @@ type StoreTest struct {
 func init() { RegisterTestSuite(&StoreTest{}) }
 
 func (t *StoreTest) CallsFileSystem() {
-	ExpectEq("TODO", "")
+	b := []byte("taco")
+
+	// File system
+	expectedPath := path.Join(t.basePath, "9dc4319c27f6479adc842ebef4a324a40759b95c")
+	ExpectCall(t.fs, "WriteFile")(expectedPath, DeepEquals(b), 0600).
+		WillOnce(oglemock.Return(errors.New("")))
+
+	// Call
+	t.store.Store(b)
 }
 
 func (t *StoreTest) FileSystemReturnsError() {
