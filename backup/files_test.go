@@ -388,5 +388,7 @@ func (t *FileSaverTest) AllStoresSuccessful() {
 	t.callSaver()
 
 	AssertEq(nil, t.err)
-	ExpectThat(t.scores, ElementsAre(score0, score1, score2))
+	ExpectThat(
+		t.scores,
+		ElementsAre(DeepEquals(score0), DeepEquals(score1), DeepEquals(score2)))
 }
