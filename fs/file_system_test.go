@@ -788,5 +788,19 @@ func (t *WriteFileTest) AlreadyExists() {
 }
 
 func (t *WriteFileTest) DoesntYetExist() {
-	ExpectEq("TODO", "")
+	// Write the file.
+	filepath := path.Join(t.baseDir, "foo.txt")
+	data := []byte("taco")
+	err := t.fileSystem.WriteFile(filepath, data, 0641)
+	AssertEq(nil, err)
+
+	// Check its contents.
+	contents, err := ioutil.ReadFile(filepath)
+	AssertEq(nil, err)
+	ExpectThat(contents, DeepEquals(data))
+
+	// Check its permissions.
+	fi, err := os.Stat(filepath)
+	AssertEq(nil, err)
+	ExpectEq(0641, fi.Mode().Perm())
 }
