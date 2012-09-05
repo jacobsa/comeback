@@ -38,21 +38,13 @@ const (
 
 var blobStore blob.Store
 
-type score struct {
-	hash []byte
-}
-
-func (s *score) Sha1Hash() []byte {
-	return s.hash
-}
-
 func fromHexHash(h string) (blob.Score, error) {
 	b, err := hex.DecodeString(h)
 	if err != nil {
 		return nil, fmt.Errorf("Invalid hex string: %s", h)
 	}
 
-	return &score{b}, nil
+	return blob.Score(b), nil
 }
 
 func chooseUserId(uid sys.UserId, username *string) (sys.UserId, error) {

@@ -18,7 +18,6 @@ package main
 import (
 	"fmt"
 	"github.com/jacobsa/comeback/backup"
-	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/disk"
 	"github.com/jacobsa/comeback/fs"
 	"github.com/jacobsa/comeback/sys"
@@ -73,5 +72,5 @@ func main() {
 	}
 
 	// Print the score.
-	fmt.Printf("Score: %s\n", blob.HexScore(score))
+	fmt.Printf("Score: %s\n", score.Hex())
 }
