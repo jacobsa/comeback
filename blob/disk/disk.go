@@ -32,7 +32,7 @@ func (s *blobStore) Store(b []byte) (blob.Score, error) {
 	score := blob.ComputeScore(b)
 	filePath := path.Join(s.basePath, score.Hex())
 
-	if err := ioutil.WriteFile(filePath, b, 0600); err != nil {
+	if err := s.fileSystem.WriteFile(filePath, b, 0600); err != nil {
 		return nil, err
 	}
 
@@ -41,8 +41,12 @@ func (s *blobStore) Store(b []byte) (blob.Score, error) {
 
 func (s *blobStore) Load(score blob.Score) ([]byte, error) {
 	filePath := path.Join(s.basePath, score.Hex())
+	file, err := s.fileSystem.OpenForReading(filePath)
+	if err != nil {
+		return nil, fmt.Errorf("OpenForReading: %v", err)
+	}
 
-	return ioutil.ReadFile(filePath)
+	return ioutil.ReadAll(filePath)
 }
 
 // Return a blob store that stores its blobs in the directory with the supplied

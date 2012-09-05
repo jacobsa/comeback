@@ -27,6 +27,7 @@ import (
 	"io"
 	"path"
 	"testing"
+	"testing/iotest"
 )
 
 func TestDisk(t *testing.T) { RunTests(t) }
@@ -151,9 +152,22 @@ func (t *LoadTest) FileSystemReturnsError() {
 	ExpectThat(err, Error(HasSubstr("taco")))
 }
 
-func (t *LoadTest) FileSystemSucceeds() {
+func (t *LoadTest) ReadReturnsError() {
 	// File system
-	f := &fakeFile{r: bytes.NewBufferString("taco")}
+	f := &fakeFile{r: iotest.TimeoutReader(new(bytes.Buffer))}
+	ExpectCall(t.fs, "OpenForReading")(Any()).
+		WillOnce(oglemock.Return(f, nil))
+
+	// Call
+	_, err := t.store.Load(blob.ComputeScore([]byte{}))
+
+	ExpectThat(err, Error(HasSubstr("TODO")))
+	ExpectTrue(f.closed)
+}
+
+func (t *LoadTest) ReadSucceeds() {
+	// File system
+	f := &fakeFile{r: bytes.NewbufferString("taco")}
 	ExpectCall(t.fs, "OpenForReading")(Any()).
 		WillOnce(oglemock.Return(f, nil))
 
