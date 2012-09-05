@@ -112,9 +112,9 @@ func (t *UnmarshalTest) HashIsTooShort() {
 	}
 
 	listingProto.Entry[1].Blob = []*repr_proto.BlobInfoProto{
-		&repr_proto.BlobInfoProto{Hash: blob.ComputeScore([]byte{}).Sha1Hash()},
-		&repr_proto.BlobInfoProto{Hash: blob.ComputeScore([]byte{}).Sha1Hash()},
-		&repr_proto.BlobInfoProto{Hash: blob.ComputeScore([]byte{}).Sha1Hash()},
+		&repr_proto.BlobInfoProto{Hash: blob.ComputeScore([]byte{})},
+		&repr_proto.BlobInfoProto{Hash: blob.ComputeScore([]byte{})},
+		&repr_proto.BlobInfoProto{Hash: blob.ComputeScore([]byte{})},
 	}
 
 	blob := listingProto.Entry[1].Blob[1]
@@ -141,9 +141,9 @@ func (t *UnmarshalTest) HashIsTooLong() {
 	}
 
 	listingProto.Entry[1].Blob = []*repr_proto.BlobInfoProto{
-		&repr_proto.BlobInfoProto{Hash: blob.ComputeScore([]byte{}).Sha1Hash()},
-		&repr_proto.BlobInfoProto{Hash: blob.ComputeScore([]byte{}).Sha1Hash()},
-		&repr_proto.BlobInfoProto{Hash: blob.ComputeScore([]byte{}).Sha1Hash()},
+		&repr_proto.BlobInfoProto{Hash: blob.ComputeScore([]byte{})},
+		&repr_proto.BlobInfoProto{Hash: blob.ComputeScore([]byte{})},
+		&repr_proto.BlobInfoProto{Hash: blob.ComputeScore([]byte{})},
 	}
 
 	blob := listingProto.Entry[1].Blob[1]

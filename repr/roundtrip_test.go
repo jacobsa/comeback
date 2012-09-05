@@ -340,11 +340,11 @@ func (t *RoundtripTest) PreservesScores() {
 	AssertThat(out, ElementsAre(Any(), Any()))
 
 	AssertThat(out[0].Scores, ElementsAre(Any(), Any()))
-	ExpectThat(out[0].Scores[0].Sha1Hash(), DeepEquals(score00.Sha1Hash()))
-	ExpectThat(out[0].Scores[1].Sha1Hash(), DeepEquals(score01.Sha1Hash()))
+	ExpectThat(out[0].Scores[0], DeepEquals(score00))
+	ExpectThat(out[0].Scores[1], DeepEquals(score01))
 
 	AssertThat(out[1].Scores, ElementsAre(Any()))
-	ExpectThat(out[1].Scores[0].Sha1Hash(), DeepEquals(score10.Sha1Hash()))
+	ExpectThat(out[1].Scores[0], DeepEquals(score10))
 }
 
 func (t *RoundtripTest) PreservesHardLinkTargets() {
