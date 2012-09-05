@@ -167,7 +167,7 @@ func (t *LoadTest) ReadReturnsError() {
 
 func (t *LoadTest) ReadSucceeds() {
 	// File system
-	f := &fakeFile{r: bytes.NewbufferString("taco")}
+	f := &fakeFile{r: bytes.NewBufferString("taco")}
 	ExpectCall(t.fs, "OpenForReading")(Any()).
 		WillOnce(oglemock.Return(f, nil))
 

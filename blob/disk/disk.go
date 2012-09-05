@@ -17,6 +17,7 @@
 package disk
 
 import (
+	"fmt"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/fs"
 	"io/ioutil"
@@ -46,7 +47,7 @@ func (s *blobStore) Load(score blob.Score) ([]byte, error) {
 		return nil, fmt.Errorf("OpenForReading: %v", err)
 	}
 
-	return ioutil.ReadAll(filePath)
+	return ioutil.ReadAll(file)
 }
 
 // Return a blob store that stores its blobs in the directory with the supplied
