@@ -748,7 +748,15 @@ func (t *WriteFileTest) ParentDoesntExist() {
 }
 
 func (t *WriteFileTest) NoWritePermissionsForParent() {
-	ExpectEq("TODO", "")
+	parent := path.Join(t.baseDir, "foo")
+	err := os.Mkdir(parent, 0555)
+	AssertEq(nil, err)
+
+	filepath := path.Join(parent, "bar")
+	data := []byte{}
+
+	err = t.fileSystem.WriteFile(filepath, data, 0600)
+	ExpectThat(err, Error(HasSubstr("permission")))
 }
 
 func (t *WriteFileTest) NoWritePermissionsForFile() {
