@@ -35,6 +35,22 @@ func init() { RegisterTestSuite(&CrypterTest{}) }
 // Tests
 ////////////////////////////////////////////////////////////////////////
 
-func (t *CrypterTest) DoesFoo() {
+func (t *CrypterTest) NilKey() {
+	ExpectEq("TODO", "")
+}
+
+func (t *CrypterTest) ShortKey() {
+	ExpectEq("TODO", "")
+}
+
+func (t *CrypterTest) LongKey() {
+	ExpectEq("TODO", "")
+}
+
+func (t *CrypterTest) Rfc5297TestCaseA1() {
+	ExpectEq("TODO", "")
+}
+
+func (t *CrypterTest) CorruptedCiphertext() {
 	ExpectEq("TODO", "")
 }
