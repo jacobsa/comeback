@@ -50,20 +50,12 @@ func convertTimeProto(timeProto *repr_proto.TimeProto) (time.Time, error) {
 	return time.Unix(timeProto.GetSecond(), int64(timeProto.GetNanosecond())), nil
 }
 
-type score struct {
-	hash []byte
-}
-
-func (s *score) Sha1Hash() []byte {
-	return s.hash
-}
-
 func convertBlobInfoProto(p *repr_proto.BlobInfoProto) (blob.Score, error) {
 	if len(p.Hash) != 20 {
 		return nil, fmt.Errorf("Illegal hash length: %d", len(p.Hash))
 	}
 
-	return &score{p.Hash}, nil
+	return blob.Score(p.Hash), nil
 }
 
 func convertEntryProto(entryProto *repr_proto.DirectoryEntryProto) (entry *fs.DirectoryEntry, err error) {

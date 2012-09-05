@@ -44,7 +44,7 @@ func convertType(t fs.EntryType) (repr_proto.DirectoryEntryProto_Type, error) {
 func makeEntryProto(entry *fs.DirectoryEntry) (*repr_proto.DirectoryEntryProto, error) {
 	blobs := []*repr_proto.BlobInfoProto{}
 	for _, score := range entry.Scores {
-		proto := &repr_proto.BlobInfoProto{Hash: score.Sha1Hash()}
+		proto := &repr_proto.BlobInfoProto{Hash: score}
 		blobs = append(blobs, proto)
 	}
 
