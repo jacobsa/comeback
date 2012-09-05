@@ -51,7 +51,23 @@ type StoreTest struct {
 
 func init() { RegisterTestSuite(&StoreTest{}) }
 
-func (t *StoreTest) DoesFoo() {
+func (t *StoreTest) CallsCrypter() {
+	ExpectEq("TODO", "")
+}
+
+func (t *StoreTest) CrypterReturnsError() {
+	ExpectEq("TODO", "")
+}
+
+func (t *StoreTest) CallsWrapped() {
+	ExpectEq("TODO", "")
+}
+
+func (t *StoreTest) WrappedReturnsError() {
+	ExpectEq("TODO", "")
+}
+
+func (t *StoreTest) WrappedSucceeds() {
 	ExpectEq("TODO", "")
 }
 
@@ -65,6 +81,22 @@ type LoadTest struct {
 
 func init() { RegisterTestSuite(&LoadTest{}) }
 
-func (t *LoadTest) DoesFoo() {
+func (t *LoadTest) CallsWrapped() {
+	ExpectEq("TODO", "")
+}
+
+func (t *LoadTest) WrappedReturnsError() {
+	ExpectEq("TODO", "")
+}
+
+func (t *LoadTest) CallsCrypter() {
+	ExpectEq("TODO", "")
+}
+
+func (t *LoadTest) CrypterReturnsError() {
+	ExpectEq("TODO", "")
+}
+
+func (t *LoadTest) CrypterSucceeds() {
 	ExpectEq("TODO", "")
 }
