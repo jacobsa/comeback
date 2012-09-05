@@ -26,13 +26,15 @@ type Crypter interface {
 	Decrypt(ciphertext []byte) (plaintext []byte, err error)
 }
 
-// NotAuthenticError may be returned by Crypter.Decrypt if the input is
+// *NotAuthenticError may be returned by Crypter.Decrypt if the input is
 // otherwise well-formed but the ciphertext doesn't check out as authentic.
 // This could be due to an incorrect key or corrupted ciphertext.
-type NotAuthenticError string
+type NotAuthenticError struct {
+	s string
+}
 
-func (e NotAuthenticError) Error() string {
-	return string(e)
+func (e *NotAuthenticError) Error() string {
+	return e.s
 }
 
 // Return a crypter configured to use AES-SIV deterministic decryption with

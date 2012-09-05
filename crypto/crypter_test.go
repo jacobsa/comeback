@@ -93,6 +93,6 @@ func (t *CrypterTest) CorruptedCiphertext() {
 	_, err = crypter.Decrypt(ciphertext)
 	AssertNe(nil, err)
 
-	_, ok := err.(crypto.NotAuthenticError)
+	_, ok := err.(*crypto.NotAuthenticError)
 	ExpectTrue(ok)
 }
