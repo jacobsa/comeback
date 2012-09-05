@@ -136,7 +136,14 @@ type LoadTest struct {
 func init() { RegisterTestSuite(&LoadTest{}) }
 
 func (t *LoadTest) CallsWrapped() {
-	ExpectEq("TODO", "")
+	score := blob.ComputeScore([]byte("taco"))
+
+	// Wrapped
+	ExpectCall(t.wrapped, "Load")(score).
+		WillOnce(oglemock.Return(nil, errors.New("")))
+
+	// Call
+	t.store.Load(score)
 }
 
 func (t *LoadTest) WrappedReturnsError() {
