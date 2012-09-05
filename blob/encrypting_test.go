@@ -16,6 +16,9 @@
 package blob_test
 
 import (
+	"github.com/jacobsa/comeback/blob"
+	"github.com/jacobsa/comeback/blob/mock"
+	"github.com/jacobsa/comeback/crypto/mock"
 	. "github.com/jacobsa/ogletest"
 	"testing"
 )
@@ -26,9 +29,19 @@ func TestEncrypting(t *testing.T) { RunTests(t) }
 // Helpers
 ////////////////////////////////////////////////////////////////////////
 
-type EncryptingStoreTest struct{}
+type EncryptingStoreTest struct{
+	crypter mock_crypto.MockCrypter
+	wrapped mock_blob.MockStore
+	store blob.Store
+}
 
 func init() { RegisterTestSuite(&EncryptingStoreTest{}) }
+
+func (t *EncryptingStoreTest) SetUp(i *TestInfo) {
+	t.crypter = mock_crypto.NewMockCrypter(i.MockController, "crypter")
+	t.wrapped = mock_blob.NewMockStore(i.MockController, "wrapped")
+	t.store = blob.NewEncryptingStore(t.crypter, t.wrapped)
+}
 
 ////////////////////////////////////////////////////////////////////////
 // Tests
