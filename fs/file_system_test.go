@@ -535,7 +535,7 @@ func (t *ReadDirTest) Symlinks() {
 	ExpectThat(entry.Scores, ElementsAre())
 }
 
-func (t *ReadDirTest) BlockDevices() {
+func (t *ReadDirTest) CharDevices() {
 	var err error
 
 	// Call
@@ -563,7 +563,7 @@ func (t *ReadDirTest) BlockDevices() {
 	ExpectNe(urandomDevNumber, randomDevNumber)
 }
 
-func (t *ReadDirTest) CharDevices() {
+func (t *ReadDirTest) BlockDevices() {
 	var err error
 
 	// Call
