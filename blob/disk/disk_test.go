@@ -16,6 +16,7 @@
 package disk_test
 
 import (
+	"bytes"
 	"errors"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/blob/disk"
@@ -23,6 +24,7 @@ import (
 	. "github.com/jacobsa/oglematchers"
 	"github.com/jacobsa/oglemock"
 	. "github.com/jacobsa/ogletest"
+	"io"
 	"path"
 	"testing"
 )
@@ -32,6 +34,24 @@ func TestDisk(t *testing.T) { RunTests(t) }
 ////////////////////////////////////////////////////////////////////////
 // Helpers
 ////////////////////////////////////////////////////////////////////////
+
+type fakeFile struct {
+	r      io.Reader
+	closed bool
+}
+
+func (f *fakeFile) Read(p []byte) (int, error) {
+	return f.r.Read(p)
+}
+
+func (f *fakeFile) Close() error {
+	if f.closed {
+		panic("Close called twice.")
+	}
+
+	f.closed = true
+	return nil
+}
 
 type diskStoreTest struct {
 	basePath string
@@ -132,5 +152,15 @@ func (t *LoadTest) FileSystemReturnsError() {
 }
 
 func (t *LoadTest) FileSystemSucceeds() {
-	ExpectEq("TODO", "")
+	// File system
+	f := &fakeFile{r: bytes.NewBufferString("taco")}
+	ExpectCall(t.fs, "OpenForReading")(Any()).
+		WillOnce(oglemock.Return(f, nil))
+
+	// Call
+	blob, err := t.store.Load(blob.ComputeScore([]byte{}))
+	AssertEq(nil, err)
+
+	ExpectThat(blob, DeepEquals([]byte("taco")))
+	ExpectTrue(f.closed)
 }
