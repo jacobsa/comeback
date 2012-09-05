@@ -535,7 +535,7 @@ func (t *ReadDirTest) Symlinks() {
 	ExpectThat(entry.Scores, ElementsAre())
 }
 
-func (t *ReadDirTest) BlockDevices() {
+func (t *ReadDirTest) CharDevices() {
 	var err error
 
 	// Call
@@ -563,7 +563,7 @@ func (t *ReadDirTest) BlockDevices() {
 	ExpectNe(urandomDevNumber, randomDevNumber)
 }
 
-func (t *ReadDirTest) CharDevices() {
+func (t *ReadDirTest) BlockDevices() {
 	var err error
 
 	// Call
@@ -584,11 +584,11 @@ func (t *ReadDirTest) CharDevices() {
 	ExpectGe(time.Since(entry.MTime), 0)
 	ExpectLt(time.Since(entry.MTime), 365*24*time.Hour)
 
-	entry = findEntry(entries, "disk1")
+	entry = findEntry(entries, "disk0s1")
 	AssertNe(nil, entry)
-	disk1DevNumber := entry.DeviceNumber
+	disk0s1DevNumber := entry.DeviceNumber
 
-	ExpectNe(disk0DevNumber, disk1DevNumber)
+	ExpectNe(disk0DevNumber, disk0s1DevNumber)
 }
 
 func (t *ReadDirTest) NamedPipes() {
