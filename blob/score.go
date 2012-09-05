@@ -27,16 +27,16 @@ import (
 type Score []byte
 
 // Compute the score for the supplied blob. This is primarily intended for use
-// by blob store implementations; users should obtain only scores through calls
-// to a store's Store method.
+// by blob store implementations; most users should obtain scores through calls
+// to a blob store's Store method.
 func ComputeScore(b []byte) Score {
 	h := sha1.New()
 	h.Write(b)
-	return &score{hash: h.Sum(nil)}
+	return Score(h.Sum(nil))
 }
 
 // Return a fixed-width hex version of the score's hash, suitable for using
 // e.g. as a filename.
-func HexScore(score Score) string {
-	return fmt.Sprintf("%x", score.Sha1Hash())
+func (s Score) Hex() string {
+	return fmt.Sprintf("%x", s)
 }
