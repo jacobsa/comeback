@@ -16,9 +16,12 @@
 package blob_test
 
 import (
+	"errors"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/blob/mock"
 	"github.com/jacobsa/comeback/crypto/mock"
+	. "github.com/jacobsa/oglematchers"
+	"github.com/jacobsa/oglemock"
 	. "github.com/jacobsa/ogletest"
 	"testing"
 )
@@ -52,7 +55,14 @@ type StoreTest struct {
 func init() { RegisterTestSuite(&StoreTest{}) }
 
 func (t *StoreTest) CallsCrypter() {
-	ExpectEq("TODO", "")
+	blob := []byte{0xde, 0xad}
+
+	// Crypter
+	ExpectCall(t.crypter, "Encrypt")(DeepEquals(blob)).
+		WillOnce(oglemock.Return(nil, errors.New("")))
+
+	// Call
+	t.store.Store(blob)
 }
 
 func (t *StoreTest) CrypterReturnsError() {
