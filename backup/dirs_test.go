@@ -405,22 +405,22 @@ func (t *DirectorySaverTest) CallsBlobStore() {
 	ExpectEq(fs.TypeFile, entry.Type)
 	ExpectEq("taco", entry.Name)
 	AssertThat(entry.Scores, ElementsAre(Any(), Any()))
-	ExpectThat(entry.Scores[0].Sha1Hash(), DeepEquals(score0.Sha1Hash()))
-	ExpectThat(entry.Scores[1].Sha1Hash(), DeepEquals(score1.Sha1Hash()))
+	ExpectThat(entry.Scores[0], DeepEquals(score0))
+	ExpectThat(entry.Scores[1], DeepEquals(score1))
 	ExpectEq(nil, entry.HardLinkTarget)
 
 	entry = resultEntries[1]
 	ExpectEq(fs.TypeDirectory, entry.Type)
 	ExpectEq("burrito", entry.Name)
 	AssertThat(entry.Scores, ElementsAre(Any()))
-	ExpectThat(entry.Scores[0].Sha1Hash(), DeepEquals(score2.Sha1Hash()))
+	ExpectThat(entry.Scores[0], DeepEquals(score2))
 	ExpectEq(nil, entry.HardLinkTarget)
 
 	entry = resultEntries[2]
 	ExpectEq(fs.TypeDirectory, entry.Type)
 	ExpectEq("enchilada", entry.Name)
 	AssertThat(entry.Scores, ElementsAre(Any()))
-	ExpectThat(entry.Scores[0].Sha1Hash(), DeepEquals(score3.Sha1Hash()))
+	ExpectThat(entry.Scores[0], DeepEquals(score3))
 	ExpectEq(nil, entry.HardLinkTarget)
 
 	entry = resultEntries[3]
