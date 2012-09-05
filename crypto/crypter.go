@@ -26,8 +26,18 @@ type Crypter interface {
 	Decrypt(ciphertext []byte) (plaintext []byte, err error)
 }
 
-// Return a crypter configured to use AES-SIV deterministic decryption (see RFC
-// 5297) with the supplied key. The key must be 32, 48, or 64 bytes long.
+// NotAuthenticError may be returned by Crypter.Decrypt if the input is
+// otherwise well-formed but the ciphertext doesn't check out as authentic.
+// This could be due to an incorrect key or corrupted ciphertext.
+type NotAuthenticError string
+
+func (e NotAuthenticError) Error() string {
+	return string(e)
+}
+
+// Return a crypter configured to use AES-SIV deterministic decryption with
+// authentication (see RFC 5297) with the supplied key. The key must be 32, 48,
+// or 64 bytes long.
 func NewCrypter(key []byte) (Crypter, error) {
 	switch len(key) {
 	case 32, 48, 64:
