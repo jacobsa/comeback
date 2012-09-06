@@ -24,6 +24,12 @@ import (
 	"path"
 )
 
+// Return a blob store that stores its blobs in the directory with the supplied
+// path.
+func NewDiskBlobStore(path string, fileSystem fs.FileSystem) (blob.Store, error) {
+	return &blobStore{basePath: path, fileSystem: fileSystem}, nil
+}
+
 type blobStore struct {
 	basePath   string
 	fileSystem fs.FileSystem
@@ -55,10 +61,4 @@ func (s *blobStore) Load(score blob.Score) ([]byte, error) {
 	}
 
 	return data, nil
-}
-
-// Return a blob store that stores its blobs in the directory with the supplied
-// path.
-func NewDiskBlobStore(path string, fileSystem fs.FileSystem) (blob.Store, error) {
-	return &blobStore{basePath: path, fileSystem: fileSystem}, nil
 }
