@@ -340,8 +340,26 @@ func makeCharDevice(path string, permissions os.FileMode, dev int32) error {
 func main() {
 	var err error
 
+	// Create a user registry.
+	userRegistry, err := sys.NewUserRegistry()
+	if err != nil {
+		log.Fatalf("Creating user registry: %v", err)
+	}
+
+	// Create a group registry.
+	groupRegistry, err := sys.NewGroupRegistry()
+	if err != nil {
+		log.Fatalf("Creating group registry: %v", err)
+	}
+
+	// Create a file system.
+	fileSystem, err := fs.NewFileSystem(userRegistry, groupRegistry)
+	if err != nil {
+		log.Fatalf("Creating file system: %v", err)
+	}
+
 	// Create the blob store.
-	blobStore, err = disk.NewBlobStore("/tmp/blobs")
+	blobStore, err = disk.NewDiskBlobStore("/tmp/blobs", fileSystem)
 	if err != nil {
 		log.Fatalf("Creating store: %v", err)
 	}

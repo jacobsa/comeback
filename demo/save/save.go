@@ -25,18 +25,6 @@ import (
 )
 
 func main() {
-	// Create the blob store.
-	blobStore, err := disk.NewBlobStore("/tmp/blobs")
-	if err != nil {
-		log.Fatalf("Creating store: %v", err)
-	}
-
-	// Create the file saver.
-	fileSaver, err := backup.NewFileSaver(blobStore, 1<<24)
-	if err != nil {
-		log.Fatalf("Creating file saver: %v", err)
-	}
-
 	// Create a user registry.
 	userRegistry, err := sys.NewUserRegistry()
 	if err != nil {
@@ -53,6 +41,18 @@ func main() {
 	fileSystem, err := fs.NewFileSystem(userRegistry, groupRegistry)
 	if err != nil {
 		log.Fatalf("Creating file system: %v", err)
+	}
+
+	// Create the blob store.
+	blobStore, err := disk.NewDiskBlobStore("/tmp/blobs", fileSystem)
+	if err != nil {
+		log.Fatalf("Creating store: %v", err)
+	}
+
+	// Create the file saver.
+	fileSaver, err := backup.NewFileSaver(blobStore, 1<<24)
+	if err != nil {
+		log.Fatalf("Creating file saver: %v", err)
 	}
 
 	// Create a directory saver.
