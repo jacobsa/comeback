@@ -15,7 +15,9 @@
 
 package backup
 
-import ()
+import (
+	"sync"
+)
 
 // A stateful object that knows how to keep track of files that are hard-linked
 // together. This is an implementation detail; you should not touch it.
@@ -23,13 +25,15 @@ type LinkResolver interface {
 	// Register the supplied path, which points to the given inode on the given
 	// containing device. Return a path that has already been registered here, if
 	// any.
+	//
+	// This method may be called multiple times concurrently.
 	Register(containingDevice int32, inode uint64, path string) *string
 }
 
 // Create an empty link resolver. This is an implementation detail; you should
 // not touch it.
 func NewLinkResolver() LinkResolver {
-	return &linkResolver{make(map[mapElement]string)}
+	return &linkResolver{alreadySeen: make(map[mapElement]string)}
 }
 
 type mapElement struct {
@@ -38,11 +42,15 @@ type mapElement struct {
 }
 
 type linkResolver struct {
-	alreadySeen map[mapElement]string
+	mutex sync.Mutex
+	alreadySeen map[mapElement]string  // Protected by mutex
 }
 
 func (r *linkResolver) Register(containingDevice int32, inode uint64, path string) *string {
 	elem := mapElement{containingDevice, inode}
+
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
 
 	// Have we already seen this element?
 	if prevPath, ok := r.alreadySeen[elem]; ok {
