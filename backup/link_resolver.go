@@ -42,8 +42,8 @@ type mapElement struct {
 }
 
 type linkResolver struct {
-	mutex sync.Mutex
-	alreadySeen map[mapElement]string  // Protected by mutex
+	mutex       sync.Mutex
+	alreadySeen map[mapElement]string // Protected by mutex
 }
 
 func (r *linkResolver) Register(containingDevice int32, inode uint64, path string) *string {
