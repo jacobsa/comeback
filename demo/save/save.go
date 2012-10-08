@@ -19,7 +19,8 @@ import (
 	"flag"
 	"fmt"
 	"github.com/jacobsa/comeback/backup"
-	"github.com/jacobsa/comeback/blob/disk"
+	"github.com/jacobsa/comeback/blob"
+	"github.com/jacobsa/comeback/kv/disk"
 	"github.com/jacobsa/comeback/config"
 	"github.com/jacobsa/comeback/fs"
 	"github.com/jacobsa/comeback/sys"
@@ -84,11 +85,14 @@ func main() {
 		log.Fatalf("Creating file system: %v", err)
 	}
 
-	// Create the blob store.
-	blobStore, err := disk.NewDiskBlobStore("/tmp/blobs", fileSystem)
+	// Create the kv store.
+	kvStore, err := disk.NewDiskKvStore("/tmp/blobs", fileSystem)
 	if err != nil {
-		log.Fatalf("Creating store: %v", err)
+		log.Fatalf("Creating kv store: %v", err)
 	}
+
+	// Create the blob store.
+	blobStore := blob.NewKvBasedBlobStore(kvStore)
 
 	// Create the file saver.
 	fileSaver, err := backup.NewFileSaver(blobStore, 1<<24)
