@@ -16,6 +16,8 @@
 package config
 
 import (
+	"github.com/jacobsa/aws"
+	"github.com/jacobsa/aws/s3"
 	"regexp"
 )
 
@@ -33,4 +35,12 @@ type Job struct {
 type Config struct {
 	// A set of named jobs. The names must be valid UTF-8.
 	Jobs map[string]*Job
+
+	// The name of the S3 bucket in which to store blobs, and its associated
+	// region.
+	S3Bucket string
+	S3Region s3.Region
+
+	// The key to be used for signing requests to S3.
+	S3Key aws.AccessKey
 }
