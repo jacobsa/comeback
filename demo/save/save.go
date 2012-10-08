@@ -16,15 +16,35 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"github.com/jacobsa/comeback/backup"
 	"github.com/jacobsa/comeback/blob/disk"
 	"github.com/jacobsa/comeback/fs"
 	"github.com/jacobsa/comeback/sys"
+	"io/ioutil"
 	"log"
+	"os"
 )
 
+var g_configFile = flag.String("config", "", "Path to config file.")
+
 func main() {
+	var err error
+	flag.Parse()
+
+	// Attempt to read the user's config data.
+	if *g_configFile == "" {
+		fmt.Println("You must set -config.")
+		os.Exit(1)
+	}
+
+	configData, err := ioutil.ReadFile(*g_configFile)
+	if err != nil {
+		fmt.Println("Error reading config file:", err)
+		os.Exit(1)
+	}
+
 	// Create a user registry.
 	userRegistry, err := sys.NewUserRegistry()
 	if err != nil {
