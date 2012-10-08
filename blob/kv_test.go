@@ -72,23 +72,79 @@ func (t *KvBasedStore_StoreTest) CallsContains() {
 }
 
 func (t *KvBasedStore_StoreTest) ContainsReturnsError() {
-	ExpectEq("TODO", "")
+	// Contains
+	ExpectCall(t.kvBasedStore, "Contains")(Any()).
+		WillOnce(oglemock.Return(false, errors.New("taco")))
+
+	// Call
+	t.callStore()
+
+	ExpectThat(t.err, Error(HasSubstr("Contains")))
+	ExpectThat(t.err, Error(HasSubstr("taco")))
 }
 
 func (t *KvBasedStore_StoreTest) ContainsSaysYes() {
-	ExpectEq("TODO", "")
+	t.data = []byte("hello")
+
+	// Contains
+	ExpectCall(t.kvBasedStore, "Contains")(Any()).
+		WillOnce(oglemock.Return(true, nil))
+
+	// Call
+	t.callStore()
+
+	AssertEq(nil, t.err)
+	ExpectThat(t.score, DeepEquals(blob.ComputeScore(t.data)))
 }
 
 func (t *KvBasedStore_StoreTest) CallsSet() {
-	ExpectEq("TODO", "")
+	t.data = []byte("hello")
+	expectedScore := []byte("aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d")
+
+	// Contains
+	ExpectCall(t.kvBasedStore, "Contains")(Any()).
+		WillOnce(oglemock.Return(false, nil))
+
+	// Set
+	ExpectCall(t.kvBasedStore, "Set")(DeepEquals(expectedScore), DeepEquals(t.data)).
+		WillOnce(oglemock.Return(errors.New("")))
+
+	// Call
+	t.callStore()
 }
 
 func (t *KvBasedStore_StoreTest) SetReturnsError() {
-	ExpectEq("TODO", "")
+	// Contains
+	ExpectCall(t.kvBasedStore, "Contains")(Any()).
+		WillOnce(oglemock.Return(false, nil))
+
+	// Set
+	ExpectCall(t.kvBasedStore, "Set")(Any(), Any()).
+		WillOnce(oglemock.Return(errors.New("taco")))
+
+	// Call
+	t.callStore()
+
+	ExpectThat(t.err, Error(HasSubstr("Set")))
+	ExpectThat(t.err, Error(HasSubstr("taco")))
 }
 
 func (t *KvBasedStore_StoreTest) SetSaysOkay() {
-	ExpectEq("TODO", "")
+	t.data = []byte("hello")
+
+	// Contains
+	ExpectCall(t.kvBasedStore, "Contains")(Any()).
+		WillOnce(oglemock.Return(false, nil))
+
+	// Set
+	ExpectCall(t.kvBasedStore, "Set")(Any(), Any()).
+		WillOnce(oglemock.Return(nil))
+
+	// Call
+	t.callStore()
+
+	AssertEq(nil, t.err)
+	ExpectThat(t.score, DeepEquals(blob.ComputeScore(t.data)))
 }
 
 ////////////////////////////////////////////////////////////////////////
