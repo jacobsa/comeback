@@ -14,4 +14,5 @@
 // limitations under the License.
 
 // Package blob contains types related to storage of content-addressed blobs.
+// It is an implementation detail; you should not use it directly.
 package blob
