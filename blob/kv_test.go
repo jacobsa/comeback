@@ -16,8 +16,11 @@
 package blob_test
 
 import (
+	"errors"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/kv/mock"
+	. "github.com/jacobsa/oglematchers"
+	"github.com/jacobsa/oglemock"
 	. "github.com/jacobsa/ogletest"
 	"testing"
 )
@@ -44,12 +47,28 @@ func (t *kvBasedStoreTest) SetUp(i *TestInfo) {
 
 type KvBasedStore_StoreTest struct {
 	kvBasedStoreTest
+
+	data []byte
+	score blob.Score
+	err error
 }
 
 func init() { RegisterTestSuite(&KvBasedStore_StoreTest{}) }
 
+func (t *KvBasedStore_StoreTest) callStore() {
+	t.score, t.err = t.store.Store(t.data)
+}
+
 func (t *KvBasedStore_StoreTest) CallsContains() {
-	ExpectEq("TODO", "")
+	t.data = []byte("hello")
+	expectedScore := []byte("aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d")
+
+	// Contains
+	ExpectCall(t.kvBasedStore, "Contains")(DeepEquals(expectedScore)).
+		WillOnce(oglemock.Return(false, errors.New("")))
+
+	// Call
+	t.callStore()
 }
 
 func (t *KvBasedStore_StoreTest) ContainsReturnsError() {
