@@ -22,6 +22,7 @@ import (
 	"github.com/jacobsa/comeback/fs"
 	"github.com/jacobsa/comeback/repr"
 	"path"
+	"regexp"
 )
 
 // An object that knows how to save directories to some underlying storage.
@@ -30,7 +31,10 @@ type DirectorySaver interface {
 	// path of a backup and a relative path within the backup) to the underlying
 	// storage, returning the score of a blob representing the directory's
 	// listing in a format that can be recovered with repr.Unmarshal.
-	Save(basePath, relPath string) (score blob.Score, err error)
+	//
+	// Recursively exclude from backup relative paths that match any of the
+	// supplied exclusion regexps.
+	Save(basePath, relPath string, exclusions []regexp.Regexp) (blob.Score, error)
 }
 
 // A directory saver that creates a new directory saver for each call to Save.
