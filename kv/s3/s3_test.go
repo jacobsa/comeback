@@ -44,6 +44,32 @@ func (t *s3KvStoreTest) createStore() (err error) {
 }
 
 ////////////////////////////////////////////////////////////////////////
+// Constructor
+////////////////////////////////////////////////////////////////////////
+
+type ConstructorTest struct {
+	s3KvStoreTest
+}
+
+func init() { RegisterTestSuite(&ConstructorTest{}) }
+
+func (t *ConstructorTest) CallsListKeyRepeatedly() {
+	ExpectEq("TODO", "")
+}
+
+func (t *ConstructorTest) ListKeyReturnsError() {
+	ExpectEq("TODO", "")
+}
+
+func (t *ConstructorTest) ListKeyReturnsNoKeys() {
+	ExpectEq("TODO", "")
+}
+
+func (t *ConstructorTest) ListKeyReturnsSomeKeys() {
+	ExpectEq("TODO", "")
+}
+
+////////////////////////////////////////////////////////////////////////
 // Set
 ////////////////////////////////////////////////////////////////////////
 
