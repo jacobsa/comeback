@@ -48,7 +48,19 @@ type CheckingStore_StoreTest struct {
 
 func init() { RegisterTestSuite(&CheckingStore_StoreTest{}) }
 
-func (t *CheckingStore_StoreTest) DoesFoo() {
+func (t *CheckingStore_StoreTest) CallsWrapped() {
+	ExpectEq("TODO", "")
+}
+
+func (t *CheckingStore_StoreTest) WrappedReturnsError() {
+	ExpectEq("TODO", "")
+}
+
+func (t *CheckingStore_StoreTest) WrappedReturnsIncorrectScore() {
+	ExpectEq("TODO", "")
+}
+
+func (t *CheckingStore_StoreTest) WrappedReturnsCorrectScore() {
 	ExpectEq("TODO", "")
 }
 
@@ -62,6 +74,18 @@ type CheckingStore_LoadTest struct {
 
 func init() { RegisterTestSuite(&CheckingStore_LoadTest{}) }
 
-func (t *CheckingStore_LoadTest) DoesFoo() {
+func (t *CheckingStore_LoadTest) CallsWrapped() {
+	ExpectEq("TODO", "")
+}
+
+func (t *CheckingStore_LoadTest) WrappedReturnsError() {
+	ExpectEq("TODO", "")
+}
+
+func (t *CheckingStore_LoadTest) WrappedReturnsCorrectData() {
+	ExpectEq("TODO", "")
+}
+
+func (t *CheckingStore_LoadTest) WrappedReturnsIncorrectData() {
 	ExpectEq("TODO", "")
 }
