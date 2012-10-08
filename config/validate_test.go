@@ -35,6 +35,14 @@ func init() { RegisterTestSuite(&ValidateTest{}) }
 // Tests
 ////////////////////////////////////////////////////////////////////////
 
-func (t *ValidateTest) DoesFoo() {
+func (t *ValidateTest) JobNameNotValidUtf8() {
+	ExpectEq("TODO", "")
+}
+
+func (t *ValidateTest) MissingBasePath() {
+	ExpectEq("TODO", "")
+}
+
+func (t *ValidateTest) BasePathNotValidUtf8() {
 	ExpectEq("TODO", "")
 }
