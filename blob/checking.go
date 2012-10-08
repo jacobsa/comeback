@@ -18,9 +18,9 @@ package blob
 import (
 )
 
-// Return a blob store that wraps the supplied one, confirming that the
-// contents of each blob it returns are correct according to the score with
-// which it was loaded, guarding against silent data corruption.
+// Return a blob store that wraps the supplied one, confirming that the blob
+// contents and scores it returns are correct, guarding against silent data
+// corruption.
 func NewCheckingStore(wrapped Store) Store {
 	// TODO
 	return nil
