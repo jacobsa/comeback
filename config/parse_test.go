@@ -71,7 +71,7 @@ func (t *ParseTest) Array() {
 func (t *ParseTest) MissingTrailingBrace() {
 	t.data = `
 	{
-		"jobs": []
+		"jobs": {}
 	`
 
 	t.parse()
@@ -83,11 +83,11 @@ func (t *ParseTest) MissingTrailingBrace() {
 func (t *ParseTest) BasePathIsNumber() {
 	t.data = `
 	{
-		"jobs": [
+		"jobs": {
 			{
 				"base_path": 17
 			}
-		]
+		}
 	}
 	`
 
@@ -99,11 +99,11 @@ func (t *ParseTest) BasePathIsNumber() {
 func (t *ParseTest) BasePathIsNull() {
 	t.data = `
 	{
-		"jobs": [
+		"jobs": {
 			{
 				"base_path": null
 			}
-		]
+		}
 	}
 	`
 
@@ -115,11 +115,11 @@ func (t *ParseTest) BasePathIsNull() {
 func (t *ParseTest) BasePathIsObject() {
 	t.data = `
 	{
-		"jobs": [
+		"jobs": {
 			{
 				"base_path": {}
 			}
-		]
+		}
 	}
 	`
 
@@ -131,7 +131,7 @@ func (t *ParseTest) BasePathIsObject() {
 func (t *ParseTest) OneExcludeDoesntCompile() {
 	t.data = `
 	{
-		"jobs": [
+		"jobs": {
 			{
 				"base_path": "/foo",
 				"excludes": ["a"],
@@ -144,7 +144,7 @@ func (t *ParseTest) OneExcludeDoesntCompile() {
 				"base_path": "/foo",
 				"excludes": ["d"]
 			}
-		]
+		}
 	}
 	`
 
