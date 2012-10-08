@@ -93,7 +93,8 @@ func (t *ParseTest) BasePathIsNumber() {
 
 	t.parse()
 
-	ExpectThat(t.err, Error(HasSubstr("TODO")))
+	ExpectThat(t.err, Error(HasSubstr("JSON")))
+	ExpectThat(t.err, Error(HasSubstr("number")))
 }
 
 func (t *ParseTest) BasePathIsNull() {
@@ -109,7 +110,8 @@ func (t *ParseTest) BasePathIsNull() {
 
 	t.parse()
 
-	ExpectThat(t.err, Error(HasSubstr("TODO")))
+	ExpectThat(t.err, Error(HasSubstr("JSON")))
+	ExpectThat(t.err, Error(HasSubstr("null")))
 }
 
 func (t *ParseTest) BasePathIsObject() {
@@ -125,7 +127,8 @@ func (t *ParseTest) BasePathIsObject() {
 
 	t.parse()
 
-	ExpectThat(t.err, Error(HasSubstr("TODO")))
+	ExpectThat(t.err, Error(HasSubstr("JSON")))
+	ExpectThat(t.err, Error(HasSubstr("object")))
 }
 
 func (t *ParseTest) OneExcludeDoesntCompile() {
