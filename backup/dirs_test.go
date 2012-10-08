@@ -311,10 +311,16 @@ func (t *DirectorySaverTest) CallsDirSaverForDirs() {
 	// Wrapped directory saver
 	score0 := blob.ComputeScore([]byte(""))
 
-	ExpectCall(t.wrapped, "Save")("/taco", "queso/tortilla/burrito").
+	ExpectCall(t.wrapped, "Save")(
+		"/taco",
+		"queso/tortilla/burrito",
+		DeepEquals(t.exclusions)).
 		WillOnce(oglemock.Return(score0, nil))
 
-	ExpectCall(t.wrapped, "Save")("/taco", "queso/tortilla/enchilada").
+	ExpectCall(t.wrapped, "Save")(
+		"/taco",
+		"queso/tortilla/enchilada",
+		DeepEquals(t.exclusions)).
 		WillOnce(oglemock.Return(nil, errors.New("")))
 
 	// Call
@@ -335,7 +341,7 @@ func (t *DirectorySaverTest) DirSaverReturnsErrorForOneDir() {
 	// Wrapped directory saver
 	score0 := blob.ComputeScore([]byte(""))
 
-	ExpectCall(t.wrapped, "Save")(Any(), Any()).
+	ExpectCall(t.wrapped, "Save")(Any(), Any(), Any()).
 		WillOnce(oglemock.Return(score0, nil)).
 		WillOnce(oglemock.Return(nil, errors.New("taco")))
 
@@ -361,7 +367,7 @@ func (t *DirectorySaverTest) OneTypeIsUnsupported() {
 	// Wrapped directory saver
 	score0 := blob.ComputeScore([]byte(""))
 
-	ExpectCall(t.wrapped, "Save")(Any(), Any()).
+	ExpectCall(t.wrapped, "Save")(Any(), Any(), Any()).
 		WillOnce(oglemock.Return(score0, nil))
 
 	// Call
@@ -412,7 +418,7 @@ func (t *DirectorySaverTest) CallsBlobStore() {
 	score2 := blob.ComputeScore([]byte("queso"))
 	score3 := blob.ComputeScore([]byte("tortilla"))
 
-	ExpectCall(t.wrapped, "Save")(Any(), Any()).
+	ExpectCall(t.wrapped, "Save")(Any(), Any(), Any()).
 		WillOnce(oglemock.Return(score2, nil)).
 		WillOnce(oglemock.Return(score3, nil))
 
