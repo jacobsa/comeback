@@ -40,21 +40,30 @@ func (s *kvBasedBlobStore) Store(blob []byte) (score Score, err error) {
 	// Don't bother storing the same blob twice.
 	alreadyExists, err := s.kvStore.Contains(key)
 	if err != nil {
-		return nil, fmt.Errorf("Contains: %v", err)
+		err = fmt.Errorf("Contains: %v", err)
+		return
 	}
 
 	if alreadyExists {
-		return score, nil
+		return
 	}
 
 	// Store the blob.
-	if err := s.kvStore.Set(key, blob); err != nil {
-		return nil, fmt.Errorf("Set: %v", err)
+	if err = s.kvStore.Set(key, blob); err != nil {
+		err = fmt.Errorf("Set: %v", err)
+		return
 	}
 
-	return score, nil
+	return
 }
 
 func (s *kvBasedBlobStore) Load(score Score) (blob []byte, err error) {
-	return nil, fmt.Errorf("TODO")
+	// Choose the appropriate key.
+	key := []byte(score.Hex())
+
+	// Call the key/value store.
+	if blob, err = s.kvStore.Get(key); err != nil {
+		err = fmt.Errorf("Get: %v", err)
+		return
+	}
 }
