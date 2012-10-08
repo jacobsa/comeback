@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package kb
+package kv
 
 // A Store knows how to store keys keyed on values. The format of keys and
 // values is left unspecified.
