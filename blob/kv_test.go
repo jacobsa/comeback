@@ -61,10 +61,10 @@ func (t *KvBasedStore_StoreTest) callStore() {
 
 func (t *KvBasedStore_StoreTest) CallsContains() {
 	t.data = []byte("hello")
-	expectedScore := []byte("aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d")
+	expectedKey := []byte("aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d")
 
 	// Contains
-	ExpectCall(t.kvBasedStore, "Contains")(DeepEquals(expectedScore)).
+	ExpectCall(t.kvBasedStore, "Contains")(DeepEquals(expectedKey)).
 		WillOnce(oglemock.Return(false, errors.New("")))
 
 	// Call
@@ -99,14 +99,14 @@ func (t *KvBasedStore_StoreTest) ContainsSaysYes() {
 
 func (t *KvBasedStore_StoreTest) CallsSet() {
 	t.data = []byte("hello")
-	expectedScore := []byte("aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d")
+	expectedKey := []byte("aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d")
 
 	// Contains
 	ExpectCall(t.kvBasedStore, "Contains")(Any()).
 		WillOnce(oglemock.Return(false, nil))
 
 	// Set
-	ExpectCall(t.kvBasedStore, "Set")(DeepEquals(expectedScore), DeepEquals(t.data)).
+	ExpectCall(t.kvBasedStore, "Set")(DeepEquals(expectedKey), DeepEquals(t.data)).
 		WillOnce(oglemock.Return(errors.New("")))
 
 	// Call
@@ -153,12 +153,28 @@ func (t *KvBasedStore_StoreTest) SetSaysOkay() {
 
 type KvBasedStore_LoadTest struct {
 	kvBasedStoreTest
+
+	score blob.Score
+	data []byte
+	err error
 }
 
 func init() { RegisterTestSuite(&KvBasedStore_LoadTest{}) }
 
+func (t *KvBasedStore_LoadTest) callStore() {
+	t.data, t.err = t.store.Load(t.score)
+}
+
 func (t *KvBasedStore_LoadTest) CallsGet() {
-	ExpectEq("TODO", "")
+	t.score = blob.ComputeScore([]byte("hello"))
+	expectedKey := []byte("aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d")
+
+	// Get
+	ExpectCall(t.kvBasedStore, "Get")(DeepEquals(expectedKey)).
+		WillOnce(oglemock.Return(nil, errors.New("")))
+
+	// Call
+	t.callStore()
 }
 
 func (t *KvBasedStore_LoadTest) GetReturnsError() {
