@@ -130,13 +130,46 @@ func (t *CheckingStore_LoadTest) CallsWrapped() {
 }
 
 func (t *CheckingStore_LoadTest) WrappedReturnsError() {
-	ExpectEq("TODO", "")
-}
+	score := blob.ComputeScore([]byte{})
 
-func (t *CheckingStore_LoadTest) WrappedReturnsCorrectData() {
-	ExpectEq("TODO", "")
+	// Wrapped
+	ExpectCall(t.wrapped, "Load")(Any()).
+		WillOnce(oglemock.Return(nil, errors.New("taco")))
+
+	// Call
+	_, err := t.store.Load(score)
+
+	ExpectThat(err, Error(Equals("taco")))
 }
 
 func (t *CheckingStore_LoadTest) WrappedReturnsIncorrectData() {
-	ExpectEq("TODO", "")
+	correctData := []byte{0xde, 0xad}
+	incorrectData := []byte{0xde, 0xad, 0xbe, 0xef}
+	score := blob.ComputeScore(correctData)
+
+	// Wrapped
+	ExpectCall(t.wrapped, "Load")(Any()).
+		WillOnce(oglemock.Return(incorrectData, nil))
+
+	// Call
+	_, err := t.store.Load(score)
+
+	ExpectThat(err, Error(HasSubstr("Incorrect")))
+	ExpectThat(err, Error(HasSubstr("data")))
+	ExpectThat(err, Error(HasSubstr(score.Hex())))
+}
+
+func (t *CheckingStore_LoadTest) WrappedReturnsCorrectData() {
+	correctData := []byte{0xde, 0xad}
+	score := blob.ComputeScore(correctData)
+
+	// Wrapped
+	ExpectCall(t.wrapped, "Load")(Any()).
+		WillOnce(oglemock.Return(correctData, nil))
+
+	// Call
+	data, err := t.store.Load(score)
+
+	AssertEq(nil, err)
+	ExpectThat(data, DeepEquals(correctData))
 }
