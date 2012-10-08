@@ -17,6 +17,7 @@ package config_test
 
 import (
 	"github.com/jacobsa/comeback/config"
+	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
 	"testing"
 )
@@ -28,7 +29,7 @@ func TestParse(t *testing.T) { RunTests(t) }
 ////////////////////////////////////////////////////////////////////////
 
 type ParseTest struct {
-	data []byte
+	data string
 	cfg *config.Config
 	err error
 }
@@ -36,7 +37,7 @@ type ParseTest struct {
 func init() { RegisterTestSuite(&ParseTest{}) }
 
 func (t *ParseTest) parse() {
-	t.cfg, t.err = config.Parse(t.data)
+	t.cfg, t.err = config.Parse([]byte(t.data))
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -44,6 +45,13 @@ func (t *ParseTest) parse() {
 ////////////////////////////////////////////////////////////////////////
 
 func (t *ParseTest) TotalJunk() {
+	t.data = "sdhjklfghdskjghdjkfgj"
+	t.parse()
+
+	ExpectThat(t.err, Error(HasSubstr("TODO")))
+}
+
+func (t *ParseTest) NonObject() {
 	ExpectEq("TODO", "")
 }
 
