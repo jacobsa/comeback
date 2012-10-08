@@ -20,6 +20,7 @@ import (
 	"github.com/jacobsa/aws/s3/mock"
 	"github.com/jacobsa/comeback/kv"
 	"github.com/jacobsa/comeback/kv/s3"
+	. "github.com/jacobsa/oglematchers"
 	"github.com/jacobsa/oglemock"
 	. "github.com/jacobsa/ogletest"
 	"testing"
@@ -105,7 +106,16 @@ func (t *ContainsTest) CallsListKeyRepeatedly() {
 }
 
 func (t *ContainsTest) ListKeyReturnsError() {
-	ExpectEq("TODO", "")
+	// ListKey
+	ExpectCall(t.bucket, "ListKeys")(Any()).
+		WillOnce(oglemock.Return([]string{"a"}, nil)).
+		WillOnce(oglemock.Return(nil, errors.New("taco")))
+
+	// Construct
+	err := t.createStore()
+
+	ExpectThat(err, Error(HasSubstr("ListKeys")))
+	ExpectThat(err, Error(HasSubstr("taco")))
 }
 
 func (t *ContainsTest) ListKeyReturnsNoKeys() {
