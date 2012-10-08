@@ -170,14 +170,14 @@ func (t *DirectorySaverTest) CallsLinkResolverFileSystemAndFileSaverForFiles() {
 
 	t.exclusions = []*regexp.Regexp{
 		regexp.MustCompile(`queso/burrito`),  // Missing initial component
-		regexp.MustCompile(`taco/queso/n\w+s`),  // Matches last
+		regexp.MustCompile(`taco/queso/n\w+s`),  // Matches second
 	}
 
 	// ReadDir
 	entries := []*fs.DirectoryEntry{
 		makeEntry("burrito", fs.TypeFile),
-		makeEntry("enchilada", fs.TypeFile),
 		makeEntry("nachos", fs.TypeFile),
+		makeEntry("enchilada", fs.TypeFile),
 	}
 
 	entries[0].ContainingDevice = 17
@@ -295,14 +295,14 @@ func (t *DirectorySaverTest) CallsDirSaverForDirs() {
 
 	t.exclusions = []*regexp.Regexp{
 		regexp.MustCompile(`tortilla/burrito`),  // Missing initial component
-		regexp.MustCompile(`queso/tortilla/n\w+s`),  // Matches last
+		regexp.MustCompile(`queso/tortilla/n\w+s`),  // Matches second
 	}
 
 	// ReadDir
 	entries := []*fs.DirectoryEntry{
 		makeEntry("burrito", fs.TypeDirectory),
-		makeEntry("enchilada", fs.TypeDirectory),
 		makeEntry("nachos", fs.TypeDirectory),
+		makeEntry("enchilada", fs.TypeDirectory),
 	}
 
 	ExpectCall(t.fileSystem, "ReadDir")(Any()).
@@ -379,19 +379,19 @@ func (t *DirectorySaverTest) OneTypeIsUnsupported() {
 
 func (t *DirectorySaverTest) CallsBlobStore() {
 	t.exclusions = []*regexp.Regexp{
-		regexp.MustCompile(`cilantro`),  // Matches last
+		regexp.MustCompile(`cilantro`),  // Matches third
 	}
 
 	// ReadDir
 	entries := []*fs.DirectoryEntry{
 		makeEntry("taco", fs.TypeFile),
 		makeEntry("burrito", fs.TypeDirectory),
+		makeEntry("cilantro", fs.TypeNamedPipe),
 		makeEntry("enchilada", fs.TypeDirectory),
 		makeEntry("carnitas", fs.TypeSymlink),
 		makeEntry("queso", fs.TypeBlockDevice),
 		makeEntry("tortilla", fs.TypeCharDevice),
 		makeEntry("nachos", fs.TypeNamedPipe),
-		makeEntry("cilantro", fs.TypeNamedPipe),
 	}
 
 	ExpectCall(t.fileSystem, "ReadDir")(Any()).
