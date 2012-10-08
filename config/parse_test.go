@@ -223,7 +223,8 @@ func (t *ParseTest) S3Configuration() {
 	t.data = `
 	{
 		"s3_bucket": "taco",
-		"s3_region": "burrito"
+		"s3_region": "burrito",
+		"s3_key_id": "enchilada"
 	}
 	`
 
@@ -232,6 +233,7 @@ func (t *ParseTest) S3Configuration() {
 
 	ExpectEq("taco", t.cfg.S3Bucket)
 	ExpectEq("burrito", t.cfg.S3Region)
+	ExpectEq("enchilada", t.cfg.S3Key.Id)
 }
 
 func (t *ParseTest) UnknownKeys() {

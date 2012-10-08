@@ -18,6 +18,7 @@ package config
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/jacobsa/aws"
 	"github.com/jacobsa/aws/s3"
 	"regexp"
 )
@@ -31,6 +32,7 @@ type jsonConfig struct {
 	Jobs map[string]*jsonJob `json:"jobs"`
 	S3Bucket string `json:"s3_bucket"`
 	S3Region s3.Region `json:"s3_region"`
+	S3KeyId string `json:"s3_key_id"`
 }
 
 // Parse the supplied JSON configuration data.
@@ -46,6 +48,7 @@ func Parse(data []byte) (*Config, error) {
 		Jobs: make(map[string]*Job),
 		S3Bucket: jCfg.S3Bucket,
 		S3Region: jCfg.S3Region,
+		S3Key: aws.AccessKey{Id: jCfg.S3KeyId},
 	}
 
 	for name, jJob := range jCfg.Jobs {
