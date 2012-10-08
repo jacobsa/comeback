@@ -18,6 +18,7 @@ package config
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/jacobsa/aws/s3"
 	"regexp"
 )
 
@@ -28,6 +29,8 @@ type jsonJob struct {
 
 type jsonConfig struct {
 	Jobs map[string]*jsonJob `json:"jobs"`
+	S3Bucket string `json:"s3_bucket"`
+	S3Region s3.Region `json:"s3_region"`
 }
 
 // Parse the supplied JSON configuration data.
@@ -39,7 +42,12 @@ func Parse(data []byte) (*Config, error) {
 	}
 
 	// Convert to our public representation.
-	cfg := &Config{Jobs: make(map[string]*Job)}
+	cfg := &Config{
+		Jobs: make(map[string]*Job),
+		S3Bucket: jCfg.S3Bucket,
+		S3Region: jCfg.S3Region,
+	}
+
 	for name, jJob := range jCfg.Jobs {
 		// Create a public job and populate it.
 		job := new(Job)
