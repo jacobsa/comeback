@@ -17,6 +17,8 @@ package s3_test
 
 import (
 	"github.com/jacobsa/aws/s3/mock"
+	"github.com/jacobsa/comeback/kv"
+	"github.com/jacobsa/comeback/kv/s3"
 	. "github.com/jacobsa/ogletest"
 	"testing"
 )
@@ -36,7 +38,10 @@ func (t *s3KvStoreTest) SetUp(i *TestInfo) {
 	t.bucket = mock_s3.NewMockBucket(i.MockController, "bucket")
 }
 
-func (t *s3KvStoreTest) createStore() error
+func (t *s3KvStoreTest) createStore() (err error) {
+	t.store, err = s3.NewS3KvStore(t.bucket)
+	return
+}
 
 ////////////////////////////////////////////////////////////////////////
 // Set
