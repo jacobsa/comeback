@@ -55,7 +55,15 @@ func (t *ParseTest) BasePathIsObject() {
 	ExpectEq("TODO", "")
 }
 
+func (t *ParseTest) OneExcludeDoesntCompile() {
+	ExpectEq("TODO", "")
+}
+
 func (t *ParseTest) EmptyConfig() {
+	ExpectEq("TODO", "")
+}
+
+func (t *ParseTest) MissingExcludesArray() {
 	ExpectEq("TODO", "")
 }
 
