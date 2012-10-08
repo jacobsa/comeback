@@ -66,4 +66,6 @@ func (s *kvBasedBlobStore) Load(score Score) (blob []byte, err error) {
 		err = fmt.Errorf("Get: %v", err)
 		return
 	}
+
+	return
 }
