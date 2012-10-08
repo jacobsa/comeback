@@ -42,7 +42,7 @@ func NewS3KvStore(bucket s3.Bucket) (kv.Store, error) {
 	}
 
 	store := &kvStore{
-		bucket: bucket,
+		bucket:    bucket,
 		knownKeys: keyMap,
 	}
 
@@ -75,8 +75,8 @@ func getAllKeys(bucket s3.Bucket) ([]string, error) {
 type kvStore struct {
 	bucket s3.Bucket
 
-	mutex sync.RWMutex
-	knownKeys map[string]bool  // Protected by mutex
+	mutex     sync.RWMutex
+	knownKeys map[string]bool // Protected by mutex
 }
 
 func (s *kvStore) Set(key []byte, val []byte) error {

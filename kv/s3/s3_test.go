@@ -195,7 +195,7 @@ type ContainsTest struct {
 
 	key string
 	res bool
-  err error
+	err error
 }
 
 func init() { RegisterTestSuite(&ContainsTest{}) }
