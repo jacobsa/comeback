@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package backup
+package config
 
 type Job struct {
 	// The path on the file system that should be backed up.
