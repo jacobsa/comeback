@@ -178,9 +178,26 @@ func (t *KvBasedStore_LoadTest) CallsGet() {
 }
 
 func (t *KvBasedStore_LoadTest) GetReturnsError() {
-	ExpectEq("TODO", "")
+	// Get
+	ExpectCall(t.kvBasedStore, "Get")(Any()).
+		WillOnce(oglemock.Return(nil, errors.New("taco")))
+
+	// Call
+	t.callStore()
+
+	ExpectThat(t.err, Error(HasSubstr("Contains")))
+	ExpectThat(t.err, Error(HasSubstr("taco")))
 }
 
 func (t *KvBasedStore_LoadTest) GetSucceeds() {
-	ExpectEq("TODO", "")
+	// Get
+	returnedData := []byte{0xde, 0xad}
+	ExpectCall(t.kvBasedStore, "Get")(Any()).
+		WillOnce(oglemock.Return(returnedData, nil))
+
+	// Call
+	t.callStore()
+
+	AssertEq(nil, t.err)
+	ExpectThat(t.data, DeepEquals(returnedData))
 }
