@@ -32,5 +32,5 @@ type Job struct {
 
 type Config struct {
 	// A set of named jobs. The names must be valid UTF-8.
-	Jobs map[string]Job
+	Jobs map[string]*Job
 }

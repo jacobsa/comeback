@@ -59,7 +59,14 @@ func (t *ParseTest) NonObject() {
 }
 
 func (t *ParseTest) MissingTrailingBrace() {
-	ExpectEq("TODO", "")
+	t.data = `
+	{
+		"jobs": [],
+	`
+
+	t.parse()
+
+	ExpectThat(t.err, Error(HasSubstr("TODO")))
 }
 
 func (t *ParseTest) BasePathIsNumber() {
