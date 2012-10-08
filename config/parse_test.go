@@ -52,7 +52,10 @@ func (t *ParseTest) TotalJunk() {
 }
 
 func (t *ParseTest) NonObject() {
-	ExpectEq("TODO", "")
+	t.data = `[17, 19]`
+	t.parse()
+
+	ExpectThat(t.err, Error(HasSubstr("TODO")))
 }
 
 func (t *ParseTest) MissingTrailingBrace() {
