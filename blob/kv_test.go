@@ -185,7 +185,7 @@ func (t *KvBasedStore_LoadTest) GetReturnsError() {
 	// Call
 	t.callStore()
 
-	ExpectThat(t.err, Error(HasSubstr("Contains")))
+	ExpectThat(t.err, Error(HasSubstr("Get")))
 	ExpectThat(t.err, Error(HasSubstr("taco")))
 }
 
