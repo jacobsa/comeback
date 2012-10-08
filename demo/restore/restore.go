@@ -18,6 +18,7 @@ package main
 import (
 	"bytes"
 	"encoding/hex"
+	"flag"
 	"fmt"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/blob/disk"
@@ -32,11 +33,10 @@ import (
 	"time"
 )
 
-const (
-	gTarget = "/tmp/restore_target"
-)
+var g_score = flag.String("score", "", "The score of the directory to restore.")
+var g_target = flag.String("target", "", "The target directory.")
 
-var blobStore blob.Store
+var g_blobStore blob.Store
 
 func fromHexHash(h string) (blob.Score, error) {
 	b, err := hex.DecodeString(h)
@@ -142,7 +142,7 @@ func restoreFile(target string, scores []blob.Score) error {
 	// Process each blob.
 	for _, score := range scores {
 		// Load the blob.
-		blob, err := blobStore.Load(score)
+		blob, err := g_blobStore.Load(score)
 		if err != nil {
 			return fmt.Errorf("Loading blob: %v", err)
 		}
@@ -183,7 +183,7 @@ func setPermissions(path string, permissions os.FileMode) error {
 // the supplied target, which must already exist.
 func restoreDir(basePath, relPath string, score blob.Score) error {
 	// Load the appropriate blob.
-	blob, err := blobStore.Load(score)
+	blob, err := g_blobStore.Load(score)
 	if err != nil {
 		return fmt.Errorf("Loading blob: %v", err)
 	}
@@ -339,6 +339,18 @@ func makeCharDevice(path string, permissions os.FileMode, dev int32) error {
 
 func main() {
 	var err error
+	flag.Parse()
+
+	// Validate flags.
+	if *g_score == "" {
+		fmt.Println("You must set -score.")
+		os.Exit(1)
+	}
+
+	if *g_target == "" {
+		fmt.Println("You must set -target.")
+		os.Exit(1)
+	}
 
 	// Create a user registry.
 	userRegistry, err := sys.NewUserRegistry()
@@ -359,19 +371,19 @@ func main() {
 	}
 
 	// Create the blob store.
-	blobStore, err = disk.NewDiskBlobStore("/tmp/blobs", fileSystem)
+	g_blobStore, err = disk.NewDiskBlobStore("/tmp/blobs", fileSystem)
 	if err != nil {
 		log.Fatalf("Creating store: %v", err)
 	}
 
 	// Parse the score.
-	score, err := fromHexHash("2667b2f8338a20b576724377af5c57b38d6cc447")
+	score, err := fromHexHash(*g_score)
 	if err != nil {
 		log.Fatalf("Parsing score: %v", err)
 	}
 
 	// Make sure the target doesn't exist.
-	err = os.RemoveAll(gTarget)
+	err = os.RemoveAll(*g_target)
 	if err != nil {
 		log.Fatalf("RemoveAll: %v", err)
 	}
@@ -383,7 +395,7 @@ func main() {
 	}
 
 	// Attempt a restore.
-	err = restoreDir(gTarget, "", score)
+	err = restoreDir(*g_target, "", score)
 	if err != nil {
 		log.Fatalf("Restoring: %v", err)
 	}
