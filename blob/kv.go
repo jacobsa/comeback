@@ -16,6 +16,7 @@
 package blob
 
 import (
+	"fmt"
 	"github.com/jacobsa/comeback/kv"
 )
 
@@ -30,5 +31,10 @@ type kvBasedBlobStore struct {
 	kvStore kv.Store
 }
 
-func (s *kvBasedBlobStore) Store(blob []byte) (score Score, err error)
-func (s *kvBasedBlobStore) Load(score Score) (blob []byte, err error)
+func (s *kvBasedBlobStore) Store(blob []byte) (score Score, err error) {
+	return nil, fmt.Errorf("TODO")
+}
+
+func (s *kvBasedBlobStore) Load(score Score) (blob []byte, err error) {
+	return nil, fmt.Errorf("TODO")
+}
