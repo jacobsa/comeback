@@ -21,6 +21,6 @@ import (
 
 // Return an error if the supplied config data is invalid in some way.
 func Validate(c *Config) error {
-	return nil, fmt.Errorf("TODO: Implement config.Validate.")
+	return fmt.Errorf("TODO: Implement config.Validate.")
 }
 
