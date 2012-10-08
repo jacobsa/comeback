@@ -151,15 +151,39 @@ func (t *GetTest) callStore() {
 }
 
 func (t *GetTest) CallsBucket() {
-	ExpectEq("TODO", "")
+	t.key = "taco"
+
+	// GetObject
+	ExpectCall(t.bucket, "GetObject")("taco").
+		WillOnce(oglemock.Return(nil, errors.New("")))
+
+	// Call
+	t.callStore()
 }
 
 func (t *GetTest) BucketReturnsError() {
-	ExpectEq("TODO", "")
+	// GetObject
+	ExpectCall(t.bucket, "GetObject")(Any()).
+		WillOnce(oglemock.Return(nil, errors.New("taco")))
+
+	// Call
+	t.callStore()
+
+	ExpectThat(t.err, Error(HasSubstr("GetObject")))
+	ExpectThat(t.err, Error(HasSubstr("taco")))
 }
 
 func (t *GetTest) BucketSucceeds() {
-	ExpectEq("TODO", "")
+	// GetObject
+	expected := []byte{0xde, 0xad}
+	ExpectCall(t.bucket, "GetObject")(Any()).
+		WillOnce(oglemock.Return(expected, nil))
+
+	// Call
+	t.callStore()
+
+	AssertEq(nil, t.err)
+	ExpectThat(t.val, DeepEquals(expected))
 }
 
 ////////////////////////////////////////////////////////////////////////
