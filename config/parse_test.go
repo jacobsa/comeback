@@ -143,7 +143,12 @@ func (t *ParseTest) OneExcludeDoesntCompile() {
 }
 
 func (t *ParseTest) EmptyConfig() {
-	ExpectEq("TODO", "")
+	t.data = `{}`
+	t.parse()
+
+	AssertEq(nil, t.err)
+	ExpectNe(nil, t.cfg.Jobs)
+	ExpectEq(0, len(t.cfg.Jobs))
 }
 
 func (t *ParseTest) MissingExcludesArray() {
