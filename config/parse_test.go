@@ -35,6 +35,34 @@ func init() { RegisterTestSuite(&ParseTest{}) }
 // Tests
 ////////////////////////////////////////////////////////////////////////
 
-func (t *ParseTest) DoesFoo() {
+func (t *ParseTest) TotalJunk() {
+	ExpectEq("TODO", "")
+}
+
+func (t *ParseTest) MissingTrailingBrace() {
+	ExpectEq("TODO", "")
+}
+
+func (t *ParseTest) BasePathIsNumber() {
+	ExpectEq("TODO", "")
+}
+
+func (t *ParseTest) BasePathIsNull() {
+	ExpectEq("TODO", "")
+}
+
+func (t *ParseTest) BasePathIsObject() {
+	ExpectEq("TODO", "")
+}
+
+func (t *ParseTest) EmptyConfig() {
+	ExpectEq("TODO", "")
+}
+
+func (t *ParseTest) DuplicateJobName() {
+	ExpectEq("TODO", "")
+}
+
+func (t *ParseTest) StructurallyValid() {
 	ExpectEq("TODO", "")
 }
