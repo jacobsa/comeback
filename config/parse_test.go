@@ -152,13 +152,29 @@ func (t *ParseTest) EmptyConfig() {
 }
 
 func (t *ParseTest) MissingExcludesArray() {
-	ExpectEq("TODO", "")
+	t.data = `
+	{
+		"jobs": {
+			"taco": {
+				"base_path": "/foo"
+			}
+		}
+	}
+	`
+
+	t.parse()
+
+	AssertEq(nil, t.err)
+
+	AssertEq(1, len(t.cfg.Jobs))
+	AssertNe(nil, t.cfg.Jobs["taco"])
+	ExpectThat(t.cfg.Jobs["taco"].Excludes, ElementsAre())
 }
 
 func (t *ParseTest) DuplicateJobName() {
 	ExpectEq("TODO", "")
 }
 
-func (t *ParseTest) StructurallyValid() {
+func (t *ParseTest) MultipleValidJobs() {
 	ExpectEq("TODO", "")
 }
