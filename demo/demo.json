@@ -2,7 +2,7 @@
 {
   "jobs": {
     "taco": {
-      "base_path": "/Volumes/Src",
+      "base_path": "/Users/jacobsa/Desktop",
       "excludes": []
     }
   }
