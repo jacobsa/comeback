@@ -127,9 +127,28 @@ func (t *SetTest) BucketSucceeds() {
 
 type GetTest struct {
 	s3KvStoreTest
+
+	key string
+	val []byte
+	err error
 }
 
 func init() { RegisterTestSuite(&GetTest{}) }
+
+func (t *GetTest) SetUp(i *TestInfo) {
+	// Run common setup code.
+	t.s3KvStoreTest.SetUp(i)
+
+	// Create the store successfully.
+	ExpectCall(t.bucket, "ListKeys")(Any()).
+		WillRepeatedly(oglemock.Return([]string{}, nil))
+
+	AssertEq(nil, t.createStore())
+}
+
+func (t *GetTest) callStore() {
+	t.val, t.err = t.store.Get([]byte(t.key))
+}
 
 func (t *GetTest) CallsBucket() {
 	ExpectEq("TODO", "")
