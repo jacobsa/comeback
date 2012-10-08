@@ -50,5 +50,22 @@ func Validate(c *Config) error {
 		}
 	}
 
+	// Validate S3 configuration.
+	if c.S3Bucket == "" {
+		return fmt.Errorf("You must specify an S3 bucket.")
+	}
+
+	if c.S3Region == "" {
+		return fmt.Errorf("You must specify an S3 region.")
+	}
+
+	if c.S3Key.Id == "" {
+		return fmt.Errorf("You must specify an S3 access key ID.")
+	}
+
+	if c.S3Key.Secret == "" {
+		return fmt.Errorf("You must specify an S3 access key secret.")
+	}
+
 	return nil
 }

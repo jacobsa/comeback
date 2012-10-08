@@ -16,6 +16,7 @@
 package config_test
 
 import (
+	"github.com/jacobsa/aws"
 	"github.com/jacobsa/comeback/config"
 	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
@@ -35,7 +36,16 @@ type ValidateTest struct {
 func init() { RegisterTestSuite(&ValidateTest{}) }
 
 func (t *ValidateTest) SetUp(i *TestInfo) {
-	t.cfg = &config.Config{Jobs: make(map[string]*config.Job)}
+	// Make the config valid by default.
+	t.cfg = &config.Config{
+		Jobs: make(map[string]*config.Job),
+		S3Bucket: "foo",
+		S3Region: "foo",
+		S3Key: aws.AccessKey{
+			Id: "foo",
+			Secret: "foo",
+		},
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -85,10 +95,43 @@ func (t *ValidateTest) BasePathNotValidUtf8() {
 	ExpectThat(err, Error(HasSubstr("taco")))
 }
 
-func (t *ValidateTest) EverythingValid() {
-	t.cfg.Jobs["taco"] = &config.Job{BasePath: "/a/타코"}
-	t.cfg.Jobs["burrito"] = &config.Job{BasePath: "/c"}
+func (t *ValidateTest) MissingS3Bucket() {
+	t.cfg.S3Bucket = ""
 
+	err := config.Validate(t.cfg)
+
+	ExpectThat(err, Error(HasSubstr("S3")))
+	ExpectThat(err, Error(HasSubstr("bucket")))
+}
+
+func (t *ValidateTest) MissingS3Region() {
+	t.cfg.S3Region = ""
+
+	err := config.Validate(t.cfg)
+
+	ExpectThat(err, Error(HasSubstr("S3")))
+	ExpectThat(err, Error(HasSubstr("region")))
+}
+
+func (t *ValidateTest) MissingS3KeyId() {
+	t.cfg.S3Key.Id = ""
+
+	err := config.Validate(t.cfg)
+
+	ExpectThat(err, Error(HasSubstr("S3")))
+	ExpectThat(err, Error(HasSubstr("key ID")))
+}
+
+func (t *ValidateTest) MissingS3KeySecret() {
+	t.cfg.S3Key.Secret = ""
+
+	err := config.Validate(t.cfg)
+
+	ExpectThat(err, Error(HasSubstr("S3")))
+	ExpectThat(err, Error(HasSubstr("key secret")))
+}
+
+func (t *ValidateTest) EverythingValid() {
 	err := config.Validate(t.cfg)
 	ExpectEq(nil, err)
 }
