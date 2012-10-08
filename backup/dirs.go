@@ -106,6 +106,7 @@ type dirSaver struct {
 func (s *dirSaver) saveDir(
 	basePath string,
 	relPath string,
+	exclusions []*regexp.Regexp,
 	entry *fs.DirectoryEntry) (
 	[]blob.Score,
 	error) {
@@ -113,7 +114,7 @@ func (s *dirSaver) saveDir(
 	score, err := s.wrapped.Save(
 		basePath,
 		path.Join(relPath, entry.Name),
-		[]*regexp.Regexp{})
+		exclusions)
 
 	if err != nil {
 		return nil, err
@@ -164,7 +165,7 @@ func (s *dirSaver) Save(
 			}
 
 		case fs.TypeDirectory:
-			entry.Scores, err = s.saveDir(basePath, relPath, entry)
+			entry.Scores, err = s.saveDir(basePath, relPath, exclusions, entry)
 		case fs.TypeSymlink:
 		case fs.TypeBlockDevice:
 		case fs.TypeCharDevice:
