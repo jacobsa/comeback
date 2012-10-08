@@ -81,7 +81,7 @@ type DirectorySaverTest struct {
 
 	basePath   string
 	relPath    string
-	exclusions []regexp.Regexp
+	exclusions []*regexp.Regexp
 
 	score    blob.Score
 	err      error
