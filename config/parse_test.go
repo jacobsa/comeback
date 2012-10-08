@@ -84,7 +84,7 @@ func (t *ParseTest) BasePathIsNumber() {
 	t.data = `
 	{
 		"jobs": {
-			{
+			"taco": {
 				"base_path": 17
 			}
 		}
@@ -100,7 +100,7 @@ func (t *ParseTest) BasePathIsNull() {
 	t.data = `
 	{
 		"jobs": {
-			{
+			"taco": {
 				"base_path": null
 			}
 		}
@@ -116,7 +116,7 @@ func (t *ParseTest) BasePathIsObject() {
 	t.data = `
 	{
 		"jobs": {
-			{
+			"taco": {
 				"base_path": {}
 			}
 		}
@@ -132,15 +132,15 @@ func (t *ParseTest) OneExcludeDoesntCompile() {
 	t.data = `
 	{
 		"jobs": {
-			{
+			"taco": {
 				"base_path": "/foo",
 				"excludes": ["a"],
 			},
-			{
+			"burrito": {
 				"base_path": "/bar",
 				"excludes": ["b", "(c"]
 			},
-			{
+			"enchilada": {
 				"base_path": "/foo",
 				"excludes": ["d"]
 			}
