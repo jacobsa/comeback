@@ -210,11 +210,11 @@ func (t *ParseTest) MultipleValidJobs() {
 	AssertNe(nil, t.cfg.Jobs["taco"])
 	ExpectEq("/foo", t.cfg.Jobs["taco"].BasePath)
 	AssertThat(t.cfg.Jobs["taco"].Excludes, ElementsAre(Any()))
-	ExpectEq("a.b", t.cfg.Jobs["taco"].Excludes[0])
+	ExpectEq("a.b", t.cfg.Jobs["taco"].Excludes[0].String())
 
 	AssertNe(nil, t.cfg.Jobs["burrito"])
 	ExpectEq("/bar", t.cfg.Jobs["burrito"].BasePath)
 	AssertThat(t.cfg.Jobs["burrito"].Excludes, ElementsAre(Any(), Any()))
-	ExpectEq("c", t.cfg.Jobs["burrito"].Excludes[0])
-	ExpectEq("d", t.cfg.Jobs["burrito"].Excludes[1])
+	ExpectEq("c", t.cfg.Jobs["burrito"].Excludes[0].String())
+	ExpectEq("d", t.cfg.Jobs["burrito"].Excludes[1].String())
 }
