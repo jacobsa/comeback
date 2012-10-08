@@ -77,7 +77,7 @@ func (t *KvBasedStore_StoreTest) SetSaysOkay() {
 ////////////////////////////////////////////////////////////////////////
 
 type KvBasedStore_LoadTest struct {
-	encryptingStoreTest
+	kvBasedStoreTest
 }
 
 func init() { RegisterTestSuite(&KvBasedStore_LoadTest{}) }
