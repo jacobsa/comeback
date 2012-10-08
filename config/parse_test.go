@@ -185,28 +185,6 @@ func (t *ParseTest) MissingExcludesArray() {
 	ExpectThat(t.cfg.Jobs["taco"].Excludes, ElementsAre())
 }
 
-func (t *ParseTest) DuplicateJobName() {
-	t.data = `
-	{
-		"jobs": {
-			"taco": {
-				"base_path": "/foo"
-			},
-			"burrito": {
-				"base_path": "/bar"
-			},
-			"taco": {
-				"base_path": "/enchilada"
-			}
-		}
-	}
-	`
-
-	t.parse()
-
-	ExpectThat(t.err, Error(HasSubstr("TODO")))
-}
-
 func (t *ParseTest) MultipleValidJobs() {
 	t.data = `
 	{
