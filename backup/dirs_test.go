@@ -113,10 +113,6 @@ func (t *DirectorySaverTest) callSaver() {
 // Tests
 ////////////////////////////////////////////////////////////////////////
 
-func (t *DirectorySaverTest) InitialRelPathExcluded() {
-	ExpectEq("TODO", "")
-}
-
 func (t *DirectorySaverTest) CallsReadDir() {
 	t.basePath = "/taco"
 	t.relPath = "burrito/enchilada"

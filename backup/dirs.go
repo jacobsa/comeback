@@ -33,7 +33,8 @@ type DirectorySaver interface {
 	// listing in a format that can be recovered with repr.Unmarshal.
 	//
 	// Recursively exclude from backup relative paths that match any of the
-	// supplied exclusion regexps.
+	// supplied exclusion regexps. This is *not* tested against the initial
+	// relative path.
 	Save(basePath, relPath string, exclusions []*regexp.Regexp) (blob.Score, error)
 }
 
