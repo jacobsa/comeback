@@ -16,6 +16,8 @@
 package config_test
 
 import (
+	"github.com/jacobsa/comeback/config"
+	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
 	"testing"
 )
@@ -27,22 +29,42 @@ func TestValidate(t *testing.T) { RunTests(t) }
 ////////////////////////////////////////////////////////////////////////
 
 type ValidateTest struct {
+	cfg *config.Config
 }
 
 func init() { RegisterTestSuite(&ValidateTest{}) }
+
+func (t *ValidateTest) SetUp(i *TestInfo) {
+	t.cfg = &config.Config{Jobs: make(map[string]*config.Job)}
+}
 
 ////////////////////////////////////////////////////////////////////////
 // Tests
 ////////////////////////////////////////////////////////////////////////
 
 func (t *ValidateTest) JobNameNotValidUtf8() {
+	t.cfg.Jobs["taco"] = &config.Job{BasePath: "/a"}
+	t.cfg.Jobs["foo\x80\x81\x82bar"] = &config.Job{BasePath: "/b"}
+	t.cfg.Jobs["burrito"] = &config.Job{BasePath: "/c"}
+
+	err := config.Validate(t.cfg)
+
+	ExpectThat(err, HasSubstr("name"))
+	ExpectThat(err, HasSubstr("UTF-8"))
+}
+
+func (t *ValidateTest) EmptyBasePath() {
 	ExpectEq("TODO", "")
 }
 
-func (t *ValidateTest) MissingBasePath() {
+func (t *ValidateTest) BasePathNotAbsolute() {
 	ExpectEq("TODO", "")
 }
 
 func (t *ValidateTest) BasePathNotValidUtf8() {
+	ExpectEq("TODO", "")
+}
+
+func (t *ValidateTest) EverythingValid() {
 	ExpectEq("TODO", "")
 }
