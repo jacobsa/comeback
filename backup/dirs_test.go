@@ -161,7 +161,35 @@ func (t *DirectorySaverTest) NoEntriesInDirectory() {
 }
 
 func (t *DirectorySaverTest) AllEntriesExcluded() {
-	ExpectEq("TODO", "")
+	t.basePath = "/tortilla"
+	t.relPath = "taco"
+
+	t.exclusions = []*regexp.Regexp{
+		regexp.MustCompile(`taco/q`),
+		regexp.MustCompile(`taco/b`),
+	}
+
+	// ReadDir
+	entries := []*fs.DirectoryEntry{
+		makeEntry("burrito", fs.TypeFile),
+		makeEntry("queso", fs.TypeDirectory),
+	}
+
+	ExpectCall(t.fileSystem, "ReadDir")(Any()).
+		WillOnce(oglemock.Return(entries, nil))
+
+	// Blob store
+	var blob []byte
+	ExpectCall(t.blobStore, "Store")(Any()).
+		WillOnce(saveBlob(&blob))
+
+	// Call
+	t.callSaver()
+
+	AssertNe(nil, blob)
+	entries, err := repr.Unmarshal(blob)
+	AssertEq(nil, err)
+	ExpectThat(entries, ElementsAre())
 }
 
 func (t *DirectorySaverTest) CallsLinkResolverFileSystemAndFileSaverForFiles() {
