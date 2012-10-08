@@ -18,6 +18,7 @@ package config
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
 )
 
 type jsonJob struct {
@@ -39,9 +40,20 @@ func Parse(data []byte) (*Config, error) {
 
 	// Convert to our public representation.
 	cfg := &Config{Jobs: make(map[string]*Job)}
-	for name, _ := range jCfg.Jobs {
+	for name, jJob := range jCfg.Jobs {
+		// Create a public job and populate it.
 		job := new(Job)
 		cfg.Jobs[name] = job
+
+		job.BasePath = jJob.BasePath
+		for _, reStr := range jJob.Excludes {
+			re, err := regexp.Compile(reStr)
+			if err != nil {
+				return nil, err
+			}
+
+			job.Excludes = append(job.Excludes, re)
+		}
 	}
 
 	return cfg, nil

@@ -153,7 +153,8 @@ func (t *ParseTest) OneExcludeDoesntCompile() {
 
 	t.parse()
 
-	ExpectThat(t.err, Error(HasSubstr("TODO")))
+	ExpectThat(t.err, Error(HasSubstr("missing closing")))
+	ExpectThat(t.err, Error(HasSubstr("(c")))
 }
 
 func (t *ParseTest) EmptyConfig() {
