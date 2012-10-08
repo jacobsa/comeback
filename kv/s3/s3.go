@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"github.com/jacobsa/aws/s3"
 	"github.com/jacobsa/comeback/kv"
+	"sync"
 )
 
 // Create a key/value store that stores data in the supplied S3 bucket. Keys
@@ -40,7 +41,12 @@ func NewS3KvStore(bucket s3.Bucket) (kv.Store, error) {
 		keyMap[key] = true
 	}
 
-	return &kvStore{bucket, keyMap}, nil
+	store := &kvStore{
+		bucket: bucket,
+		knownKeys: keyMap,
+	}
+
+	return store, nil
 }
 
 func getAllKeys(bucket s3.Bucket) ([]string, error) {
@@ -68,7 +74,9 @@ func getAllKeys(bucket s3.Bucket) ([]string, error) {
 
 type kvStore struct {
 	bucket s3.Bucket
-	knownKeys map[string]bool
+
+	mutex sync.RWMutex
+	knownKeys map[string]bool  // Protected by mutex
 }
 
 func (s *kvStore) Set(key []byte, val []byte) error {
@@ -80,5 +88,9 @@ func (s *kvStore) Get(key []byte) (val []byte, err error) {
 }
 
 func (s *kvStore) Contains(key []byte) (res bool, err error) {
-	return false, fmt.Errorf("TODO")
+	s.mutex.RLock()
+	defer s.mutex.RUnlock()
+
+	_, ok := s.knownKeys[string(key)]
+	return ok, nil
 }
