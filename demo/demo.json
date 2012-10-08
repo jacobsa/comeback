@@ -1,0 +1,9 @@
+
+{
+  "jobs": {
+    "taco": {
+      "base_path": "/Volumes/Src",
+      "excludes": []
+    }
+  }
+}
