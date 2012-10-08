@@ -16,12 +16,24 @@
 package blob
 
 import (
+	"fmt"
 )
 
 // Return a blob store that wraps the supplied one, confirming that the blob
 // contents and scores it returns are correct, guarding against silent data
 // corruption.
 func NewCheckingStore(wrapped Store) Store {
-	// TODO
-	return nil
+	return &checkingStore{wrapped}
+}
+
+type checkingStore struct {
+	wrapped Store
+}
+
+func (s *checkingStore) Store(blob []byte) (score Score, err error) {
+	return nil, fmt.Errorf("TODO")
+}
+
+func (s *checkingStore) Load(score Score) (blob []byte, err error) {
+	return nil, fmt.Errorf("TODO")
 }
