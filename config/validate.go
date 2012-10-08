@@ -17,6 +17,7 @@ package config
 
 import (
 	"fmt"
+	"path"
 	"unicode/utf8"
 )
 
@@ -24,6 +25,11 @@ func validateJob(j *Job) error {
 	// Base paths must be non-empty valid UTF-8.
 	if j.BasePath == "" || !utf8.Valid([]byte(j.BasePath)) {
 		return fmt.Errorf("Base paths must be non-empty valid UTF-8.")
+	}
+
+	// Base paths must be absolute.
+	if !path.IsAbs(j.BasePath) {
+		return fmt.Errorf("Base paths must absolute.")
 	}
 
 	return nil
