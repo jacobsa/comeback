@@ -18,9 +18,9 @@ package disk_test
 import (
 	"bytes"
 	"errors"
-	"github.com/jacobsa/comeback/blob"
-	"github.com/jacobsa/comeback/blob/disk"
 	"github.com/jacobsa/comeback/fs/mock"
+	"github.com/jacobsa/comeback/kv"
+	"github.com/jacobsa/comeback/kv/disk"
 	. "github.com/jacobsa/oglematchers"
 	"github.com/jacobsa/oglemock"
 	. "github.com/jacobsa/ogletest"
@@ -57,7 +57,7 @@ func (f *fakeFile) Close() error {
 type diskStoreTest struct {
 	basePath string
 	fs       mock_fs.MockFileSystem
-	store    blob.Store
+	store    kv.Store
 }
 
 func (t *diskStoreTest) SetUp(i *TestInfo) {
@@ -66,7 +66,7 @@ func (t *diskStoreTest) SetUp(i *TestInfo) {
 	t.basePath = "/foo/bar"
 	t.fs = mock_fs.NewMockFileSystem(i.MockController, "fs")
 
-	t.store, err = disk.NewDiskBlobStore(t.basePath, t.fs)
+	t.store, err = disk.NewDiskKvStore(t.basePath, t.fs)
 	AssertEq(nil, err)
 }
 

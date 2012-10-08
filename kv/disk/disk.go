@@ -13,41 +13,40 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package disk implements a blob store on the local disk.
+// Package disk implements a key/value store on the local disk.
 package disk
 
 import (
 	"fmt"
-	"github.com/jacobsa/comeback/blob"
+	"github.com/jacobsa/comeback/kv"
 	"github.com/jacobsa/comeback/fs"
 	"io/ioutil"
 	"path"
 )
 
-// Return a blob store that stores its blobs in the directory with the supplied
-// path.
-func NewDiskBlobStore(path string, fileSystem fs.FileSystem) (blob.Store, error) {
-	return &blobStore{basePath: path, fileSystem: fileSystem}, nil
+// Return a key/value store that stores its values in the directory with the
+// supplied path. Only keys that represent valid file names are supported.
+func NewDiskKvStore(path string, fileSystem fs.FileSystem) (kv.Store, error) {
+	return &kvStore{basePath: path, fileSystem: fileSystem}, nil
 }
 
-type blobStore struct {
+type kvStore struct {
 	basePath   string
 	fileSystem fs.FileSystem
 }
 
-func (s *blobStore) Store(b []byte) (blob.Score, error) {
-	score := blob.ComputeScore(b)
-	filePath := path.Join(s.basePath, score.Hex())
+func (s *kvStore) Set(key []byte, val []byte) error {
+	filePath := path.Join(s.basePath, string(key))
 
-	if err := s.fileSystem.WriteFile(filePath, b, 0600); err != nil {
-		return nil, fmt.Errorf("WriteFile: %v", err)
+	if err := s.fileSystem.WriteFile(filePath, val, 0600); err != nil {
+		return fmt.Errorf("WriteFile: %v", err)
 	}
 
-	return score, nil
+	return nil
 }
 
-func (s *blobStore) Load(score blob.Score) ([]byte, error) {
-	filePath := path.Join(s.basePath, score.Hex())
+func (s *kvStore) Get(key []byte) ([]byte, error) {
+	filePath := path.Join(s.basePath, string(key))
 	file, err := s.fileSystem.OpenForReading(filePath)
 	if err != nil {
 		return nil, fmt.Errorf("OpenForReading: %v", err)
@@ -61,4 +60,9 @@ func (s *blobStore) Load(score blob.Score) ([]byte, error) {
 	}
 
 	return data, nil
+}
+
+func (s *kvStore) Contains(key []byte) (res bool, err error) {
+	// Don't bother trying. This is legal according to the interface.
+	return false, nil
 }
