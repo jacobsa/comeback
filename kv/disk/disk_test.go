@@ -71,88 +71,86 @@ func (t *diskStoreTest) SetUp(i *TestInfo) {
 }
 
 ////////////////////////////////////////////////////////////////////////
-// Tests
+// Set
 ////////////////////////////////////////////////////////////////////////
 
-type StoreTest struct {
+type SetTest struct {
 	diskStoreTest
 }
 
-func init() { RegisterTestSuite(&StoreTest{}) }
+func init() { RegisterTestSuite(&SetTest{}) }
 
-func (t *StoreTest) CallsFileSystem() {
-	b := []byte("taco")
+func (t *SetTest) CallsFileSystem() {
+	key := []byte("taco")
+	val := []byte("burrito")
 
 	// File system
-	expectedPath := path.Join(t.basePath, "9dc4319c27f6479adc842ebef4a324a40759b95c")
-	ExpectCall(t.fs, "WriteFile")(expectedPath, DeepEquals(b), 0600).
+	expectedPath := path.Join(t.basePath, "taco")
+	ExpectCall(t.fs, "WriteFile")(expectedPath, DeepEquals("burrito"), 0600).
 		WillOnce(oglemock.Return(errors.New("")))
 
 	// Call
-	t.store.Store(b)
+	t.store.Set(key, val)
 }
 
-func (t *StoreTest) FileSystemReturnsError() {
+func (t *SetTest) FileSystemReturnsError() {
 	// File system
 	ExpectCall(t.fs, "WriteFile")(Any(), Any(), Any()).
 		WillOnce(oglemock.Return(errors.New("taco")))
 
 	// Call
-	_, err := t.store.Store([]byte{})
+	err := t.store.Set([]byte{}, []byte{})
 
 	ExpectThat(err, Error(HasSubstr("WriteFile")))
 	ExpectThat(err, Error(HasSubstr("taco")))
 }
 
-func (t *StoreTest) FileSystemSaysOkay() {
-	b := []byte("taco")
-
+func (t *SetTest) FileSystemSaysOkay() {
 	// File system
 	ExpectCall(t.fs, "WriteFile")(Any(), Any(), Any()).
 		WillOnce(oglemock.Return(nil))
 
 	// Call
-	score, err := t.store.Store(b)
-	AssertEq(nil, err)
+	err := t.store.Set([]byte{}, []byte{})
 
-	ExpectThat(score, DeepEquals(blob.ComputeScore(b)))
+	ExpectEq(nil, err)
 }
 
 ////////////////////////////////////////////////////////////////////////
-// Load
+// Get
 ////////////////////////////////////////////////////////////////////////
 
-type LoadTest struct {
+type GetTest struct {
 	diskStoreTest
 }
 
-func init() { RegisterTestSuite(&LoadTest{}) }
+func init() { RegisterTestSuite(&GetTest{}) }
 
-func (t *LoadTest) CallsFileSystem() {
-	score := blob.ComputeScore([]byte("taco"))
+func (t *GetTest) CallsFileSystem() {
+	key := []byte("taco")
 
 	// File system
-	expectedPath := path.Join(t.basePath, "9dc4319c27f6479adc842ebef4a324a40759b95c")
+	expectedPath := path.Join(t.basePath, "taco")
 	ExpectCall(t.fs, "OpenForReading")(expectedPath).
 		WillOnce(oglemock.Return(nil, errors.New("")))
 
 	// Call
-	t.store.Load(score)
+	t.store.Get(key)
 }
 
-func (t *LoadTest) FileSystemReturnsError() {
+func (t *GetTest) FileSystemReturnsError() {
 	// File system
 	ExpectCall(t.fs, "OpenForReading")(Any()).
 		WillOnce(oglemock.Return(nil, errors.New("taco")))
 
 	// Call
-	_, err := t.store.Load(blob.ComputeScore([]byte{}))
+	_, err := t.store.Get([]byte{})
 
 	ExpectThat(err, Error(HasSubstr("OpenForReading")))
 	ExpectThat(err, Error(HasSubstr("taco")))
 }
 
-func (t *LoadTest) ReadReturnsError() {
+func (t *GetTest) ReadReturnsError() {
 	// File system
 	data := make([]byte, 1024)
 	f := &fakeFile{r: iotest.TimeoutReader(bytes.NewBuffer(data))}
@@ -160,23 +158,23 @@ func (t *LoadTest) ReadReturnsError() {
 		WillOnce(oglemock.Return(f, nil))
 
 	// Call
-	_, err := t.store.Load(blob.ComputeScore([]byte{}))
+	_, err := t.store.Get([]byte{})
 
 	ExpectThat(err, Error(HasSubstr("ReadAll")))
 	ExpectThat(err, Error(HasSubstr("timeout")))
 	ExpectTrue(f.closed)
 }
 
-func (t *LoadTest) ReadSucceeds() {
+func (t *GetTest) ReadSucceeds() {
 	// File system
 	f := &fakeFile{r: bytes.NewBufferString("taco")}
 	ExpectCall(t.fs, "OpenForReading")(Any()).
 		WillOnce(oglemock.Return(f, nil))
 
 	// Call
-	blob, err := t.store.Load(blob.ComputeScore([]byte{}))
+	val, err := t.store.Get([]byte{})
 	AssertEq(nil, err)
 
-	ExpectThat(blob, DeepEquals([]byte("taco")))
+	ExpectThat(val, DeepEquals([]byte("taco")))
 	ExpectTrue(f.closed)
 }
