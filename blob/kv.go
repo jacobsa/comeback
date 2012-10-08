@@ -32,7 +32,27 @@ type kvBasedBlobStore struct {
 }
 
 func (s *kvBasedBlobStore) Store(blob []byte) (score Score, err error) {
-	return nil, fmt.Errorf("TODO")
+	score = ComputeScore(blob)
+
+	// Choose a key for this blob based on its score.
+	key := []byte(score.Hex())
+
+	// Don't bother storing the same blob twice.
+	alreadyExists, err := s.kvStore.Contains(key)
+	if err != nil {
+		return nil, fmt.Errorf("Contains: %v", err)
+	}
+
+	if alreadyExists {
+		return score, nil
+	}
+
+	// Store the blob.
+	if err := s.kvStore.Set(key, blob); err != nil {
+		return nil, fmt.Errorf("Set: %v", err)
+	}
+
+	return score, nil
 }
 
 func (s *kvBasedBlobStore) Load(score Score) (blob []byte, err error) {
