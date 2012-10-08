@@ -48,8 +48,8 @@ func (s *onDemandDirSaver) Save(
 	basePath,
 	relPath string,
 	exclusions []regexp.Regexp) (
-		score blob.Score,
-		err error) {
+	score blob.Score,
+	err error) {
 	return s.createSaver(s).Save(basePath, relPath, exclusions)
 }
 
@@ -107,8 +107,8 @@ func (s *dirSaver) saveDir(
 	basePath string,
 	relPath string,
 	entry *fs.DirectoryEntry) (
-		[]blob.Score,
-		error) {
+	[]blob.Score,
+	error) {
 	// Recurse.
 	score, err := s.wrapped.Save(
 		basePath,
@@ -138,8 +138,8 @@ func (s *dirSaver) Save(
 	basePath,
 	relPath string,
 	exclusions []regexp.Regexp) (
-		score blob.Score,
-		err error) {
+	score blob.Score,
+	err error) {
 	dirpath := path.Join(basePath, relPath)
 
 	// Grab a listing for the directory.

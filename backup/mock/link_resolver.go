@@ -7,8 +7,8 @@
 package mock_backup
 
 import (
-	backup "github.com/jacobsa/comeback/backup"
 	fmt "fmt"
+	backup "github.com/jacobsa/comeback/backup"
 	oglemock "github.com/jacobsa/oglemock"
 	runtime "runtime"
 	unsafe "unsafe"
@@ -20,16 +20,16 @@ type MockLinkResolver interface {
 }
 
 type mockLinkResolver struct {
-	controller	oglemock.Controller
-	description	string
+	controller  oglemock.Controller
+	description string
 }
 
 func NewMockLinkResolver(
 	c oglemock.Controller,
 	desc string) MockLinkResolver {
 	return &mockLinkResolver{
-		controller:	c,
-		description:	desc,
+		controller:  c,
+		description: desc,
 	}
 }
 
