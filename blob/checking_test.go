@@ -82,7 +82,7 @@ func (t *CheckingStore_StoreTest) WrappedReturnsIncorrectScore() {
 
 	// Wrapped
 	ExpectCall(t.wrapped, "Store")(Any()).
-		WillOnce(oglemock.Return(correctScore, nil))
+		WillOnce(oglemock.Return(incorrectScore, nil))
 
 	// Call
 	_, err := t.store.Store(b)
@@ -94,7 +94,18 @@ func (t *CheckingStore_StoreTest) WrappedReturnsIncorrectScore() {
 }
 
 func (t *CheckingStore_StoreTest) WrappedReturnsCorrectScore() {
-	ExpectEq("TODO", "")
+	b := []byte{0xde, 0xad}
+	correctScore := blob.ComputeScore(b)
+
+	// Wrapped
+	ExpectCall(t.wrapped, "Store")(Any()).
+		WillOnce(oglemock.Return(correctScore, nil))
+
+	// Call
+	score, err := t.store.Store(b)
+
+	AssertEq(nil, err)
+	ExpectThat(score, DeepEquals(correctScore))
 }
 
 ////////////////////////////////////////////////////////////////////////
