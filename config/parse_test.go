@@ -165,16 +165,63 @@ func (t *ParseTest) MissingExcludesArray() {
 	t.parse()
 
 	AssertEq(nil, t.err)
-
 	AssertEq(1, len(t.cfg.Jobs))
+
 	AssertNe(nil, t.cfg.Jobs["taco"])
 	ExpectThat(t.cfg.Jobs["taco"].Excludes, ElementsAre())
 }
 
 func (t *ParseTest) DuplicateJobName() {
-	ExpectEq("TODO", "")
+	t.data = `
+	{
+		"jobs": {
+			"taco": {
+				"base_path": "/foo"
+			},
+			"burrito": {
+				"base_path": "/bar"
+			},
+			"taco": {
+				"base_path": "/enchilada"
+			}
+		}
+	}
+	`
+
+	t.parse()
+
+	ExpectThat(t.err, Error(HasSubstr("TODO")))
 }
 
 func (t *ParseTest) MultipleValidJobs() {
-	ExpectEq("TODO", "")
+	t.data = `
+	{
+		"jobs": {
+			"taco": {
+				"base_path": "/foo"
+				"excludes": ["a.b"],
+			},
+			"burrito": {
+				"base_path": "/bar"
+				"excludes": ["c", "d"],
+			}
+		}
+	}
+	`
+
+	t.parse()
+
+	AssertEq(nil, t.err)
+	AssertEq(2, len(t.cfg.Jobs))
+
+	AssertNe(nil, t.cfg.Jobs["taco"])
+	ExpectEq("/foo", t.cfg.Jobs["taco"].BasePath)
+	AssertThat(t.cfg.Jobs["taco"].Excludes, ElementsAre(Any()))
+	ExpectEq("a.b", t.cfg.Jobs["taco"].Excludes[0])
+
+	AssertNe(nil, t.cfg.Jobs["burrito"])
+	ExpectEq("/bar", t.cfg.Jobs["burrito"].BasePath)
+	AssertThat(t.cfg.Jobs["burrito"].Excludes, ElementsAre(Any(), Any()))
+	ExpectEq("c", t.cfg.Jobs["burrito"].Excludes[0])
+	ExpectEq("d", t.cfg.Jobs["burrito"].Excludes[1])
 }
