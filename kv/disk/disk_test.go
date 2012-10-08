@@ -86,7 +86,7 @@ func (t *SetTest) CallsFileSystem() {
 
 	// File system
 	expectedPath := path.Join(t.basePath, "taco")
-	ExpectCall(t.fs, "WriteFile")(expectedPath, DeepEquals("burrito"), 0600).
+	ExpectCall(t.fs, "WriteFile")(expectedPath, DeepEquals(val), 0600).
 		WillOnce(oglemock.Return(errors.New("")))
 
 	// Call
