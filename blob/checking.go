@@ -16,6 +16,7 @@
 package blob
 
 import (
+	"bytes"
 	"fmt"
 )
 
@@ -31,7 +32,21 @@ type checkingStore struct {
 }
 
 func (s *checkingStore) Store(blob []byte) (score Score, err error) {
-	return nil, fmt.Errorf("TODO")
+	// Call the wrapped store.
+	if score, err = s.wrapped.Store(blob); err != nil {
+		return
+	}
+
+	// Check its result.
+	expected := ComputeScore(blob)
+	if !bytes.Equal(score, expected) {
+		return nil, fmt.Errorf(
+			"Incorrect score returned for blob; %s vs %s.",
+			score.Hex(),
+			expected.Hex())
+	}
+
+	return
 }
 
 func (s *checkingStore) Load(score Score) (blob []byte, err error) {
