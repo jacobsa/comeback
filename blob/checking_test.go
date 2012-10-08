@@ -59,11 +59,18 @@ func (t *CheckingStore_StoreTest) CallsWrapped() {
 		WillOnce(oglemock.Return(nil, errors.New("")))
 
 	// Call
-	t.store.Store([]byte{})
+	t.store.Store(blob)
 }
 
 func (t *CheckingStore_StoreTest) WrappedReturnsError() {
-	ExpectEq("TODO", "")
+	// Wrapped
+	ExpectCall(t.wrapped, "Store")(Any()).
+		WillOnce(oglemock.Return(nil, errors.New("taco")))
+
+	// Call
+	_, err := t.store.Store([]byte{})
+
+	ExpectThat(err, Error(Equals("taco")))
 }
 
 func (t *CheckingStore_StoreTest) WrappedReturnsIncorrectScore() {
