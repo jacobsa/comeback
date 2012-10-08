@@ -7,9 +7,9 @@
 package mock_backup
 
 import (
+	fmt "fmt"
 	backup "github.com/jacobsa/comeback/backup"
 	blob "github.com/jacobsa/comeback/blob"
-	fmt "fmt"
 	oglemock "github.com/jacobsa/oglemock"
 	regexp "regexp"
 	runtime "runtime"
@@ -22,16 +22,16 @@ type MockDirectorySaver interface {
 }
 
 type mockDirectorySaver struct {
-	controller	oglemock.Controller
-	description	string
+	controller  oglemock.Controller
+	description string
 }
 
 func NewMockDirectorySaver(
 	c oglemock.Controller,
 	desc string) MockDirectorySaver {
 	return &mockDirectorySaver{
-		controller:	c,
-		description:	desc,
+		controller:  c,
+		description: desc,
 	}
 }
 

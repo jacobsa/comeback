@@ -21,7 +21,7 @@ import (
 )
 
 type jsonJob struct {
-	BasePath string `json:"base_path"`
+	BasePath string   `json:"base_path"`
 	Excludes []string `json:"excludes"`
 }
 

@@ -30,8 +30,8 @@ func TestParse(t *testing.T) { RunTests(t) }
 
 type ParseTest struct {
 	data string
-	cfg *config.Config
-	err error
+	cfg  *config.Config
+	err  error
 }
 
 func init() { RegisterTestSuite(&ParseTest{}) }

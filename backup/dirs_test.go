@@ -83,8 +83,8 @@ type DirectorySaverTest struct {
 	relPath    string
 	exclusions []*regexp.Regexp
 
-	score    blob.Score
-	err      error
+	score blob.Score
+	err   error
 }
 
 func init() { RegisterTestSuite(&DirectorySaverTest{}) }
@@ -198,9 +198,9 @@ func (t *DirectorySaverTest) CallsLinkResolverFileSystemAndFileSaverForFiles() {
 	t.relPath = "taco/queso"
 
 	t.exclusions = []*regexp.Regexp{
-		regexp.MustCompile(`foobar`),  // Matches none
-		regexp.MustCompile(`queso/n\w+s`),  // Matches second
-		regexp.MustCompile(`bazqux`),  // Matches none
+		regexp.MustCompile(`foobar`),      // Matches none
+		regexp.MustCompile(`queso/n\w+s`), // Matches second
+		regexp.MustCompile(`bazqux`),      // Matches none
 	}
 
 	// ReadDir
@@ -324,9 +324,9 @@ func (t *DirectorySaverTest) CallsDirSaverForDirs() {
 	t.relPath = "queso/tortilla"
 
 	t.exclusions = []*regexp.Regexp{
-		regexp.MustCompile(`foobar`),  // Matches none
-		regexp.MustCompile(`tortilla/n\w+s`),  // Matches second
-		regexp.MustCompile(`bazqux`),  // Matches none
+		regexp.MustCompile(`foobar`),         // Matches none
+		regexp.MustCompile(`tortilla/n\w+s`), // Matches second
+		regexp.MustCompile(`bazqux`),         // Matches none
 	}
 
 	// ReadDir
@@ -410,7 +410,7 @@ func (t *DirectorySaverTest) OneTypeIsUnsupported() {
 
 func (t *DirectorySaverTest) CallsBlobStore() {
 	t.exclusions = []*regexp.Regexp{
-		regexp.MustCompile(`cilantro`),  // Matches third
+		regexp.MustCompile(`cilantro`), // Matches third
 	}
 
 	// ReadDir

@@ -23,4 +23,3 @@ import (
 func Validate(c *Config) error {
 	return fmt.Errorf("TODO: Implement config.Validate.")
 }
-
