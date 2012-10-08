@@ -21,8 +21,8 @@ import (
 	"flag"
 	"fmt"
 	"github.com/jacobsa/comeback/blob"
-	"github.com/jacobsa/comeback/blob/disk"
 	"github.com/jacobsa/comeback/fs"
+	"github.com/jacobsa/comeback/kv/disk"
 	"github.com/jacobsa/comeback/repr"
 	"github.com/jacobsa/comeback/sys"
 	"io"
@@ -370,11 +370,14 @@ func main() {
 		log.Fatalf("Creating file system: %v", err)
 	}
 
-	// Create the blob store.
-	g_blobStore, err = disk.NewDiskBlobStore("/tmp/blobs", fileSystem)
+	// Create the kv store.
+	kvStore, err := disk.NewDiskKvStore("/tmp/blobs", fileSystem)
 	if err != nil {
-		log.Fatalf("Creating store: %v", err)
+		log.Fatalf("Creating kv store: %v", err)
 	}
+
+	// Create the blob store.
+	g_blobStore = blob.NewKvBasedBlobStore(kvStore)
 
 	// Parse the score.
 	score, err := fromHexHash(*g_score)
