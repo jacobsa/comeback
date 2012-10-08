@@ -15,14 +15,18 @@
 
 package config
 
+import (
+	"regexp"
+)
+
 type Job struct {
 	// The path on the file system that should be backed up.
 	BasePath string
 
 	// A set of regexps to be matched against relative paths within the base
-	// path. If a relative path matches any of these, it will be excluded from
-	// the backup. If the path represents a directory, its contents will also be
-	// excluded.
+	// path, excluding the base path itself. If a relative path matches any of
+	// these, it will be excluded from the backup. If the path represents a
+	// directory, its contents will also be excluded.
 	Excludes []*regexp.Regexp
 }
 
