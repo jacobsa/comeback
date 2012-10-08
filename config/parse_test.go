@@ -76,7 +76,8 @@ func (t *ParseTest) MissingTrailingBrace() {
 
 	t.parse()
 
-	ExpectThat(t.err, Error(HasSubstr("TODO")))
+	ExpectThat(t.err, Error(HasSubstr("JSON")))
+	ExpectThat(t.err, Error(HasSubstr("unexpected end")))
 }
 
 func (t *ParseTest) BasePathIsNumber() {
