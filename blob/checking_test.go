@@ -16,8 +16,11 @@
 package blob_test
 
 import (
+	"errors"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/blob/mock"
+	. "github.com/jacobsa/oglematchers"
+	"github.com/jacobsa/oglemock"
 	. "github.com/jacobsa/ogletest"
 	"testing"
 )
@@ -49,7 +52,14 @@ type CheckingStore_StoreTest struct {
 func init() { RegisterTestSuite(&CheckingStore_StoreTest{}) }
 
 func (t *CheckingStore_StoreTest) CallsWrapped() {
-	ExpectEq("TODO", "")
+	blob := []byte{0xde, 0xad}
+
+	// Wrapped
+	ExpectCall(t.wrapped, "Store")(DeepEquals(blob)).
+		WillOnce(oglemock.Return(nil, errors.New("")))
+
+	// Call
+	t.store.Store([]byte{})
 }
 
 func (t *CheckingStore_StoreTest) WrappedReturnsError() {
