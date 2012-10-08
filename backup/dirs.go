@@ -159,15 +159,18 @@ func (s *dirSaver) Save(
 		return nil, fmt.Errorf("Listing directory: %v", err)
 	}
 
+	// Filter the entries according to the list of exclusions.
+	var tmp []*fs.DirectoryEntry
+	for _, entry := range entries {
+		if !shouldExclude(exclusions, path.Join(relPath, entry.Name)) {
+			tmp = append(tmp, entry)
+		}
+	}
+
+	entries = tmp
+
 	// Save the data for each entry.
 	for _, entry := range entries {
-		entryRelPath := path.Join(relPath, entry.Name)
-
-		// Exclude this entry if necessary.
-		if shouldExclude(exclusions, entryRelPath) {
-			continue
-		}
-
 		// Call the appropriate method based on this entry's type.
 		switch entry.Type {
 		case fs.TypeFile:
@@ -175,7 +178,7 @@ func (s *dirSaver) Save(
 			entry.HardLinkTarget = s.linkResolver.Register(
 				entry.ContainingDevice,
 				entry.Inode,
-				entryRelPath)
+				path.Join(relPath, entry.Name))
 
 			if entry.HardLinkTarget == nil {
 				entry.Scores, err = s.saveFile(dirpath, entry)
