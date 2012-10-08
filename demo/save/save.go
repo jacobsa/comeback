@@ -55,6 +55,12 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Validate the config file.
+	if err := config.Validate(cfg); err != nil {
+		fmt.Printf("Config file invalid: %v", err)
+		os.Exit(1)
+	}
+
 	// Look for the specified job.
 	if *g_jobName == "" {
 		fmt.Println("You must set -job.")
