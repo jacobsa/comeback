@@ -49,8 +49,8 @@ func (t *ValidateTest) JobNameNotValidUtf8() {
 
 	err := config.Validate(t.cfg)
 
-	ExpectThat(err, HasSubstr("name"))
-	ExpectThat(err, HasSubstr("UTF-8"))
+	ExpectThat(err, Error(HasSubstr("name")))
+	ExpectThat(err, Error(HasSubstr("UTF-8")))
 }
 
 func (t *ValidateTest) EmptyBasePath() {
@@ -59,8 +59,8 @@ func (t *ValidateTest) EmptyBasePath() {
 
 	err := config.Validate(t.cfg)
 
-	ExpectThat(err, HasSubstr("base path"))
-	ExpectThat(err, HasSubstr("taco"))
+	ExpectThat(err, Error(HasSubstr("base path")))
+	ExpectThat(err, Error(HasSubstr("taco")))
 }
 
 func (t *ValidateTest) BasePathNotAbsolute() {
@@ -69,9 +69,9 @@ func (t *ValidateTest) BasePathNotAbsolute() {
 
 	err := config.Validate(t.cfg)
 
-	ExpectThat(err, HasSubstr("path"))
-	ExpectThat(err, HasSubstr("absolute"))
-	ExpectThat(err, HasSubstr("taco"))
+	ExpectThat(err, Error(HasSubstr("path")))
+	ExpectThat(err, Error(HasSubstr("absolute")))
+	ExpectThat(err, Error(HasSubstr("taco")))
 }
 
 func (t *ValidateTest) BasePathNotValidUtf8() {
@@ -80,9 +80,9 @@ func (t *ValidateTest) BasePathNotValidUtf8() {
 
 	err := config.Validate(t.cfg)
 
-	ExpectThat(err, HasSubstr("path"))
-	ExpectThat(err, HasSubstr("UTF-8"))
-	ExpectThat(err, HasSubstr("taco"))
+	ExpectThat(err, Error(HasSubstr("path")))
+	ExpectThat(err, Error(HasSubstr("UTF-8")))
+	ExpectThat(err, Error(HasSubstr("taco")))
 }
 
 func (t *ValidateTest) EverythingValid() {
