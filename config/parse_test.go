@@ -48,14 +48,24 @@ func (t *ParseTest) TotalJunk() {
 	t.data = "sdhjklfghdskjghdjkfgj"
 	t.parse()
 
-	ExpectThat(t.err, Error(HasSubstr("TODO")))
+	ExpectThat(t.err, Error(HasSubstr("JSON")))
+	ExpectThat(t.err, Error(HasSubstr("invalid")))
 }
 
-func (t *ParseTest) NonObject() {
+func (t *ParseTest) Null() {
+	t.data = `null`
+	t.parse()
+
+	ExpectThat(t.err, Error(HasSubstr("JSON")))
+	ExpectThat(t.err, Error(HasSubstr("null")))
+}
+
+func (t *ParseTest) Array() {
 	t.data = `[17, 19]`
 	t.parse()
 
-	ExpectThat(t.err, Error(HasSubstr("TODO")))
+	ExpectThat(t.err, Error(HasSubstr("JSON")))
+	ExpectThat(t.err, Error(HasSubstr("array")))
 }
 
 func (t *ParseTest) MissingTrailingBrace() {

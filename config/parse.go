@@ -16,10 +16,26 @@
 package config
 
 import (
+	"encoding/json"
 	"fmt"
 )
 
+type jsonJob struct {
+	BasePath string `json:"base_path"`
+	Excludes []string `json:"excludes"`
+}
+
+type jsonConfig struct {
+	Jobs map[string]*jsonJob `json:"jobs"`
+}
+
 // Parse the supplied JSON configuration data.
 func Parse(data []byte) (*Config, error) {
+	// Attempt to unmarshal.
+	var jsonCfg jsonConfig
+	if err := json.Unmarshal(data, &jsonCfg); err != nil {
+		return nil, fmt.Errorf("Decoding JSON: %v", err)
+	}
+
 	return nil, fmt.Errorf("TODO: Implement config.Parse.")
 }
