@@ -54,15 +54,35 @@ func (t *ValidateTest) JobNameNotValidUtf8() {
 }
 
 func (t *ValidateTest) EmptyBasePath() {
-	ExpectEq("TODO", "")
+	t.cfg.Jobs["taco"] = &config.Job{BasePath: ""}
+	t.cfg.Jobs["burrito"] = &config.Job{BasePath: "/c"}
+
+	err := config.Validate(t.cfg)
+
+	ExpectThat(err, HasSubstr("base path"))
+	ExpectThat(err, HasSubstr("taco"))
 }
 
 func (t *ValidateTest) BasePathNotAbsolute() {
-	ExpectEq("TODO", "")
+	t.cfg.Jobs["taco"] = &config.Job{BasePath: "a"}
+	t.cfg.Jobs["burrito"] = &config.Job{BasePath: "/c"}
+
+	err := config.Validate(t.cfg)
+
+	ExpectThat(err, HasSubstr("path"))
+	ExpectThat(err, HasSubstr("absolute"))
+	ExpectThat(err, HasSubstr("taco"))
 }
 
 func (t *ValidateTest) BasePathNotValidUtf8() {
-	ExpectEq("TODO", "")
+	t.cfg.Jobs["taco"] = &config.Job{BasePath: "/a/\x80\x81\x82"}
+	t.cfg.Jobs["burrito"] = &config.Job{BasePath: "/c"}
+
+	err := config.Validate(t.cfg)
+
+	ExpectThat(err, HasSubstr("path"))
+	ExpectThat(err, HasSubstr("UTF-8"))
+	ExpectThat(err, HasSubstr("taco"))
 }
 
 func (t *ValidateTest) EverythingValid() {
