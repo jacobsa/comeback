@@ -59,7 +59,7 @@ func (t *ValidateTest) EmptyBasePath() {
 
 	err := config.Validate(t.cfg)
 
-	ExpectThat(err, Error(HasSubstr("base path")))
+	ExpectThat(err, Error(HasSubstr("path")))
 	ExpectThat(err, Error(HasSubstr("taco")))
 }
 
