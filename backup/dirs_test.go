@@ -184,8 +184,8 @@ func (t *DirectorySaverTest) CallsLinkResolverFileSystemAndFileSaverForFiles() {
 	entries[0].ContainingDevice = 17
 	entries[0].Inode = 19
 
-	entries[1].ContainingDevice = 23
-	entries[1].Inode = 29
+	entries[2].ContainingDevice = 23
+	entries[2].Inode = 29
 
 	ExpectCall(t.fileSystem, "ReadDir")(Any()).
 		WillOnce(oglemock.Return(entries, nil))
