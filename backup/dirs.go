@@ -34,7 +34,7 @@ type DirectorySaver interface {
 	//
 	// Recursively exclude from backup relative paths that match any of the
 	// supplied exclusion regexps.
-	Save(basePath, relPath string, exclusions []regexp.Regexp) (blob.Score, error)
+	Save(basePath, relPath string, exclusions []*regexp.Regexp) (blob.Score, error)
 }
 
 // A directory saver that creates a new directory saver for each call to Save.
@@ -47,7 +47,7 @@ type onDemandDirSaver struct {
 func (s *onDemandDirSaver) Save(
 	basePath,
 	relPath string,
-	exclusions []regexp.Regexp) (
+	exclusions []*regexp.Regexp) (
 	score blob.Score,
 	err error) {
 	return s.createSaver(s).Save(basePath, relPath, exclusions)
@@ -113,7 +113,7 @@ func (s *dirSaver) saveDir(
 	score, err := s.wrapped.Save(
 		basePath,
 		path.Join(relPath, entry.Name),
-		[]regexp.Regexp{})
+		[]*regexp.Regexp{})
 
 	if err != nil {
 		return nil, err
@@ -137,7 +137,7 @@ func (s *dirSaver) saveFile(parent string, entry *fs.DirectoryEntry) ([]blob.Sco
 func (s *dirSaver) Save(
 	basePath,
 	relPath string,
-	exclusions []regexp.Regexp) (
+	exclusions []*regexp.Regexp) (
 	score blob.Score,
 	err error) {
 	dirpath := path.Join(basePath, relPath)

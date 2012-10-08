@@ -23,7 +23,7 @@ type Job struct {
 	// path. If a relative path matches any of these, it will be excluded from
 	// the backup. If the path represents a directory, its contents will also be
 	// excluded.
-	Excludes []regexp.Regexp
+	Excludes []*regexp.Regexp
 }
 
 type Config struct {
