@@ -16,9 +16,11 @@
 package s3_test
 
 import (
+	"errors"
 	"github.com/jacobsa/aws/s3/mock"
 	"github.com/jacobsa/comeback/kv"
 	"github.com/jacobsa/comeback/kv/s3"
+	"github.com/jacobsa/oglemock"
 	. "github.com/jacobsa/ogletest"
 	"testing"
 )
@@ -41,32 +43,6 @@ func (t *s3KvStoreTest) SetUp(i *TestInfo) {
 func (t *s3KvStoreTest) createStore() (err error) {
 	t.store, err = s3.NewS3KvStore(t.bucket)
 	return
-}
-
-////////////////////////////////////////////////////////////////////////
-// Constructor
-////////////////////////////////////////////////////////////////////////
-
-type ConstructorTest struct {
-	s3KvStoreTest
-}
-
-func init() { RegisterTestSuite(&ConstructorTest{}) }
-
-func (t *ConstructorTest) CallsListKeyRepeatedly() {
-	ExpectEq("TODO", "")
-}
-
-func (t *ConstructorTest) ListKeyReturnsError() {
-	ExpectEq("TODO", "")
-}
-
-func (t *ConstructorTest) ListKeyReturnsNoKeys() {
-	ExpectEq("TODO", "")
-}
-
-func (t *ConstructorTest) ListKeyReturnsSomeKeys() {
-	ExpectEq("TODO", "")
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -107,6 +83,35 @@ type ContainsTest struct {
 
 func init() { RegisterTestSuite(&ContainsTest{}) }
 
-func (t *ContainsTest) DoesFoo() {
+func (t *ContainsTest) CallsListKeyRepeatedly() {
+	// ListKey (call 0)
+	keys0 := []string{"burrito", "enchilada"}
+
+	ExpectCall(t.bucket, "ListKeys")("").
+		WillOnce(oglemock.Return(keys0, nil))
+
+	// ListKey (call 1)
+	keys1 := []string{"queso", "taco"}
+
+	ExpectCall(t.bucket, "ListKeys")("enchilada").
+		WillOnce(oglemock.Return(keys1, nil))
+
+	// ListKey (call 2)
+	ExpectCall(t.bucket, "ListKeys")("taco").
+		WillOnce(oglemock.Return(nil, errors.New("")))
+
+	// Construct
+	t.createStore()
+}
+
+func (t *ContainsTest) ListKeyReturnsError() {
+	ExpectEq("TODO", "")
+}
+
+func (t *ContainsTest) ListKeyReturnsNoKeys() {
+	ExpectEq("TODO", "")
+}
+
+func (t *ContainsTest) ListKeyReturnsSomeKeys() {
 	ExpectEq("TODO", "")
 }
