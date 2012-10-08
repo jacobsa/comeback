@@ -137,7 +137,7 @@ func (t *ParseTest) OneExcludeDoesntCompile() {
 		"jobs": {
 			"taco": {
 				"base_path": "/foo",
-				"excludes": ["a"],
+				"excludes": ["a"]
 			},
 			"burrito": {
 				"base_path": "/bar",
@@ -216,8 +216,8 @@ func (t *ParseTest) MultipleValidJobs() {
 				"excludes": ["a.b"],
 			},
 			"burrito": {
-				"base_path": "/bar"
-				"excludes": ["c", "d"],
+				"base_path": "/bar",
+				"excludes": ["c", "d"]
 			}
 		}
 	}
