@@ -169,8 +169,9 @@ func (t *DirectorySaverTest) CallsLinkResolverFileSystemAndFileSaverForFiles() {
 	t.relPath = "taco/queso"
 
 	t.exclusions = []*regexp.Regexp{
-		regexp.MustCompile(`queso/burrito`),  // Missing initial component
-		regexp.MustCompile(`taco/queso/n\w+s`),  // Matches second
+		regexp.MustCompile(`foobar`),  // Matches none
+		regexp.MustCompile(`queso/n\w+s`),  // Matches second
+		regexp.MustCompile(`bazqux`),  // Matches none
 	}
 
 	// ReadDir
@@ -294,8 +295,9 @@ func (t *DirectorySaverTest) CallsDirSaverForDirs() {
 	t.relPath = "queso/tortilla"
 
 	t.exclusions = []*regexp.Regexp{
-		regexp.MustCompile(`tortilla/burrito`),  // Missing initial component
-		regexp.MustCompile(`queso/tortilla/n\w+s`),  // Matches second
+		regexp.MustCompile(`foobar`),  // Matches none
+		regexp.MustCompile(`tortilla/n\w+s`),  // Matches second
+		regexp.MustCompile(`bazqux`),  // Matches none
 	}
 
 	// ReadDir

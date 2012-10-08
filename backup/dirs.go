@@ -135,6 +135,16 @@ func (s *dirSaver) saveFile(parent string, entry *fs.DirectoryEntry) ([]blob.Sco
 	return s.fileSaver.Save(f)
 }
 
+func shouldExclude(exclusions []*regexp.Regexp, relPath string) bool {
+	for _, re := range exclusions {
+		if re.MatchString(relPath) {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (s *dirSaver) Save(
 	basePath,
 	relPath string,
@@ -151,6 +161,13 @@ func (s *dirSaver) Save(
 
 	// Save the data for each entry.
 	for _, entry := range entries {
+		entryRelPath := path.Join(relPath, entry.Name)
+
+		// Exclude this entry if necessary.
+		if shouldExclude(exclusions, entryRelPath) {
+			continue
+		}
+
 		// Call the appropriate method based on this entry's type.
 		switch entry.Type {
 		case fs.TypeFile:
@@ -158,7 +175,7 @@ func (s *dirSaver) Save(
 			entry.HardLinkTarget = s.linkResolver.Register(
 				entry.ContainingDevice,
 				entry.Inode,
-				path.Join(relPath, entry.Name))
+				entryRelPath)
 
 			if entry.HardLinkTarget == nil {
 				entry.Scores, err = s.saveFile(dirpath, entry)
