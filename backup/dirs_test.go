@@ -27,6 +27,7 @@ import (
 	. "github.com/jacobsa/oglematchers"
 	"github.com/jacobsa/oglemock"
 	. "github.com/jacobsa/ogletest"
+	"regexp"
 	"testing"
 )
 
@@ -103,7 +104,7 @@ func (t *DirectorySaverTest) SetUp(i *TestInfo) {
 }
 
 func (t *DirectorySaverTest) callSaver() {
-	t.score, t.err = t.dirSaver.Save(t.basePath, t.relPath)
+	t.score, t.err = t.dirSaver.Save(t.basePath, t.relPath, []regexp.Regexp{})
 }
 
 ////////////////////////////////////////////////////////////////////////
