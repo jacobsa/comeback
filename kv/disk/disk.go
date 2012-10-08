@@ -18,8 +18,8 @@ package disk
 
 import (
 	"fmt"
-	"github.com/jacobsa/comeback/kv"
 	"github.com/jacobsa/comeback/fs"
+	"github.com/jacobsa/comeback/kv"
 	"io/ioutil"
 	"path"
 )

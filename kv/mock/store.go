@@ -20,16 +20,16 @@ type MockStore interface {
 }
 
 type mockStore struct {
-	controller	oglemock.Controller
-	description	string
+	controller  oglemock.Controller
+	description string
 }
 
 func NewMockStore(
 	c oglemock.Controller,
 	desc string) MockStore {
 	return &mockStore{
-		controller:	c,
-		description:	desc,
+		controller:  c,
+		description: desc,
 	}
 }
 

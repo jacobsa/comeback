@@ -33,7 +33,7 @@ func TestKv(t *testing.T) { RunTests(t) }
 
 type kvBasedStoreTest struct {
 	kvBasedStore mock_kv.MockStore
-	store   blob.Store
+	store        blob.Store
 }
 
 func (t *kvBasedStoreTest) SetUp(i *TestInfo) {
@@ -48,9 +48,9 @@ func (t *kvBasedStoreTest) SetUp(i *TestInfo) {
 type KvBasedStore_StoreTest struct {
 	kvBasedStoreTest
 
-	data []byte
+	data  []byte
 	score blob.Score
-	err error
+	err   error
 }
 
 func init() { RegisterTestSuite(&KvBasedStore_StoreTest{}) }
@@ -155,8 +155,8 @@ type KvBasedStore_LoadTest struct {
 	kvBasedStoreTest
 
 	score blob.Score
-	data []byte
-	err error
+	data  []byte
+	err   error
 }
 
 func init() { RegisterTestSuite(&KvBasedStore_LoadTest{}) }
