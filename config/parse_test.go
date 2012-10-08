@@ -190,8 +190,8 @@ func (t *ParseTest) MultipleValidJobs() {
 	{
 		"jobs": {
 			"taco": {
-				"base_path": "/foo"
-				"excludes": ["a.b"],
+				"base_path": "/foo",
+				"excludes": ["a.b"]
 			},
 			"burrito": {
 				"base_path": "/bar",
