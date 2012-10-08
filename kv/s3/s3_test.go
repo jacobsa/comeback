@@ -80,24 +80,32 @@ func (t *GetTest) DoesFoo() {
 
 type ContainsTest struct {
 	s3KvStoreTest
+
+	key string
+	res bool
+  err error
 }
 
 func init() { RegisterTestSuite(&ContainsTest{}) }
 
+func (t *ContainsTest) callStore() {
+	t.res, t.err = t.store.Contains([]byte(t.key))
+}
+
 func (t *ContainsTest) CallsListKeyRepeatedly() {
-	// ListKey (call 0)
+	// ListKeys (call 0)
 	keys0 := []string{"burrito", "enchilada"}
 
 	ExpectCall(t.bucket, "ListKeys")("").
 		WillOnce(oglemock.Return(keys0, nil))
 
-	// ListKey (call 1)
+	// ListKeys (call 1)
 	keys1 := []string{"queso", "taco"}
 
 	ExpectCall(t.bucket, "ListKeys")("enchilada").
 		WillOnce(oglemock.Return(keys1, nil))
 
-	// ListKey (call 2)
+	// ListKeys (call 2)
 	ExpectCall(t.bucket, "ListKeys")("taco").
 		WillOnce(oglemock.Return(nil, errors.New("")))
 
@@ -106,7 +114,7 @@ func (t *ContainsTest) CallsListKeyRepeatedly() {
 }
 
 func (t *ContainsTest) ListKeyReturnsError() {
-	// ListKey
+	// ListKeys
 	ExpectCall(t.bucket, "ListKeys")(Any()).
 		WillOnce(oglemock.Return([]string{"a"}, nil)).
 		WillOnce(oglemock.Return(nil, errors.New("taco")))
@@ -119,7 +127,19 @@ func (t *ContainsTest) ListKeyReturnsError() {
 }
 
 func (t *ContainsTest) ListKeyReturnsNoKeys() {
-	ExpectEq("TODO", "")
+	// ListKeys
+	ExpectCall(t.bucket, "ListKeys")(Any()).
+		WillOnce(oglemock.Return([]string{}, nil))
+
+	// Construct
+	AssertEq(nil, t.createStore())
+
+	// Call
+	t.key = "taco"
+	t.callStore()
+
+	AssertEq(nil, t.err)
+	ExpectFalse(t.res)
 }
 
 func (t *ContainsTest) ListKeyReturnsSomeKeys() {
