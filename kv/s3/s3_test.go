@@ -143,5 +143,32 @@ func (t *ContainsTest) ListKeyReturnsNoKeys() {
 }
 
 func (t *ContainsTest) ListKeyReturnsSomeKeys() {
-	ExpectEq("TODO", "")
+	// ListKeys
+	ExpectCall(t.bucket, "ListKeys")(Any()).
+		WillOnce(oglemock.Return([]string{"burrito", "taco"}, nil)).
+		WillOnce(oglemock.Return([]string{}, nil))
+
+	// Construct
+	AssertEq(nil, t.createStore())
+
+	// Call 0
+	t.key = "burrito"
+	t.callStore()
+
+	AssertEq(nil, t.err)
+	ExpectTrue(t.res)
+
+	// Call 1
+	t.key = "enchilada"
+	t.callStore()
+
+	AssertEq(nil, t.err)
+	ExpectFalse(t.res)
+
+	// Call 2
+	t.key = "taco"
+	t.callStore()
+
+	AssertEq(nil, t.err)
+	ExpectTrue(t.res)
 }
