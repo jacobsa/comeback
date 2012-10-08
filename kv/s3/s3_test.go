@@ -60,6 +60,17 @@ type SetTest struct {
 
 func init() { RegisterTestSuite(&SetTest{}) }
 
+func (t *SetTest) SetUp(i *TestInfo) {
+	// Run common setup code.
+	t.s3KvStoreTest.SetUp(i)
+
+	// Create the store successfully.
+	ExpectCall(t.bucket, "ListKeys")(Any()).
+		WillRepeatedly(oglemock.Return([]string{}, nil))
+
+	AssertEq(nil, t.createStore())
+}
+
 func (t *SetTest) callStore() {
 	t.err = t.store.Set([]byte(t.key), t.val)
 }
