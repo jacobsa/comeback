@@ -50,5 +50,19 @@ func (s *checkingStore) Store(blob []byte) (score Score, err error) {
 }
 
 func (s *checkingStore) Load(score Score) (blob []byte, err error) {
-	return nil, fmt.Errorf("TODO")
+	// Call the wrapped store.
+	if blob, err = s.wrapped.Load(score); err != nil {
+		return
+	}
+
+	// Check its result.
+	actual := ComputeScore(blob)
+	if !bytes.Equal(score, actual) {
+		return nil, fmt.Errorf(
+			"Incorrect data returned for blob; requested score is %s actual is %s.",
+			score.Hex(),
+			actual.Hex())
+	}
+
+	return
 }
