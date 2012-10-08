@@ -80,7 +80,17 @@ type kvStore struct {
 }
 
 func (s *kvStore) Set(key []byte, val []byte) error {
-	return fmt.Errorf("TODO")
+	// Call the bucket.
+	if err := s.bucket.StoreObject(string(key), val); err != nil {
+		return fmt.Errorf("StoreObject: %v", err)
+	}
+
+	// Record the fact that the key is now known.
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	s.knownKeys[string(key)] = true
+
+	return nil
 }
 
 func (s *kvStore) Get(key []byte) (val []byte, err error) {
