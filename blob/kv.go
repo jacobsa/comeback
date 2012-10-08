@@ -23,5 +23,12 @@ import (
 // trusts that it has full ownership of the store's key space -- if a score key
 // exists, then it points to the correct data.
 func NewKvBasedBlobStore(kvStore kv.Store) Store {
-	panic("TODO")
+	return &kvBasedBlobStore{kvStore}
 }
+
+type kvBasedBlobStore struct {
+	kvStore kv.Store
+}
+
+func (s *kvBasedBlobStore) Store(blob []byte) (score Score, err error)
+func (s *kvBasedBlobStore) Load(score Score) (blob []byte, err error)
