@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"github.com/jacobsa/comeback/backup"
 	"github.com/jacobsa/comeback/blob/disk"
+	"github.com/jacobsa/comeback/config"
 	"github.com/jacobsa/comeback/fs"
 	"github.com/jacobsa/comeback/sys"
 	"io/ioutil"
@@ -28,6 +29,7 @@ import (
 )
 
 var g_configFile = flag.String("config", "", "Path to config file.")
+var g_jobName = flag.String("job", "", "Job name within the config file.")
 
 func main() {
 	var err error
@@ -42,6 +44,25 @@ func main() {
 	configData, err := ioutil.ReadFile(*g_configFile)
 	if err != nil {
 		fmt.Println("Error reading config file:", err)
+		os.Exit(1)
+	}
+
+	// Parse the config file.
+	cfg, err := config.Parse(configData)
+	if err != nil {
+		fmt.Println("Parsing config file:", err)
+		os.Exit(1)
+	}
+
+	// Look for the specified job.
+	if *g_jobName == "" {
+		fmt.Println("You must set -job.")
+		os.Exit(1)
+	}
+
+	job, ok := cfg.Jobs[*g_jobName]
+	if !ok {
+		fmt.Println("Unknown job:", *g_jobName)
 		os.Exit(1)
 	}
 
@@ -85,8 +106,8 @@ func main() {
 		log.Fatalf("Creating directory saver: %v", err)
 	}
 
-	// Save a directory.
-	score, err := dirSaver.Save("/Volumes/Src", "")
+	// Run the job.
+	score, err := dirSaver.Save(job.BasePath, "", job.Excludes)
 	if err != nil {
 		log.Fatalf("Saving: %v", err)
 	}
