@@ -119,7 +119,14 @@ type CheckingStore_LoadTest struct {
 func init() { RegisterTestSuite(&CheckingStore_LoadTest{}) }
 
 func (t *CheckingStore_LoadTest) CallsWrapped() {
-	ExpectEq("TODO", "")
+	score := blob.ComputeScore([]byte{0xde, 0xad})
+
+	// Wrapped
+	ExpectCall(t.wrapped, "Load")(DeepEquals(score)).
+		WillOnce(oglemock.Return(nil, errors.New("")))
+
+	// Call
+	t.store.Load(score)
 }
 
 func (t *CheckingStore_LoadTest) WrappedReturnsError() {
