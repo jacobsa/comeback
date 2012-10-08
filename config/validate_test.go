@@ -86,5 +86,9 @@ func (t *ValidateTest) BasePathNotValidUtf8() {
 }
 
 func (t *ValidateTest) EverythingValid() {
-	ExpectEq("TODO", "")
+	t.cfg.Jobs["taco"] = &config.Job{BasePath: "/a/타코"}
+	t.cfg.Jobs["burrito"] = &config.Job{BasePath: "/c"}
+
+	err := config.Validate(t.cfg)
+	ExpectEq(nil, err)
 }
