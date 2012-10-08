@@ -218,3 +218,22 @@ func (t *ParseTest) MultipleValidJobs() {
 	ExpectEq("c", t.cfg.Jobs["burrito"].Excludes[0].String())
 	ExpectEq("d", t.cfg.Jobs["burrito"].Excludes[1].String())
 }
+
+func (t *ParseTest) UnknownKeys() {
+	t.data = `
+	{
+		"jobs": {
+			"taco": {
+				"base_path": "/foo",
+				"excludes": ["a.b"]
+			}
+		},
+		"some_other_key": 17
+	}
+	`
+
+	t.parse()
+
+	AssertEq(nil, t.err)
+	ExpectEq(1, len(t.cfg.Jobs))
+}
