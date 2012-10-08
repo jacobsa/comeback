@@ -77,11 +77,37 @@ func (t *SetTest) CallsBucket() {
 }
 
 func (t *SetTest) BucketReturnsError() {
-	ExpectEq("TODO", "")
+	t.key = "taco"
+
+	// StoreObject
+	ExpectCall(t.bucket, "StoreObject")(Any(), Any()).
+		WillOnce(oglemock.Return(errors.New("")))
+
+	// Call
+	t.callStore()
+
+	// Contains
+	exists, err := t.store.Contains([]byte(t.key))
+
+	AssertEq(nil, err)
+	ExpectFalse(exists)
 }
 
 func (t *SetTest) BucketSucceeds() {
-	ExpectEq("TODO", "")
+	t.key = "taco"
+
+	// StoreObject
+	ExpectCall(t.bucket, "StoreObject")(Any(), Any()).
+		WillOnce(oglemock.Return(nil))
+
+	// Call
+	t.callStore()
+
+	// Contains
+	exists, err := t.store.Contains([]byte(t.key))
+
+	AssertEq(nil, err)
+	ExpectTrue(exists)
 }
 
 ////////////////////////////////////////////////////////////////////////
