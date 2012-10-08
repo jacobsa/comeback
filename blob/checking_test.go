@@ -42,13 +42,13 @@ func (t *checkingStoreTest) SetUp(i *TestInfo) {
 // Store
 ////////////////////////////////////////////////////////////////////////
 
-type StoreTest struct {
+type CheckingStore_StoreTest struct {
 	checkingStoreTest
 }
 
-func init() { RegisterTestSuite(&StoreTest{}) }
+func init() { RegisterTestSuite(&CheckingStore_StoreTest{}) }
 
-func (t *StoreTest) DoesFoo() {
+func (t *CheckingStore_StoreTest) DoesFoo() {
 	ExpectEq("TODO", "")
 }
 
@@ -56,12 +56,12 @@ func (t *StoreTest) DoesFoo() {
 // Load
 ////////////////////////////////////////////////////////////////////////
 
-type LoadTest struct {
+type CheckingStore_LoadTest struct {
 	checkingStoreTest
 }
 
-func init() { RegisterTestSuite(&LoadTest{}) }
+func init() { RegisterTestSuite(&CheckingStore_LoadTest{}) }
 
-func (t *LoadTest) DoesFoo() {
+func (t *CheckingStore_LoadTest) DoesFoo() {
 	ExpectEq("TODO", "")
 }
