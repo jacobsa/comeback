@@ -61,7 +61,7 @@ func (t *ParseTest) NonObject() {
 func (t *ParseTest) MissingTrailingBrace() {
 	t.data = `
 	{
-		"jobs": [],
+		"jobs": []
 	`
 
 	t.parse()
@@ -70,19 +70,76 @@ func (t *ParseTest) MissingTrailingBrace() {
 }
 
 func (t *ParseTest) BasePathIsNumber() {
-	ExpectEq("TODO", "")
+	t.data = `
+	{
+		"jobs": [
+			{
+				"base_path": 17
+			}
+		]
+	}
+	`
+
+	t.parse()
+
+	ExpectThat(t.err, Error(HasSubstr("TODO")))
 }
 
 func (t *ParseTest) BasePathIsNull() {
-	ExpectEq("TODO", "")
+	t.data = `
+	{
+		"jobs": [
+			{
+				"base_path": null
+			}
+		]
+	}
+	`
+
+	t.parse()
+
+	ExpectThat(t.err, Error(HasSubstr("TODO")))
 }
 
 func (t *ParseTest) BasePathIsObject() {
-	ExpectEq("TODO", "")
+	t.data = `
+	{
+		"jobs": [
+			{
+				"base_path": {}
+			}
+		]
+	}
+	`
+
+	t.parse()
+
+	ExpectThat(t.err, Error(HasSubstr("TODO")))
 }
 
 func (t *ParseTest) OneExcludeDoesntCompile() {
-	ExpectEq("TODO", "")
+	t.data = `
+	{
+		"jobs": [
+			{
+				"base_path": "/foo",
+				"excludes": ["a"],
+			},
+			{
+				"base_path": "/bar",
+				"excludes": ["b", "(c"]
+			},
+			{
+				"base_path": "/foo",
+				"excludes": ["d"]
+			}
+		]
+	}
+	`
+
+	t.parse()
+
+	ExpectThat(t.err, Error(HasSubstr("TODO")))
 }
 
 func (t *ParseTest) EmptyConfig() {
