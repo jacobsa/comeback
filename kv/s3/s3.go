@@ -28,5 +28,38 @@ import (
 //
 // This function blocks while listing keys in the bucket.
 func NewS3KvStore(bucket s3.Bucket) (kv.Store, error) {
+	// List the keys in the bucket.
+	keys, err := getAllKeys(bucket)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create an appropriate map for efficient lookups.
+	keyMap := make(map[string]bool)
+	for _, key := range keys {
+		keyMap[key] = true
+	}
+
+	return &kvStore{bucket, keyMap}, nil
+}
+
+func getAllKeys(bucket s3.Bucket) ([]string, error) {
 	return nil, fmt.Errorf("TODO")
+}
+
+type kvStore struct {
+	bucket s3.Bucket
+	knownKeys map[string]bool
+}
+
+func (s *kvStore) Set(key []byte, val []byte) error {
+	return fmt.Errorf("TODO")
+}
+
+func (s *kvStore) Get(key []byte) (val []byte, err error) {
+	return nil, fmt.Errorf("TODO")
+}
+
+func (s *kvStore) Contains(key []byte) (res bool, err error) {
+	return false, fmt.Errorf("TODO")
 }
