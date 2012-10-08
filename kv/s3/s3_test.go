@@ -52,11 +52,35 @@ func (t *s3KvStoreTest) createStore() (err error) {
 
 type SetTest struct {
 	s3KvStoreTest
+
+	key string
+	val []byte
+	err error
 }
 
 func init() { RegisterTestSuite(&SetTest{}) }
 
-func (t *SetTest) DoesFoo() {
+func (t *SetTest) callStore() {
+	t.err = t.store.Set([]byte(t.key), t.val)
+}
+
+func (t *SetTest) CallsBucket() {
+	t.key = "taco"
+	t.val = []byte{0xbe, 0xef}
+
+	// StoreObject
+	ExpectCall(t.bucket, "StoreObject")("taco", DeepEquals(t.val)).
+		WillOnce(oglemock.Return(errors.New("")))
+
+	// Call
+	t.callStore()
+}
+
+func (t *SetTest) BucketReturnsError() {
+	ExpectEq("TODO", "")
+}
+
+func (t *SetTest) BucketSucceeds() {
 	ExpectEq("TODO", "")
 }
 
@@ -70,7 +94,15 @@ type GetTest struct {
 
 func init() { RegisterTestSuite(&GetTest{}) }
 
-func (t *GetTest) DoesFoo() {
+func (t *GetTest) CallsBucket() {
+	ExpectEq("TODO", "")
+}
+
+func (t *GetTest) BucketReturnsError() {
+	ExpectEq("TODO", "")
+}
+
+func (t *GetTest) BucketSucceeds() {
 	ExpectEq("TODO", "")
 }
 
