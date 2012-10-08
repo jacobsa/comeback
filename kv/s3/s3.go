@@ -94,7 +94,12 @@ func (s *kvStore) Set(key []byte, val []byte) error {
 }
 
 func (s *kvStore) Get(key []byte) (val []byte, err error) {
-	return nil, fmt.Errorf("TODO")
+	if val, err = s.bucket.GetObject(string(key)); err != nil {
+		err = fmt.Errorf("GetObject: %v", err)
+		return
+	}
+
+	return
 }
 
 func (s *kvStore) Contains(key []byte) (res bool, err error) {
