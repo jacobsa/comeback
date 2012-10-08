@@ -79,8 +79,10 @@ type DirectorySaverTest struct {
 
 	dirSaver backup.DirectorySaver
 
-	basePath string
-	relPath  string
+	basePath   string
+	relPath    string
+	exclusions []regexp.Regexp
+
 	score    blob.Score
 	err      error
 }
@@ -104,12 +106,16 @@ func (t *DirectorySaverTest) SetUp(i *TestInfo) {
 }
 
 func (t *DirectorySaverTest) callSaver() {
-	t.score, t.err = t.dirSaver.Save(t.basePath, t.relPath, []regexp.Regexp{})
+	t.score, t.err = t.dirSaver.Save(t.basePath, t.relPath, t.exclusions)
 }
 
 ////////////////////////////////////////////////////////////////////////
 // Tests
 ////////////////////////////////////////////////////////////////////////
+
+func (t *DirectorySaverTest) InitialRelPathExcluded() {
+	ExpectEq("TODO", "")
+}
 
 func (t *DirectorySaverTest) CallsReadDir() {
 	t.basePath = "/taco"
@@ -154,14 +160,23 @@ func (t *DirectorySaverTest) NoEntriesInDirectory() {
 	ExpectThat(entries, ElementsAre())
 }
 
+func (t *DirectorySaverTest) AllEntriesExcluded() {
+	ExpectEq("TODO", "")
+}
+
 func (t *DirectorySaverTest) CallsLinkResolverFileSystemAndFileSaverForFiles() {
 	t.basePath = "/tortilla"
 	t.relPath = "taco/queso"
+	t.exclusions = []*regexp.Regexp{
+		regexp.MustCompile(`queso/burrito`),  // Missing initial component
+		regexp.MustCompile(`taco/queso/n\w+s`),  // Matches last
+	}
 
 	// ReadDir
 	entries := []*fs.DirectoryEntry{
 		makeEntry("burrito", fs.TypeFile),
 		makeEntry("enchilada", fs.TypeFile),
+		makeEntry("nachos", fs.TypeFile),
 	}
 
 	entries[0].ContainingDevice = 17
