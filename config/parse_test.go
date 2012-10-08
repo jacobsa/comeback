@@ -219,6 +219,21 @@ func (t *ParseTest) MultipleValidJobs() {
 	ExpectEq("d", t.cfg.Jobs["burrito"].Excludes[1].String())
 }
 
+func (t *ParseTest) S3Configuration() {
+	t.data = `
+	{
+		"s3_bucket": "taco",
+		"s3_region": "burrito"
+	}
+	`
+
+	t.parse()
+	AssertEq(nil, t.err)
+
+	ExpectEq("taco", t.cfg.S3Bucket)
+	ExpectEq("burrito", t.cfg.S3Region)
+}
+
 func (t *ParseTest) UnknownKeys() {
 	t.data = `
 	{
