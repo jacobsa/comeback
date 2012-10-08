@@ -48,7 +48,27 @@ type KvBasedStore_StoreTest struct {
 
 func init() { RegisterTestSuite(&KvBasedStore_StoreTest{}) }
 
-func (t *KvBasedStore_StoreTest) DoesFoo() {
+func (t *KvBasedStore_StoreTest) CallsContains() {
+	ExpectEq("TODO", "")
+}
+
+func (t *KvBasedStore_StoreTest) ContainsReturnsError() {
+	ExpectEq("TODO", "")
+}
+
+func (t *KvBasedStore_StoreTest) ContainsSaysYes() {
+	ExpectEq("TODO", "")
+}
+
+func (t *KvBasedStore_StoreTest) CallsSet() {
+	ExpectEq("TODO", "")
+}
+
+func (t *KvBasedStore_StoreTest) SetReturnsError() {
+	ExpectEq("TODO", "")
+}
+
+func (t *KvBasedStore_StoreTest) SetSaysOkay() {
 	ExpectEq("TODO", "")
 }
 
@@ -62,6 +82,14 @@ type KvBasedStore_LoadTest struct {
 
 func init() { RegisterTestSuite(&KvBasedStore_LoadTest{}) }
 
-func (t *KvBasedStore_LoadTest) DoesFoo() {
+func (t *KvBasedStore_LoadTest) CallsGet() {
+	ExpectEq("TODO", "")
+}
+
+func (t *KvBasedStore_LoadTest) GetReturnsError() {
+	ExpectEq("TODO", "")
+}
+
+func (t *KvBasedStore_LoadTest) GetSucceeds() {
 	ExpectEq("TODO", "")
 }
