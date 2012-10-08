@@ -16,6 +16,7 @@
 package config_test
 
 import (
+	"github.com/jacobsa/comeback/config"
 	. "github.com/jacobsa/ogletest"
 	"testing"
 )
@@ -27,9 +28,16 @@ func TestParse(t *testing.T) { RunTests(t) }
 ////////////////////////////////////////////////////////////////////////
 
 type ParseTest struct {
+	data []byte
+	cfg *config.Config
+	err error
 }
 
 func init() { RegisterTestSuite(&ParseTest{}) }
+
+func (t *ParseTest) parse() {
+	t.cfg, t.err = config.Parse(t.data)
+}
 
 ////////////////////////////////////////////////////////////////////////
 // Tests
