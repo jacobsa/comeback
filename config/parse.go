@@ -19,6 +19,7 @@ import (
 	"fmt"
 )
 
+// Parse the supplied JSON configuration data.
 func Parse(data []byte) (*Config, error) {
 	return nil, fmt.Errorf("TODO: Implement config.Parse.")
 }
