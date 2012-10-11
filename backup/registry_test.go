@@ -17,6 +17,7 @@ package backup_test
 
 import (
 	"errors"
+	"github.com/jacobsa/aws/sdb"
 	"github.com/jacobsa/aws/sdb/mock"
 	"github.com/jacobsa/comeback/backup"
 	"github.com/jacobsa/comeback/crypto/mock"
@@ -84,7 +85,17 @@ func (t *NewRegistryTest) GetAttributesReturnsError() {
 }
 
 func (t *NewRegistryTest) CallsDecrypt() {
-	ExpectEq("TODO", "")
+	// Domain
+	attr := sdb.Attribute{Name: "encrypted_data", Value: "taco"}
+	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return([]sdb.Attribute{attr}, nil))
+
+	// Crypter
+	ExpectCall(t.crypter, "Decrypt")(DeepEquals([]byte("taco"))).
+		WillOnce(oglemock.Return(nil, errors.New("")))
+
+	// Call
+	t.callConstructor()
 }
 
 func (t *NewRegistryTest) DecryptReturnsGenericError() {
