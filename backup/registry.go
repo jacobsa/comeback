@@ -20,6 +20,7 @@ import (
 	"github.com/jacobsa/aws/sdb"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/crypto"
+	"math/rand"
 	"time"
 )
 
@@ -119,7 +120,21 @@ func NewRegistry(
 	return
 }
 
-func getRandBytes() []byte
+func getRandBytes() []byte {
+	a := rand.Uint32()
+	b := rand.Uint32()
+
+	return []byte{
+		byte(a),
+		byte(a >> 8),
+		byte(a >> 16),
+		byte(a >> 24),
+		byte(b),
+		byte(b >> 8),
+		byte(b >> 16),
+		byte(b >> 24),
+	}
+}
 
 type registry struct {
 	crypter crypto.Crypter
