@@ -61,6 +61,21 @@ func NewRegistry(
 	return
 }
 
+type registry struct {
+	crypter crypto.Crypter
+	domain sdb.Domain
+}
+
+func (r *registry) RecordBackup(j CompletedJob) (err error) {
+	err = fmt.Errorf("TODO")
+	return
+}
+
+func (r *registry) ListRecentBackups() (jobs []CompletedJob, err error) {
+	err = fmt.Errorf("TODO")
+	return
+}
+
 type IncompatibleCrypterError struct {
 }
 
