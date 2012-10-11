@@ -207,9 +207,41 @@ func (t *NewRegistryTest) CallsPutAttributes() {
 }
 
 func (t *NewRegistryTest) PutAttributesReturnsError() {
-	ExpectEq("TODO", "")
+	// Domain
+	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return([]sdb.Attribute{}, nil))
+
+	// Crypter
+	ExpectCall(t.crypter, "Encrypt")(Any()).
+		WillOnce(oglemock.Return([]byte{}, nil))
+
+	// Domain
+	ExpectCall(t.domain, "PutAttributes")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return(errors.New("taco")))
+
+	// Call
+	t.callConstructor()
+
+	ExpectThat(t.err, Error(HasSubstr("PutAttributes")))
+	ExpectThat(t.err, Error(HasSubstr("taco")))
 }
 
 func (t *NewRegistryTest) PutAttributesSucceeds() {
-	ExpectEq("TODO", "")
+	// Domain
+	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return([]sdb.Attribute{}, nil))
+
+	// Crypter
+	ExpectCall(t.crypter, "Encrypt")(Any()).
+		WillOnce(oglemock.Return([]byte{}, nil))
+
+	// Domain
+	ExpectCall(t.domain, "PutAttributes")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return(nil))
+
+	// Call
+	t.callConstructor()
+
+	AssertEq(nil, t.err)
+	ExpectNe(nil, t.registry)
 }
