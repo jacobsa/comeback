@@ -199,7 +199,7 @@ func (t *NewRegistryTest) CallsPutAttributes() {
 	ExpectCall(t.domain, "PutAttributes")(
 		"comeback_marker",
 		ElementsAre(DeepEquals(expectedUpdate)),
-		ElementsAre(Pointee(DeepEquals(expectedPrecondition)))).
+		Pointee(DeepEquals(expectedPrecondition))).
 		WillOnce(oglemock.Return(errors.New("")))
 
 	// Call
