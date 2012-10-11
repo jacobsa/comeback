@@ -167,11 +167,43 @@ func (t *NewRegistryTest) CallsEncrypt() {
 }
 
 func (t *NewRegistryTest) EncryptReturnsError() {
-	ExpectEq("TODO", "")
+	// Domain
+	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return([]sdb.Attribute{}, nil))
+
+	// Crypter
+	ExpectCall(t.crypter, "Encrypt")(Any()).
+		WillOnce(oglemock.Return(nil, errors.New("taco")))
+
+	// Call
+	t.callConstructor()
+
+	ExpectThat(t.err, Error(HasSubstr("Encrypt")))
+	ExpectThat(t.err, Error(HasSubstr("taco")))
 }
 
 func (t *NewRegistryTest) CallsPutAttributes() {
-	ExpectEq("TODO", "")
+	// Domain
+	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return([]sdb.Attribute{}, nil))
+
+	// Crypter
+	ciphertext := []byte("taco")
+	ExpectCall(t.crypter, "Encrypt")(Any()).
+		WillOnce(oglemock.Return(ciphertext, nil))
+
+	// Domain
+	expectedUpdate := sdb.PutUpdate{Name: "encrypted_data", Value: "taco"}
+	expectedPrecondition := sdb.Precondition{Name: "encrypted_data"}
+
+	ExpectCall(t.domain, "PutAttributes")(
+		"comeback_marker",
+		ElementsAre(DeepEquals(expectedUpdate)),
+		ElementsAre(Pointee(DeepEquals(expectedPrecondition)))).
+		WillOnce(oglemock.Return(errors.New("")))
+
+	// Call
+	t.callConstructor()
 }
 
 func (t *NewRegistryTest) PutAttributesReturnsError() {
