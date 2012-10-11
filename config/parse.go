@@ -29,10 +29,10 @@ type jsonJob struct {
 }
 
 type jsonConfig struct {
-	Jobs map[string]*jsonJob `json:"jobs"`
-	AccessKeyId string `json:"access_key_id"`
-	S3Bucket string `json:"s3_bucket"`
-	S3Region s3.Region `json:"s3_region"`
+	Jobs        map[string]*jsonJob `json:"jobs"`
+	AccessKeyId string              `json:"access_key_id"`
+	S3Bucket    string              `json:"s3_bucket"`
+	S3Region    s3.Region           `json:"s3_region"`
 }
 
 // Parse the supplied JSON configuration data.
@@ -45,9 +45,9 @@ func Parse(data []byte) (*Config, error) {
 
 	// Convert to our public representation.
 	cfg := &Config{
-		Jobs: make(map[string]*Job),
-		S3Bucket: jCfg.S3Bucket,
-		S3Region: jCfg.S3Region,
+		Jobs:      make(map[string]*Job),
+		S3Bucket:  jCfg.S3Bucket,
+		S3Region:  jCfg.S3Region,
 		AccessKey: aws.AccessKey{Id: jCfg.AccessKeyId},
 	}
 

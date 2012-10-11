@@ -30,7 +30,7 @@ func TestRegistry(t *testing.T) { RunTests(t) }
 
 type registryTest struct {
 	crypter mock_crypto.MockCrypter
-	domain mock_sdb.MockDomain
+	domain  mock_sdb.MockDomain
 }
 
 func (t *registryTest) SetUp(i *TestInfo) {
