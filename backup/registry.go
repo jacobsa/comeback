@@ -54,7 +54,9 @@ type Registry interface {
 // The crypter must be set up such that it is guaranteed to return an error if
 // it is used to decrypt ciphertext encrypted with a different key. In that
 // case, this function will return an *IncompatibleCrypterError.
-func NewRegistry(crypter crypto.Crypter, domain sdb.Domain) (r Registry, err error) {
+func NewRegistry(
+	crypter crypto.Crypter,
+	domain sdb.Domain) (r Registry, err error) {
 	err = fmt.Errorf("TODO")
 	return
 }
