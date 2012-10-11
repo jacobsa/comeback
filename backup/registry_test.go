@@ -154,7 +154,16 @@ func (t *NewRegistryTest) DecryptSucceeds() {
 }
 
 func (t *NewRegistryTest) CallsEncrypt() {
-	ExpectEq("TODO", "")
+	// Domain
+	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return([]sdb.Attribute{}, nil))
+
+	// Crypter
+	ExpectCall(t.crypter, "Encrypt")(Any()).
+		WillOnce(oglemock.Return(nil, errors.New("")))
+
+	// Call
+	t.callConstructor()
 }
 
 func (t *NewRegistryTest) EncryptReturnsError() {
