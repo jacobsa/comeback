@@ -23,6 +23,14 @@ import (
 	"time"
 )
 
+const (
+	// The item name we use for "domain is already in use" markers.
+	markerItemName = "comeback_marker"
+
+	// The attribute name we use for storing crypto-compatibility data.
+	cryptoMarkerAttributeName = "encrypted_data"
+)
+
 // A record in the backup registry describing a successful backup job.
 type CompletedJob struct {
 	// The name of the backup job.
@@ -57,9 +65,61 @@ type Registry interface {
 func NewRegistry(
 	crypter crypto.Crypter,
 	domain sdb.Domain) (r Registry, err error) {
-	err = fmt.Errorf("TODO")
+	// Set up a tentative result.
+	r = &registry{crypter, domain}
+
+	// Ask for the data that will tell us whether the crypter is compatible with
+	// the previous one used in this domain, if any.
+	attrs, err := domain.GetAttributes(
+		markerItemName,
+		false,  // No need to ask for a consistent read
+		[]string{cryptoMarkerAttributeName},
+	)
+
+	if err != nil {
+		err = fmt.Errorf("GetAttributes: %v", err)
+		return
+	}
+
+	// If we got back an attribute and its data is decryptable, we're done.
+	if len(attrs) > 0 {
+		ciphertext := []byte(attrs[0].Value)
+		if _, err = crypter.Decrypt(ciphertext); err != nil {
+			err = fmt.Errorf("Decrypt: %v", err)
+			return
+		}
+
+		return
+	}
+
+	// Otherwise, we want to claim this domain. Encrypt some random data, then
+	// write it out. Make sure to use a precondition to defeat the race condition
+	// where another machine is doing the same simultaneously.
+	plaintext := getRandBytes()
+	ciphertext, err := crypter.Encrypt(plaintext)
+	if err != nil {
+		err = fmt.Errorf("Encrypt: %v", err)
+		return
+	}
+
+	err = domain.PutAttributes(
+		markerItemName,
+		[]sdb.PutUpdate{
+			sdb.PutUpdate{Name: cryptoMarkerAttributeName, Value: string(ciphertext)},
+		},
+		&sdb.Precondition{Name: cryptoMarkerAttributeName, Value: nil},
+	)
+
+	if err != nil {
+		err = fmt.Errorf("PutAttributes: %v", err)
+		return
+	}
+
+	// All is good.
 	return
 }
+
+func getRandBytes() []byte
 
 type registry struct {
 	crypter crypto.Crypter
