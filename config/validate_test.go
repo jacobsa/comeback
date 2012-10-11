@@ -41,7 +41,7 @@ func (t *ValidateTest) SetUp(i *TestInfo) {
 		Jobs: make(map[string]*config.Job),
 		S3Bucket: "foo",
 		S3Region: "foo",
-		S3Key: aws.AccessKey{
+		AccessKey: aws.AccessKey{
 			Id: "foo",
 			Secret: "foo",
 		},
@@ -113,8 +113,8 @@ func (t *ValidateTest) MissingS3Region() {
 	ExpectThat(err, Error(HasSubstr("region")))
 }
 
-func (t *ValidateTest) MissingS3KeyId() {
-	t.cfg.S3Key.Id = ""
+func (t *ValidateTest) MissingAccessKeyId() {
+	t.cfg.AccessKey.Id = ""
 
 	err := config.Validate(t.cfg)
 
@@ -122,8 +122,8 @@ func (t *ValidateTest) MissingS3KeyId() {
 	ExpectThat(err, Error(HasSubstr("key ID")))
 }
 
-func (t *ValidateTest) MissingS3KeySecret() {
-	t.cfg.S3Key.Secret = ""
+func (t *ValidateTest) MissingAccessKeySecret() {
+	t.cfg.AccessKey.Secret = ""
 
 	err := config.Validate(t.cfg)
 

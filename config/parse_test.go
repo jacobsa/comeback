@@ -222,9 +222,9 @@ func (t *ParseTest) MultipleValidJobs() {
 func (t *ParseTest) S3Configuration() {
 	t.data = `
 	{
+		"access_key_id": "enchilada",
 		"s3_bucket": "taco",
-		"s3_region": "burrito",
-		"s3_key_id": "enchilada"
+		"s3_region": "burrito"
 	}
 	`
 
@@ -233,7 +233,7 @@ func (t *ParseTest) S3Configuration() {
 
 	ExpectEq("taco", t.cfg.S3Bucket)
 	ExpectEq("burrito", t.cfg.S3Region)
-	ExpectEq("enchilada", t.cfg.S3Key.Id)
+	ExpectEq("enchilada", t.cfg.AccessKey.Id)
 }
 
 func (t *ParseTest) UnknownKeys() {

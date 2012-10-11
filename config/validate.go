@@ -59,11 +59,11 @@ func Validate(c *Config) error {
 		return fmt.Errorf("You must specify an S3 region.")
 	}
 
-	if c.S3Key.Id == "" {
+	if c.AccessKey.Id == "" {
 		return fmt.Errorf("You must specify an S3 access key ID.")
 	}
 
-	if c.S3Key.Secret == "" {
+	if c.AccessKey.Secret == "" {
 		return fmt.Errorf("You must specify an S3 access key secret.")
 	}
 
