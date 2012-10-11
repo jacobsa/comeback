@@ -16,7 +16,9 @@
 package backup
 
 import (
+	"github.com/jacobsa/aws/sdb"
 	"github.com/jacobsa/comeback/blob"
+	"github.com/jacobsa/comeback/crypto"
 	"time"
 )
 
@@ -39,3 +41,21 @@ type Registry interface {
 	// Return a list of the most recent completed backups.
 	ListRecentBackups() (jobs []CompletedJob, err error)
 }
+
+// Create a registry that stores data in the supplied SimpleDB domain.
+//
+// Before doing so, check to see whether this domain has been used as a
+// registry before. If not, write an encrypted marker with the supplied
+// crypter. If it has been used before, make sure that it was used with a
+// crypter compatible with the supplied one. This prevents accidentally writing
+// data with the wrong key, as if the user entered the wrong password.
+//
+// The crypter must be set up such that it is guaranteed to return an error if
+// it is used to decrypt ciphertext encrypted with a different key. In that
+// case, this function will return a *IncorrectKeyError.
+func NewRegistry(crypter crypto.Crypter, domain sdb.Domain) (r Registry, err error)
+
+type IncorrectKeyError struct {
+}
+
+func (e *IncorrectKeyError) Error() string
