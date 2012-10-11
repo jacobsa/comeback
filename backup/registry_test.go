@@ -72,7 +72,15 @@ func (t *NewRegistryTest) CallsGetAttributes() {
 }
 
 func (t *NewRegistryTest) GetAttributesReturnsError() {
-	ExpectEq("TODO", "")
+	// Domain
+	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return(nil, errors.New("taco")))
+
+	// Call
+	t.callConstructor()
+
+	ExpectThat(t.err, Error(HasSubstr("GetAttributes")))
+	ExpectThat(t.err, Error(HasSubstr("taco")))
 }
 
 func (t *NewRegistryTest) CallsDecrypt() {
