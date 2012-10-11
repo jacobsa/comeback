@@ -48,6 +48,46 @@ type NewRegistryTest struct {
 
 func init() { RegisterTestSuite(&NewRegistryTest{}) }
 
-func (t *NewRegistryTest) DoesFoo() {
+func (t *NewRegistryTest) CallsGetAttributes() {
+	ExpectEq("TODO", "")
+}
+
+func (t *NewRegistryTest) GetAttributesReturnsError() {
+	ExpectEq("TODO", "")
+}
+
+func (t *NewRegistryTest) CallsDecrypt() {
+	ExpectEq("TODO", "")
+}
+
+func (t *NewRegistryTest) DecryptReturnsGenericError() {
+	ExpectEq("TODO", "")
+}
+
+func (t *NewRegistryTest) DecryptReturnsNotAuthenticError() {
+	ExpectEq("TODO", "")
+}
+
+func (t *NewRegistryTest) DecryptSucceeds() {
+	ExpectEq("TODO", "")
+}
+
+func (t *NewRegistryTest) CallsEncrypt() {
+	ExpectEq("TODO", "")
+}
+
+func (t *NewRegistryTest) EncryptReturnsError() {
+	ExpectEq("TODO", "")
+}
+
+func (t *NewRegistryTest) CallsPutAttributes() {
+	ExpectEq("TODO", "")
+}
+
+func (t *NewRegistryTest) PutAttributesReturnsError() {
+	ExpectEq("TODO", "")
+}
+
+func (t *NewRegistryTest) PutAttributesSucceeds() {
 	ExpectEq("TODO", "")
 }
