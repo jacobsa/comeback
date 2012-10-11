@@ -16,8 +16,12 @@
 package backup_test
 
 import (
+	"errors"
 	"github.com/jacobsa/aws/sdb/mock"
+	"github.com/jacobsa/comeback/backup"
 	"github.com/jacobsa/comeback/crypto/mock"
+	. "github.com/jacobsa/oglematchers"
+	"github.com/jacobsa/oglemock"
 	. "github.com/jacobsa/ogletest"
 	"testing"
 )
@@ -44,12 +48,27 @@ func (t *registryTest) SetUp(i *TestInfo) {
 
 type NewRegistryTest struct {
 	registryTest
+
+	r backup.Registry
+	err error
 }
 
 func init() { RegisterTestSuite(&NewRegistryTest{}) }
 
+func (t *NewRegistryTest) callConstructor() {
+	t.r, t.err = backup.NewRegistry(t.crypter, t.domain)
+}
+
 func (t *NewRegistryTest) CallsGetAttributes() {
-	ExpectEq("TODO", "")
+	// Domain
+	ExpectCall(t.domain, "GetAttributes")(
+		"comeback_marker",
+		false,
+		ElementsAre("encrypted_data")).
+		WillOnce(oglemock.Return(nil, errors.New("")))
+
+	// Call
+	t.callConstructor()
 }
 
 func (t *NewRegistryTest) GetAttributesReturnsError() {
