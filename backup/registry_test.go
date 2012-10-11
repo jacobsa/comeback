@@ -16,6 +16,8 @@
 package backup_test
 
 import (
+	"github.com/jacobsa/aws/sdb/mock"
+	"github.com/jacobsa/comeback/crypto/mock"
 	. "github.com/jacobsa/ogletest"
 	"testing"
 )
@@ -27,6 +29,13 @@ func TestRegistry(t *testing.T) { RunTests(t) }
 ////////////////////////////////////////////////////////////////////////
 
 type registryTest struct {
+	crypter mock_crypto.MockCrypter
+	domain mock_sdb.MockDomain
+}
+
+func (t *registryTest) SetUp(i *TestInfo) {
+	t.crypter = mock_crypto.NewMockCrypter(i.MockController, "crypter")
+	t.domain = mock_sdb.NewMockDomain(i.MockController, "domain")
 }
 
 ////////////////////////////////////////////////////////////////////////
