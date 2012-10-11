@@ -20,6 +20,7 @@ import (
 	"github.com/jacobsa/aws/sdb"
 	"github.com/jacobsa/aws/sdb/mock"
 	"github.com/jacobsa/comeback/backup"
+	"github.com/jacobsa/comeback/crypto"
 	"github.com/jacobsa/comeback/crypto/mock"
 	. "github.com/jacobsa/oglematchers"
 	"github.com/jacobsa/oglemock"
@@ -99,11 +100,40 @@ func (t *NewRegistryTest) CallsDecrypt() {
 }
 
 func (t *NewRegistryTest) DecryptReturnsGenericError() {
-	ExpectEq("TODO", "")
+	// Domain
+	attr := sdb.Attribute{Name: "encrypted_data"}
+	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return([]sdb.Attribute{attr}, nil))
+
+	// Crypter
+	ExpectCall(t.crypter, "Decrypt")(Any()).
+		WillOnce(oglemock.Return(nil, errors.New("taco")))
+
+	// Call
+	t.callConstructor()
+
+	ExpectThat(t.err, Error(HasSubstr("Decrypt")))
+	ExpectThat(t.err, Error(HasSubstr("taco")))
 }
 
 func (t *NewRegistryTest) DecryptReturnsNotAuthenticError() {
-	ExpectEq("TODO", "")
+	// Domain
+	attr := sdb.Attribute{Name: "encrypted_data"}
+	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return([]sdb.Attribute{attr}, nil))
+
+	// Crypter
+	ExpectCall(t.crypter, "Decrypt")(Any()).
+		WillOnce(oglemock.Return(nil, &crypto.NotAuthenticError{}))
+
+	// Call
+	t.callConstructor()
+
+	_, ok := t.err.(*backup.IncompatibleCrypterError)
+	AssertTrue(ok, "Error: %v", t.err)
+
+	ExpectThat(t.err, Error(HasSubstr("crypter")))
+	ExpectThat(t.err, Error(HasSubstr("incompatible")))
 }
 
 func (t *NewRegistryTest) DecryptSucceeds() {
