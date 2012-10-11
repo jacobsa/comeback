@@ -52,10 +52,10 @@ type Registry interface {
 //
 // The crypter must be set up such that it is guaranteed to return an error if
 // it is used to decrypt ciphertext encrypted with a different key. In that
-// case, this function will return a *IncorrectKeyError.
+// case, this function will return an *IncompatibleCrypterError.
 func NewRegistry(crypter crypto.Crypter, domain sdb.Domain) (r Registry, err error)
 
-type IncorrectKeyError struct {
+type IncompatibleCrypterError struct {
 }
 
-func (e *IncorrectKeyError) Error() string
+func (e *IncompatibleCrypterError) Error() string
