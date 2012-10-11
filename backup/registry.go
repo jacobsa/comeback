@@ -86,6 +86,15 @@ func NewRegistry(
 	if len(attrs) > 0 {
 		ciphertext := []byte(attrs[0].Value)
 		if _, err = crypter.Decrypt(ciphertext); err != nil {
+			// Special case: Did the crypter signal that the key was wrong?
+			if _, ok := err.(*crypto.NotAuthenticError); ok {
+				err = &IncompatibleCrypterError{
+					"The supplied crypter is not compatible with the data in the domain.",
+				}
+				return
+			}
+
+			// Generic error.
 			err = fmt.Errorf("Decrypt: %v", err)
 			return
 		}
@@ -152,8 +161,9 @@ func (r *registry) ListRecentBackups() (jobs []CompletedJob, err error) {
 }
 
 type IncompatibleCrypterError struct {
+	s string
 }
 
 func (e *IncompatibleCrypterError) Error() string {
-	return "TODO"
+	return e.s
 }

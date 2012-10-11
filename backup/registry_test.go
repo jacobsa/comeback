@@ -133,7 +133,7 @@ func (t *NewRegistryTest) DecryptReturnsNotAuthenticError() {
 	AssertTrue(ok, "Error: %v", t.err)
 
 	ExpectThat(t.err, Error(HasSubstr("crypter")))
-	ExpectThat(t.err, Error(HasSubstr("incompatible")))
+	ExpectThat(t.err, Error(HasSubstr("not compatible")))
 }
 
 func (t *NewRegistryTest) DecryptSucceeds() {
