@@ -51,14 +51,14 @@ func (t *registryTest) SetUp(i *TestInfo) {
 type NewRegistryTest struct {
 	registryTest
 
-	r backup.Registry
+	registry backup.Registry
 	err error
 }
 
 func init() { RegisterTestSuite(&NewRegistryTest{}) }
 
 func (t *NewRegistryTest) callConstructor() {
-	t.r, t.err = backup.NewRegistry(t.crypter, t.domain)
+	t.registry, t.err = backup.NewRegistry(t.crypter, t.domain)
 }
 
 func (t *NewRegistryTest) CallsGetAttributes() {
@@ -137,7 +137,20 @@ func (t *NewRegistryTest) DecryptReturnsNotAuthenticError() {
 }
 
 func (t *NewRegistryTest) DecryptSucceeds() {
-	ExpectEq("TODO", "")
+	// Domain
+	attr := sdb.Attribute{Name: "encrypted_data"}
+	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return([]sdb.Attribute{attr}, nil))
+
+	// Crypter
+	ExpectCall(t.crypter, "Decrypt")(Any()).
+		WillOnce(oglemock.Return([]byte{}, nil))
+
+	// Call
+	t.callConstructor()
+
+	AssertEq(nil, t.err)
+	ExpectNe(nil, t.registry)
 }
 
 func (t *NewRegistryTest) CallsEncrypt() {
