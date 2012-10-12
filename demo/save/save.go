@@ -22,8 +22,8 @@ import (
 	"github.com/jacobsa/aws/sdb"
 	"github.com/jacobsa/comeback/backup"
 	"github.com/jacobsa/comeback/blob"
-	"github.com/jacobsa/comeback/crypto"
 	"github.com/jacobsa/comeback/config"
+	"github.com/jacobsa/comeback/crypto"
 	"github.com/jacobsa/comeback/fs"
 	s3_kv "github.com/jacobsa/comeback/kv/s3"
 	"github.com/jacobsa/comeback/sys"
@@ -158,10 +158,10 @@ func main() {
 
 	// Register the successful backup.
 	completedJob := backup.CompletedJob{
-		Id: randUint64(randSrc),
-		Name: *g_jobName,
+		Id:        randUint64(randSrc),
+		Name:      *g_jobName,
 		StartTime: startTime,
-		Score: score,
+		Score:     score,
 	}
 
 	if err = registry.RecordBackup(completedJob); err != nil {
