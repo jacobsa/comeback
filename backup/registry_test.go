@@ -85,9 +85,22 @@ func (t *NewRegistryTest) GetAttributesReturnsError() {
 	ExpectThat(t.err, Error(HasSubstr("taco")))
 }
 
+func (t *NewRegistryTest) GetAttributesReturnsInvalidBase64Data() {
+	// Domain
+	attr := sdb.Attribute{Name: "encrypted_data", Value: "foo"}
+	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return([]sdb.Attribute{attr}, nil))
+
+	// Call
+	t.callConstructor()
+
+	ExpectThat(t.err, Error(HasSubstr("base64")))
+	ExpectThat(t.err, Error(HasSubstr("foo")))
+}
+
 func (t *NewRegistryTest) CallsDecrypt() {
 	// Domain
-	attr := sdb.Attribute{Name: "encrypted_data", Value: "taco"}
+	attr := sdb.Attribute{Name: "encrypted_data", Value: "dGFjbw=="}
 	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
 		WillOnce(oglemock.Return([]sdb.Attribute{attr}, nil))
 
@@ -193,7 +206,7 @@ func (t *NewRegistryTest) CallsPutAttributes() {
 		WillOnce(oglemock.Return(ciphertext, nil))
 
 	// Domain
-	expectedUpdate := sdb.PutUpdate{Name: "encrypted_data", Value: "taco"}
+	expectedUpdate := sdb.PutUpdate{Name: "encrypted_data", Value: "dGFjbw=="}
 	expectedPrecondition := sdb.Precondition{Name: "encrypted_data"}
 
 	ExpectCall(t.domain, "PutAttributes")(

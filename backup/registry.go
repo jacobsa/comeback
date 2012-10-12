@@ -16,6 +16,7 @@
 package backup
 
 import (
+	"encoding/base64"
 	"fmt"
 	"github.com/jacobsa/aws/sdb"
 	"github.com/jacobsa/comeback/blob"
@@ -52,6 +53,35 @@ type Registry interface {
 	ListRecentBackups() (jobs []CompletedJob, err error)
 }
 
+func verifyCompatible(
+	markerAttr sdb.Attribute,
+	crypter crypto.Crypter) (err error) {
+	// The ciphertext should be base64-encoded.
+	encoded := markerAttr.Value
+	ciphertext, err := base64.StdEncoding.DecodeString(encoded)
+	if err != nil {
+		err = fmt.Errorf("base64.DecodeString(%s): %v", encoded, err)
+		return
+	}
+
+	// Attempt to decrypt the ciphertext.
+	if _, err = crypter.Decrypt(ciphertext); err != nil {
+		// Special case: Did the crypter signal that the key was wrong?
+		if _, ok := err.(*crypto.NotAuthenticError); ok {
+			err = &IncompatibleCrypterError{
+				"The supplied crypter is not compatible with the data in the domain.",
+			}
+			return
+		}
+
+		// Generic error.
+		err = fmt.Errorf("Decrypt: %v", err)
+		return
+	}
+
+	return
+}
+
 // Create a registry that stores data in the supplied SimpleDB domain.
 //
 // Before doing so, check to see whether this domain has been used as a
@@ -82,29 +112,15 @@ func NewRegistry(
 		return
 	}
 
-	// If we got back an attribute and its data is decryptable, we're done.
+	// If we got back an attribute, we must verify that it is compatible.
 	if len(attrs) > 0 {
-		ciphertext := []byte(attrs[0].Value)
-		if _, err = crypter.Decrypt(ciphertext); err != nil {
-			// Special case: Did the crypter signal that the key was wrong?
-			if _, ok := err.(*crypto.NotAuthenticError); ok {
-				err = &IncompatibleCrypterError{
-					"The supplied crypter is not compatible with the data in the domain.",
-				}
-				return
-			}
-
-			// Generic error.
-			err = fmt.Errorf("Decrypt: %v", err)
-			return
-		}
-
+		err = verifyCompatible(attrs[0], crypter)
 		return
 	}
 
-	// Otherwise, we want to claim this domain. Encrypt some random data, then
-	// write it out. Make sure to use a precondition to defeat the race condition
-	// where another machine is doing the same simultaneously.
+	// Otherwise, we want to claim this domain. Encrypt some random data, base64
+	// encode it, then write it out. Make sure to use a precondition to defeat
+	// the race condition where another machine is doing the same simultaneously.
 	plaintext := getRandBytes()
 	ciphertext, err := crypter.Encrypt(plaintext)
 	if err != nil {
@@ -112,10 +128,12 @@ func NewRegistry(
 		return
 	}
 
+	encoded := base64.StdEncoding.EncodeToString(ciphertext)
+
 	err = domain.PutAttributes(
 		markerItemName,
 		[]sdb.PutUpdate{
-			sdb.PutUpdate{Name: cryptoMarkerAttributeName, Value: string(ciphertext)},
+			sdb.PutUpdate{Name: cryptoMarkerAttributeName, Value: encoded},
 		},
 		&sdb.Precondition{Name: cryptoMarkerAttributeName, Value: nil},
 	)
