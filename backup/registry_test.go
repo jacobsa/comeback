@@ -27,6 +27,7 @@ import (
 	. "github.com/jacobsa/oglematchers"
 	"github.com/jacobsa/oglemock"
 	. "github.com/jacobsa/ogletest"
+	"math/rand"
 	"strings"
 	"testing"
 	"time"
@@ -43,15 +44,17 @@ const (
 ////////////////////////////////////////////////////////////////////////
 
 type registryTest struct {
-	crypter mock_crypto.MockCrypter
 	db      mock_sdb.MockSimpleDB
 	domain  mock_sdb.MockDomain
+	crypter mock_crypto.MockCrypter
+	randSrc *rand.Rand
 }
 
 func (t *registryTest) SetUp(i *TestInfo) {
-	t.crypter = mock_crypto.NewMockCrypter(i.MockController, "crypter")
 	t.db = mock_sdb.NewMockSimpleDB(i.MockController, "domain")
 	t.domain = mock_sdb.NewMockDomain(i.MockController, "domain")
+	t.crypter = mock_crypto.NewMockCrypter(i.MockController, "crypter")
+	t.randSrc = rand.New(rand.NewSource(17))
 
 	// By default, open the domain successfully.
 	ExpectCall(t.db, "OpenDomain")(Any()).
@@ -76,7 +79,7 @@ type NewRegistryTest struct {
 func init() { RegisterTestSuite(&NewRegistryTest{}) }
 
 func (t *NewRegistryTest) callConstructor() {
-	t.registry, t.err = backup.NewRegistry(t.crypter, t.db, domainName)
+	t.registry, t.err = backup.NewRegistry(t.db, domainName, t.crypter, t.randSrc)
 }
 
 func (t *NewRegistryTest) CallsOpenDomain() {
@@ -327,7 +330,7 @@ func (t *RecordBackupTest) SetUp(i *TestInfo) {
 		WillOnce(oglemock.Return([]byte{}, nil))
 
 	// Create the registry.
-	t.registry, err = backup.NewRegistry(t.crypter, t.db, domainName)
+	t.registry, err = backup.NewRegistry(t.db, domainName, t.crypter, t.randSrc)
 	AssertEq(nil, err)
 
 	// Make the request legal by default.
@@ -465,7 +468,7 @@ func (t *ListRecentBackupsTest) SetUp(i *TestInfo) {
 		WillOnce(oglemock.Return([]byte{}, nil))
 
 	// Create the registry.
-	t.registry, err = backup.NewRegistry(t.crypter, t.db, domainName)
+	t.registry, err = backup.NewRegistry(t.db, domainName, t.crypter, t.randSrc)
 	AssertEq(nil, err)
 }
 

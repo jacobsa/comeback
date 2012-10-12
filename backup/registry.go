@@ -102,9 +102,11 @@ func verifyCompatible(
 // it is used to decrypt ciphertext encrypted with a different key. In that
 // case, this function will return an *IncompatibleCrypterError.
 func NewRegistry(
-	crypter crypto.Crypter,
 	db sdb.SimpleDB,
-	domainName string) (r Registry, err error) {
+	domainName string,
+	crypter crypto.Crypter,
+	randSrc *rand.Rand,
+  ) (r Registry, err error) {
 	// Attempt to open the domain.
 	domain, err := db.OpenDomain(domainName)
 	if err != nil {
@@ -137,7 +139,7 @@ func NewRegistry(
 	// Otherwise, we want to claim this domain. Encrypt some random data, base64
 	// encode it, then write it out. Make sure to use a precondition to defeat
 	// the race condition where another machine is doing the same simultaneously.
-	plaintext := get8RandBytes()
+	plaintext := get8RandBytes(randSrc)
 	ciphertext, err := crypter.Encrypt(plaintext)
 	if err != nil {
 		err = fmt.Errorf("Encrypt: %v", err)
@@ -163,9 +165,9 @@ func NewRegistry(
 	return
 }
 
-func get8RandBytes() []byte {
-	a := rand.Uint32()
-	b := rand.Uint32()
+func get8RandBytes(src *rand.Rand) []byte {
+	a := src.Uint32()
+	b := src.Uint32()
 
 	return []byte{
 		byte(a),
@@ -284,7 +286,7 @@ func (r *registry) ListRecentBackups() (jobs []CompletedJob, err error) {
 		var job CompletedJob
 		job, err = convertSelectedItem(item)
 		if err != nil {
-			err = fmt.Errorf("Item %s is invalid: %v", err)
+			err = fmt.Errorf("Item %s is invalid: %v", item.Name, err)
 			return
 		}
 
