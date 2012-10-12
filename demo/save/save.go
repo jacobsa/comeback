@@ -37,6 +37,8 @@ import (
 var g_configFile = flag.String("config", "", "Path to config file.")
 var g_jobName = flag.String("job", "", "Job name within the config file.")
 
+func randUint64(randSrc *rand.Rand) uint64
+
 func main() {
 	var err error
 	flag.Parse()
@@ -154,6 +156,17 @@ func main() {
 		log.Fatalf("Saving: %v", err)
 	}
 
-	// Print the score.
-	fmt.Printf("Score: %s\n", score.Hex())
+	// Register the successful backup.
+	completedJob := backup.CompletedJob{
+		Id: randUint64(randSrc),
+		Name: cfg.JobName,
+		StartTime: startTime,
+		Score: score,
+	}
+
+	if err = registry.RecordBackup(completedJob); err != nil {
+		log.Fatalf("Recoding to registry: %v", err)
+	}
+
+	fmt.Printf("Successfully backed up. ID: %16x\n", completedJob.Id)
 }
