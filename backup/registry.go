@@ -17,6 +17,7 @@ package backup
 
 import (
 	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"github.com/jacobsa/aws/sdb"
 	"github.com/jacobsa/comeback/blob"
@@ -216,8 +217,80 @@ func (r *registry) RecordBackup(job CompletedJob) (err error) {
 	return
 }
 
+func convertSelectedItem(item sdb.SelectedItem) (j CompletedJob, err error) {
+	for _, attr := range item.Attributes {
+		switch attr.Name {
+		case "job_name":
+			j.Name = attr.Value
+
+		case "start_time":
+			if j.StartTime, err = time.Parse(iso8601TimeFormat, attr.Value); err != nil {
+				err = fmt.Errorf("Invalid start_time value: %v", err)
+				return
+			}
+
+		case "score":
+			var decoded []byte
+			decoded, err = hex.DecodeString(attr.Value)
+			if err != nil || len(decoded) != 20 {
+				err = fmt.Errorf("Invalid score: %s", attr.Value)
+				return
+			}
+
+			j.Score = blob.Score(decoded)
+		}
+	}
+
+	// Everything must have been returned.
+	if j.Name == "" {
+		err = fmt.Errorf("Missing name attribute.")
+		return
+	}
+
+	if j.StartTime.IsZero() {
+		err = fmt.Errorf("Missing start_time attribute.")
+		return
+	}
+
+	if j.Score == nil {
+		err = fmt.Errorf("Missing score attribute.")
+		return
+	}
+
+	return
+}
+
 func (r *registry) ListRecentBackups() (jobs []CompletedJob, err error) {
-	err = fmt.Errorf("TODO")
+	// Call the database.
+	query := fmt.Sprintf(
+		"select job_name, start_time, score from `%s` where " +
+		"start_time is not null order by start_time desc",
+		r.domain.Name(),
+	)
+
+	results, _, err := r.db.Select(
+		query,
+		false,  // No need for consistent reads.
+		nil,
+	)
+
+	if err != nil {
+		err = fmt.Errorf("Select: %v", err)
+		return
+	}
+
+	// Convert each result.
+	for _, item := range results {
+		var job CompletedJob
+		job, err = convertSelectedItem(item)
+		if err != nil {
+			err = fmt.Errorf("Item %s is invalid: %v", err)
+			return
+		}
+
+		jobs = append(jobs, job)
+	}
+
 	return
 }
 

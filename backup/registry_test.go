@@ -56,6 +56,10 @@ func (t *registryTest) SetUp(i *TestInfo) {
 	// By default, open the domain successfully.
 	ExpectCall(t.db, "OpenDomain")(Any()).
 		WillRepeatedly(oglemock.Return(t.domain, nil))
+
+	// Set up the domain's name.
+	ExpectCall(t.domain, "Name")().
+		WillRepeatedly(oglemock.Return(domainName))
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -738,6 +742,7 @@ func (t *ListRecentBackupsTest) ReturnsCompletedJobs() {
 		sdb.SelectedItem{
 			Name: "bar",
 			Attributes: []sdb.Attribute{
+				sdb.Attribute{Name: "irrelevant", Value: "blah"},
 				sdb.Attribute{Name: "job_name", Value: "burrito"},
 				sdb.Attribute{Name: "start_time", Value: "1989-03-16T12:34:56Z"},
 				sdb.Attribute{Name: "score", Value: score1.Hex()},
