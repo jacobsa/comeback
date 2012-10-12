@@ -366,7 +366,7 @@ func (t *RecordBackupTest) LongJobName() {
 }
 
 func (t *RecordBackupTest) CallsPutAttributes() {
-	t.job.Id = 0xdeadbeeffeedface
+	t.job.Id = 0xfeedface
 	t.job.Name = "taco"
 	t.job.StartTime = time.Date(1985, time.March, 18, 15, 33, 07, 0, time.UTC).Local()
 	t.job.Score = blob.ComputeScore([]byte("burrito"))
@@ -381,7 +381,7 @@ func (t *RecordBackupTest) CallsPutAttributes() {
 
 	// Domain
 	ExpectCall(t.domain, "PutAttributes")(
-		"backup_deadbeeffeedface",
+		"backup_00000000feedface",
 		ElementsAre(
 			DeepEquals(
 				sdb.PutUpdate{

@@ -192,8 +192,8 @@ func (r *registry) RecordBackup(job CompletedJob) (err error) {
 		return
 	}
 
-	// Choose a random item name.
-	itemName := sdb.ItemName(fmt.Sprintf("backup_%x", get8RandBytes()))
+	// Format the item name.
+	itemName := sdb.ItemName(fmt.Sprintf("backup_%016x", job.Id))
 
 	// Use a time format that works correctly with range queries. Make sure to
 	// standardize on UTC.
@@ -206,7 +206,9 @@ func (r *registry) RecordBackup(job CompletedJob) (err error) {
 		sdb.PutUpdate{Name: "score", Value: job.Score.Hex()},
 	}
 
-	if err = r.domain.PutAttributes(itemName, updates, nil); err != nil {
+	precond := sdb.Precondition{Name: "score", Value: nil}
+
+	if err = r.domain.PutAttributes(itemName, updates, &precond); err != nil {
 		err = fmt.Errorf("PutAttributes: %v", err)
 		return
 	}
