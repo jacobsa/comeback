@@ -547,8 +547,8 @@ func (t *ListRecentBackupsTest) OneResultMissingName() {
 	t.callRegistry()
 
 	ExpectThat(t.err, Error(HasSubstr("bar")))
-	ExpectThat(t.err, Error(HasSubstr("missing")))
-	ExpectThat(t.err, Error(HasSubstr("job name")))
+	ExpectThat(t.err, Error(HasSubstr("Missing")))
+	ExpectThat(t.err, Error(HasSubstr("name")))
 }
 
 func (t *ListRecentBackupsTest) OneResultMissingStartTime() {
@@ -581,8 +581,8 @@ func (t *ListRecentBackupsTest) OneResultMissingStartTime() {
 	t.callRegistry()
 
 	ExpectThat(t.err, Error(HasSubstr("bar")))
-	ExpectThat(t.err, Error(HasSubstr("missing")))
-	ExpectThat(t.err, Error(HasSubstr("start time")))
+	ExpectThat(t.err, Error(HasSubstr("Missing")))
+	ExpectThat(t.err, Error(HasSubstr("start_time")))
 }
 
 func (t *ListRecentBackupsTest) OneResultHasInvalidStartTime() {
@@ -617,7 +617,7 @@ func (t *ListRecentBackupsTest) OneResultHasInvalidStartTime() {
 
 	ExpectThat(t.err, Error(HasSubstr("bar")))
 	ExpectThat(t.err, Error(HasSubstr("invalid")))
-	ExpectThat(t.err, Error(HasSubstr("start time")))
+	ExpectThat(t.err, Error(HasSubstr("start_time")))
 	ExpectThat(t.err, Error(HasSubstr("afsdf")))
 }
 
@@ -651,7 +651,7 @@ func (t *ListRecentBackupsTest) OneResultMissingScore() {
 	t.callRegistry()
 
 	ExpectThat(t.err, Error(HasSubstr("bar")))
-	ExpectThat(t.err, Error(HasSubstr("missing")))
+	ExpectThat(t.err, Error(HasSubstr("Missing")))
 	ExpectThat(t.err, Error(HasSubstr("score")))
 }
 
