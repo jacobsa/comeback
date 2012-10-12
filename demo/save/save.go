@@ -159,7 +159,7 @@ func main() {
 	// Register the successful backup.
 	completedJob := backup.CompletedJob{
 		Id: randUint64(randSrc),
-		Name: cfg.JobName,
+		Name: *g_jobName,
 		StartTime: startTime,
 		Score: score,
 	}
