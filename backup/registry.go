@@ -23,6 +23,7 @@ import (
 	"github.com/jacobsa/comeback/crypto"
 	"math/rand"
 	"time"
+	"unicode/utf8"
 )
 
 const (
@@ -31,6 +32,9 @@ const (
 
 	// The attribute name we use for storing crypto-compatibility data.
 	cryptoMarkerAttributeName = "encrypted_data"
+
+	// A time format that works properly with range queries.
+	iso8601TimeFormat = "2006-01-02T15:04:05Z"
 )
 
 // A record in the backup registry describing a successful backup job.
@@ -129,7 +133,7 @@ func NewRegistry(
 	// Otherwise, we want to claim this domain. Encrypt some random data, base64
 	// encode it, then write it out. Make sure to use a precondition to defeat
 	// the race condition where another machine is doing the same simultaneously.
-	plaintext := getRandBytes()
+	plaintext := get8RandBytes()
 	ciphertext, err := crypter.Encrypt(plaintext)
 	if err != nil {
 		err = fmt.Errorf("Encrypt: %v", err)
@@ -155,7 +159,7 @@ func NewRegistry(
 	return
 }
 
-func getRandBytes() []byte {
+func get8RandBytes() []byte {
 	a := rand.Uint32()
 	b := rand.Uint32()
 
@@ -177,8 +181,33 @@ type registry struct {
 	domain sdb.Domain
 }
 
-func (r *registry) RecordBackup(j CompletedJob) (err error) {
-	err = fmt.Errorf("TODO")
+func (r *registry) RecordBackup(job CompletedJob) (err error) {
+	// Job names must be valid SimpleDB attribute values.
+	if len(job.Name) == 0 || len(job.Name) > 1024 || !utf8.ValidString(job.Name) {
+		err = fmt.Errorf(
+			"Job names must be non-empty UTF-8 no more than 1024 bytes long.")
+		return
+	}
+
+	// Choose a random item name.
+	itemName := sdb.ItemName(fmt.Sprintf("backup_%x", get8RandBytes()))
+
+	// Use a time format that works correctly with range queries. Make sure to
+	// standardize on UTC.
+	formattedTime := job.StartTime.UTC().Format(iso8601TimeFormat)
+
+	// Call the domain.
+	updates := []sdb.PutUpdate{
+		sdb.PutUpdate{Name: "job_name", Value: job.Name},
+		sdb.PutUpdate{Name: "start_time", Value: formattedTime},
+		sdb.PutUpdate{Name: "score", Value: job.Score.Hex()},
+	}
+
+	if err = r.domain.PutAttributes(itemName, updates, nil); err != nil {
+		err = fmt.Errorf("PutAttributes: %v", err)
+		return
+	}
+
 	return
 }
 

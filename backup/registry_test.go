@@ -340,7 +340,7 @@ func (t *RecordBackupTest) EmptyJobName() {
 	// Call
 	t.callRegistry()
 
-	ExpectThat(t.err, Error(HasSubstr("job name")))
+	ExpectThat(t.err, Error(HasSubstr("Job name")))
 	ExpectThat(t.err, Error(HasSubstr("empty")))
 }
 
@@ -350,7 +350,7 @@ func (t *RecordBackupTest) InvalidUtf8JobName() {
 	// Call
 	t.callRegistry()
 
-	ExpectThat(t.err, Error(HasSubstr("job name")))
+	ExpectThat(t.err, Error(HasSubstr("Job name")))
 	ExpectThat(t.err, Error(HasSubstr("UTF-8")))
 }
 
@@ -360,7 +360,7 @@ func (t *RecordBackupTest) LongJobName() {
 	// Call
 	t.callRegistry()
 
-	ExpectThat(t.err, Error(HasSubstr("job name")))
+	ExpectThat(t.err, Error(HasSubstr("Job name")))
 	ExpectThat(t.err, Error(HasSubstr("1024")))
 }
 
@@ -368,6 +368,14 @@ func (t *RecordBackupTest) CallsPutAttributes() {
 	t.job.Name = "taco"
 	t.job.StartTime = time.Date(1985, time.March, 18, 15, 33, 07, 0, time.UTC).Local()
 	t.job.Score = blob.ComputeScore([]byte("burrito"))
+
+	AssertThat(
+		t.job.Score.Hex(),
+		AllOf(
+			MatchesRegexp("[a-f]"),
+			MatchesRegexp("^[0-9a-f]{40}$"),
+		),
+	)
 
 	// Domain
 	ExpectCall(t.domain, "PutAttributes")(
@@ -382,7 +390,7 @@ func (t *RecordBackupTest) CallsPutAttributes() {
 			DeepEquals(
 				sdb.PutUpdate{
 					Name: "start_time",
-					Value: "1985-03-18 15:33:07",
+					Value: "1985-03-18T15:33:07Z",
 				},
 			),
 			DeepEquals(
