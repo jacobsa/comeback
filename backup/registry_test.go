@@ -484,7 +484,15 @@ func (t *ListRecentBackupsTest) CallsSelect() {
 }
 
 func (t *ListRecentBackupsTest) SelectReturnsError() {
-	ExpectEq("TODO", "")
+	// Domain
+	ExpectCall(t.db, "Select")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return(nil, nil, errors.New("taco")))
+
+	// Call
+	t.callRegistry()
+
+	ExpectThat(t.err, Error(HasSubstr("Select")))
+	ExpectThat(t.err, Error(HasSubstr("taco")))
 }
 
 func (t *ListRecentBackupsTest) NoResults() {
