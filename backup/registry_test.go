@@ -511,7 +511,37 @@ func (t *ListRecentBackupsTest) NoResults() {
 }
 
 func (t *ListRecentBackupsTest) OneResultMissingName() {
-	ExpectEq("TODO", "")
+	validItem := sdb.SelectedItem{
+		Name: "foo",
+		Attributes: []sdb.Attribute{
+			sdb.Attribute{Name: "job_name", Value: "some_job"},
+			sdb.Attribute{Name: "start_time", Value: "1985-03-18T15:33:07Z"},
+			sdb.Attribute{Name: "score", Value: strings.Repeat("f", 40)},
+		},
+	}
+
+	// Domain
+	results := []sdb.SelectedItem{
+		validItem,
+		sdb.SelectedItem{
+			Name: "foo",
+			Attributes: []sdb.Attribute{
+				sdb.Attribute{Name: "start_time", Value: "1985-03-18T15:33:07Z"},
+				sdb.Attribute{Name: "score", Value: strings.Repeat("f", 40)},
+			},
+		},
+		validItem,
+	}
+
+	ExpectCall(t.db, "Select")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return(results, nil, nil))
+
+	// Call
+	t.callRegistry()
+
+	ExpectThat(t.err, Error(HasSubstr("foo")))
+	ExpectThat(t.err, Error(HasSubstr("missing")))
+	ExpectThat(t.err, Error(HasSubstr("job name")))
 }
 
 func (t *ListRecentBackupsTest) OneResultMissingStartTime() {
@@ -522,7 +552,11 @@ func (t *ListRecentBackupsTest) OneResultMissingScore() {
 	ExpectEq("TODO", "")
 }
 
-func (t *ListRecentBackupsTest) OneResultHasInvalidScore() {
+func (t *ListRecentBackupsTest) OneResultHasInvalidCharacterInScore() {
+	ExpectEq("TODO", "")
+}
+
+func (t *ListRecentBackupsTest) OneResultHasShortScore() {
 	ExpectEq("TODO", "")
 }
 
