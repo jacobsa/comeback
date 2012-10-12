@@ -721,5 +721,47 @@ func (t *ListRecentBackupsTest) OneResultHasShortScore() {
 }
 
 func (t *ListRecentBackupsTest) ReturnsCompletedJobs() {
-	ExpectEq("TODO", "")
+	// Domain
+	score0 := blob.ComputeScore([]byte("enchilada"))
+	score1 := blob.ComputeScore([]byte("queso"))
+
+	results := []sdb.SelectedItem{
+		sdb.SelectedItem{
+			Name: "foo",
+			Attributes: []sdb.Attribute{
+				sdb.Attribute{Name: "job_name", Value: "taco"},
+				sdb.Attribute{Name: "start_time", Value: "1985-03-18T15:33:07Z"},
+				sdb.Attribute{Name: "score", Value: score0.Hex()},
+			},
+		},
+		sdb.SelectedItem{
+			Name: "bar",
+			Attributes: []sdb.Attribute{
+				sdb.Attribute{Name: "job_name", Value: "burrito"},
+				sdb.Attribute{Name: "start_time", Value: "1989-03-16T12:34:56Z"},
+				sdb.Attribute{Name: "score", Value: score1.Hex()},
+			},
+		},
+	}
+
+	ExpectCall(t.db, "Select")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return(results, nil, nil))
+
+	// Call
+	t.callRegistry()
+	AssertEq(nil, t.err)
+
+	AssertThat(t.jobs, ElementsAre(Any(), Any()))
+
+	ExpectEq("taco", t.jobs[0].Name)
+	ExpectThat(t.jobs[0].Score, DeepEquals(score0))
+	ExpectEq(
+		time.Date(1985, time.March, 18, 15, 33, 07, 0, time.UTC).Local(),
+		t.jobs[0].StartTime)
+
+	ExpectEq("burrito", t.jobs[1].Name)
+	ExpectThat(t.jobs[1].Score, DeepEquals(score1))
+	ExpectEq(
+		time.Date(1989, time.March, 16, 12, 34, 56, 0, time.UTC).Local(),
+		t.jobs[1].StartTime)
 }
