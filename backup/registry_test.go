@@ -551,6 +551,74 @@ func (t *ListRecentBackupsTest) OneResultMissingName() {
 	ExpectThat(t.err, Error(HasSubstr("name")))
 }
 
+func (t *ListRecentBackupsTest) OneResultHasJunkName() {
+	validItem := sdb.SelectedItem{
+		Name: "backup_00000000deadbeef",
+		Attributes: []sdb.Attribute{
+			sdb.Attribute{Name: "job_name", Value: "some_job"},
+			sdb.Attribute{Name: "start_time", Value: "1985-03-18T15:33:07Z"},
+			sdb.Attribute{Name: "score", Value: strings.Repeat("f", 40)},
+		},
+	}
+
+	// Domain
+	results := []sdb.SelectedItem{
+		validItem,
+		sdb.SelectedItem{
+			Name: "foobar",
+			Attributes: []sdb.Attribute{
+				sdb.Attribute{Name: "start_time", Value: "1985-03-18T15:33:07Z"},
+				sdb.Attribute{Name: "score", Value: strings.Repeat("f", 40)},
+			},
+		},
+		validItem,
+	}
+
+	ExpectCall(t.db, "Select")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return(results, nil, nil))
+
+	// Call
+	t.callRegistry()
+
+	ExpectThat(t.err, Error(HasSubstr("Invalid")))
+	ExpectThat(t.err, Error(HasSubstr("name")))
+	ExpectThat(t.err, Error(HasSubstr("foobar")))
+}
+
+func (t *ListRecentBackupsTest) OneResultHasShortName() {
+	validItem := sdb.SelectedItem{
+		Name: "backup_00000000deadbeef",
+		Attributes: []sdb.Attribute{
+			sdb.Attribute{Name: "job_name", Value: "some_job"},
+			sdb.Attribute{Name: "start_time", Value: "1985-03-18T15:33:07Z"},
+			sdb.Attribute{Name: "score", Value: strings.Repeat("f", 40)},
+		},
+	}
+
+	// Domain
+	results := []sdb.SelectedItem{
+		validItem,
+		sdb.SelectedItem{
+			Name: "backup_00000000feedfa",
+			Attributes: []sdb.Attribute{
+				sdb.Attribute{Name: "start_time", Value: "1985-03-18T15:33:07Z"},
+				sdb.Attribute{Name: "score", Value: strings.Repeat("f", 40)},
+			},
+		},
+		validItem,
+	}
+
+	ExpectCall(t.db, "Select")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return(results, nil, nil))
+
+	// Call
+	t.callRegistry()
+
+	ExpectThat(t.err, Error(HasSubstr("Invalid")))
+	ExpectThat(t.err, Error(HasSubstr("name")))
+	ExpectThat(t.err, Error(HasSubstr("backup_00000000feedfa")))
+}
+
 func (t *ListRecentBackupsTest) OneResultMissingStartTime() {
 	validItem := sdb.SelectedItem{
 		Name: "backup_00000000deadbeef",
@@ -743,7 +811,7 @@ func (t *ListRecentBackupsTest) ReturnsCompletedJobs() {
 			},
 		},
 		sdb.SelectedItem{
-			Name: "backup_00000000feedface",
+			Name: "backup_cafebabefeedface",
 			Attributes: []sdb.Attribute{
 				sdb.Attribute{Name: "irrelevant", Value: "blah"},
 				sdb.Attribute{Name: "job_name", Value: "burrito"},
@@ -762,6 +830,7 @@ func (t *ListRecentBackupsTest) ReturnsCompletedJobs() {
 
 	AssertThat(t.jobs, ElementsAre(Any(), Any()))
 
+	ExpectEq(uint64(0xdeadbeef), t.jobs[0].Id)
 	ExpectEq("taco", t.jobs[0].Name)
 	ExpectThat(t.jobs[0].Score, DeepEquals(score0))
 	ExpectTrue(
@@ -771,6 +840,7 @@ func (t *ListRecentBackupsTest) ReturnsCompletedJobs() {
 		t.jobs[0].StartTime,
 	)
 
+	ExpectEq(uint64(0xcafebabefeedface), t.jobs[1].Id)
 	ExpectEq("burrito", t.jobs[1].Name)
 	ExpectThat(t.jobs[1].Score, DeepEquals(score1))
 	ExpectTrue(
