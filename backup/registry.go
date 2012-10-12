@@ -23,6 +23,8 @@ import (
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/crypto"
 	"math/rand"
+	"regexp"
+	"strconv"
 	"time"
 	"unicode/utf8"
 )
@@ -37,6 +39,9 @@ const (
 	// A time format that works properly with range queries.
 	iso8601TimeFormat = "2006-01-02T15:04:05Z"
 )
+
+// A regexp for selected item names.
+var itemNameRegexp = regexp.MustCompile(`^backup_([0-9a-f]{16})$`)
 
 // A record in the backup registry describing a successful backup job.
 type CompletedJob struct {
@@ -220,6 +225,18 @@ func (r *registry) RecordBackup(job CompletedJob) (err error) {
 }
 
 func convertSelectedItem(item sdb.SelectedItem) (j CompletedJob, err error) {
+	// Convert the item name.
+	subMatches := itemNameRegexp.FindStringSubmatch(string(item.Name))
+	if subMatches == nil {
+		err = fmt.Errorf("Invalid item name: %s", item.Name)
+		return
+	}
+
+	if j.Id, err = strconv.ParseUint(subMatches[1], 16, 64); err != nil {
+		panic(fmt.Sprintf("Unexpected result for name: %s", item.Name))
+	}
+
+	// Convert each attribute.
 	for _, attr := range item.Attributes {
 		switch attr.Name {
 		case "job_name":
