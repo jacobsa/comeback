@@ -30,18 +30,28 @@ import (
 
 func TestRegistry(t *testing.T) { RunTests(t) }
 
+const (
+	domainName = "some_domain"
+)
+
 ////////////////////////////////////////////////////////////////////////
 // Helpers
 ////////////////////////////////////////////////////////////////////////
 
 type registryTest struct {
 	crypter mock_crypto.MockCrypter
+	db mock_sdb.MockSimpleDB
 	domain  mock_sdb.MockDomain
 }
 
 func (t *registryTest) SetUp(i *TestInfo) {
 	t.crypter = mock_crypto.NewMockCrypter(i.MockController, "crypter")
+	t.db = mock_sdb.NewMockSimpleDB(i.MockController, "domain")
 	t.domain = mock_sdb.NewMockDomain(i.MockController, "domain")
+
+	// By default, open the domain successfully.
+	ExpectCall(t.db, "OpenDomain")(Any()).
+		WillRepeatedly(oglemock.Return(t.domain, nil))
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -58,7 +68,28 @@ type NewRegistryTest struct {
 func init() { RegisterTestSuite(&NewRegistryTest{}) }
 
 func (t *NewRegistryTest) callConstructor() {
-	t.registry, t.err = backup.NewRegistry(t.crypter, t.domain)
+	t.registry, t.err = backup.NewRegistry(t.crypter, t.db, domainName)
+}
+
+func (t *NewRegistryTest) CallsOpenDomain() {
+	// OpenDomain
+	ExpectCall(t.db, "OpenDomain")(domainName).
+		WillOnce(oglemock.Return(nil, errors.New("")))
+
+	// Call
+	t.callConstructor()
+}
+
+func (t *NewRegistryTest) OpenDomainReturnsError() {
+	// OpenDomain
+	ExpectCall(t.db, "OpenDomain")(domainName).
+		WillOnce(oglemock.Return(nil, errors.New("taco")))
+
+	// Call
+	t.callConstructor()
+
+	ExpectThat(t.err, Error(HasSubstr("OpenDomain")))
+	ExpectThat(t.err, Error(HasSubstr("taco")))
 }
 
 func (t *NewRegistryTest) CallsGetAttributes() {
@@ -288,7 +319,7 @@ func (t *RecordBackupTest) SetUp(i *TestInfo) {
 		WillOnce(oglemock.Return([]byte{}, nil))
 
 	// Create the registry.
-	t.registry, err = backup.NewRegistry(t.crypter, t.domain)
+	t.registry, err = backup.NewRegistry(t.crypter, t.db, domainName)
 	AssertEq(nil, err)
 }
 
@@ -337,7 +368,7 @@ func (t *ListRecentBackupsTest) SetUp(i *TestInfo) {
 		WillOnce(oglemock.Return([]byte{}, nil))
 
 	// Create the registry.
-	t.registry, err = backup.NewRegistry(t.crypter, t.domain)
+	t.registry, err = backup.NewRegistry(t.crypter, t.db, domainName)
 	AssertEq(nil, err)
 }
 

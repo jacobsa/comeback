@@ -82,7 +82,7 @@ func verifyCompatible(
 	return
 }
 
-// Create a registry that stores data in the supplied SimpleDB domain.
+// Create a registry that stores data in the named SimpleDB domain.
 //
 // Before doing so, check to see whether this domain has been used as a
 // registry before. If not, write an encrypted marker with the supplied
@@ -95,9 +95,17 @@ func verifyCompatible(
 // case, this function will return an *IncompatibleCrypterError.
 func NewRegistry(
 	crypter crypto.Crypter,
-	domain sdb.Domain) (r Registry, err error) {
+	db sdb.SimpleDB,
+	domainName string) (r Registry, err error) {
+	// Attempt to open the domain.
+	domain, err := db.OpenDomain(domainName)
+	if err != nil {
+		err = fmt.Errorf("OpenDomain: %v", err)
+		return
+	}
+
 	// Set up a tentative result.
-	r = &registry{crypter, domain}
+	r = &registry{crypter, db, domain}
 
 	// Ask for the data that will tell us whether the crypter is compatible with
 	// the previous one used in this domain, if any.
@@ -165,6 +173,7 @@ func getRandBytes() []byte {
 
 type registry struct {
 	crypter crypto.Crypter
+	db sdb.SimpleDB
 	domain sdb.Domain
 }
 
