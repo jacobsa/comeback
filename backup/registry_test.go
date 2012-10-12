@@ -296,7 +296,15 @@ func (t *RecordBackupTest) callRegistry() {
 	t.err = t.registry.RecordBackup(t.job)
 }
 
-func (t *RecordBackupTest) DoesFoo() {
+func (t *RecordBackupTest) CallsPutAttributes() {
+	ExpectEq("TODO", "")
+}
+
+func (t *RecordBackupTest) PutAttributesReturnsError() {
+	ExpectEq("TODO", "")
+}
+
+func (t *RecordBackupTest) PutAttributesSucceeds() {
 	ExpectEq("TODO", "")
 }
 
@@ -337,6 +345,34 @@ func (t *ListRecentBackupsTest) callRegistry() {
 	t.jobs, t.err = t.registry.ListRecentBackups()
 }
 
-func (t *ListRecentBackupsTest) DoesFoo() {
+func (t *ListRecentBackupsTest) CallsSelect() {
+	ExpectEq("TODO", "")
+}
+
+func (t *ListRecentBackupsTest) SelectReturnsError() {
+	ExpectEq("TODO", "")
+}
+
+func (t *ListRecentBackupsTest) NoResults() {
+	ExpectEq("TODO", "")
+}
+
+func (t *ListRecentBackupsTest) OneResultMissingName() {
+	ExpectEq("TODO", "")
+}
+
+func (t *ListRecentBackupsTest) OneResultMissingStartTime() {
+	ExpectEq("TODO", "")
+}
+
+func (t *ListRecentBackupsTest) OneResultMissingScore() {
+	ExpectEq("TODO", "")
+}
+
+func (t *ListRecentBackupsTest) OneResultHasInvalidScore() {
+	ExpectEq("TODO", "")
+}
+
+func (t *ListRecentBackupsTest) ReturnsCompletedJobs() {
 	ExpectEq("TODO", "")
 }
