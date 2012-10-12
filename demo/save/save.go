@@ -16,6 +16,8 @@
 package main
 
 import (
+	"code.google.com/p/go.crypto/pbkdf2"
+	"crypto/sha256"
 	"flag"
 	"fmt"
 	"github.com/jacobsa/aws/s3"
@@ -109,6 +111,14 @@ func main() {
 	if err != nil {
 		log.Fatalf("Creating bucket: %v", err)
 	}
+
+	// Derive a crypto key from a password using PBKDF2, recommended for use by
+	// NIST Special Publication 800-132. The latter says that PBKDF2 is approved
+	// for use with HMAC and any approved hash function. Special Publication
+	// 800-107 lists SHA-256 as an approved hash function.
+	const pbkdf2Iters = 4096
+	const keyLen = 32  // Minimum key length for AES-SIV
+	cryptoKey := pbkdf2.Key(password, salt, pbkdf2Iters, keyLen, sha256.New)
 
 	// Create the crypter.
 	crypter, err := crypto.NewCrypter(cryptoKey)
