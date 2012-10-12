@@ -737,8 +737,9 @@ func (t *ListRecentBackupsTest) ReturnsCompletedJobs() {
 			Name: "foo",
 			Attributes: []sdb.Attribute{
 				sdb.Attribute{Name: "job_name", Value: "taco"},
-				sdb.Attribute{Name: "start_time", Value: "1985-03-18T15:33:07Z"},
+				sdb.Attribute{Name: "start_time", Value: "2012-08-15T12:56:00Z"},
 				sdb.Attribute{Name: "score", Value: score0.Hex()},
+				sdb.Attribute{Name: "irrelevant", Value: "blah"},
 			},
 		},
 		sdb.SelectedItem{
@@ -746,7 +747,7 @@ func (t *ListRecentBackupsTest) ReturnsCompletedJobs() {
 			Attributes: []sdb.Attribute{
 				sdb.Attribute{Name: "irrelevant", Value: "blah"},
 				sdb.Attribute{Name: "job_name", Value: "burrito"},
-				sdb.Attribute{Name: "start_time", Value: "1989-03-16T12:34:56Z"},
+				sdb.Attribute{Name: "start_time", Value: "1985-03-18T15:33:07Z"},
 				sdb.Attribute{Name: "score", Value: score1.Hex()},
 			},
 		},
@@ -764,7 +765,7 @@ func (t *ListRecentBackupsTest) ReturnsCompletedJobs() {
 	ExpectEq("taco", t.jobs[0].Name)
 	ExpectThat(t.jobs[0].Score, DeepEquals(score0))
 	ExpectTrue(
-		time.Date(1985, time.March, 18, 15, 33, 07, 0, time.UTC).Local().Equal(
+		time.Date(2012, time.August, 15, 12, 56, 00, 0, time.UTC).Local().Equal(
 			t.jobs[0].StartTime),
 		"Time: %v",
 		t.jobs[0].StartTime,
@@ -773,7 +774,7 @@ func (t *ListRecentBackupsTest) ReturnsCompletedJobs() {
 	ExpectEq("burrito", t.jobs[1].Name)
 	ExpectThat(t.jobs[1].Score, DeepEquals(score1))
 	ExpectTrue(
-		time.Date(1989, time.March, 16, 12, 34, 56, 0, time.UTC).Local().Equal(
+		time.Date(1985, time.March, 18, 15, 33, 07, 0, time.UTC).Local().Equal(
 			t.jobs[1].StartTime),
 		"Time: %v",
 		t.jobs[1].StartTime,
