@@ -150,6 +150,9 @@ func main() {
 		log.Fatalf("Creating directory saver: %v", err)
 	}
 
+	// Choose a start time for the job.
+	startTime := time.Now()
+
 	// Run the job.
 	score, err := dirSaver.Save(job.BasePath, "", job.Excludes)
 	if err != nil {
