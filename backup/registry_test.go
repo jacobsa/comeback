@@ -258,3 +258,44 @@ func (t *NewRegistryTest) PutAttributesSucceeds() {
 	AssertEq(nil, t.err)
 	ExpectNe(nil, t.registry)
 }
+
+////////////////////////////////////////////////////////////////////////
+// RecordBackup
+////////////////////////////////////////////////////////////////////////
+
+type RecordBackupTest struct {
+	registryTest
+	registry backup.Registry
+
+	job backup.CompletedJob
+	err error
+}
+
+func init() { RegisterTestSuite(&RecordBackupTest{}) }
+
+func (t *RecordBackupTest) SetUp(i *TestInfo) {
+	var err error
+
+	// Call common setup code.
+	t.registryTest.SetUp(i)
+
+	// Set up dependencies to pretend that the crypter is compatible.
+	attr := sdb.Attribute{Name: "encrypted_data"}
+	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return([]sdb.Attribute{attr}, nil))
+
+	ExpectCall(t.crypter, "Decrypt")(Any()).
+		WillOnce(oglemock.Return([]byte{}, nil))
+
+	// Create the registry.
+	t.registry, err = backup.NewRegistry(t.crypter, t.domain)
+	AssertEq(nil, err)
+}
+
+func (t *RecordBackupTest) callRegistry() {
+	t.err = t.registry.RecordBackup(t.job)
+}
+
+func (t *RecordBackupTest) DoesFoo() {
+	ExpectEq("TODO", "")
+}
