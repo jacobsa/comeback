@@ -18,15 +18,20 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/jacobsa/aws/s3"
+	"github.com/jacobsa/aws/sdb"
 	"github.com/jacobsa/comeback/backup"
 	"github.com/jacobsa/comeback/blob"
+	"github.com/jacobsa/comeback/crypto"
 	"github.com/jacobsa/comeback/config"
 	"github.com/jacobsa/comeback/fs"
-	"github.com/jacobsa/comeback/kv/disk"
+	s3_kv "github.com/jacobsa/comeback/kv/s3"
 	"github.com/jacobsa/comeback/sys"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"os"
+	"time"
 )
 
 var g_configFile = flag.String("config", "", "Path to config file.")
@@ -91,14 +96,41 @@ func main() {
 		log.Fatalf("Creating file system: %v", err)
 	}
 
+	// Open a connection to SimpleDB.
+	db, err := sdb.NewSimpleDB(cfg.SdbRegion, cfg.AccessKey)
+	if err != nil {
+		log.Fatalf("Creating SimpleDB: %v", err)
+	}
+
+	// Open a connection to S3.
+	bucket, err := s3.OpenBucket(cfg.S3Bucket, cfg.S3Region, cfg.AccessKey)
+	if err != nil {
+		log.Fatalf("Creating bucket: %v", err)
+	}
+
+	// Create the crypter.
+	crypter, err := crypto.NewCrypter(cryptoKey)
+	if err != nil {
+		log.Fatalf("Creating crypter: %v", err)
+	}
+
+	// Create the backup registry.
+	randSrc := rand.New(rand.NewSource(time.Now().UnixNano()))
+	registry, err := backup.NewRegistry(db, cfg.SdbDomain, crypter, randSrc)
+	if err != nil {
+		log.Fatalf("Creating registry: %v", err)
+	}
+
 	// Create the kv store.
-	kvStore, err := disk.NewDiskKvStore("/tmp/blobs", fileSystem)
+	kvStore, err := s3_kv.NewS3KvStore(bucket)
 	if err != nil {
 		log.Fatalf("Creating kv store: %v", err)
 	}
 
 	// Create the blob store.
 	blobStore := blob.NewKvBasedBlobStore(kvStore)
+	blobStore = blob.NewCheckingStore(blobStore)
+	blobStore = blob.NewEncryptingStore(crypter, blobStore)
 
 	// Create the file saver.
 	fileSaver, err := backup.NewFileSaver(blobStore, 1<<24)
