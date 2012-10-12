@@ -519,7 +519,7 @@ func (t *ListRecentBackupsTest) NoResults() {
 
 func (t *ListRecentBackupsTest) OneResultMissingName() {
 	validItem := sdb.SelectedItem{
-		Name: "foo",
+		Name: "backup_00000000deadbeef",
 		Attributes: []sdb.Attribute{
 			sdb.Attribute{Name: "job_name", Value: "some_job"},
 			sdb.Attribute{Name: "start_time", Value: "1985-03-18T15:33:07Z"},
@@ -531,7 +531,7 @@ func (t *ListRecentBackupsTest) OneResultMissingName() {
 	results := []sdb.SelectedItem{
 		validItem,
 		sdb.SelectedItem{
-			Name: "bar",
+			Name: "backup_00000000feedface",
 			Attributes: []sdb.Attribute{
 				sdb.Attribute{Name: "start_time", Value: "1985-03-18T15:33:07Z"},
 				sdb.Attribute{Name: "score", Value: strings.Repeat("f", 40)},
@@ -546,14 +546,14 @@ func (t *ListRecentBackupsTest) OneResultMissingName() {
 	// Call
 	t.callRegistry()
 
-	ExpectThat(t.err, Error(HasSubstr("bar")))
+	ExpectThat(t.err, Error(HasSubstr("backup_00000000feedface")))
 	ExpectThat(t.err, Error(HasSubstr("Missing")))
 	ExpectThat(t.err, Error(HasSubstr("name")))
 }
 
 func (t *ListRecentBackupsTest) OneResultMissingStartTime() {
 	validItem := sdb.SelectedItem{
-		Name: "foo",
+		Name: "backup_00000000deadbeef",
 		Attributes: []sdb.Attribute{
 			sdb.Attribute{Name: "job_name", Value: "some_job"},
 			sdb.Attribute{Name: "start_time", Value: "1985-03-18T15:33:07Z"},
@@ -565,7 +565,7 @@ func (t *ListRecentBackupsTest) OneResultMissingStartTime() {
 	results := []sdb.SelectedItem{
 		validItem,
 		sdb.SelectedItem{
-			Name: "bar",
+			Name: "backup_00000000feedface",
 			Attributes: []sdb.Attribute{
 				sdb.Attribute{Name: "job_name", Value: "some_job"},
 				sdb.Attribute{Name: "score", Value: strings.Repeat("f", 40)},
@@ -580,14 +580,14 @@ func (t *ListRecentBackupsTest) OneResultMissingStartTime() {
 	// Call
 	t.callRegistry()
 
-	ExpectThat(t.err, Error(HasSubstr("bar")))
+	ExpectThat(t.err, Error(HasSubstr("backup_00000000feedface")))
 	ExpectThat(t.err, Error(HasSubstr("Missing")))
 	ExpectThat(t.err, Error(HasSubstr("start_time")))
 }
 
 func (t *ListRecentBackupsTest) OneResultHasInvalidStartTime() {
 	validItem := sdb.SelectedItem{
-		Name: "foo",
+		Name: "backup_00000000deadbeef",
 		Attributes: []sdb.Attribute{
 			sdb.Attribute{Name: "job_name", Value: "some_job"},
 			sdb.Attribute{Name: "start_time", Value: "1985-03-18T15:33:07Z"},
@@ -599,7 +599,7 @@ func (t *ListRecentBackupsTest) OneResultHasInvalidStartTime() {
 	results := []sdb.SelectedItem{
 		validItem,
 		sdb.SelectedItem{
-			Name: "bar",
+			Name: "backup_00000000feedface",
 			Attributes: []sdb.Attribute{
 				sdb.Attribute{Name: "job_name", Value: "some_job"},
 				sdb.Attribute{Name: "start_time", Value: "afsdf"},
@@ -615,7 +615,7 @@ func (t *ListRecentBackupsTest) OneResultHasInvalidStartTime() {
 	// Call
 	t.callRegistry()
 
-	ExpectThat(t.err, Error(HasSubstr("bar")))
+	ExpectThat(t.err, Error(HasSubstr("backup_00000000feedface")))
 	ExpectThat(t.err, Error(HasSubstr("invalid")))
 	ExpectThat(t.err, Error(HasSubstr("start_time")))
 	ExpectThat(t.err, Error(HasSubstr("afsdf")))
@@ -623,7 +623,7 @@ func (t *ListRecentBackupsTest) OneResultHasInvalidStartTime() {
 
 func (t *ListRecentBackupsTest) OneResultMissingScore() {
 	validItem := sdb.SelectedItem{
-		Name: "foo",
+		Name: "backup_00000000deadbeef",
 		Attributes: []sdb.Attribute{
 			sdb.Attribute{Name: "job_name", Value: "some_job"},
 			sdb.Attribute{Name: "start_time", Value: "1985-03-18T15:33:07Z"},
@@ -635,7 +635,7 @@ func (t *ListRecentBackupsTest) OneResultMissingScore() {
 	results := []sdb.SelectedItem{
 		validItem,
 		sdb.SelectedItem{
-			Name: "bar",
+			Name: "backup_00000000feedface",
 			Attributes: []sdb.Attribute{
 				sdb.Attribute{Name: "job_name", Value: "some_job"},
 				sdb.Attribute{Name: "start_time", Value: "1985-03-18T15:33:07Z"},
@@ -650,14 +650,14 @@ func (t *ListRecentBackupsTest) OneResultMissingScore() {
 	// Call
 	t.callRegistry()
 
-	ExpectThat(t.err, Error(HasSubstr("bar")))
+	ExpectThat(t.err, Error(HasSubstr("backup_00000000feedface")))
 	ExpectThat(t.err, Error(HasSubstr("Missing")))
 	ExpectThat(t.err, Error(HasSubstr("score")))
 }
 
 func (t *ListRecentBackupsTest) OneResultHasInvalidCharacterInScore() {
 	validItem := sdb.SelectedItem{
-		Name: "foo",
+		Name: "backup_00000000deadbeef",
 		Attributes: []sdb.Attribute{
 			sdb.Attribute{Name: "job_name", Value: "some_job"},
 			sdb.Attribute{Name: "start_time", Value: "1985-03-18T15:33:07Z"},
@@ -669,7 +669,7 @@ func (t *ListRecentBackupsTest) OneResultHasInvalidCharacterInScore() {
 	results := []sdb.SelectedItem{
 		validItem,
 		sdb.SelectedItem{
-			Name: "bar",
+			Name: "backup_00000000feedface",
 			Attributes: []sdb.Attribute{
 				sdb.Attribute{Name: "job_name", Value: "some_job"},
 				sdb.Attribute{Name: "start_time", Value: "1985-03-18T15:33:07Z"},
@@ -685,7 +685,7 @@ func (t *ListRecentBackupsTest) OneResultHasInvalidCharacterInScore() {
 	// Call
 	t.callRegistry()
 
-	ExpectThat(t.err, Error(HasSubstr("bar")))
+	ExpectThat(t.err, Error(HasSubstr("backup_00000000feedface")))
 	ExpectThat(t.err, Error(HasSubstr("invalid")))
 	ExpectThat(t.err, Error(HasSubstr("score")))
 	ExpectThat(t.err, Error(HasSubstr("fffx")))
@@ -693,7 +693,7 @@ func (t *ListRecentBackupsTest) OneResultHasInvalidCharacterInScore() {
 
 func (t *ListRecentBackupsTest) OneResultHasShortScore() {
 	validItem := sdb.SelectedItem{
-		Name: "foo",
+		Name: "backup_00000000deadbeef",
 		Attributes: []sdb.Attribute{
 			sdb.Attribute{Name: "job_name", Value: "some_job"},
 			sdb.Attribute{Name: "start_time", Value: "1985-03-18T15:33:07Z"},
@@ -705,7 +705,7 @@ func (t *ListRecentBackupsTest) OneResultHasShortScore() {
 	results := []sdb.SelectedItem{
 		validItem,
 		sdb.SelectedItem{
-			Name: "bar",
+			Name: "backup_00000000feedface",
 			Attributes: []sdb.Attribute{
 				sdb.Attribute{Name: "job_name", Value: "some_job"},
 				sdb.Attribute{Name: "start_time", Value: "1985-03-18T15:33:07Z"},
@@ -721,7 +721,7 @@ func (t *ListRecentBackupsTest) OneResultHasShortScore() {
 	// Call
 	t.callRegistry()
 
-	ExpectThat(t.err, Error(HasSubstr("bar")))
+	ExpectThat(t.err, Error(HasSubstr("backup_00000000feedface")))
 	ExpectThat(t.err, Error(HasSubstr("invalid")))
 	ExpectThat(t.err, Error(HasSubstr("score")))
 	ExpectThat(t.err, Error(HasSubstr("fff")))
@@ -734,7 +734,7 @@ func (t *ListRecentBackupsTest) ReturnsCompletedJobs() {
 
 	results := []sdb.SelectedItem{
 		sdb.SelectedItem{
-			Name: "foo",
+			Name: "backup_00000000deadbeef",
 			Attributes: []sdb.Attribute{
 				sdb.Attribute{Name: "job_name", Value: "taco"},
 				sdb.Attribute{Name: "start_time", Value: "2012-08-15T12:56:00Z"},
@@ -743,7 +743,7 @@ func (t *ListRecentBackupsTest) ReturnsCompletedJobs() {
 			},
 		},
 		sdb.SelectedItem{
-			Name: "bar",
+			Name: "backup_00000000feedface",
 			Attributes: []sdb.Attribute{
 				sdb.Attribute{Name: "irrelevant", Value: "blah"},
 				sdb.Attribute{Name: "job_name", Value: "burrito"},
