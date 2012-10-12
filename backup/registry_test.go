@@ -28,6 +28,7 @@ import (
 	. "github.com/jacobsa/ogletest"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestRegistry(t *testing.T) { RunTests(t) }
@@ -364,7 +365,38 @@ func (t *RecordBackupTest) LongJobName() {
 }
 
 func (t *RecordBackupTest) CallsPutAttributes() {
-	ExpectEq("TODO", "")
+	t.job.Name = "taco"
+	t.job.StartTime = time.Date(1985, time.March, 18, 15, 33, 07, 0, time.UTC).Local()
+	t.job.Score = blob.ComputeScore([]byte("burrito"))
+
+	// Domain
+	ExpectCall(t.domain, "PutAttributes")(
+		MatchesRegexp("^backup_[0-9a-f]{16}$"),
+		ElementsAre(
+			DeepEquals(
+				sdb.PutUpdate{
+					Name: "job_name",
+					Value: "taco",
+				},
+			),
+			DeepEquals(
+				sdb.PutUpdate{
+					Name: "start_time",
+					Value: "1985-03-18 15:33:07",
+				},
+			),
+			DeepEquals(
+				sdb.PutUpdate{
+					Name: "score",
+					Value: t.job.Score.Hex(),
+				},
+			),
+		),
+		nil,
+	).WillOnce(oglemock.Return(errors.New("")))
+
+	// Call
+	t.callRegistry()
 }
 
 func (t *RecordBackupTest) PutAttributesReturnsError() {
