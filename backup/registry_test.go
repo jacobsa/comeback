@@ -763,13 +763,19 @@ func (t *ListRecentBackupsTest) ReturnsCompletedJobs() {
 
 	ExpectEq("taco", t.jobs[0].Name)
 	ExpectThat(t.jobs[0].Score, DeepEquals(score0))
-	ExpectEq(
-		time.Date(1985, time.March, 18, 15, 33, 07, 0, time.UTC).Local(),
-		t.jobs[0].StartTime)
+	ExpectTrue(
+		time.Date(1985, time.March, 18, 15, 33, 07, 0, time.UTC).Local().Equal(
+			t.jobs[0].StartTime),
+		"Time: %v",
+		t.jobs[0].StartTime,
+	)
 
 	ExpectEq("burrito", t.jobs[1].Name)
 	ExpectThat(t.jobs[1].Score, DeepEquals(score1))
-	ExpectEq(
-		time.Date(1989, time.March, 16, 12, 34, 56, 0, time.UTC).Local(),
-		t.jobs[1].StartTime)
+	ExpectTrue(
+		time.Date(1989, time.March, 16, 12, 34, 56, 0, time.UTC).Local().Equal(
+			t.jobs[1].StartTime),
+		"Time: %v",
+		t.jobs[1].StartTime,
+	)
 }
