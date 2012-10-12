@@ -41,6 +41,8 @@ func (t *ValidateTest) SetUp(i *TestInfo) {
 		Jobs:     make(map[string]*config.Job),
 		S3Bucket: "foo",
 		S3Region: "foo",
+		SdbDomain: "foo",
+		SdbRegion: "foo",
 		AccessKey: aws.AccessKey{
 			Id:     "foo",
 			Secret: "foo",
@@ -110,6 +112,24 @@ func (t *ValidateTest) MissingS3Region() {
 	err := config.Validate(t.cfg)
 
 	ExpectThat(err, Error(HasSubstr("S3")))
+	ExpectThat(err, Error(HasSubstr("region")))
+}
+
+func (t *ValidateTest) MissingSdbDomain() {
+	t.cfg.SdbDomain = ""
+
+	err := config.Validate(t.cfg)
+
+	ExpectThat(err, Error(HasSubstr("SimpleDB")))
+	ExpectThat(err, Error(HasSubstr("domain")))
+}
+
+func (t *ValidateTest) MissingSdbRegion() {
+	t.cfg.SdbRegion = ""
+
+	err := config.Validate(t.cfg)
+
+	ExpectThat(err, Error(HasSubstr("SimpleDB")))
 	ExpectThat(err, Error(HasSubstr("region")))
 }
 

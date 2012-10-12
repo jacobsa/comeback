@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"github.com/jacobsa/aws"
 	"github.com/jacobsa/aws/s3"
+	"github.com/jacobsa/aws/sdb"
 	"regexp"
 )
 
@@ -33,6 +34,8 @@ type jsonConfig struct {
 	AccessKeyId string              `json:"access_key_id"`
 	S3Bucket    string              `json:"s3_bucket"`
 	S3Region    s3.Region           `json:"s3_region"`
+	SdbDomain string `json:"simpledb_domain"`
+	SdbRegion sdb.Region `json:"simpledb_region"`
 }
 
 // Parse the supplied JSON configuration data.
@@ -48,6 +51,8 @@ func Parse(data []byte) (*Config, error) {
 		Jobs:      make(map[string]*Job),
 		S3Bucket:  jCfg.S3Bucket,
 		S3Region:  jCfg.S3Region,
+		SdbDomain:  jCfg.SdbDomain,
+		SdbRegion:  jCfg.SdbRegion,
 		AccessKey: aws.AccessKey{Id: jCfg.AccessKeyId},
 	}
 

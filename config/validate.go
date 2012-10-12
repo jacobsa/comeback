@@ -50,6 +50,15 @@ func Validate(c *Config) error {
 		}
 	}
 
+	// Validate AWS key.
+	if c.AccessKey.Id == "" {
+		return fmt.Errorf("You must specify an S3 access key ID.")
+	}
+
+	if c.AccessKey.Secret == "" {
+		return fmt.Errorf("You must specify an S3 access key secret.")
+	}
+
 	// Validate S3 configuration.
 	if c.S3Bucket == "" {
 		return fmt.Errorf("You must specify an S3 bucket.")
@@ -59,12 +68,13 @@ func Validate(c *Config) error {
 		return fmt.Errorf("You must specify an S3 region.")
 	}
 
-	if c.AccessKey.Id == "" {
-		return fmt.Errorf("You must specify an S3 access key ID.")
+	// Validate SimpleDB configuration.
+	if c.SdbDomain == "" {
+		return fmt.Errorf("You must specify a SimpleDB domain.")
 	}
 
-	if c.AccessKey.Secret == "" {
-		return fmt.Errorf("You must specify an S3 access key secret.")
+	if c.SdbRegion == "" {
+		return fmt.Errorf("You must specify a SimpleDB region.")
 	}
 
 	return nil

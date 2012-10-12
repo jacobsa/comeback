@@ -18,6 +18,7 @@ package config
 import (
 	"github.com/jacobsa/aws"
 	"github.com/jacobsa/aws/s3"
+	"github.com/jacobsa/aws/sdb"
 	"regexp"
 )
 
@@ -43,4 +44,9 @@ type Config struct {
 	// region.
 	S3Bucket string
 	S3Region s3.Region
+
+	// The name of the SimpleDB domain in which to store backup history, and its
+	// associated region.
+	SdbDomain string
+	SdbRegion sdb.Region
 }

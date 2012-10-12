@@ -219,10 +219,22 @@ func (t *ParseTest) MultipleValidJobs() {
 	ExpectEq("d", t.cfg.Jobs["burrito"].Excludes[1].String())
 }
 
+func (t *ParseTest) AccessKeyId() {
+	t.data = `
+	{
+		"access_key_id": "enchilada"
+	}
+	`
+
+	t.parse()
+	AssertEq(nil, t.err)
+
+	ExpectEq("enchilada", t.cfg.AccessKey.Id)
+}
+
 func (t *ParseTest) S3Configuration() {
 	t.data = `
 	{
-		"access_key_id": "enchilada",
 		"s3_bucket": "taco",
 		"s3_region": "burrito"
 	}
@@ -233,7 +245,21 @@ func (t *ParseTest) S3Configuration() {
 
 	ExpectEq("taco", t.cfg.S3Bucket)
 	ExpectEq("burrito", t.cfg.S3Region)
-	ExpectEq("enchilada", t.cfg.AccessKey.Id)
+}
+
+func (t *ParseTest) SimpleDBConfiguration() {
+	t.data = `
+	{
+		"simpledb_domain": "taco",
+		"simpledb_region": "burrito"
+	}
+	`
+
+	t.parse()
+	AssertEq(nil, t.err)
+
+	ExpectEq("taco", t.cfg.SdbDomain)
+	ExpectEq("burrito", t.cfg.SdbRegion)
 }
 
 func (t *ParseTest) UnknownKeys() {
