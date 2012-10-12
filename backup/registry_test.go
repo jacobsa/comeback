@@ -17,6 +17,7 @@ package backup_test
 
 import (
 	"errors"
+	"fmt"
 	"github.com/jacobsa/aws/sdb"
 	"github.com/jacobsa/aws/sdb/mock"
 	"github.com/jacobsa/comeback/backup"
@@ -468,7 +469,18 @@ func (t *ListRecentBackupsTest) callRegistry() {
 }
 
 func (t *ListRecentBackupsTest) CallsSelect() {
-	ExpectEq("TODO", "")
+	// Domain
+	ExpectCall(t.db, "Select")(
+		fmt.Sprintf(
+			"select job_name, start_time, score " +
+			"from `%s` where start_time is not null order by start_time desc",
+			domainName),
+		false,
+		nil,
+	).WillOnce(oglemock.Return(nil, nil, errors.New("")))
+
+	// Call
+	t.callRegistry()
 }
 
 func (t *ListRecentBackupsTest) SelectReturnsError() {
