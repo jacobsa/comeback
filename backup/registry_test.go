@@ -44,7 +44,7 @@ const (
 
 type registryTest struct {
 	crypter mock_crypto.MockCrypter
-	db mock_sdb.MockSimpleDB
+	db      mock_sdb.MockSimpleDB
 	domain  mock_sdb.MockDomain
 }
 
@@ -70,7 +70,7 @@ type NewRegistryTest struct {
 	registryTest
 
 	registry backup.Registry
-	err error
+	err      error
 }
 
 func init() { RegisterTestSuite(&NewRegistryTest{}) }
@@ -389,19 +389,19 @@ func (t *RecordBackupTest) CallsPutAttributes() {
 		ElementsAre(
 			DeepEquals(
 				sdb.PutUpdate{
-					Name: "job_name",
+					Name:  "job_name",
 					Value: "taco",
 				},
 			),
 			DeepEquals(
 				sdb.PutUpdate{
-					Name: "start_time",
+					Name:  "start_time",
 					Value: "1985-03-18T15:33:07Z",
 				},
 			),
 			DeepEquals(
 				sdb.PutUpdate{
-					Name: "score",
+					Name:  "score",
 					Value: t.job.Score.Hex(),
 				},
 			),
@@ -445,7 +445,7 @@ type ListRecentBackupsTest struct {
 	registry backup.Registry
 
 	jobs []backup.CompletedJob
-	err error
+	err  error
 }
 
 func init() { RegisterTestSuite(&ListRecentBackupsTest{}) }
@@ -477,8 +477,8 @@ func (t *ListRecentBackupsTest) CallsSelect() {
 	// Domain
 	ExpectCall(t.db, "Select")(
 		fmt.Sprintf(
-			"select job_name, start_time, score " +
-			"from `%s` where start_time is not null order by start_time desc",
+			"select job_name, start_time, score "+
+				"from `%s` where start_time is not null order by start_time desc",
 			domainName),
 		false,
 		nil,
@@ -502,8 +502,7 @@ func (t *ListRecentBackupsTest) SelectReturnsError() {
 
 func (t *ListRecentBackupsTest) NoResults() {
 	// Domain
-	results := []sdb.SelectedItem{
-	}
+	results := []sdb.SelectedItem{}
 
 	ExpectCall(t.db, "Select")(Any(), Any(), Any()).
 		WillOnce(oglemock.Return(results, nil, nil))

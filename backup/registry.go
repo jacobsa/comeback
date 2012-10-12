@@ -119,7 +119,7 @@ func NewRegistry(
 	// the previous one used in this domain, if any.
 	attrs, err := domain.GetAttributes(
 		markerItemName,
-		false,  // No need to ask for a consistent read
+		false, // No need to ask for a consistent read
 		[]string{cryptoMarkerAttributeName},
 	)
 
@@ -181,8 +181,8 @@ func get8RandBytes() []byte {
 
 type registry struct {
 	crypter crypto.Crypter
-	db sdb.SimpleDB
-	domain sdb.Domain
+	db      sdb.SimpleDB
+	domain  sdb.Domain
 }
 
 func (r *registry) RecordBackup(job CompletedJob) (err error) {
@@ -263,14 +263,14 @@ func convertSelectedItem(item sdb.SelectedItem) (j CompletedJob, err error) {
 func (r *registry) ListRecentBackups() (jobs []CompletedJob, err error) {
 	// Call the database.
 	query := fmt.Sprintf(
-		"select job_name, start_time, score from `%s` where " +
-		"start_time is not null order by start_time desc",
+		"select job_name, start_time, score from `%s` where "+
+			"start_time is not null order by start_time desc",
 		r.domain.Name(),
 	)
 
 	results, _, err := r.db.Select(
 		query,
-		false,  // No need for consistent reads.
+		false, // No need for consistent reads.
 		nil,
 	)
 
