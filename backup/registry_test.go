@@ -366,6 +366,7 @@ func (t *RecordBackupTest) LongJobName() {
 }
 
 func (t *RecordBackupTest) CallsPutAttributes() {
+	t.job.Id = 0xdeadbeeffeedface
 	t.job.Name = "taco"
 	t.job.StartTime = time.Date(1985, time.March, 18, 15, 33, 07, 0, time.UTC).Local()
 	t.job.Score = blob.ComputeScore([]byte("burrito"))
@@ -380,7 +381,7 @@ func (t *RecordBackupTest) CallsPutAttributes() {
 
 	// Domain
 	ExpectCall(t.domain, "PutAttributes")(
-		MatchesRegexp("^backup_[0-9a-f]{16}$"),
+		"backup_deadbeeffeedface",
 		ElementsAre(
 			DeepEquals(
 				sdb.PutUpdate{
@@ -401,7 +402,7 @@ func (t *RecordBackupTest) CallsPutAttributes() {
 				},
 			),
 		),
-		nil,
+		Pointee(DeepEquals(sdb.Precondition{Name: "score", Value: nil})),
 	).WillOnce(oglemock.Return(errors.New("")))
 
 	// Call

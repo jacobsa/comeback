@@ -39,6 +39,9 @@ const (
 
 // A record in the backup registry describing a successful backup job.
 type CompletedJob struct {
+	// A unique ID for this completed run.
+	Id uint64
+
 	// The name of the backup job.
 	Name string
 
