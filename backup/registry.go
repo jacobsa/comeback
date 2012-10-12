@@ -106,7 +106,7 @@ func NewRegistry(
 	domainName string,
 	crypter crypto.Crypter,
 	randSrc *rand.Rand,
-  ) (r Registry, err error) {
+) (r Registry, err error) {
 	// Attempt to open the domain.
 	domain, err := db.OpenDomain(domainName)
 	if err != nil {

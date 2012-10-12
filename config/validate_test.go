@@ -38,9 +38,9 @@ func init() { RegisterTestSuite(&ValidateTest{}) }
 func (t *ValidateTest) SetUp(i *TestInfo) {
 	// Make the config valid by default.
 	t.cfg = &config.Config{
-		Jobs:     make(map[string]*config.Job),
-		S3Bucket: "foo",
-		S3Region: "foo",
+		Jobs:      make(map[string]*config.Job),
+		S3Bucket:  "foo",
+		S3Region:  "foo",
 		SdbDomain: "foo",
 		SdbRegion: "foo",
 		AccessKey: aws.AccessKey{
