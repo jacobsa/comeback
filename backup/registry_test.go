@@ -619,6 +619,40 @@ func (t *ListRecentBackupsTest) OneResultHasShortName() {
 	ExpectThat(t.err, Error(HasSubstr("backup_00000000feedfa")))
 }
 
+func (t *ListRecentBackupsTest) OneResultHasLongName() {
+	validItem := sdb.SelectedItem{
+		Name: "backup_00000000deadbeef",
+		Attributes: []sdb.Attribute{
+			sdb.Attribute{Name: "job_name", Value: "some_job"},
+			sdb.Attribute{Name: "start_time", Value: "1985-03-18T15:33:07Z"},
+			sdb.Attribute{Name: "score", Value: strings.Repeat("f", 40)},
+		},
+	}
+
+	// Domain
+	results := []sdb.SelectedItem{
+		validItem,
+		sdb.SelectedItem{
+			Name: "backup_00000000feedface0",
+			Attributes: []sdb.Attribute{
+				sdb.Attribute{Name: "start_time", Value: "1985-03-18T15:33:07Z"},
+				sdb.Attribute{Name: "score", Value: strings.Repeat("f", 40)},
+			},
+		},
+		validItem,
+	}
+
+	ExpectCall(t.db, "Select")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return(results, nil, nil))
+
+	// Call
+	t.callRegistry()
+
+	ExpectThat(t.err, Error(HasSubstr("Invalid")))
+	ExpectThat(t.err, Error(HasSubstr("name")))
+	ExpectThat(t.err, Error(HasSubstr("backup_00000000feedface0")))
+}
+
 func (t *ListRecentBackupsTest) OneResultMissingStartTime() {
 	validItem := sdb.SelectedItem{
 		Name: "backup_00000000deadbeef",
