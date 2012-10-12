@@ -20,6 +20,7 @@ import (
 	"github.com/jacobsa/aws/sdb"
 	"github.com/jacobsa/aws/sdb/mock"
 	"github.com/jacobsa/comeback/backup"
+	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/crypto"
 	"github.com/jacobsa/comeback/crypto/mock"
 	. "github.com/jacobsa/oglematchers"
@@ -321,10 +322,32 @@ func (t *RecordBackupTest) SetUp(i *TestInfo) {
 	// Create the registry.
 	t.registry, err = backup.NewRegistry(t.crypter, t.db, domainName)
 	AssertEq(nil, err)
+
+	// Make the request legal by default.
+	t.job.Name = "foo"
+	t.job.Score = blob.ComputeScore([]byte{})
 }
 
 func (t *RecordBackupTest) callRegistry() {
 	t.err = t.registry.RecordBackup(t.job)
+}
+
+func (t *RecordBackupTest) EmptyJobName() {
+	t.job.Name = ""
+
+	// Call
+	t.callRegistry()
+
+	ExpectThat(t.err, Error(HasSubstr("job name")))
+	ExpectThat(t.err, Error(HasSubstr("empty")))
+}
+
+func (t *RecordBackupTest) InvalidUtf8JobName() {
+	ExpectEq("TODO", "")
+}
+
+func (t *RecordBackupTest) LongJobName() {
+	ExpectEq("TODO", "")
 }
 
 func (t *RecordBackupTest) CallsPutAttributes() {
