@@ -26,6 +26,7 @@ import (
 	. "github.com/jacobsa/oglematchers"
 	"github.com/jacobsa/oglemock"
 	. "github.com/jacobsa/ogletest"
+	"strings"
 	"testing"
 )
 
@@ -343,11 +344,23 @@ func (t *RecordBackupTest) EmptyJobName() {
 }
 
 func (t *RecordBackupTest) InvalidUtf8JobName() {
-	ExpectEq("TODO", "")
+	t.job.Name = "taco\x80\x81\x82"
+
+	// Call
+	t.callRegistry()
+
+	ExpectThat(t.err, Error(HasSubstr("job name")))
+	ExpectThat(t.err, Error(HasSubstr("UTF-8")))
 }
 
 func (t *RecordBackupTest) LongJobName() {
-	ExpectEq("TODO", "")
+	t.job.Name = strings.Repeat("x", 1025)
+
+	// Call
+	t.callRegistry()
+
+	ExpectThat(t.err, Error(HasSubstr("job name")))
+	ExpectThat(t.err, Error(HasSubstr("1024")))
 }
 
 func (t *RecordBackupTest) CallsPutAttributes() {
