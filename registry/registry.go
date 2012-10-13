@@ -69,9 +69,7 @@ func verifyCompatible(
 	if _, err = crypter.Decrypt(ciphertext); err != nil {
 		// Special case: Did the crypter signal that the key was wrong?
 		if _, ok := err.(*crypto.NotAuthenticError); ok {
-			err = &IncompatibleCrypterError{
-				"The supplied crypter is not compatible with the data in the domain.",
-			}
+			err = fmt.Errorf("The supplied password is incorrect.")
 			return
 		}
 
@@ -83,20 +81,20 @@ func verifyCompatible(
 	return
 }
 
-// Create a registry that stores data in the supplied SimpleDB domain.
+// Create a registry that stores data in the supplied SimpleDB domain,
+// encrypting using the supplied password.
 //
 // Before doing so, check to see whether this domain has been used as a
-// registry before. If not, write an encrypted marker with the supplied
-// crypter. If it has been used before, make sure that it was used with a
-// crypter compatible with the supplied one. This prevents accidentally writing
-// data with the wrong key, as if the user entered the wrong password.
+// registry before. If not, write an encrypted marker. If it has been used
+// before, make sure that it was used with the same password. This prevents
+// accidentally writing data with the wrong key when the user enters the wrong
+// password.
 //
 // The crypter must be set up such that it is guaranteed to return an error if
-// it is used to decrypt ciphertext encrypted with a different key. In that
-// case, this function will return an *IncompatibleCrypterError.
+// it is used to decrypt ciphertext encrypted with a different key.
 func NewRegistry(
 	domain sdb.Domain,
-	crypter crypto.Crypter,
+	cryptoPassword string,
 	randSrc *rand.Rand,
 ) (r Registry, err error) {
 	// Set up a tentative result.
@@ -322,12 +320,4 @@ func (r *registry) FindBackup(jobId uint64) (job CompletedJob, err error) {
 
 	job.Id = jobId
 	return
-}
-
-type IncompatibleCrypterError struct {
-	s string
-}
-
-func (e *IncompatibleCrypterError) Error() string {
-	return e.s
 }
