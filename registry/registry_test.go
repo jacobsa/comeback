@@ -56,7 +56,7 @@ func (t *registryTest) SetUp(i *TestInfo) {
 	t.domain = mock_sdb.NewMockDomain(i.MockController, "domain")
 	t.deriver = mock_crypto.NewMockKeyDeriver(i.MockController, "deriver")
 	t.crypter = mock_crypto.NewMockCrypter(i.MockController, "crypter")
-	t.randBytes = bytes.NewBuffer(make([]byte, 8))
+	t.randBytes = bytes.NewBuffer(make([]byte, 16))
 
 	// Set up the domain's name and associated database.
 	ExpectCall(t.domain, "Name")().
