@@ -90,9 +90,16 @@ func (t *extentRegistryTest) SetUp(i *TestInfo) {
 	}
 
 	// Set up dependencies to pretend that the crypter is compatible.
-	attr := sdb.Attribute{Name: "encrypted_data"}
+	attrs := []sdb.Attribute{
+		sdb.Attribute{Name: "encrypted_data"},
+		sdb.Attribute{Name: "password_salt"},
+	}
+
 	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
-		WillOnce(oglemock.Return([]sdb.Attribute{attr}, nil))
+		WillOnce(oglemock.Return(attrs, nil))
+
+	ExpectCall(t.deriver, "DeriveKey")(Any(), Any()).
+		WillRepeatedly(oglemock.Return([]byte{}))
 
 	ExpectCall(t.crypter, "Decrypt")(Any()).
 		WillOnce(oglemock.Return([]byte{}, nil))
