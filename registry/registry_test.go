@@ -16,6 +16,7 @@
 package registry
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"github.com/jacobsa/aws/sdb"
@@ -26,7 +27,6 @@ import (
 	. "github.com/jacobsa/oglematchers"
 	"github.com/jacobsa/oglemock"
 	. "github.com/jacobsa/ogletest"
-	"math/rand"
 	"strings"
 	"testing"
 	"time"
@@ -48,7 +48,7 @@ type registryTest struct {
 	domain  mock_sdb.MockDomain
 	deriver mock_crypto.MockKeyDeriver
 	crypter mock_crypto.MockCrypter
-	randSrc *rand.Rand
+	randBytes *bytes.Buffer
 }
 
 func (t *registryTest) SetUp(i *TestInfo) {
@@ -56,7 +56,7 @@ func (t *registryTest) SetUp(i *TestInfo) {
 	t.domain = mock_sdb.NewMockDomain(i.MockController, "domain")
 	t.deriver = mock_crypto.NewMockKeyDeriver(i.MockController, "deriver")
 	t.crypter = mock_crypto.NewMockCrypter(i.MockController, "crypter")
-	t.randSrc = rand.New(rand.NewSource(17))
+	t.randBytes = bytes.NewBuffer(make([]byte, 8))
 
 	// Set up the domain's name and associated database.
 	ExpectCall(t.domain, "Name")().
@@ -96,7 +96,7 @@ func (t *extentRegistryTest) SetUp(i *TestInfo) {
 		cryptoPassword,
 		t.deriver,
 		createCrypter,
-		t.randSrc,
+		t.randBytes,
 	)
 
 	AssertEq(nil, err)
@@ -136,7 +136,7 @@ func (t *NewRegistryTest) callConstructor() {
 		cryptoPassword,
 		t.deriver,
 		t.createCrypter,
-		t.randSrc,
+		t.randBytes,
 	)
 }
 
@@ -205,7 +205,7 @@ func (t *NewRegistryTest) CallsDecrypt() {
 	}
 
 	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
-		WillOnce(oglemock.Return([]sdb.Attribute{attr}, nil))
+		WillOnce(oglemock.Return(attrs, nil))
 
 	// Crypter
 	ExpectCall(t.crypter, "Decrypt")(DeepEquals([]byte("taco"))).
@@ -223,7 +223,7 @@ func (t *NewRegistryTest) DecryptReturnsError() {
 	}
 
 	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
-		WillOnce(oglemock.Return([]sdb.Attribute{attr}, nil))
+		WillOnce(oglemock.Return(attrs, nil))
 
 	// Crypter
 	ExpectCall(t.crypter, "Decrypt")(Any()).
@@ -244,7 +244,7 @@ func (t *NewRegistryTest) DecryptSucceeds() {
 	}
 
 	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
-		WillOnce(oglemock.Return([]sdb.Attribute{attr}, nil))
+		WillOnce(oglemock.Return(attrs, nil))
 
 	// Crypter
 	ExpectCall(t.crypter, "Decrypt")(Any()).
@@ -274,17 +274,20 @@ func (t *NewRegistryTest) ErrorGettingDataBytes() {
 }
 
 func (t *NewRegistryTest) CallsEncrypt() {
-	t.randBytes = []byte{
+	someBytes := []byte{
 		0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
 		0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
 	}
+
+	t.randBytes.Reset()
+	t.randBytes.Write(someBytes)
 
 	// Domain
 	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
 		WillOnce(oglemock.Return([]sdb.Attribute{}, nil))
 
 	// Crypter
-	ExpectCall(t.crypter, "Encrypt")(DeepEquals(t.randBytes[8:])).
+	ExpectCall(t.crypter, "Encrypt")(DeepEquals(someBytes[8:])).
 		WillOnce(oglemock.Return(nil, errors.New("")))
 
 	// Call
@@ -308,8 +311,11 @@ func (t *NewRegistryTest) EncryptReturnsError() {
 }
 
 func (t *NewRegistryTest) CallsPutAttributes() {
-	t.randBytes = make([]byte, 8)
-	copy(t.randBytes, []byte("burrito!"))
+	someBytes := make([]byte, 8)
+
+	t.randBytes.Reset()
+	t.randBytes.Write(make([]byte, 4))
+	t.randBytes.Write([]byte("burrito!"))
 
 	// Domain
 	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
