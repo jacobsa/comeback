@@ -254,6 +254,22 @@ func (t *NewRegistryTest) DecryptSucceeds() {
 	ExpectNe(nil, t.registry)
 }
 
+func (t *NewRegistryTest) ErrorGettingSaltBytes() {
+	ExpectEq("TODO", "")
+}
+
+func (t *NewRegistryTest) CallsDeriverAndCrypterFactory() {
+	ExpectEq("TODO", "")
+}
+
+func (t *NewRegistryTest) CrypterFactoryReturnsError() {
+	ExpectEq("TODO", "")
+}
+
+func (t *NewRegistryTest) ErrorGettingDataBytes() {
+	ExpectEq("TODO", "")
+}
+
 func (t *NewRegistryTest) CallsEncrypt() {
 	t.randBytes = []byte{
 		0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
@@ -289,6 +305,9 @@ func (t *NewRegistryTest) EncryptReturnsError() {
 }
 
 func (t *NewRegistryTest) CallsPutAttributes() {
+	t.randBytes = make([]byte, 8)
+	copy(t.randBytes, []byte("burrito!"))
+
 	// Domain
 	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
 		WillOnce(oglemock.Return([]sdb.Attribute{}, nil))
@@ -299,12 +318,16 @@ func (t *NewRegistryTest) CallsPutAttributes() {
 		WillOnce(oglemock.Return(ciphertext, nil))
 
 	// Domain
-	expectedUpdate := sdb.PutUpdate{Name: "encrypted_data", Value: "dGFjbw=="}
+	expectedUpdates := []sdb.PutUpdate{
+		sdb.PutUpdate{Name: "encrypted_data", Value: "dGFjbw=="},
+		sdb.PutUpdate{Name: "password_salt", Value: "YnVycml0byE="},
+	}
+
 	expectedPrecondition := sdb.Precondition{Name: "encrypted_data"}
 
 	ExpectCall(t.domain, "PutAttributes")(
 		"comeback_marker",
-		ElementsAre(DeepEquals(expectedUpdate)),
+		DeepEquals(expectedUpdates),
 		Pointee(DeepEquals(expectedPrecondition))).
 		WillOnce(oglemock.Return(errors.New("")))
 
