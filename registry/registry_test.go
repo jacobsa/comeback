@@ -128,6 +128,7 @@ type NewRegistryTest struct {
 	createCrypter func([]byte) (crypto.Crypter, error)
 
 	registry Registry
+	returnedCrypter crypto.Crypter
 	err      error
 }
 
@@ -145,7 +146,7 @@ func (t *NewRegistryTest) SetUp(i *TestInfo) {
 }
 
 func (t *NewRegistryTest) callConstructor() {
-	t.registry, t.err = newRegistry(
+	t.registry, t.returnedCrypter, t.err = newRegistry(
 		t.domain,
 		cryptoPassword,
 		t.deriver,
@@ -368,6 +369,7 @@ func (t *NewRegistryTest) DecryptSucceeds() {
 
 	AssertEq(nil, t.err)
 	ExpectNe(nil, t.registry)
+	ExpectEq(t.crypter, t.returnedCrypter)
 }
 
 func (t *NewRegistryTest) ErrorGettingSaltBytes() {
@@ -579,6 +581,7 @@ func (t *NewRegistryTest) PutAttributesSucceeds() {
 
 	AssertEq(nil, t.err)
 	ExpectNe(nil, t.registry)
+	ExpectEq(t.crypter, t.returnedCrypter)
 }
 
 ////////////////////////////////////////////////////////////////////////

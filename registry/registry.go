@@ -143,7 +143,7 @@ func newRegistry(
 	deriver crypto.KeyDeriver,
 	createCrypter func(key []byte) (crypto.Crypter, error),
 	cryptoRandSrc io.Reader,
-) (r Registry, err error) {
+) (r Registry, crypter crypto.Crypter, err error) {
 	// Ask for the previously-written encrypted marker and password salt, if any.
 	attrs, err := domain.GetAttributes(
 		markerItemName,
