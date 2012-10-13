@@ -298,6 +298,10 @@ func (t *NewRegistryTest) CallsEncrypt() {
 	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
 		WillOnce(oglemock.Return([]sdb.Attribute{}, nil))
 
+	// Deriver
+	ExpectCall(t.deriver, "DeriveKey")(Any(), Any()).
+		WillOnce(oglemock.Return([]byte{}))
+
 	// Crypter
 	ExpectCall(t.crypter, "Encrypt")(DeepEquals(someBytes[8:])).
 		WillOnce(oglemock.Return(nil, errors.New("")))
@@ -310,6 +314,10 @@ func (t *NewRegistryTest) EncryptReturnsError() {
 	// Domain
 	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
 		WillOnce(oglemock.Return([]sdb.Attribute{}, nil))
+
+	// Deriver
+	ExpectCall(t.deriver, "DeriveKey")(Any(), Any()).
+		WillOnce(oglemock.Return([]byte{}))
 
 	// Crypter
 	ExpectCall(t.crypter, "Encrypt")(Any()).
@@ -330,6 +338,10 @@ func (t *NewRegistryTest) CallsPutAttributes() {
 	// Domain
 	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
 		WillOnce(oglemock.Return([]sdb.Attribute{}, nil))
+
+	// Deriver
+	ExpectCall(t.deriver, "DeriveKey")(Any(), Any()).
+		WillOnce(oglemock.Return([]byte{}))
 
 	// Crypter
 	ciphertext := []byte("taco")
@@ -359,6 +371,10 @@ func (t *NewRegistryTest) PutAttributesReturnsError() {
 	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
 		WillOnce(oglemock.Return([]sdb.Attribute{}, nil))
 
+	// Deriver
+	ExpectCall(t.deriver, "DeriveKey")(Any(), Any()).
+		WillOnce(oglemock.Return([]byte{}))
+
 	// Crypter
 	ExpectCall(t.crypter, "Encrypt")(Any()).
 		WillOnce(oglemock.Return([]byte{}, nil))
@@ -378,6 +394,10 @@ func (t *NewRegistryTest) PutAttributesSucceeds() {
 	// Domain
 	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
 		WillOnce(oglemock.Return([]sdb.Attribute{}, nil))
+
+	// Deriver
+	ExpectCall(t.deriver, "DeriveKey")(Any(), Any()).
+		WillOnce(oglemock.Return([]byte{}))
 
 	// Crypter
 	ExpectCall(t.crypter, "Encrypt")(Any()).
