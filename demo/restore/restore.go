@@ -497,7 +497,7 @@ func main() {
 	}
 
 	// Create the blob store.
-	g_blobStore := blob.NewKvBasedBlobStore(kvStore)
+	g_blobStore = blob.NewKvBasedBlobStore(kvStore)
 	g_blobStore = blob.NewCheckingStore(g_blobStore)
 	g_blobStore = blob.NewEncryptingStore(crypter, g_blobStore)
 
