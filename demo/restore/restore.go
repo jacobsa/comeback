@@ -497,7 +497,9 @@ func main() {
 	}
 
 	// Create the blob store.
-	g_blobStore = blob.NewKvBasedBlobStore(kvStore)
+	g_blobStore := blob.NewKvBasedBlobStore(kvStore)
+	g_blobStore = blob.NewCheckingStore(blobStore)
+	g_blobStore = blob.NewEncryptingStore(crypter, blobStore)
 
 	// Find the requested job.
 	job, err := registry.FindBackup(jobId)
@@ -512,7 +514,7 @@ func main() {
 	}
 
 	// Create the target.
-	err = os.Mkdir("/tmp/restore_target", 0755)
+	err = os.Mkdir(*g_target, 0755)
 	if err != nil {
 		log.Fatalf("Mkdir: %v", err)
 	}
