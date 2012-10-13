@@ -438,23 +438,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Create a user registry.
-	userRegistry, err := sys.NewUserRegistry()
-	if err != nil {
-		log.Fatalf("Creating user registry: %v", err)
-	}
-
-	// Create a group registry.
-	groupRegistry, err := sys.NewGroupRegistry()
-	if err != nil {
-		log.Fatalf("Creating group registry: %v", err)
-	}
-
-	// Create a file system.
-	fileSystem, err := fs.NewFileSystem(userRegistry, groupRegistry)
-	if err != nil {
-		log.Fatalf("Creating file system: %v", err)
-	}
 
 	// Open a connection to SimpleDB.
 	db, err := sdb.NewSimpleDB(cfg.SdbRegion, cfg.AccessKey)
