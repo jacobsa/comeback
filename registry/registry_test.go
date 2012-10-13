@@ -371,11 +371,49 @@ func (t *NewRegistryTest) DecryptSucceeds() {
 }
 
 func (t *NewRegistryTest) ErrorGettingSaltBytes() {
-	ExpectEq("TODO", "")
+	t.saltBytes.Reset()
+	t.plaintextBytes.Reset()
+
+	// Domain
+	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return([]sdb.Attribute{}, nil))
+
+	// Call
+	t.callConstructor()
+
+	ExpectThat(t.err, Error(HasSubstr("random")))
+	ExpectThat(t.err, Error(HasSubstr("salt")))
+	ExpectThat(t.err, Error(HasSubstr("EOF")))
 }
 
 func (t *NewRegistryTest) CallsDeriverAndCrypterFactoryForNewMarkers() {
-	ExpectEq("TODO", "")
+	saltBytes := []byte{
+		0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+	}
+
+	t.saltBytes.Reset()
+	t.saltBytes.Write(saltBytes)
+
+	// Domain
+	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return([]sdb.Attribute{}, nil))
+
+	// Deriver
+	expectedKey := []byte("enchilada")
+
+	ExpectCall(t.deriver, "DeriveKey")(
+		cryptoPassword,
+		DeepEquals(saltBytes),
+	).WillOnce(oglemock.Return(expectedKey))
+
+	// Crypter
+	ExpectCall(t.crypter, "Encrypt")(Any()).
+		WillOnce(oglemock.Return(nil, errors.New("")))
+
+	// Call
+	t.callConstructor()
+
+	ExpectThat(t.suppliedKey, DeepEquals(expectedKey))
 }
 
 func (t *NewRegistryTest) CrypterFactoryReturnsErrorForNewMarkers() {
