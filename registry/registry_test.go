@@ -61,8 +61,8 @@ func (t *registryTest) SetUp(i *TestInfo) {
 	t.deriver = mock_crypto.NewMockKeyDeriver(i.MockController, "deriver")
 	t.crypter = mock_crypto.NewMockCrypter(i.MockController, "crypter")
 
-	t.saltBytes = bytes.NewBuffer(make([]byte, 16))
-	t.plaintextBytes = bytes.NewBuffer(make([]byte, 16))
+	t.saltBytes = bytes.NewBuffer(make([]byte, 8))
+	t.plaintextBytes = bytes.NewBuffer(make([]byte, 8))
 	t.randBytes = io.MultiReader(t.saltBytes, t.plaintextBytes)
 
 	// Set up the domain's name and associated database.
