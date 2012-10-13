@@ -301,7 +301,7 @@ func (t *NewRegistryTest) CrypterFactoryReturnsErrorForExistingMarkers() {
 func (t *NewRegistryTest) CallsDecrypt() {
 	// Domain
 	attrs := []sdb.Attribute{
-		sdb.Attribute{Name: "encrypted_data"},
+		sdb.Attribute{Name: "encrypted_data", Value: "dGFjbw=="},
 		sdb.Attribute{Name: "password_salt"},
 	}
 
