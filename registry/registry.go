@@ -23,6 +23,7 @@ import (
 	"github.com/jacobsa/aws/sdb"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/crypto"
+	"io"
 	"math/rand"
 	"regexp"
 	"strconv"
@@ -34,8 +35,9 @@ const (
 	// The item name we use for "domain is already in use" markers.
 	markerItemName = "comeback_marker"
 
-	// The attribute name we use for storing crypto-compatibility data.
-	cryptoMarkerAttributeName = "encrypted_data"
+	// The attribute names we use for storing crypto-compatibility data.
+	encryptedDataMarker = "encrypted_data"
+	passwordSaltMarker = "encrypted_data"
 
 	// A time format that works properly with range queries.
 	iso8601TimeFormat = "2006-01-02T15:04:05Z"
@@ -55,9 +57,12 @@ type Registry interface {
 	FindBackup(jobId uint64) (job CompletedJob, err error)
 }
 
-func verifyCompatible(
-	markerAttr sdb.Attribute,
-	crypter crypto.Crypter) (err error) {
+func verifyCompatibleAndSetUpCrypter(
+	markerAttrs []sdb.Attribute,
+	cryptoPassword string,
+	deriver crypto.KeyDeriver,
+	createCrypter func(key []byte) (crypto.Crypter, error),
+) (crypter crypto.Crypter, err error) {
 	// The ciphertext should be base64-encoded.
 	encoded := markerAttr.Value
 	ciphertext, err := base64.StdEncoding.DecodeString(encoded)
@@ -112,17 +117,13 @@ func newRegistry(
 	cryptoPassword string,
 	deriver crypto.KeyDeriver,
 	createCrypter func(key []byte) (crypto.Crypter, error),
-	cryptoRandSource io.Reader,
+	cryptoRandSrc io.Reader,
 ) (r Registry, err error) {
-	// Set up a tentative result.
-	r = &registry{crypter, domain.Db(), domain}
-
-	// Ask for the data that will tell us whether the crypter is compatible with
-	// the previous one used in this domain, if any.
+	// Ask for the previously-written encrypted marker and password salt, if any.
 	attrs, err := domain.GetAttributes(
 		markerItemName,
 		false, // No need to ask for a consistent read
-		[]string{cryptoMarkerAttributeName},
+		[]string{encryptedDataMarker, passwordSaltMarker},
 	)
 
 	if err != nil {
@@ -130,30 +131,70 @@ func newRegistry(
 		return
 	}
 
-	// If we got back an attribute, we must verify that it is compatible.
+	// If we got back any attributes, we must verify that they are compatible.
 	if len(attrs) > 0 {
-		err = verifyCompatible(attrs[0], crypter)
+		var crypter crypto.Crypter
+		crypter, err = verifyCompatibleAndSetUpCrypter(
+			attrs,
+			cryptoPassword,
+			deriver,
+			createCrypter,
+		)
+
+		if err != nil {
+			return
+		}
+
+		// All is good.
+		r = &registry{crypter, domain.Db(), domain}
 		return
 	}
 
 	// Otherwise, we want to claim this domain. Encrypt some random data, base64
 	// encode it, then write it out. Make sure to use a precondition to defeat
 	// the race condition where another machine is doing the same simultaneously.
-	plaintext := get8RandBytes(randSrc)
+
+	// Create some plaintext.
+	plaintext := make([]byte, 8)
+	if _, err = io.ReadAtLeast(cryptoRandSrc, plaintext, len(plaintext)); err != nil {
+		err = fmt.Errorf("Reading random bytes for plaintext: %v", err)
+		return
+	}
+
+	// Generate a random salt.
+	salt := make([]byte, 8)
+	if _, err = io.ReadAtLeast(cryptoRandSrc, salt, len(salt)); err != nil {
+		err = fmt.Errorf("Reading random bytes for salt: %v", err)
+		return
+	}
+
+	// Derive a crypto key and create the crypter.
+	cryptoKey := deriver.DeriveKey(cryptoPassword, salt)
+	crypter, err := createCrypter(cryptoKey)
+	if err != nil {
+		err = fmt.Errorf("createCrypter: %v", err)
+		return
+	}
+
+	// Encrypt the plaintext.
 	ciphertext, err := crypter.Encrypt(plaintext)
 	if err != nil {
 		err = fmt.Errorf("Encrypt: %v", err)
 		return
 	}
 
-	encoded := base64.StdEncoding.EncodeToString(ciphertext)
+	// SimpleDB requires only UTF-8 text.
+	encodedEncryptedData := base64.StdEncoding.EncodeToString(ciphertext)
+	encodedSalt := base64.StdEncoding.EncodeToString(salt)
 
+	// Write out the two markers.
 	err = domain.PutAttributes(
 		markerItemName,
 		[]sdb.PutUpdate{
-			sdb.PutUpdate{Name: cryptoMarkerAttributeName, Value: encoded},
+			sdb.PutUpdate{Name: encryptedDataMarker, Value: encodedEncryptedData},
+			sdb.PutUpdate{Name: passwordSaltMarker, Value: encodedSalt},
 		},
-		&sdb.Precondition{Name: cryptoMarkerAttributeName, Value: nil},
+		&sdb.Precondition{Name: encryptedDataMarker, Value: nil},
 	)
 
 	if err != nil {
