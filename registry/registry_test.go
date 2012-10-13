@@ -247,6 +247,34 @@ func (t *NewRegistryTest) InvalidSaltAttribute() {
 }
 
 func (t *NewRegistryTest) CallsDeriverAndCrypterFactoryForExistingMarkers() {
+	// Domain
+	attrs := []sdb.Attribute{
+		sdb.Attribute{Name: "encrypted_data", Value: "dGFjbw=="},
+		sdb.Attribute{Name: "password_salt", Value: "YnVycml0bw=="},
+	}
+
+	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return(attrs, nil))
+
+	// Deriver
+	expectedKey := []byte("enchilada")
+
+	ExpectCall(t.deriver, "DeriveKey")(
+		cryptoPassword,
+		DeepEquals([]byte("burrito")),
+	).WillOnce(oglemock.Return(expectedKey))
+
+	// Crypter
+	ExpectCall(t.crypter, "Decrypt")(DeepEquals([]byte("taco"))).
+		WillOnce(oglemock.Return(nil, errors.New("")))
+
+	// Call
+	t.callConstructor()
+
+	ExpectThat(t.suppliedKey, DeepEquals(expectedKey))
+}
+
+func (t *NewRegistryTest) CrypterFactoryReturnsErrorForExistingMarkers() {
 	ExpectEq("TODO", "")
 }
 
@@ -330,7 +358,7 @@ func (t *NewRegistryTest) CallsDeriverAndCrypterFactoryForNewMarkers() {
 	ExpectEq("TODO", "")
 }
 
-func (t *NewRegistryTest) CrypterFactoryReturnsError() {
+func (t *NewRegistryTest) CrypterFactoryReturnsErrorForNewMarkers() {
 	ExpectEq("TODO", "")
 }
 
