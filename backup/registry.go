@@ -219,20 +219,8 @@ func (r *registry) RecordBackup(job CompletedJob) (err error) {
 	return
 }
 
-func convertSelectedItem(item sdb.SelectedItem) (j CompletedJob, err error) {
-	// Convert the item name.
-	subMatches := itemNameRegexp.FindStringSubmatch(string(item.Name))
-	if subMatches == nil {
-		err = fmt.Errorf("Invalid item name: %s", item.Name)
-		return
-	}
-
-	if j.Id, err = strconv.ParseUint(subMatches[1], 16, 64); err != nil {
-		panic(fmt.Sprintf("Unexpected result for name: %s", item.Name))
-	}
-
-	// Convert each attribute.
-	for _, attr := range item.Attributes {
+func convertAttributes(attrs []sdb.Attribute) (j CompletedJob, err error) {
+	for _, attr := range attrs {
 		switch attr.Name {
 		case "job_name":
 			j.Name = attr.Value
@@ -269,6 +257,26 @@ func convertSelectedItem(item sdb.SelectedItem) (j CompletedJob, err error) {
 	if j.Score == nil {
 		err = fmt.Errorf("Missing score attribute.")
 		return
+	}
+
+	return
+}
+
+func convertSelectedItem(item sdb.SelectedItem) (j CompletedJob, err error) {
+	// Convert the item's attributes.
+	if j, err = convertAttributes(item.Attributes); err != nil {
+		return
+	}
+
+	// Convert the item name.
+	subMatches := itemNameRegexp.FindStringSubmatch(string(item.Name))
+	if subMatches == nil {
+		err = fmt.Errorf("Invalid item name: %s", item.Name)
+		return
+	}
+
+	if j.Id, err = strconv.ParseUint(subMatches[1], 16, 64); err != nil {
+		panic(fmt.Sprintf("Unexpected result for name: %s", item.Name))
 	}
 
 	return
