@@ -186,13 +186,6 @@ func newRegistry(
 	// encode it, then write it out. Make sure to use a precondition to defeat
 	// the race condition where another machine is doing the same simultaneously.
 
-	// Create some plaintext.
-	plaintext := make([]byte, 8)
-	if _, err = io.ReadAtLeast(cryptoRandSrc, plaintext, len(plaintext)); err != nil {
-		err = fmt.Errorf("Reading random bytes for plaintext: %v", err)
-		return
-	}
-
 	// Generate a random salt.
 	salt := make([]byte, 8)
 	if _, err = io.ReadAtLeast(cryptoRandSrc, salt, len(salt)); err != nil {
@@ -205,6 +198,13 @@ func newRegistry(
 	crypter, err := createCrypter(cryptoKey)
 	if err != nil {
 		err = fmt.Errorf("createCrypter: %v", err)
+		return
+	}
+
+	// Create some plaintext.
+	plaintext := make([]byte, 8)
+	if _, err = io.ReadAtLeast(cryptoRandSrc, plaintext, len(plaintext)); err != nil {
+		err = fmt.Errorf("Reading random bytes for plaintext: %v", err)
 		return
 	}
 
