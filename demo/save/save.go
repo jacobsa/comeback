@@ -44,6 +44,8 @@ func randUint64(randSrc *rand.Rand) uint64
 // Return the existing salt used by the domain, or nil if there is none.
 func getExistingSalt(d sdb.Domain) (salt []byte, err error)
 
+func setSalt(d sdb.Domain, salt []byte) (err error)
+
 func main() {
 	var err error
 	flag.Parse()
