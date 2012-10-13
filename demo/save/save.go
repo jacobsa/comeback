@@ -40,77 +40,11 @@ import (
 	"time"
 )
 
-// Keep this consistent with the item name used in the backup package.
-const markerItemName = "comeback_marker"
-const saltAttributeName = "password_salt"
-
 var g_configFile = flag.String("config", "", "Path to config file.")
 var g_jobName = flag.String("job", "", "Job name within the config file.")
 
 func randUint64(randSrc *rand.Rand) uint64 {
 	return (uint64(randSrc.Uint32()) << 32) | uint64(randSrc.Uint32())
-}
-
-// Return the existing salt used by the domain, or nil if there is none.
-func getExistingSalt(domain sdb.Domain) (salt []byte, err error) {
-	// Call the domain.
-	attrs, err := domain.GetAttributes(
-		markerItemName,
-		false, // No need to ask for a consistent read
-		[]string{saltAttributeName},
-	)
-
-	if err != nil {
-		err = fmt.Errorf("GetAttributes: %v", err)
-		return
-	}
-
-	if len(attrs) == 0 {
-		return
-	}
-
-	if attrs[0].Name != saltAttributeName {
-		panic(fmt.Errorf("Unexpected attribute: %v", attrs[0]))
-	}
-
-	// Base64-decode the salt.
-	salt, err = base64.StdEncoding.DecodeString(attrs[0].Value)
-	if err != nil {
-		err = fmt.Errorf("base64.DecodeString(%s): %v", attrs[0].Value, err)
-		return
-	}
-
-	return
-}
-
-func generateAndSetSalt(domain sdb.Domain) (salt []byte, err error) {
-	const saltLen = 8
-
-	// Generate a salt.
-	salt = make([]byte, saltLen)
-	if _, err = io.ReadAtLeast(crypto_rand.Reader, salt, len(salt)); err != nil {
-		err = fmt.Errorf("Reading random bytes: %v", err)
-		return
-	}
-
-	// Base64-encode it.
-	encoded := base64.StdEncoding.EncodeToString(salt)
-
-	// Write it out, making sure nobody has beaten us to the punch.
-	err = domain.PutAttributes(
-		markerItemName,
-		[]sdb.PutUpdate{
-			sdb.PutUpdate{Name: saltAttributeName, Value: encoded},
-		},
-		&sdb.Precondition{Name: saltAttributeName, Value: nil},
-	)
-
-	if err != nil {
-		err = fmt.Errorf("PutAttributes: %v", err)
-		return
-	}
-
-	return
 }
 
 func main() {
