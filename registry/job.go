@@ -13,6 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+package registry
+
+import (
+	"github.com/jacobsa/comeback/blob"
+	"time"
+)
+
 // A record in the backup registry describing a successful backup job.
 type CompletedJob struct {
 	// A unique ID for this completed run.
