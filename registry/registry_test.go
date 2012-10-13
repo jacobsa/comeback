@@ -23,7 +23,6 @@ import (
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/crypto"
 	"github.com/jacobsa/comeback/crypto/mock"
-	"github.com/jacobsa/comeback/registry"
 	. "github.com/jacobsa/oglematchers"
 	"github.com/jacobsa/oglemock"
 	. "github.com/jacobsa/ogletest"

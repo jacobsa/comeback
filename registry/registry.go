@@ -37,7 +37,7 @@ const (
 
 	// The attribute names we use for storing crypto-compatibility data.
 	encryptedDataMarker = "encrypted_data"
-	passwordSaltMarker = "encrypted_data"
+	passwordSaltMarker = "password_salt"
 
 	// A time format that works properly with range queries.
 	iso8601TimeFormat = "2006-01-02T15:04:05Z"
@@ -87,17 +87,20 @@ func verifyCompatibleAndSetUpCrypter(
 
 	// Did we get both ciphertext and salt?
 	if ciphertext == nil {
-		return fmt.Errorf("Missing encrypted data marker.")
+		err = fmt.Errorf("Missing encrypted data marker.")
+		return
 	}
 
 	if salt == nil {
-		return fmt.Errorf("Missing password salt marker.")
+		err = fmt.Errorf("Missing password salt marker.")
+		return
 	}
 
 	// Derive a key and create a crypter.
 	cryptoKey := deriver.DeriveKey(cryptoPassword, salt)
 	if crypter, err = createCrypter(cryptoKey); err != nil {
-		return fmt.Errorf("createCrypter: %v", err)
+		err = fmt.Errorf("createCrypter: %v", err)
+		return
 	}
 
 	// Attempt to decrypt the ciphertext.
