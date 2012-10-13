@@ -82,8 +82,7 @@ func verifyCompatible(
 }
 
 // Create a registry that stores data in the supplied SimpleDB domain,
-// encrypting using a key derived from the supplied password using the supplied
-// function.
+// encrypting using a key derived from the supplied password.
 //
 // Before doing so, check to see whether this domain has been used as a
 // registry before. If not, write an encrypted marker. If it has been used
@@ -96,13 +95,13 @@ func verifyCompatible(
 func NewRegistry(
 	domain sdb.Domain,
 	cryptoPassword string,
-	deriveKey func (password string, salt []byte) []byte,
+	deriver crypto.KeyDeriver,
 	randSrc *rand.Rand,
 ) (r Registry, err error) {
 	return newRegistry(
 		domain,
 		cryptoPassword,
-		deriveKey,
+		deriver,
 		crypto.NewCrypter,
 		randSrc)
 }
@@ -111,7 +110,7 @@ func NewRegistry(
 func newRegistry(
 	domain sdb.Domain,
 	cryptoPassword string,
-	deriveKey func (password string, salt []byte) []byte,
+	deriver crypto.KeyDeriver,
 	createCrypter func (key []byte) (crypto.Crypter, error),
 	randSrc *rand.Rand,
 ) (r Registry, err error) {
