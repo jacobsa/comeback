@@ -19,6 +19,7 @@ import (
 	"bytes"
 	"code.google.com/p/go.crypto/pbkdf2"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"flag"
 	"fmt"
@@ -49,7 +50,41 @@ var g_target = flag.String("target", "", "The target directory.")
 
 var g_blobStore blob.Store
 
-func getSalt(domain sdb.Domain) (salt []byte, err error)
+// Keep this consistent with the item name used in the backup package.
+const markerItemName = "comeback_marker"
+const saltAttributeName = "password_salt"
+
+func getSalt(domain sdb.Domain) (salt []byte, err error) {
+	// Call the domain.
+	attrs, err := domain.GetAttributes(
+		markerItemName,
+		false, // No need to ask for a consistent read
+		[]string{saltAttributeName},
+	)
+
+	if err != nil {
+		err = fmt.Errorf("GetAttributes: %v", err)
+		return
+	}
+
+	if len(attrs) == 0 {
+		err = fmt.Errorf("Couldn't find salt in the supplied domain.")
+		return
+	}
+
+	if attrs[0].Name != saltAttributeName {
+		panic(fmt.Errorf("Unexpected attribute: %v", attrs[0]))
+	}
+
+	// Base64-decode the salt.
+	salt, err = base64.StdEncoding.DecodeString(attrs[0].Value)
+	if err != nil {
+		err = fmt.Errorf("base64.DecodeString(%s): %v", attrs[0].Value, err)
+		return
+	}
+
+	return
+}
 
 func fromHexHash(h string) (blob.Score, error) {
 	b, err := hex.DecodeString(h)
