@@ -888,7 +888,15 @@ func (t *FindBackupTest) CallsGetAttributes() {
 }
 
 func (t *FindBackupTest) GetAttributesReturnsError() {
-	ExpectEq("TODO", "")
+	// Domain
+	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return(nil, errors.New("taco")))
+
+	// Call
+	t.callRegistry()
+
+	ExpectThat(t.err, Error(HasSubstr("GetAttributes")))
+	ExpectThat(t.err, Error(HasSubstr("taco")))
 }
 
 func (t *FindBackupTest) JobNameMissing() {
@@ -920,5 +928,35 @@ func (t *FindBackupTest) ScoreTooShort() {
 }
 
 func (t *FindBackupTest) EverythingOkay() {
-	ExpectEq("TODO", "")
+	t.jobId = 0xdeadbeef
+
+	// Domain
+	score := blob.ComputeScore([]byte("enchilada"))
+	AssertThat(score, MatchesRegexp("[a-f]"))
+	AssertThat(score, MatchesRegexp("[0-9a-f]{40}"))
+
+	attrs := []sdb.Attribute{
+		sdb.Attribute{Name: "irrelevant", Value: "foo"},
+		sdb.Attribute{Name: "job_name", Value: "taco"},
+		sdb.Attribute{Name: "start_time", Value: "2012-08-15T12:56:00Z"},
+		sdb.Attribute{Name: "score", Value: score.Hex()},
+		sdb.Attribute{Name: "irrelevant", Value: "bar"},
+	}
+
+	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return(attrs, nil))
+
+	// Call
+	t.callRegistry()
+	AssertEq(nil, t.err)
+
+	ExpectEq(uint64(0xdeadbeef), t.job.Id)
+	ExpectEq("taco", t.job.Name)
+	ExpectThat(t.job.Score, DeepEquals(score))
+	ExpectTrue(
+		time.Date(2012, time.August, 15, 12, 56, 00, 0, time.UTC).Local().Equal(
+			t.job.StartTime),
+		"Time: %v",
+		t.job.StartTime,
+	)
 }
