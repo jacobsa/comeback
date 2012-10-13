@@ -90,13 +90,12 @@ func verifyCompatible(
 // accidentally writing data with the wrong key when the user enters the wrong
 // password.
 //
-// The crypter must be set up such that it is guaranteed to return an error if
-// it is used to decrypt ciphertext encrypted with a different key.
+// Returned crypters must be set up such that they are guaranteed to return an
+// error if they are used to decrypt ciphertext encrypted with a different key.
 func NewRegistry(
 	domain sdb.Domain,
 	cryptoPassword string,
 	deriver crypto.KeyDeriver,
-	randSrc *rand.Rand,
 ) (r Registry, err error) {
 	return newRegistry(
 		domain,
@@ -112,7 +111,7 @@ func newRegistry(
 	cryptoPassword string,
 	deriver crypto.KeyDeriver,
 	createCrypter func(key []byte) (crypto.Crypter, error),
-	randSrc *rand.Rand,
+	cryptoRandSource io.Reader,
 ) (r Registry, err error) {
 	// Set up a tentative result.
 	r = &registry{crypter, domain.Db(), domain}

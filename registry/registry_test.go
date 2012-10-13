@@ -165,17 +165,33 @@ func (t *NewRegistryTest) GetAttributesReturnsError() {
 	ExpectThat(t.err, Error(HasSubstr("taco")))
 }
 
-func (t *NewRegistryTest) GetAttributesReturnsInvalidBase64Data() {
+func (t *NewRegistryTest) MissingOnlyEncryptedDataAttribute() {
+	ExpectEq("TODO", "")
+}
+
+func (t *NewRegistryTest) MissingOnlySaltAttribute() {
+	ExpectEq("TODO", "")
+}
+
+func (t *NewRegistryTest) InvalidEncryptedDataAttribute() {
 	// Domain
-	attr := sdb.Attribute{Name: "encrypted_data", Value: "foo"}
+	attrs := []sdb.Attribute{
+		sdb.Attribute{Name: "encrypted_data", Value: "foo"},
+		sdb.Attribute{Name: "password_salt", Value: "YnVycml0bw=="},
+	}
+
 	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
-		WillOnce(oglemock.Return([]sdb.Attribute{attr}, nil))
+		WillOnce(oglemock.Return(attrs, nil))
 
 	// Call
 	t.callConstructor()
 
 	ExpectThat(t.err, Error(HasSubstr("base64")))
 	ExpectThat(t.err, Error(HasSubstr("foo")))
+}
+
+func (t *NewRegistryTest) InvalidSaltAttribute() {
+	ExpectEq("TODO", "")
 }
 
 func (t *NewRegistryTest) CallsDecrypt() {
