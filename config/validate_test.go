@@ -138,7 +138,7 @@ func (t *ValidateTest) MissingAccessKeyId() {
 
 	err := config.Validate(t.cfg)
 
-	ExpectThat(err, Error(HasSubstr("S3")))
+	ExpectThat(err, Error(HasSubstr("AWS")))
 	ExpectThat(err, Error(HasSubstr("key ID")))
 }
 
@@ -147,7 +147,7 @@ func (t *ValidateTest) MissingAccessKeySecret() {
 
 	err := config.Validate(t.cfg)
 
-	ExpectThat(err, Error(HasSubstr("S3")))
+	ExpectThat(err, Error(HasSubstr("AWS")))
 	ExpectThat(err, Error(HasSubstr("key secret")))
 }
 

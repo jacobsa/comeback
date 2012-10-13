@@ -52,11 +52,11 @@ func Validate(c *Config) error {
 
 	// Validate AWS key.
 	if c.AccessKey.Id == "" {
-		return fmt.Errorf("You must specify an S3 access key ID.")
+		return fmt.Errorf("You must specify an AWS access key ID.")
 	}
 
 	if c.AccessKey.Secret == "" {
-		return fmt.Errorf("You must specify an S3 access key secret.")
+		return fmt.Errorf("You must specify an AWS access key secret.")
 	}
 
 	// Validate S3 configuration.
