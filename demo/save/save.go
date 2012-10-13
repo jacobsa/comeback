@@ -16,10 +16,7 @@
 package main
 
 import (
-	"code.google.com/p/go.crypto/pbkdf2"
-	crypto_rand "crypto/rand"
 	"crypto/sha256"
-	"encoding/base64"
 	"flag"
 	"fmt"
 	"github.com/jacobsa/aws/s3"
@@ -32,7 +29,6 @@ import (
 	s3_kv "github.com/jacobsa/comeback/kv/s3"
 	"github.com/jacobsa/comeback/registry"
 	"github.com/jacobsa/comeback/sys"
-	"io"
 	"io/ioutil"
 	"log"
 	"math/rand"
@@ -131,7 +127,7 @@ func main() {
 	}
 
 	// Read in a password.
-	password := []byte(readPassword("Enter crypto password: "))
+	password := readPassword("Enter crypto password: ")
 	if len(password) == 0 {
 		log.Fatalf("You must enter a password.")
 	}
@@ -187,6 +183,7 @@ func main() {
 	}
 
 	// Register the successful backup.
+	randSrc := rand.New(rand.NewSource(time.Now().UnixNano()))
 	completedJob := registry.CompletedJob{
 		Id:        randUint64(randSrc),
 		Name:      *g_jobName,
