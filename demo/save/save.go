@@ -136,37 +136,16 @@ func main() {
 		log.Fatalf("You must enter a password.")
 	}
 
-	// Look for a salt that has already been used.
-	salt, err := getExistingSalt(domain)
-	if err != nil {
-		log.Fatalf("%v\n", err)
-	}
-
-	// If there is no existing salt, set one up.
-	if salt == nil {
-		salt, err = generateAndSetSalt(domain)
-		if err != nil {
-			log.Fatalf("%v\n", err)
-		}
-	}
-
 	// Derive a crypto key from the password using PBKDF2, recommended for use by
 	// NIST Special Publication 800-132. The latter says that PBKDF2 is approved
 	// for use with HMAC and any approved hash function. Special Publication
 	// 800-107 lists SHA-256 as an approved hash function.
 	const pbkdf2Iters = 4096
 	const keyLen = 32 // Minimum key length for AES-SIV
-	cryptoKey := pbkdf2.Key(password, salt, pbkdf2Iters, keyLen, sha256.New)
-
-	// Create the crypter.
-	crypter, err := crypto.NewCrypter(cryptoKey)
-	if err != nil {
-		log.Fatalf("Creating crypter: %v", err)
-	}
+	keyDeriver := crypto.NewPbkdf2KeyDeriver(pbkdf2Iters, keyLen, sha256.New)
 
 	// Create the backup registry.
-	randSrc := rand.New(rand.NewSource(time.Now().UnixNano()))
-	reg, err := registry.NewRegistry(domain, crypter, randSrc)
+	reg, crypter, err := registry.NewRegistry(domain, password, keyDeriver)
 	if err != nil {
 		log.Fatalf("Creating registry: %v", err)
 	}

@@ -57,22 +57,15 @@ type Registry interface {
 	FindBackup(jobId uint64) (job CompletedJob, err error)
 }
 
-// Create a registry that stores data in the supplied SimpleDB domain,
-// encrypting using a key derived from the supplied password.
-//
-// Before doing so, check to see whether this domain has been used as a
-// registry before. If not, write an encrypted marker. If it has been used
-// before, make sure that it was used with the same password. This prevents
-// accidentally writing data with the wrong key when the user enters the wrong
-// password.
-//
-// Returned crypters must be set up such that they are guaranteed to return an
-// error if they are used to decrypt ciphertext encrypted with a different key.
+// Create a registry that stores data in the supplied SimpleDB domain, deriving
+// a crypto key from the supplied password and ensuring that the domain may not
+// in the future be used with any other key and has not in the past, either.
+// Return a crypter configured to use the key.
 func NewRegistry(
 	domain sdb.Domain,
 	cryptoPassword string,
 	deriver crypto.KeyDeriver,
-) (r Registry, err error) {
+) (r Registry, crypter crypto.Crypter, err error) {
 	return newRegistry(
 		domain,
 		cryptoPassword,
