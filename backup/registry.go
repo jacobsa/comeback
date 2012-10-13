@@ -308,6 +308,11 @@ func (r *registry) ListRecentBackups() (jobs []CompletedJob, err error) {
 	return
 }
 
+func (r *registry) FindBackup(jobId uint64) (job CompletedJob, err error) {
+	err = fmt.Errorf("TODO")
+	return
+}
+
 type IncompatibleCrypterError struct {
 	s string
 }

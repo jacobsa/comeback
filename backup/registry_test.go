@@ -865,3 +865,45 @@ func (t *ListRecentBackupsTest) ReturnsCompletedJobs() {
 		t.jobs[1].StartTime,
 	)
 }
+
+////////////////////////////////////////////////////////////////////////
+// FindBackup
+////////////////////////////////////////////////////////////////////////
+
+type FindBackupTest struct {
+	registryTest
+	registry backup.Registry
+
+	jobId uint64
+	job backup.CompletedJob
+	err  error
+}
+
+func init() { RegisterTestSuite(&FindBackupTest{}) }
+
+func (t *FindBackupTest) SetUp(i *TestInfo) {
+	var err error
+
+	// Call common setup code.
+	t.registryTest.SetUp(i)
+
+	// Set up dependencies to pretend that the crypter is compatible.
+	attr := sdb.Attribute{Name: "encrypted_data"}
+	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return([]sdb.Attribute{attr}, nil))
+
+	ExpectCall(t.crypter, "Decrypt")(Any()).
+		WillOnce(oglemock.Return([]byte{}, nil))
+
+	// Create the registry.
+	t.registry, err = backup.NewRegistry(t.domain, t.crypter, t.randSrc)
+	AssertEq(nil, err)
+}
+
+func (t *FindBackupTest) callRegistry() {
+	t.job, t.err = t.registry.FindBackup(t.jobId)
+}
+
+func (t *FindBackupTest) DoesFoo() {
+	ExpectEq("TODO", "")
+}
