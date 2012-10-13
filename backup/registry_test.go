@@ -914,8 +914,8 @@ func (t *FindBackupTest) JobNameMissing() {
 	// Call
 	t.callRegistry()
 
-	ExpectThat(t.err, Error(HasSubstr("missing")))
-	ExpectThat(t.err, Error(HasSubstr("job name")))
+	ExpectThat(t.err, Error(HasSubstr("Missing")))
+	ExpectThat(t.err, Error(HasSubstr("job_name")))
 }
 
 func (t *FindBackupTest) StartTimeMissing() {
@@ -933,8 +933,8 @@ func (t *FindBackupTest) StartTimeMissing() {
 	// Call
 	t.callRegistry()
 
-	ExpectThat(t.err, Error(HasSubstr("missing")))
-	ExpectThat(t.err, Error(HasSubstr("start time")))
+	ExpectThat(t.err, Error(HasSubstr("Missing")))
+	ExpectThat(t.err, Error(HasSubstr("start_time")))
 }
 
 func (t *FindBackupTest) StartTimeInvalid() {
@@ -971,7 +971,7 @@ func (t *FindBackupTest) ScoreMissing() {
 	// Call
 	t.callRegistry()
 
-	ExpectThat(t.err, Error(HasSubstr("missing")))
+	ExpectThat(t.err, Error(HasSubstr("Missing")))
 	ExpectThat(t.err, Error(HasSubstr("score")))
 }
 

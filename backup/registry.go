@@ -245,7 +245,7 @@ func convertAttributes(attrs []sdb.Attribute) (j CompletedJob, err error) {
 
 	// Everything must have been returned.
 	if j.Name == "" {
-		err = fmt.Errorf("Missing name attribute.")
+		err = fmt.Errorf("Missing job_name attribute.")
 		return
 	}
 
@@ -317,7 +317,25 @@ func (r *registry) ListRecentBackups() (jobs []CompletedJob, err error) {
 }
 
 func (r *registry) FindBackup(jobId uint64) (job CompletedJob, err error) {
-	err = fmt.Errorf("TODO")
+	// Call the domain.
+	attrs, err := r.domain.GetAttributes(
+		sdb.ItemName(fmt.Sprintf("backup_%016x", jobId)),
+		false,  // Consistent read unnecessary
+		[]string{"job_name", "start_time", "score"},
+	)
+
+	if err != nil {
+		err = fmt.Errorf("GetAttributes: %v", err)
+		return
+	}
+
+	// Convert the results.
+	if job, err = convertAttributes(attrs); err != nil {
+		err = fmt.Errorf("Returned attributes invalid: %v", err)
+		return
+	}
+
+	job.Id = jobId
 	return
 }
 
