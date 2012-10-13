@@ -438,7 +438,6 @@ func main() {
 		os.Exit(1)
 	}
 
-
 	// Open a connection to SimpleDB.
 	db, err := sdb.NewSimpleDB(cfg.SdbRegion, cfg.AccessKey)
 	if err != nil {
