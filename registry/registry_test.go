@@ -311,8 +311,6 @@ func (t *NewRegistryTest) EncryptReturnsError() {
 }
 
 func (t *NewRegistryTest) CallsPutAttributes() {
-	someBytes := make([]byte, 8)
-
 	t.randBytes.Reset()
 	t.randBytes.Write(make([]byte, 4))
 	t.randBytes.Write([]byte("burrito!"))
