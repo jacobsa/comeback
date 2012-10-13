@@ -29,6 +29,7 @@ import (
 	"github.com/jacobsa/comeback/config"
 	"github.com/jacobsa/comeback/crypto"
 	"github.com/jacobsa/comeback/fs"
+	"github.com/jacobsa/comeback/registry"
 	s3_kv "github.com/jacobsa/comeback/kv/s3"
 	"github.com/jacobsa/comeback/sys"
 	"io"
@@ -231,7 +232,7 @@ func main() {
 
 	// Create the backup registry.
 	randSrc := rand.New(rand.NewSource(time.Now().UnixNano()))
-	registry, err := backup.NewRegistry(domain, crypter, randSrc)
+	reg, err := registry.NewRegistry(domain, crypter, randSrc)
 	if err != nil {
 		log.Fatalf("Creating registry: %v", err)
 	}
@@ -273,14 +274,14 @@ func main() {
 	}
 
 	// Register the successful backup.
-	completedJob := backup.CompletedJob{
+	completedJob := registry.CompletedJob{
 		Id:        randUint64(randSrc),
 		Name:      *g_jobName,
 		StartTime: startTime,
 		Score:     score,
 	}
 
-	if err = registry.RecordBackup(completedJob); err != nil {
+	if err = reg.RecordBackup(completedJob); err != nil {
 		log.Fatalf("Recoding to registry: %v", err)
 	}
 

@@ -25,12 +25,12 @@ import (
 	"fmt"
 	"github.com/jacobsa/aws/s3"
 	"github.com/jacobsa/aws/sdb"
-	"github.com/jacobsa/comeback/backup"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/config"
 	"github.com/jacobsa/comeback/crypto"
 	"github.com/jacobsa/comeback/fs"
 	s3_kv "github.com/jacobsa/comeback/kv/s3"
+	"github.com/jacobsa/comeback/registry"
 	"github.com/jacobsa/comeback/repr"
 	"github.com/jacobsa/comeback/sys"
 	"io"
@@ -485,7 +485,7 @@ func main() {
 
 	// Create the backup registry.
 	randSrc := rand.New(rand.NewSource(time.Now().UnixNano()))
-	registry, err := backup.NewRegistry(domain, crypter, randSrc)
+	reg, err := registry.NewRegistry(domain, crypter, randSrc)
 	if err != nil {
 		log.Fatalf("Creating registry: %v", err)
 	}
@@ -502,7 +502,7 @@ func main() {
 	g_blobStore = blob.NewEncryptingStore(crypter, g_blobStore)
 
 	// Find the requested job.
-	job, err := registry.FindBackup(jobId)
+	job, err := reg.FindBackup(jobId)
 	if err != nil {
 		log.Fatalln("FindBackup:", err)
 	}
