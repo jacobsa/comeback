@@ -22,7 +22,7 @@ import (
 	"fmt"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/fs"
-	"github.com/jacobsa/comeback/kv/disk"
+	"github.com/jacobsa/comeback/kv/s3"
 	"github.com/jacobsa/comeback/repr"
 	"github.com/jacobsa/comeback/sys"
 	"io"
@@ -33,7 +33,7 @@ import (
 	"time"
 )
 
-var g_score = flag.String("score", "", "The score of the directory to restore.")
+var g_jobIdStr = flag.String("job_id", "", "The job ID to restore.")
 var g_target = flag.String("target", "", "The target directory.")
 
 var g_blobStore blob.Store
@@ -342,9 +342,15 @@ func main() {
 	flag.Parse()
 
 	// Validate flags.
-	if *g_score == "" {
-		fmt.Println("You must set -score.")
+	if len(*g_jobIdStr) != 16 {
+		fmt.Println("You must set -job_id.")
 		os.Exit(1)
+	}
+
+	jobId, err := strconv.ParseUint(*g_jobIdStr, 16, 64)
+	if err != nil {
+		fmt.Println("Invalid job ID:", *g_jobIdStr)
+		os.Exist(1)
 	}
 
 	if *g_target == "" {
@@ -370,8 +376,59 @@ func main() {
 		log.Fatalf("Creating file system: %v", err)
 	}
 
+	// Open a connection to SimpleDB.
+	db, err := sdb.NewSimpleDB(cfg.SdbRegion, cfg.AccessKey)
+	if err != nil {
+		log.Fatalf("Creating SimpleDB: %v", err)
+	}
+
+	// Open the appropriate domain.
+	domain, err := db.OpenDomain(cfg.SdbDomain)
+	if err != nil {
+		log.Fatalf("OpenDomain: %v", err)
+	}
+
+	// Open a connection to S3.
+	bucket, err := s3.OpenBucket(cfg.S3Bucket, cfg.S3Region, cfg.AccessKey)
+	if err != nil {
+		log.Fatalf("Creating bucket: %v", err)
+	}
+
+	// Read in the password.
+	password := []byte(readPassword("Enter crypto password: "))
+	if len(password) == 0 {
+		log.Fatalf("You must enter a password.")
+	}
+
+	// Load the salt.
+	salt, err := getSalt(domain)
+	if err != nil {
+		log.Fatalf("%v\n", err)
+	}
+
+	// Derive a crypto key from the password using PBKDF2, recommended for use by
+	// NIST Special Publication 800-132. The latter says that PBKDF2 is approved
+	// for use with HMAC and any approved hash function. Special Publication
+	// 800-107 lists SHA-256 as an approved hash function.
+	const pbkdf2Iters = 4096
+	const keyLen = 32  // Minimum key length for AES-SIV
+	cryptoKey := pbkdf2.Key(password, salt, pbkdf2Iters, keyLen, sha256.New)
+
+	// Create the crypter.
+	crypter, err := crypto.NewCrypter(cryptoKey)
+	if err != nil {
+		log.Fatalf("Creating crypter: %v", err)
+	}
+
+	// Create the backup registry.
+	randSrc := rand.New(rand.NewSource(time.Now().UnixNano()))
+	registry, err := backup.NewRegistry(domain, crypter, randSrc)
+	if err != nil {
+		log.Fatalf("Creating registry: %v", err)
+	}
+
 	// Create the kv store.
-	kvStore, err := disk.NewDiskKvStore("/tmp/blobs", fileSystem)
+	kvStore, err := s3_kv.NewS3KvStore(bucket)
 	if err != nil {
 		log.Fatalf("Creating kv store: %v", err)
 	}
@@ -379,10 +436,10 @@ func main() {
 	// Create the blob store.
 	g_blobStore = blob.NewKvBasedBlobStore(kvStore)
 
-	// Parse the score.
-	score, err := fromHexHash(*g_score)
+	// Find the requested job.
+	job, err := registry.FindBackup(jobId)
 	if err != nil {
-		log.Fatalf("Parsing score: %v", err)
+		log.Fatalln("FindBackup:", err)
 	}
 
 	// Make sure the target doesn't exist.

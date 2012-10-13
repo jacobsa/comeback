@@ -204,14 +204,14 @@ func main() {
 	// Look for a salt that has already been used.
 	salt, err := getExistingSalt(domain)
 	if err != nil {
-		log.Fatalf("%v", err)
+		log.Fatalf("%v\n", err)
 	}
 
 	// If there is no existing salt, set one up.
 	if salt == nil {
 		salt, err = generateAndSetSalt(domain)
 		if err != nil {
-			log.Fatalf("%v", err)
+			log.Fatalf("%v\n", err)
 		}
 	}
 

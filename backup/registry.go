@@ -64,6 +64,9 @@ type Registry interface {
 
 	// Return a list of the most recent completed backups.
 	ListRecentBackups() (jobs []CompletedJob, err error)
+
+	// Find a particular completed job by ID.
+	FindBackup(jobId uint64) (job CompletedJob, err error)
 }
 
 func verifyCompatible(
