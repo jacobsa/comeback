@@ -900,31 +900,136 @@ func (t *FindBackupTest) GetAttributesReturnsError() {
 }
 
 func (t *FindBackupTest) JobNameMissing() {
-	ExpectEq("TODO", "")
+	// Domain
+	score := blob.ComputeScore([]byte(""))
+
+	attrs := []sdb.Attribute{
+		sdb.Attribute{Name: "start_time", Value: "2012-08-15T12:56:00Z"},
+		sdb.Attribute{Name: "score", Value: score.Hex()},
+	}
+
+	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return(attrs, nil))
+
+	// Call
+	t.callRegistry()
+
+	ExpectThat(t.err, Error(HasSubstr("missing")))
+	ExpectThat(t.err, Error(HasSubstr("job name")))
 }
 
 func (t *FindBackupTest) StartTimeMissing() {
-	ExpectEq("TODO", "")
+	// Domain
+	score := blob.ComputeScore([]byte(""))
+
+	attrs := []sdb.Attribute{
+		sdb.Attribute{Name: "job_name", Value: "taco"},
+		sdb.Attribute{Name: "score", Value: score.Hex()},
+	}
+
+	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return(attrs, nil))
+
+	// Call
+	t.callRegistry()
+
+	ExpectThat(t.err, Error(HasSubstr("missing")))
+	ExpectThat(t.err, Error(HasSubstr("start time")))
 }
 
 func (t *FindBackupTest) StartTimeInvalid() {
-	ExpectEq("TODO", "")
+	// Domain
+	score := blob.ComputeScore([]byte(""))
+
+	attrs := []sdb.Attribute{
+		sdb.Attribute{Name: "job_name", Value: "taco"},
+		sdb.Attribute{Name: "start_time", Value: "asdsdfdg"},
+		sdb.Attribute{Name: "score", Value: score.Hex()},
+	}
+
+	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return(attrs, nil))
+
+	// Call
+	t.callRegistry()
+
+	ExpectThat(t.err, Error(HasSubstr("invalid")))
+	ExpectThat(t.err, Error(HasSubstr("start_time")))
+	ExpectThat(t.err, Error(HasSubstr("asdsdfdg")))
 }
 
 func (t *FindBackupTest) ScoreMissing() {
-	ExpectEq("TODO", "")
+	// Domain
+	attrs := []sdb.Attribute{
+		sdb.Attribute{Name: "job_name", Value: "taco"},
+		sdb.Attribute{Name: "start_time", Value: "2012-08-15T12:56:00Z"},
+	}
+
+	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return(attrs, nil))
+
+	// Call
+	t.callRegistry()
+
+	ExpectThat(t.err, Error(HasSubstr("missing")))
+	ExpectThat(t.err, Error(HasSubstr("score")))
 }
 
 func (t *FindBackupTest) ScoreContainsIllegalCharacter() {
-	ExpectEq("TODO", "")
+	// Domain
+	attrs := []sdb.Attribute{
+		sdb.Attribute{Name: "job_name", Value: "taco"},
+		sdb.Attribute{Name: "start_time", Value: "2012-08-15T12:56:00Z"},
+		sdb.Attribute{Name: "score", Value: strings.Repeat("f", 39) + "x"},
+	}
+
+	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return(attrs, nil))
+
+	// Call
+	t.callRegistry()
+
+	ExpectThat(t.err, Error(HasSubstr("Invalid")))
+	ExpectThat(t.err, Error(HasSubstr("score")))
+	ExpectThat(t.err, Error(HasSubstr("fffx")))
 }
 
 func (t *FindBackupTest) ScoreTooLong() {
-	ExpectEq("TODO", "")
+	// Domain
+	attrs := []sdb.Attribute{
+		sdb.Attribute{Name: "job_name", Value: "taco"},
+		sdb.Attribute{Name: "start_time", Value: "2012-08-15T12:56:00Z"},
+		sdb.Attribute{Name: "score", Value: strings.Repeat("f", 41) },
+	}
+
+	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return(attrs, nil))
+
+	// Call
+	t.callRegistry()
+
+	ExpectThat(t.err, Error(HasSubstr("Invalid")))
+	ExpectThat(t.err, Error(HasSubstr("score")))
+	ExpectThat(t.err, Error(HasSubstr("fff")))
 }
 
 func (t *FindBackupTest) ScoreTooShort() {
-	ExpectEq("TODO", "")
+	// Domain
+	attrs := []sdb.Attribute{
+		sdb.Attribute{Name: "job_name", Value: "taco"},
+		sdb.Attribute{Name: "start_time", Value: "2012-08-15T12:56:00Z"},
+		sdb.Attribute{Name: "score", Value: strings.Repeat("f", 39) },
+	}
+
+	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return(attrs, nil))
+
+	// Call
+	t.callRegistry()
+
+	ExpectThat(t.err, Error(HasSubstr("Invalid")))
+	ExpectThat(t.err, Error(HasSubstr("score")))
+	ExpectThat(t.err, Error(HasSubstr("fff")))
 }
 
 func (t *FindBackupTest) EverythingOkay() {
