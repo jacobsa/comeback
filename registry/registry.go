@@ -235,6 +235,8 @@ func newRegistry(
 	}
 
 	// All is good.
+	r = &registry{crypter, domain.Db(), domain}
+
 	return
 }
 
