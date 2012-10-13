@@ -63,12 +63,41 @@ func verifyCompatibleAndSetUpCrypter(
 	deriver crypto.KeyDeriver,
 	createCrypter func(key []byte) (crypto.Crypter, error),
 ) (crypter crypto.Crypter, err error) {
-	// The ciphertext should be base64-encoded.
-	encoded := markerAttr.Value
-	ciphertext, err := base64.StdEncoding.DecodeString(encoded)
-	if err != nil {
-		err = fmt.Errorf("base64.DecodeString(%s): %v", encoded, err)
-		return
+	// Look through the attributes for what we need.
+	var ciphertext []byte
+	var salt []byte
+
+	for _, attr := range markerAttrs {
+		var dest *[]byte
+		switch attr.Name {
+		case encryptedDataMarker:
+			dest = &ciphertext
+		case passwordSaltMarker:
+			dest = &salt
+		default:
+			continue
+		}
+
+		// The data is base64-encoded.
+		if *dest, err = base64.StdEncoding.DecodeString(attr.Value); err != nil {
+			err = fmt.Errorf("Decoding %s: %v", attr.Name, err)
+			return
+		}
+	}
+
+	// Did we get both ciphertext and salt?
+	if ciphertext == nil {
+		return fmt.Errorf("Missing encrypted data marker.")
+	}
+
+	if salt == nil {
+		return fmt.Errorf("Missing password salt marker.")
+	}
+
+	// Derive a key and create a crypter.
+	cryptoKey := deriver.DeriveKey(cryptoPassword, salt)
+	if crypter, err = createCrypter(cryptoKey); err != nil {
+		return fmt.Errorf("createCrypter: %v", err)
 	}
 
 	// Attempt to decrypt the ciphertext.

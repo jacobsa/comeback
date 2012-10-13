@@ -194,6 +194,10 @@ func (t *NewRegistryTest) InvalidSaltAttribute() {
 	ExpectEq("TODO", "")
 }
 
+func (t *NewRegistryTest) CallsDeriverAndCrypterFactoryForExistingMarkers() {
+	ExpectEq("TODO", "")
+}
+
 func (t *NewRegistryTest) CallsDecrypt() {
 	// Domain
 	attrs := []sdb.Attribute{
@@ -258,7 +262,7 @@ func (t *NewRegistryTest) ErrorGettingSaltBytes() {
 	ExpectEq("TODO", "")
 }
 
-func (t *NewRegistryTest) CallsDeriverAndCrypterFactory() {
+func (t *NewRegistryTest) CallsDeriverAndCrypterFactoryForNewMarkers() {
 	ExpectEq("TODO", "")
 }
 
