@@ -56,13 +56,12 @@ func (t *registryTest) SetUp(i *TestInfo) {
 	t.crypter = mock_crypto.NewMockCrypter(i.MockController, "crypter")
 	t.randSrc = rand.New(rand.NewSource(17))
 
-	// By default, open the domain successfully.
-	ExpectCall(t.db, "OpenDomain")(Any()).
-		WillRepeatedly(oglemock.Return(t.domain, nil))
-
-	// Set up the domain's name.
+	// Set up the domain's name and associated database.
 	ExpectCall(t.domain, "Name")().
 		WillRepeatedly(oglemock.Return(domainName))
+
+	ExpectCall(t.domain, "Db")().
+		WillRepeatedly(oglemock.Return(t.db))
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -79,28 +78,7 @@ type NewRegistryTest struct {
 func init() { RegisterTestSuite(&NewRegistryTest{}) }
 
 func (t *NewRegistryTest) callConstructor() {
-	t.registry, t.err = backup.NewRegistry(t.db, domainName, t.crypter, t.randSrc)
-}
-
-func (t *NewRegistryTest) CallsOpenDomain() {
-	// OpenDomain
-	ExpectCall(t.db, "OpenDomain")(domainName).
-		WillOnce(oglemock.Return(nil, errors.New("")))
-
-	// Call
-	t.callConstructor()
-}
-
-func (t *NewRegistryTest) OpenDomainReturnsError() {
-	// OpenDomain
-	ExpectCall(t.db, "OpenDomain")(domainName).
-		WillOnce(oglemock.Return(nil, errors.New("taco")))
-
-	// Call
-	t.callConstructor()
-
-	ExpectThat(t.err, Error(HasSubstr("OpenDomain")))
-	ExpectThat(t.err, Error(HasSubstr("taco")))
+	t.registry, t.err = backup.NewRegistry(t.domain, t.crypter, t.randSrc)
 }
 
 func (t *NewRegistryTest) CallsGetAttributes() {
@@ -330,7 +308,7 @@ func (t *RecordBackupTest) SetUp(i *TestInfo) {
 		WillOnce(oglemock.Return([]byte{}, nil))
 
 	// Create the registry.
-	t.registry, err = backup.NewRegistry(t.db, domainName, t.crypter, t.randSrc)
+	t.registry, err = backup.NewRegistry(t.domain, t.crypter, t.randSrc)
 	AssertEq(nil, err)
 
 	// Make the request legal by default.
@@ -468,7 +446,7 @@ func (t *ListRecentBackupsTest) SetUp(i *TestInfo) {
 		WillOnce(oglemock.Return([]byte{}, nil))
 
 	// Create the registry.
-	t.registry, err = backup.NewRegistry(t.db, domainName, t.crypter, t.randSrc)
+	t.registry, err = backup.NewRegistry(t.domain, t.crypter, t.randSrc)
 	AssertEq(nil, err)
 }
 
