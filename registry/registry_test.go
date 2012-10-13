@@ -27,6 +27,7 @@ import (
 	. "github.com/jacobsa/oglematchers"
 	"github.com/jacobsa/oglemock"
 	. "github.com/jacobsa/ogletest"
+	"io"
 	"strings"
 	"testing"
 	"time"
@@ -48,7 +49,10 @@ type registryTest struct {
 	domain  mock_sdb.MockDomain
 	deriver mock_crypto.MockKeyDeriver
 	crypter mock_crypto.MockCrypter
-	randBytes *bytes.Buffer
+
+	saltBytes *bytes.Buffer
+	plaintextBytes *bytes.Buffer
+	randBytes io.Reader
 }
 
 func (t *registryTest) SetUp(i *TestInfo) {
@@ -56,7 +60,10 @@ func (t *registryTest) SetUp(i *TestInfo) {
 	t.domain = mock_sdb.NewMockDomain(i.MockController, "domain")
 	t.deriver = mock_crypto.NewMockKeyDeriver(i.MockController, "deriver")
 	t.crypter = mock_crypto.NewMockCrypter(i.MockController, "crypter")
-	t.randBytes = bytes.NewBuffer(make([]byte, 16))
+
+	t.saltBytes = bytes.NewBuffer(make([]byte, 16))
+	t.plaintextBytes = bytes.NewBuffer(make([]byte, 16))
+	t.randBytes = io.MultiReader(t.saltBytes, t.plaintextBytes)
 
 	// Set up the domain's name and associated database.
 	ExpectCall(t.domain, "Name")().
@@ -286,13 +293,12 @@ func (t *NewRegistryTest) ErrorGettingDataBytes() {
 }
 
 func (t *NewRegistryTest) CallsEncrypt() {
-	someBytes := []byte{
+	plaintextBytes := []byte{
 		0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
-		0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
 	}
 
-	t.randBytes.Reset()
-	t.randBytes.Write(someBytes)
+	t.plaintextBytes.Reset()
+	t.plaintextBytes.Write(plaintextBytes)
 
 	// Domain
 	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
@@ -303,7 +309,7 @@ func (t *NewRegistryTest) CallsEncrypt() {
 		WillOnce(oglemock.Return([]byte{}))
 
 	// Crypter
-	ExpectCall(t.crypter, "Encrypt")(DeepEquals(someBytes[8:])).
+	ExpectCall(t.crypter, "Encrypt")(DeepEquals(plaintextBytes)).
 		WillOnce(oglemock.Return(nil, errors.New("")))
 
 	// Call
@@ -331,9 +337,8 @@ func (t *NewRegistryTest) EncryptReturnsError() {
 }
 
 func (t *NewRegistryTest) CallsPutAttributes() {
-	t.randBytes.Reset()
-	t.randBytes.Write(make([]byte, 4))
-	t.randBytes.Write([]byte("burrito!"))
+	t.saltBytes.Reset()
+	t.saltBytes.Write([]byte("burrito!"))
 
 	// Domain
 	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
