@@ -18,6 +18,7 @@ package main
 import (
 	"code.google.com/p/go.crypto/pbkdf2"
 	"crypto/sha256"
+	"encoding/base64"
 	"flag"
 	"fmt"
 	"github.com/jacobsa/aws/s3"
@@ -42,7 +43,40 @@ var g_jobName = flag.String("job", "", "Job name within the config file.")
 func randUint64(randSrc *rand.Rand) uint64
 
 // Return the existing salt used by the domain, or nil if there is none.
-func getExistingSalt(d sdb.Domain) (salt []byte, err error)
+func getExistingSalt(d sdb.Domain) (salt []byte, err error) {
+	// Keep this consistent with the item name used in the backup package.
+	const markerItemName = "comeback_marker"
+	const saltAttributeName = "password_salt"
+
+	// Call the domain.
+	attrs, err := domain.GetAttributes(
+		markerItemName,
+		false, // No need to ask for a consistent read
+		[]string{saltAttributeName},
+	)
+
+	if err != nil {
+		err = fmt.Errorf("GetAttributes: %v", err)
+		return
+	}
+
+	if len(attrs) == 0 {
+		return
+	}
+
+	if attrs[0].Name != saltAttributeName {
+		panic(fmt.Errorf("Unexpected attribute: %v", attrs[0]))
+	}
+
+	// Base64-decode the salt.
+	salt, err = base64.StdEncoding.DecodeString(attrs[0].Value)
+	if err != nil {
+		err = fmt.Errorf("base64.DecodeString(%s): %v", encoded, err)
+		return
+	}
+
+	return
+}
 
 func generateAndSetSalt(d sdb.Domain) (salt []byte, err error)
 
