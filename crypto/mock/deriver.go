@@ -41,20 +41,20 @@ func (m *mockKeyDeriver) Oglemock_Description() string {
 	return m.description
 }
 
-func (m *mockKeyDeriver) Derive(p0 string, p1 []uint8) (o0 []uint8) {
+func (m *mockKeyDeriver) DeriveKey(p0 string, p1 []uint8) (o0 []uint8) {
 	// Get a file name and line number for the caller.
 	_, file, line, _ := runtime.Caller(1)
 
 	// Hand the call off to the controller, which does most of the work.
 	retVals := m.controller.HandleMethodCall(
 		m,
-		"Derive",
+		"DeriveKey",
 		file,
 		line,
 		[]interface{}{p0, p1})
 
 	if len(retVals) != 1 {
-		panic(fmt.Sprintf("mockKeyDeriver.Derive: invalid return values: %v", retVals))
+		panic(fmt.Sprintf("mockKeyDeriver.DeriveKey: invalid return values: %v", retVals))
 	}
 
 	// o0 []uint8

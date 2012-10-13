@@ -22,7 +22,7 @@ import (
 // An object that knows how to derive a crypto key, given a user password and a
 // random salt.
 type KeyDeriver interface {
-	Derive(password string, salt []byte) []byte
+	DeriveKey(password string, salt []byte) []byte
 }
 
 // Create a key deriver that uses the PBKDF2 key derivation function of
