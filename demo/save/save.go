@@ -17,6 +17,7 @@ package main
 
 import (
 	"code.google.com/p/go.crypto/pbkdf2"
+	crypto_rand "crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
 	"flag"
@@ -30,6 +31,7 @@ import (
 	"github.com/jacobsa/comeback/fs"
 	s3_kv "github.com/jacobsa/comeback/kv/s3"
 	"github.com/jacobsa/comeback/sys"
+	"io"
 	"io/ioutil"
 	"log"
 	"math/rand"
@@ -37,17 +39,17 @@ import (
 	"time"
 )
 
+// Keep this consistent with the item name used in the backup package.
+const markerItemName = "comeback_marker"
+const saltAttributeName = "password_salt"
+
 var g_configFile = flag.String("config", "", "Path to config file.")
 var g_jobName = flag.String("job", "", "Job name within the config file.")
 
 func randUint64(randSrc *rand.Rand) uint64
 
 // Return the existing salt used by the domain, or nil if there is none.
-func getExistingSalt(d sdb.Domain) (salt []byte, err error) {
-	// Keep this consistent with the item name used in the backup package.
-	const markerItemName = "comeback_marker"
-	const saltAttributeName = "password_salt"
-
+func getExistingSalt(domain sdb.Domain) (salt []byte, err error) {
 	// Call the domain.
 	attrs, err := domain.GetAttributes(
 		markerItemName,
@@ -71,14 +73,42 @@ func getExistingSalt(d sdb.Domain) (salt []byte, err error) {
 	// Base64-decode the salt.
 	salt, err = base64.StdEncoding.DecodeString(attrs[0].Value)
 	if err != nil {
-		err = fmt.Errorf("base64.DecodeString(%s): %v", encoded, err)
+		err = fmt.Errorf("base64.DecodeString(%s): %v", attrs[0].Value, err)
 		return
 	}
 
 	return
 }
 
-func generateAndSetSalt(d sdb.Domain) (salt []byte, err error)
+func generateAndSetSalt(domain sdb.Domain) (salt []byte, err error) {
+	const saltLen = 8
+
+	// Generate a salt.
+	salt = make([]byte, saltLen)
+	if _, err = io.ReadAtLeast(crypto_rand.Reader, salt, len(salt)); err != nil {
+		err = fmt.Errorf("Reading random bytes: %v", err)
+		return
+	}
+
+	// Base64-encode it.
+	encoded := base64.StdEncoding.EncodeToString(salt)
+
+	// Write it out, making sure nobody has beaten us to the punch.
+	err = domain.PutAttributes(
+		markerItemName,
+		[]sdb.PutUpdate{
+			sdb.PutUpdate{Name: saltAttributeName, Value: encoded},
+		},
+		&sdb.Precondition{Name: saltAttributeName, Value: nil},
+	)
+
+	if err != nil {
+		err = fmt.Errorf("PutAttributes: %v", err)
+		return
+	}
+
+	return
+}
 
 func main() {
 	var err error
