@@ -16,6 +16,7 @@
 package crypto
 
 import (
+	"code.google.com/p/go.crypto/pbkdf2"
 	"hash"
 )
 
@@ -27,4 +28,22 @@ type KeyDeriver interface {
 
 // Create a key deriver that uses the PBKDF2 key derivation function of
 // RFC 2898 / PKCS #5 v2.0.
-func NewPbkdf2KeyDeriver(iters int, keyLen int, h func() hash.Hash) KeyDeriver
+func NewPbkdf2KeyDeriver(iters int, keyLen int, h func() hash.Hash) KeyDeriver {
+	return &pbkdf2KeyDeriver{iters, keyLen, h}
+}
+
+type pbkdf2KeyDeriver struct {
+	iters int
+	keyLen int
+	h func() hash.Hash
+}
+
+func (d *pbkdf2KeyDeriver) DeriveKey(password string, salt []byte) []byte {
+	return pbkdf2.Key(
+		[]byte(password),
+		salt,
+		d.iters,
+		d.keyLen,
+		d.h,
+	)
+}
