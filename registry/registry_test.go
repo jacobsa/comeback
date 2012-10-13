@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package registry_test
+package registry
 
 import (
 	"errors"
@@ -66,7 +66,7 @@ func (t *registryTest) SetUp(i *TestInfo) {
 
 type extentRegistryTest struct {
 	registryTest
-	registry registry.Registry
+	registry Registry
 }
 
 func (t *extentRegistryTest) SetUp(i *TestInfo) {
@@ -84,7 +84,7 @@ func (t *extentRegistryTest) SetUp(i *TestInfo) {
 		WillOnce(oglemock.Return([]byte{}, nil))
 
 	// Create the registry.
-	t.registry, err = registry.NewRegistry(t.domain, t.crypter, t.randSrc)
+	t.registry, err = NewRegistry(t.domain, t.crypter, t.randSrc)
 	AssertEq(nil, err)
 }
 
@@ -95,14 +95,14 @@ func (t *extentRegistryTest) SetUp(i *TestInfo) {
 type NewRegistryTest struct {
 	registryTest
 
-	registry registry.Registry
+	registry Registry
 	err      error
 }
 
 func init() { RegisterTestSuite(&NewRegistryTest{}) }
 
 func (t *NewRegistryTest) callConstructor() {
-	t.registry, t.err = registry.NewRegistry(t.domain, t.crypter, t.randSrc)
+	t.registry, t.err = NewRegistry(t.domain, t.crypter, t.randSrc)
 }
 
 func (t *NewRegistryTest) CallsGetAttributes() {
@@ -186,7 +186,7 @@ func (t *NewRegistryTest) DecryptReturnsNotAuthenticError() {
 	// Call
 	t.callConstructor()
 
-	_, ok := t.err.(*registry.IncompatibleCrypterError)
+	_, ok := t.err.(*IncompatibleCrypterError)
 	AssertTrue(ok, "Error: %v", t.err)
 
 	ExpectThat(t.err, Error(HasSubstr("crypter")))
@@ -310,7 +310,7 @@ func (t *NewRegistryTest) PutAttributesSucceeds() {
 type RecordBackupTest struct {
 	extentRegistryTest
 
-	job registry.CompletedJob
+	job CompletedJob
 	err error
 }
 
@@ -433,7 +433,7 @@ func (t *RecordBackupTest) PutAttributesSucceeds() {
 type ListRecentBackupsTest struct {
 	extentRegistryTest
 
-	jobs []registry.CompletedJob
+	jobs []CompletedJob
 	err  error
 }
 
@@ -863,7 +863,7 @@ type FindBackupTest struct {
 	extentRegistryTest
 
 	jobId uint64
-	job   registry.CompletedJob
+	job   CompletedJob
 	err   error
 }
 
