@@ -275,7 +275,27 @@ func (t *NewRegistryTest) CallsDeriverAndCrypterFactoryForExistingMarkers() {
 }
 
 func (t *NewRegistryTest) CrypterFactoryReturnsErrorForExistingMarkers() {
-	ExpectEq("TODO", "")
+	// Domain
+	attrs := []sdb.Attribute{
+		sdb.Attribute{Name: "encrypted_data", Value: "dGFjbw=="},
+		sdb.Attribute{Name: "password_salt", Value: "YnVycml0bw=="},
+	}
+
+	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return(attrs, nil))
+
+	// Deriver
+	ExpectCall(t.deriver, "DeriveKey")(Any(), Any()).
+		WillOnce(oglemock.Return([]byte{}))
+
+	// Crypter factory
+	t.createCrypterError = fmt.Errorf("queso")
+
+	// Call
+	t.callConstructor()
+
+	ExpectThat(t.err, Error(HasSubstr("createCrypter")))
+	ExpectThat(t.err, Error(HasSubstr("queso")))
 }
 
 func (t *NewRegistryTest) CallsDecrypt() {
