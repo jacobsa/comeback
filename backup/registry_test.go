@@ -873,6 +873,42 @@ func (t *FindBackupTest) callRegistry() {
 	t.job, t.err = t.registry.FindBackup(t.jobId)
 }
 
-func (t *FindBackupTest) DoesFoo() {
+func (t *FindBackupTest) CallsGetAttributes() {
+	ExpectEq("TODO", "")
+}
+
+func (t *FindBackupTest) GetAttributesReturnsError() {
+	ExpectEq("TODO", "")
+}
+
+func (t *FindBackupTest) JobNameMissing() {
+	ExpectEq("TODO", "")
+}
+
+func (t *FindBackupTest) StartTimeMissing() {
+	ExpectEq("TODO", "")
+}
+
+func (t *FindBackupTest) StartTimeInvalid() {
+	ExpectEq("TODO", "")
+}
+
+func (t *FindBackupTest) ScoreMissing() {
+	ExpectEq("TODO", "")
+}
+
+func (t *FindBackupTest) ScoreContainsIllegalCharacter() {
+	ExpectEq("TODO", "")
+}
+
+func (t *FindBackupTest) ScoreTooLong() {
+	ExpectEq("TODO", "")
+}
+
+func (t *FindBackupTest) ScoreTooShort() {
+	ExpectEq("TODO", "")
+}
+
+func (t *FindBackupTest) EverythingOkay() {
 	ExpectEq("TODO", "")
 }
