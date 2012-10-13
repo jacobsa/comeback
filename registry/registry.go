@@ -158,7 +158,6 @@ func newRegistry(
 
 	// If we got back any attributes, we must verify that they are compatible.
 	if len(attrs) > 0 {
-		var crypter crypto.Crypter
 		crypter, err = verifyCompatibleAndSetUpCrypter(
 			attrs,
 			cryptoPassword,
@@ -188,7 +187,7 @@ func newRegistry(
 
 	// Derive a crypto key and create the crypter.
 	cryptoKey := deriver.DeriveKey(cryptoPassword, salt)
-	crypter, err := createCrypter(cryptoKey)
+	crypter, err = createCrypter(cryptoKey)
 	if err != nil {
 		err = fmt.Errorf("createCrypter: %v", err)
 		return

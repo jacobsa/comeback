@@ -105,7 +105,7 @@ func (t *extentRegistryTest) SetUp(i *TestInfo) {
 		WillOnce(oglemock.Return([]byte{}, nil))
 
 	// Create the registry.
-	t.registry, err = newRegistry(
+	t.registry, _, err = newRegistry(
 		t.domain,
 		cryptoPassword,
 		t.deriver,
