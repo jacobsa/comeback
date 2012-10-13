@@ -57,6 +57,30 @@ type Registry interface {
 	FindBackup(jobId uint64) (job CompletedJob, err error)
 }
 
+// Create a registry that stores data in the supplied SimpleDB domain,
+// encrypting using a key derived from the supplied password.
+//
+// Before doing so, check to see whether this domain has been used as a
+// registry before. If not, write an encrypted marker. If it has been used
+// before, make sure that it was used with the same password. This prevents
+// accidentally writing data with the wrong key when the user enters the wrong
+// password.
+//
+// Returned crypters must be set up such that they are guaranteed to return an
+// error if they are used to decrypt ciphertext encrypted with a different key.
+func NewRegistry(
+	domain sdb.Domain,
+	cryptoPassword string,
+	deriver crypto.KeyDeriver,
+) (r Registry, err error) {
+	return newRegistry(
+		domain,
+		cryptoPassword,
+		deriver,
+		crypto.NewCrypter,
+		crypto_rand.Reader)
+}
+
 func verifyCompatibleAndSetUpCrypter(
 	markerAttrs []sdb.Attribute,
 	cryptoPassword string,
@@ -117,30 +141,6 @@ func verifyCompatibleAndSetUpCrypter(
 	}
 
 	return
-}
-
-// Create a registry that stores data in the supplied SimpleDB domain,
-// encrypting using a key derived from the supplied password.
-//
-// Before doing so, check to see whether this domain has been used as a
-// registry before. If not, write an encrypted marker. If it has been used
-// before, make sure that it was used with the same password. This prevents
-// accidentally writing data with the wrong key when the user enters the wrong
-// password.
-//
-// Returned crypters must be set up such that they are guaranteed to return an
-// error if they are used to decrypt ciphertext encrypted with a different key.
-func NewRegistry(
-	domain sdb.Domain,
-	cryptoPassword string,
-	deriver crypto.KeyDeriver,
-) (r Registry, err error) {
-	return newRegistry(
-		domain,
-		cryptoPassword,
-		deriver,
-		crypto.NewCrypter,
-		crypto_rand.Reader)
 }
 
 // A version split out for testability.
