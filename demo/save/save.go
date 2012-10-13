@@ -135,9 +135,15 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Read in the AWS access key secret.
+	cfg.AccessKey.Secret = readPassword("Enter AWS access key secret: ")
+	if len(cfg.AccessKey.Secret) == 0 {
+		log.Fatalf("You must enter an access key secret.\n")
+	}
+
 	// Validate the config file.
 	if err := config.Validate(cfg); err != nil {
-		fmt.Printf("Config file invalid: %v", err)
+		fmt.Printf("Config file invalid: %v\n", err)
 		os.Exit(1)
 	}
 
