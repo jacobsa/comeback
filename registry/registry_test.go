@@ -126,7 +126,7 @@ func (t *NewRegistryTest) SetUp(i *TestInfo) {
 	// Set up the crypter factory function.
 	t.createCrypter = func(key []byte) (crypto.Crypter, error) {
 		t.suppliedKey = key
-		return nil, t.createCrypterError
+		return t.crypter, t.createCrypterError
 	}
 }
 
