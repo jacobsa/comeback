@@ -863,8 +863,8 @@ type FindBackupTest struct {
 	extentRegistryTest
 
 	jobId uint64
-	job backup.CompletedJob
-	err  error
+	job   backup.CompletedJob
+	err   error
 }
 
 func init() { RegisterTestSuite(&FindBackupTest{}) }
@@ -999,7 +999,7 @@ func (t *FindBackupTest) ScoreTooLong() {
 	attrs := []sdb.Attribute{
 		sdb.Attribute{Name: "job_name", Value: "taco"},
 		sdb.Attribute{Name: "start_time", Value: "2012-08-15T12:56:00Z"},
-		sdb.Attribute{Name: "score", Value: strings.Repeat("f", 41) },
+		sdb.Attribute{Name: "score", Value: strings.Repeat("f", 41)},
 	}
 
 	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
@@ -1018,7 +1018,7 @@ func (t *FindBackupTest) ScoreTooShort() {
 	attrs := []sdb.Attribute{
 		sdb.Attribute{Name: "job_name", Value: "taco"},
 		sdb.Attribute{Name: "start_time", Value: "2012-08-15T12:56:00Z"},
-		sdb.Attribute{Name: "score", Value: strings.Repeat("f", 39) },
+		sdb.Attribute{Name: "score", Value: strings.Repeat("f", 39)},
 	}
 
 	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).

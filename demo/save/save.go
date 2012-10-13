@@ -220,7 +220,7 @@ func main() {
 	// for use with HMAC and any approved hash function. Special Publication
 	// 800-107 lists SHA-256 as an approved hash function.
 	const pbkdf2Iters = 4096
-	const keyLen = 32  // Minimum key length for AES-SIV
+	const keyLen = 32 // Minimum key length for AES-SIV
 	cryptoKey := pbkdf2.Key(password, salt, pbkdf2Iters, keyLen, sha256.New)
 
 	// Create the crypter.

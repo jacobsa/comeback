@@ -320,7 +320,7 @@ func (r *registry) FindBackup(jobId uint64) (job CompletedJob, err error) {
 	// Call the domain.
 	attrs, err := r.domain.GetAttributes(
 		sdb.ItemName(fmt.Sprintf("backup_%016x", jobId)),
-		false,  // Consistent read unnecessary
+		false, // Consistent read unnecessary
 		[]string{"job_name", "start_time", "score"},
 	)
 

@@ -20,15 +20,14 @@ import (
 	"code.google.com/p/go.crypto/pbkdf2"
 	"crypto/sha256"
 	"encoding/hex"
-	"math/rand"
 	"flag"
-	"github.com/jacobsa/comeback/crypto"
 	"fmt"
 	"github.com/jacobsa/aws/s3"
 	"github.com/jacobsa/aws/sdb"
 	"github.com/jacobsa/comeback/backup"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/config"
+	"github.com/jacobsa/comeback/crypto"
 	"github.com/jacobsa/comeback/fs"
 	s3_kv "github.com/jacobsa/comeback/kv/s3"
 	"github.com/jacobsa/comeback/repr"
@@ -36,6 +35,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"os"
 	"path"
 	"strconv"
@@ -456,7 +456,7 @@ func main() {
 	// for use with HMAC and any approved hash function. Special Publication
 	// 800-107 lists SHA-256 as an approved hash function.
 	const pbkdf2Iters = 4096
-	const keyLen = 32  // Minimum key length for AES-SIV
+	const keyLen = 32 // Minimum key length for AES-SIV
 	cryptoKey := pbkdf2.Key(password, salt, pbkdf2Iters, keyLen, sha256.New)
 
 	// Create the crypter.
