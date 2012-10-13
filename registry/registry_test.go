@@ -36,7 +36,8 @@ import (
 func TestRegistry(t *testing.T) { RunTests(t) }
 
 const (
-	domainName = "some_domain"
+	domainName     = "some_domain"
+	cryptoPassword = "some_password"
 )
 
 ////////////////////////////////////////////////////////////////////////
@@ -46,6 +47,7 @@ const (
 type registryTest struct {
 	db      mock_sdb.MockSimpleDB
 	domain  mock_sdb.MockDomain
+	deriver mock_crypto.MockKeyDeriver
 	crypter mock_crypto.MockCrypter
 	randSrc *rand.Rand
 }
@@ -53,6 +55,7 @@ type registryTest struct {
 func (t *registryTest) SetUp(i *TestInfo) {
 	t.db = mock_sdb.NewMockSimpleDB(i.MockController, "domain")
 	t.domain = mock_sdb.NewMockDomain(i.MockController, "domain")
+	t.deriver = mock_crypto.NewMockKeyDeriver(i.MockController, "deriver")
 	t.crypter = mock_crypto.NewMockCrypter(i.MockController, "crypter")
 	t.randSrc = rand.New(rand.NewSource(17))
 
@@ -75,6 +78,11 @@ func (t *extentRegistryTest) SetUp(i *TestInfo) {
 	// Call common setup code.
 	t.registryTest.SetUp(i)
 
+	// Set up a function that will return the mock crypter.
+	createCrypter := func(key []byte) (crypto.Crypter, error) {
+		return t.crypter, nil
+	}
+
 	// Set up dependencies to pretend that the crypter is compatible.
 	attr := sdb.Attribute{Name: "encrypted_data"}
 	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
@@ -84,7 +92,14 @@ func (t *extentRegistryTest) SetUp(i *TestInfo) {
 		WillOnce(oglemock.Return([]byte{}, nil))
 
 	// Create the registry.
-	t.registry, err = NewRegistry(t.domain, t.crypter, t.randSrc)
+	t.registry, err = newRegistry(
+		t.domain,
+		cryptoPassword,
+		t.deriver,
+		createCrypter,
+		t.randSrc,
+	)
+
 	AssertEq(nil, err)
 }
 
@@ -110,7 +125,7 @@ func (t *NewRegistryTest) CallsGetAttributes() {
 	ExpectCall(t.domain, "GetAttributes")(
 		"comeback_marker",
 		false,
-		ElementsAre("encrypted_data")).
+		ElementsAre("encrypted_data", "password_salt")).
 		WillOnce(oglemock.Return(nil, errors.New("")))
 
 	// Call

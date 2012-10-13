@@ -111,7 +111,7 @@ func newRegistry(
 	domain sdb.Domain,
 	cryptoPassword string,
 	deriver crypto.KeyDeriver,
-	createCrypter func (key []byte) (crypto.Crypter, error),
+	createCrypter func(key []byte) (crypto.Crypter, error),
 	randSrc *rand.Rand,
 ) (r Registry, err error) {
 	// Set up a tentative result.
