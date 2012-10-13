@@ -110,14 +110,35 @@ func (t *extentRegistryTest) SetUp(i *TestInfo) {
 type NewRegistryTest struct {
 	registryTest
 
+	suppliedKey []byte
+	createCrypterError error
+	createCrypter func([]byte) (crypto.Crypter, error)
+
 	registry Registry
 	err      error
 }
 
 func init() { RegisterTestSuite(&NewRegistryTest{}) }
 
+func (t *NewRegistryTest) SetUp(i *TestInfo) {
+	// Call common setup code.
+	t.registryTest.SetUp(i)
+
+	// Set up the crypter factory function.
+	t.createCrypter = func(key []byte) (crypto.Crypter, error) {
+		t.suppliedKey = key
+		return nil, t.createCrypterError
+	}
+}
+
 func (t *NewRegistryTest) callConstructor() {
-	t.registry, t.err = NewRegistry(t.domain, t.crypter, t.randSrc)
+	t.registry, t.err = newRegistry(
+		t.domain,
+		cryptoPassword,
+		t.deriver,
+		t.createCrypter,
+		t.randSrc,
+	)
 }
 
 func (t *NewRegistryTest) CallsGetAttributes() {
