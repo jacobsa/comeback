@@ -64,6 +64,30 @@ func (t *registryTest) SetUp(i *TestInfo) {
 		WillRepeatedly(oglemock.Return(t.db))
 }
 
+type extentRegistryTest struct {
+	registryTest
+	registry backup.Registry
+}
+
+func (t *extentRegistryTest) SetUp(i *TestInfo) {
+	var err error
+
+	// Call common setup code.
+	t.registryTest.SetUp(i)
+
+	// Set up dependencies to pretend that the crypter is compatible.
+	attr := sdb.Attribute{Name: "encrypted_data"}
+	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return([]sdb.Attribute{attr}, nil))
+
+	ExpectCall(t.crypter, "Decrypt")(Any()).
+		WillOnce(oglemock.Return([]byte{}, nil))
+
+	// Create the registry.
+	t.registry, err = backup.NewRegistry(t.domain, t.crypter, t.randSrc)
+	AssertEq(nil, err)
+}
+
 ////////////////////////////////////////////////////////////////////////
 // NewRegistry
 ////////////////////////////////////////////////////////////////////////
@@ -284,8 +308,7 @@ func (t *NewRegistryTest) PutAttributesSucceeds() {
 ////////////////////////////////////////////////////////////////////////
 
 type RecordBackupTest struct {
-	registryTest
-	registry backup.Registry
+	extentRegistryTest
 
 	job backup.CompletedJob
 	err error
@@ -294,22 +317,8 @@ type RecordBackupTest struct {
 func init() { RegisterTestSuite(&RecordBackupTest{}) }
 
 func (t *RecordBackupTest) SetUp(i *TestInfo) {
-	var err error
-
 	// Call common setup code.
-	t.registryTest.SetUp(i)
-
-	// Set up dependencies to pretend that the crypter is compatible.
-	attr := sdb.Attribute{Name: "encrypted_data"}
-	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
-		WillOnce(oglemock.Return([]sdb.Attribute{attr}, nil))
-
-	ExpectCall(t.crypter, "Decrypt")(Any()).
-		WillOnce(oglemock.Return([]byte{}, nil))
-
-	// Create the registry.
-	t.registry, err = backup.NewRegistry(t.domain, t.crypter, t.randSrc)
-	AssertEq(nil, err)
+	t.extentRegistryTest.SetUp(i)
 
 	// Make the request legal by default.
 	t.job.Name = "foo"
@@ -422,33 +431,13 @@ func (t *RecordBackupTest) PutAttributesSucceeds() {
 ////////////////////////////////////////////////////////////////////////
 
 type ListRecentBackupsTest struct {
-	registryTest
-	registry backup.Registry
+	extentRegistryTest
 
 	jobs []backup.CompletedJob
 	err  error
 }
 
 func init() { RegisterTestSuite(&ListRecentBackupsTest{}) }
-
-func (t *ListRecentBackupsTest) SetUp(i *TestInfo) {
-	var err error
-
-	// Call common setup code.
-	t.registryTest.SetUp(i)
-
-	// Set up dependencies to pretend that the crypter is compatible.
-	attr := sdb.Attribute{Name: "encrypted_data"}
-	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
-		WillOnce(oglemock.Return([]sdb.Attribute{attr}, nil))
-
-	ExpectCall(t.crypter, "Decrypt")(Any()).
-		WillOnce(oglemock.Return([]byte{}, nil))
-
-	// Create the registry.
-	t.registry, err = backup.NewRegistry(t.domain, t.crypter, t.randSrc)
-	AssertEq(nil, err)
-}
 
 func (t *ListRecentBackupsTest) callRegistry() {
 	t.jobs, t.err = t.registry.ListRecentBackups()
@@ -871,8 +860,7 @@ func (t *ListRecentBackupsTest) ReturnsCompletedJobs() {
 ////////////////////////////////////////////////////////////////////////
 
 type FindBackupTest struct {
-	registryTest
-	registry backup.Registry
+	extentRegistryTest
 
 	jobId uint64
 	job backup.CompletedJob
@@ -880,25 +868,6 @@ type FindBackupTest struct {
 }
 
 func init() { RegisterTestSuite(&FindBackupTest{}) }
-
-func (t *FindBackupTest) SetUp(i *TestInfo) {
-	var err error
-
-	// Call common setup code.
-	t.registryTest.SetUp(i)
-
-	// Set up dependencies to pretend that the crypter is compatible.
-	attr := sdb.Attribute{Name: "encrypted_data"}
-	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
-		WillOnce(oglemock.Return([]sdb.Attribute{attr}, nil))
-
-	ExpectCall(t.crypter, "Decrypt")(Any()).
-		WillOnce(oglemock.Return([]byte{}, nil))
-
-	// Create the registry.
-	t.registry, err = backup.NewRegistry(t.domain, t.crypter, t.randSrc)
-	AssertEq(nil, err)
-}
 
 func (t *FindBackupTest) callRegistry() {
 	t.job, t.err = t.registry.FindBackup(t.jobId)
