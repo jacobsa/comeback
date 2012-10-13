@@ -179,11 +179,35 @@ func (t *NewRegistryTest) GetAttributesReturnsError() {
 }
 
 func (t *NewRegistryTest) MissingOnlyEncryptedDataAttribute() {
-	ExpectEq("TODO", "")
+	// Domain
+	attrs := []sdb.Attribute{
+		sdb.Attribute{Name: "password_salt", Value: "YnVycml0bw=="},
+	}
+
+	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return(attrs, nil))
+
+	// Call
+	t.callConstructor()
+
+	ExpectThat(t.err, Error(HasSubstr("Missing")))
+	ExpectThat(t.err, Error(HasSubstr("encrypted data")))
 }
 
 func (t *NewRegistryTest) MissingOnlySaltAttribute() {
-	ExpectEq("TODO", "")
+	// Domain
+	attrs := []sdb.Attribute{
+		sdb.Attribute{Name: "encrypted_data", Value: "dGFjbw=="},
+	}
+
+	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return(attrs, nil))
+
+	// Call
+	t.callConstructor()
+
+	ExpectThat(t.err, Error(HasSubstr("Missing")))
+	ExpectThat(t.err, Error(HasSubstr("password salt")))
 }
 
 func (t *NewRegistryTest) InvalidEncryptedDataAttribute() {
