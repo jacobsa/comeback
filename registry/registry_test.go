@@ -436,7 +436,22 @@ func (t *NewRegistryTest) CrypterFactoryReturnsErrorForNewMarkers() {
 }
 
 func (t *NewRegistryTest) ErrorGettingDataBytes() {
-	ExpectEq("TODO", "")
+	t.plaintextBytes.Reset()
+
+	// Domain
+	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return([]sdb.Attribute{}, nil))
+
+	// Deriver
+	ExpectCall(t.deriver, "DeriveKey")(Any(), Any()).
+		WillOnce(oglemock.Return([]byte{}))
+
+	// Call
+	t.callConstructor()
+
+	ExpectThat(t.err, Error(HasSubstr("random")))
+	ExpectThat(t.err, Error(HasSubstr("plaintext")))
+	ExpectThat(t.err, Error(HasSubstr("EOF")))
 }
 
 func (t *NewRegistryTest) CallsEncrypt() {
