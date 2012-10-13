@@ -874,7 +874,17 @@ func (t *FindBackupTest) callRegistry() {
 }
 
 func (t *FindBackupTest) CallsGetAttributes() {
-	ExpectEq("TODO", "")
+	t.jobId = 0xdeadbeef
+
+	// Domain
+	ExpectCall(t.domain, "GetAttributes")(
+		"backup_00000000deadbeef",
+		false,
+		ElementsAre("job_name", "start_time", "score"),
+	).WillOnce(oglemock.Return(nil, errors.New("")))
+
+	// Call
+	t.callRegistry()
 }
 
 func (t *FindBackupTest) GetAttributesReturnsError() {
