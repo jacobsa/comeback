@@ -224,11 +224,26 @@ func (t *NewRegistryTest) InvalidEncryptedDataAttribute() {
 	t.callConstructor()
 
 	ExpectThat(t.err, Error(HasSubstr("base64")))
+	ExpectThat(t.err, Error(HasSubstr("encrypted_data")))
 	ExpectThat(t.err, Error(HasSubstr("foo")))
 }
 
 func (t *NewRegistryTest) InvalidSaltAttribute() {
-	ExpectEq("TODO", "")
+	// Domain
+	attrs := []sdb.Attribute{
+		sdb.Attribute{Name: "encrypted_data", Value: "dGFjbw=="},
+		sdb.Attribute{Name: "password_salt", Value: "foo"},
+	}
+
+	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return(attrs, nil))
+
+	// Call
+	t.callConstructor()
+
+	ExpectThat(t.err, Error(HasSubstr("base64")))
+	ExpectThat(t.err, Error(HasSubstr("password_salt")))
+	ExpectThat(t.err, Error(HasSubstr("foo")))
 }
 
 func (t *NewRegistryTest) CallsDeriverAndCrypterFactoryForExistingMarkers() {
