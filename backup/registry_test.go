@@ -932,8 +932,8 @@ func (t *FindBackupTest) EverythingOkay() {
 
 	// Domain
 	score := blob.ComputeScore([]byte("enchilada"))
-	AssertThat(score, MatchesRegexp("[a-f]"))
-	AssertThat(score, MatchesRegexp("[0-9a-f]{40}"))
+	AssertThat(score.Hex(), MatchesRegexp("[a-f]"))
+	AssertThat(score.Hex(), MatchesRegexp("[0-9a-f]{40}"))
 
 	attrs := []sdb.Attribute{
 		sdb.Attribute{Name: "irrelevant", Value: "foo"},
