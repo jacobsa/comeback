@@ -44,7 +44,7 @@ func randUint64(randSrc *rand.Rand) uint64
 // Return the existing salt used by the domain, or nil if there is none.
 func getExistingSalt(d sdb.Domain) (salt []byte, err error)
 
-func setSalt(d sdb.Domain, salt []byte) (err error)
+func generateAndSetSalt(d sdb.Domain) (salt []byte, err error)
 
 func main() {
 	var err error
@@ -111,13 +111,39 @@ func main() {
 		log.Fatalf("Creating SimpleDB: %v", err)
 	}
 
+	// Open the appropriate domain.
+	domain, err := db.OpenDomain(cfg.SdbDomain)
+	if err != nil {
+		log.Fatalf("OpenDomain: %v", err)
+	}
+
 	// Open a connection to S3.
 	bucket, err := s3.OpenBucket(cfg.S3Bucket, cfg.S3Region, cfg.AccessKey)
 	if err != nil {
 		log.Fatalf("Creating bucket: %v", err)
 	}
 
-	// Derive a crypto key from a password using PBKDF2, recommended for use by
+	// Read in a password.
+	password := []byte(readPassword("Enter crypto password: "))
+	if len(password) == 0 {
+		log.Fatalf("You must enter a password.")
+	}
+
+	// Look for a salt that has already been used.
+	salt, err := getExistingSalt(domain)
+	if err != nil {
+		log.Fatalf("%v", err)
+	}
+
+	// If there is no existing salt, set one up.
+	if salt == nil {
+		salt, err = generateAndSetSalt(domain)
+		if err != nil {
+			log.Fatalf("%v", err)
+		}
+	}
+
+	// Derive a crypto key from the password using PBKDF2, recommended for use by
 	// NIST Special Publication 800-132. The latter says that PBKDF2 is approved
 	// for use with HMAC and any approved hash function. Special Publication
 	// 800-107 lists SHA-256 as an approved hash function.
@@ -133,7 +159,7 @@ func main() {
 
 	// Create the backup registry.
 	randSrc := rand.New(rand.NewSource(time.Now().UnixNano()))
-	registry, err := backup.NewRegistry(db, cfg.SdbDomain, crypter, randSrc)
+	registry, err := backup.NewRegistry(domain, crypter, randSrc)
 	if err != nil {
 		log.Fatalf("Creating registry: %v", err)
 	}
