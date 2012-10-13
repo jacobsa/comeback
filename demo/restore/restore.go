@@ -20,7 +20,11 @@ import (
 	"encoding/hex"
 	"flag"
 	"fmt"
+	"github.com/jacobsa/aws/s3"
+	"github.com/jacobsa/aws/sdb"
+	"github.com/jacobsa/comeback/backup"
 	"github.com/jacobsa/comeback/blob"
+	"github.com/jacobsa/comeback/config"
 	"github.com/jacobsa/comeback/fs"
 	"github.com/jacobsa/comeback/kv/s3"
 	"github.com/jacobsa/comeback/repr"
@@ -29,6 +33,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"strconv"
 	"syscall"
 	"time"
 )
@@ -350,7 +355,7 @@ func main() {
 	jobId, err := strconv.ParseUint(*g_jobIdStr, 16, 64)
 	if err != nil {
 		fmt.Println("Invalid job ID:", *g_jobIdStr)
-		os.Exist(1)
+		os.Exit(1)
 	}
 
 	if *g_target == "" {
