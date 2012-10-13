@@ -207,6 +207,10 @@ func (t *NewRegistryTest) CallsDecrypt() {
 	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
 		WillOnce(oglemock.Return(attrs, nil))
 
+	// Deriver
+	ExpectCall(t.deriver, "DeriveKey")(Any(), Any()).
+		WillOnce(oglemock.Return([]byte{}))
+
 	// Crypter
 	ExpectCall(t.crypter, "Decrypt")(DeepEquals([]byte("taco"))).
 		WillOnce(oglemock.Return(nil, errors.New("")))
@@ -224,6 +228,10 @@ func (t *NewRegistryTest) DecryptReturnsError() {
 
 	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
 		WillOnce(oglemock.Return(attrs, nil))
+
+	// Deriver
+	ExpectCall(t.deriver, "DeriveKey")(Any(), Any()).
+		WillOnce(oglemock.Return([]byte{}))
 
 	// Crypter
 	ExpectCall(t.crypter, "Decrypt")(Any()).
@@ -245,6 +253,10 @@ func (t *NewRegistryTest) DecryptSucceeds() {
 
 	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
 		WillOnce(oglemock.Return(attrs, nil))
+
+	// Deriver
+	ExpectCall(t.deriver, "DeriveKey")(Any(), Any()).
+		WillOnce(oglemock.Return([]byte{}))
 
 	// Crypter
 	ExpectCall(t.crypter, "Decrypt")(Any()).

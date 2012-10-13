@@ -80,7 +80,7 @@ func verifyCompatibleAndSetUpCrypter(
 
 		// The data is base64-encoded.
 		if *dest, err = base64.StdEncoding.DecodeString(attr.Value); err != nil {
-			err = fmt.Errorf("Decoding %s: %v", attr.Name, err)
+			err = fmt.Errorf("Decoding %s (%s): %v", attr.Name, attr.Value, err)
 			return
 		}
 	}
