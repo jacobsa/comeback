@@ -43,21 +43,6 @@ const (
 // A regexp for selected item names.
 var itemNameRegexp = regexp.MustCompile(`^backup_([0-9a-f]{16})$`)
 
-// A record in the backup registry describing a successful backup job.
-type CompletedJob struct {
-	// A unique ID for this completed run.
-	Id uint64
-
-	// The name of the backup job.
-	Name string
-
-	// The time at which the backup was started.
-	StartTime time.Time
-
-	// The score representing the contents of the backup.
-	Score blob.Score
-}
-
 type Registry interface {
 	// Record that the named backup job has completed.
 	RecordBackup(j CompletedJob) (err error)
