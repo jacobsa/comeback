@@ -196,7 +196,11 @@ func (t *NewRegistryTest) InvalidSaltAttribute() {
 
 func (t *NewRegistryTest) CallsDecrypt() {
 	// Domain
-	attr := sdb.Attribute{Name: "encrypted_data", Value: "dGFjbw=="}
+	attrs := []sdb.Attribute{
+		sdb.Attribute{Name: "encrypted_data", Value: "dGFjbw=="},
+		sdb.Attribute{Name: "password_salt", Value: "YnVycml0bw=="},
+	}
+
 	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
 		WillOnce(oglemock.Return([]sdb.Attribute{attr}, nil))
 
@@ -208,9 +212,13 @@ func (t *NewRegistryTest) CallsDecrypt() {
 	t.callConstructor()
 }
 
-func (t *NewRegistryTest) DecryptReturnsGenericError() {
+func (t *NewRegistryTest) DecryptReturnsError() {
 	// Domain
-	attr := sdb.Attribute{Name: "encrypted_data"}
+	attrs := []sdb.Attribute{
+		sdb.Attribute{Name: "encrypted_data", Value: ""},
+		sdb.Attribute{Name: "password_salt", Value: ""},
+	}
+
 	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
 		WillOnce(oglemock.Return([]sdb.Attribute{attr}, nil))
 
@@ -225,29 +233,13 @@ func (t *NewRegistryTest) DecryptReturnsGenericError() {
 	ExpectThat(t.err, Error(HasSubstr("taco")))
 }
 
-func (t *NewRegistryTest) DecryptReturnsNotAuthenticError() {
-	// Domain
-	attr := sdb.Attribute{Name: "encrypted_data"}
-	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
-		WillOnce(oglemock.Return([]sdb.Attribute{attr}, nil))
-
-	// Crypter
-	ExpectCall(t.crypter, "Decrypt")(Any()).
-		WillOnce(oglemock.Return(nil, &crypto.NotAuthenticError{}))
-
-	// Call
-	t.callConstructor()
-
-	_, ok := t.err.(*IncompatibleCrypterError)
-	AssertTrue(ok, "Error: %v", t.err)
-
-	ExpectThat(t.err, Error(HasSubstr("crypter")))
-	ExpectThat(t.err, Error(HasSubstr("not compatible")))
-}
-
 func (t *NewRegistryTest) DecryptSucceeds() {
 	// Domain
-	attr := sdb.Attribute{Name: "encrypted_data"}
+	attrs := []sdb.Attribute{
+		sdb.Attribute{Name: "encrypted_data", Value: ""},
+		sdb.Attribute{Name: "password_salt", Value: ""},
+	}
+
 	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
 		WillOnce(oglemock.Return([]sdb.Attribute{attr}, nil))
 
@@ -263,12 +255,17 @@ func (t *NewRegistryTest) DecryptSucceeds() {
 }
 
 func (t *NewRegistryTest) CallsEncrypt() {
+	t.randBytes = []byte{
+		0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+		0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+	}
+
 	// Domain
 	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
 		WillOnce(oglemock.Return([]sdb.Attribute{}, nil))
 
 	// Crypter
-	ExpectCall(t.crypter, "Encrypt")(Any()).
+	ExpectCall(t.crypter, "Encrypt")(DeepEquals(t.randBytes[8:])).
 		WillOnce(oglemock.Return(nil, errors.New("")))
 
 	// Call

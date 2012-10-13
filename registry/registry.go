@@ -16,6 +16,7 @@
 package registry
 
 import (
+	crypto_rand "crypto/rand"
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
@@ -102,7 +103,7 @@ func NewRegistry(
 		cryptoPassword,
 		deriver,
 		crypto.NewCrypter,
-		randSrc)
+		crypto_rand.Reader)
 }
 
 // A version split out for testability.
