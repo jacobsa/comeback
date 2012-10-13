@@ -17,8 +17,12 @@ package main
 
 import (
 	"bytes"
+	"code.google.com/p/go.crypto/pbkdf2"
+	"crypto/sha256"
 	"encoding/hex"
+	"math/rand"
 	"flag"
+	"github.com/jacobsa/comeback/crypto"
 	"fmt"
 	"github.com/jacobsa/aws/s3"
 	"github.com/jacobsa/aws/sdb"
@@ -26,10 +30,11 @@ import (
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/config"
 	"github.com/jacobsa/comeback/fs"
-	"github.com/jacobsa/comeback/kv/s3"
+	s3_kv "github.com/jacobsa/comeback/kv/s3"
 	"github.com/jacobsa/comeback/repr"
 	"github.com/jacobsa/comeback/sys"
 	"io"
+	"io/ioutil"
 	"log"
 	"os"
 	"path"
@@ -38,10 +43,13 @@ import (
 	"time"
 )
 
+var g_configFile = flag.String("config", "", "Path to config file.")
 var g_jobIdStr = flag.String("job_id", "", "The job ID to restore.")
 var g_target = flag.String("target", "", "The target directory.")
 
 var g_blobStore blob.Store
+
+func getSalt(domain sdb.Domain) (salt []byte, err error)
 
 func fromHexHash(h string) (blob.Score, error) {
 	b, err := hex.DecodeString(h)
@@ -346,7 +354,7 @@ func main() {
 	var err error
 	flag.Parse()
 
-	// Validate flags.
+	// Parse the job ID.
 	if len(*g_jobIdStr) != 16 {
 		fmt.Println("You must set -job_id.")
 		os.Exit(1)
@@ -358,8 +366,40 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Check the target.
 	if *g_target == "" {
 		fmt.Println("You must set -target.")
+		os.Exit(1)
+	}
+
+	// Attempt to read the user's config data.
+	if *g_configFile == "" {
+		fmt.Println("You must set -config.")
+		os.Exit(1)
+	}
+
+	configData, err := ioutil.ReadFile(*g_configFile)
+	if err != nil {
+		fmt.Println("Error reading config file:", err)
+		os.Exit(1)
+	}
+
+	// Parse the config file.
+	cfg, err := config.Parse(configData)
+	if err != nil {
+		fmt.Println("Parsing config file:", err)
+		os.Exit(1)
+	}
+
+	// Read in the AWS access key secret.
+	cfg.AccessKey.Secret = readPassword("Enter AWS access key secret: ")
+	if len(cfg.AccessKey.Secret) == 0 {
+		log.Fatalf("You must enter an access key secret.\n")
+	}
+
+	// Validate the config file.
+	if err := config.Validate(cfg); err != nil {
+		fmt.Printf("Config file invalid: %v\n", err)
 		os.Exit(1)
 	}
 
@@ -460,7 +500,7 @@ func main() {
 	}
 
 	// Attempt a restore.
-	err = restoreDir(*g_target, "", score)
+	err = restoreDir(*g_target, "", job.Score)
 	if err != nil {
 		log.Fatalf("Restoring: %v", err)
 	}
