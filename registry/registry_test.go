@@ -181,7 +181,7 @@ func (t *NewRegistryTest) GetAttributesReturnsError() {
 func (t *NewRegistryTest) MissingOnlyEncryptedDataAttribute() {
 	// Domain
 	attrs := []sdb.Attribute{
-		sdb.Attribute{Name: "password_salt", Value: "YnVycml0bw=="},
+		sdb.Attribute{Name: "password_salt"},
 	}
 
 	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
@@ -197,7 +197,7 @@ func (t *NewRegistryTest) MissingOnlyEncryptedDataAttribute() {
 func (t *NewRegistryTest) MissingOnlySaltAttribute() {
 	// Domain
 	attrs := []sdb.Attribute{
-		sdb.Attribute{Name: "encrypted_data", Value: "dGFjbw=="},
+		sdb.Attribute{Name: "encrypted_data"},
 	}
 
 	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
@@ -214,7 +214,7 @@ func (t *NewRegistryTest) InvalidEncryptedDataAttribute() {
 	// Domain
 	attrs := []sdb.Attribute{
 		sdb.Attribute{Name: "encrypted_data", Value: "foo"},
-		sdb.Attribute{Name: "password_salt", Value: "YnVycml0bw=="},
+		sdb.Attribute{Name: "password_salt"},
 	}
 
 	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
@@ -231,7 +231,7 @@ func (t *NewRegistryTest) InvalidEncryptedDataAttribute() {
 func (t *NewRegistryTest) InvalidSaltAttribute() {
 	// Domain
 	attrs := []sdb.Attribute{
-		sdb.Attribute{Name: "encrypted_data", Value: "dGFjbw=="},
+		sdb.Attribute{Name: "encrypted_data"},
 		sdb.Attribute{Name: "password_salt", Value: "foo"},
 	}
 
@@ -277,8 +277,8 @@ func (t *NewRegistryTest) CallsDeriverAndCrypterFactoryForExistingMarkers() {
 func (t *NewRegistryTest) CrypterFactoryReturnsErrorForExistingMarkers() {
 	// Domain
 	attrs := []sdb.Attribute{
-		sdb.Attribute{Name: "encrypted_data", Value: "dGFjbw=="},
-		sdb.Attribute{Name: "password_salt", Value: "YnVycml0bw=="},
+		sdb.Attribute{Name: "encrypted_data"},
+		sdb.Attribute{Name: "password_salt"},
 	}
 
 	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
@@ -301,8 +301,8 @@ func (t *NewRegistryTest) CrypterFactoryReturnsErrorForExistingMarkers() {
 func (t *NewRegistryTest) CallsDecrypt() {
 	// Domain
 	attrs := []sdb.Attribute{
-		sdb.Attribute{Name: "encrypted_data", Value: "dGFjbw=="},
-		sdb.Attribute{Name: "password_salt", Value: "YnVycml0bw=="},
+		sdb.Attribute{Name: "encrypted_data"},
+		sdb.Attribute{Name: "password_salt"},
 	}
 
 	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
@@ -323,8 +323,8 @@ func (t *NewRegistryTest) CallsDecrypt() {
 func (t *NewRegistryTest) DecryptReturnsError() {
 	// Domain
 	attrs := []sdb.Attribute{
-		sdb.Attribute{Name: "encrypted_data", Value: ""},
-		sdb.Attribute{Name: "password_salt", Value: ""},
+		sdb.Attribute{Name: "encrypted_data"},
+		sdb.Attribute{Name: "password_salt"},
 	}
 
 	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
@@ -348,8 +348,8 @@ func (t *NewRegistryTest) DecryptReturnsError() {
 func (t *NewRegistryTest) DecryptSucceeds() {
 	// Domain
 	attrs := []sdb.Attribute{
-		sdb.Attribute{Name: "encrypted_data", Value: ""},
-		sdb.Attribute{Name: "password_salt", Value: ""},
+		sdb.Attribute{Name: "encrypted_data"},
+		sdb.Attribute{Name: "password_salt"},
 	}
 
 	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
