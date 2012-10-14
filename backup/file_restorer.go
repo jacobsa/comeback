@@ -16,10 +16,15 @@
 package backup
 
 import (
+	"fmt"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/fs"
 	"os"
 )
+
+////////////////////////////////////////////////////////////////////////
+// Public
+////////////////////////////////////////////////////////////////////////
 
 // An object that knows how to restore previously backed up files.
 type FileRestorer interface {
@@ -32,4 +37,25 @@ type FileRestorer interface {
 func NewFileRestorer(
 	blobStore blob.Store,
 	fileSystem fs.FileSystem,
-) (restorer FileRestorer, err error)
+) (restorer FileRestorer, err error) {
+	restorer = &fileRestorer{blobStore, fileSystem}
+	return
+}
+
+////////////////////////////////////////////////////////////////////////
+// Implementation
+////////////////////////////////////////////////////////////////////////
+
+type fileRestorer struct {
+	blobStore blob.Store
+	fileSystem fs.FileSystem
+}
+
+func (r *fileRestorer) RestoreFile(
+	scores []blob.Score,
+	path string,
+	perms os.FileMode,
+) (err error) {
+	err = fmt.Errorf("TODO")
+	return
+}
