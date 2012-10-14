@@ -32,6 +32,22 @@ type SetPermissionsTest struct {
 
 func init() { RegisterTestSuite(&SetPermissionsTest{}) }
 
-func (t *SetPermissionsTest) DoesFoo() {
+func (t *SetPermissionsTest) NonExistentPath() {
+	ExpectEq("TODO", "")
+}
+
+func (t *SetPermissionsTest) File() {
+	ExpectEq("TODO", "")
+}
+
+func (t *SetPermissionsTest) Directory() {
+	ExpectEq("TODO", "")
+}
+
+func (t *SetPermissionsTest) Symlink() {
+	ExpectEq("TODO", "")
+}
+
+func (t *SetPermissionsTest) Device() {
 	ExpectEq("TODO", "")
 }
