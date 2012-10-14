@@ -37,7 +37,6 @@ import (
 	"os"
 	"path"
 	"strconv"
-	"syscall"
 )
 
 var g_configFile = flag.String("config", "", "Path to config file.")
@@ -196,21 +195,29 @@ func restoreDir(
 			}
 
 		case fs.TypeNamedPipe:
-			err = makeNamedPipe(entryFullPath, entry.Permissions)
+			err = fileSystem.CreateNamedPipe(entryFullPath, entry.Permissions)
 			if err != nil {
-				return fmt.Errorf("makeNamedPipe: %v", err)
+				return fmt.Errorf("CreateNamedPipe: %v", err)
 			}
 
 		case fs.TypeBlockDevice:
-			err = makeBlockDevice(entryFullPath, entry.Permissions, entry.DeviceNumber)
+			err = fileSystem.CreateBlockDevice(
+				entryFullPath,
+				entry.Permissions,
+				entry.DeviceNumber)
+
 			if err != nil {
-				return fmt.Errorf("makeBlockDevice: %v", err)
+				return fmt.Errorf("CreateBlockDevice: %v", err)
 			}
 
 		case fs.TypeCharDevice:
-			err = makeCharDevice(entryFullPath, entry.Permissions, entry.DeviceNumber)
+			err = fileSystem.CreateCharDevice(
+				entryFullPath,
+				entry.Permissions,
+				entry.DeviceNumber)
+
 			if err != nil {
-				return fmt.Errorf("makeCharDevice: %v", err)
+				return fmt.Errorf("CreateCharDevice: %v", err)
 			}
 
 		default:
@@ -249,51 +256,6 @@ func restoreDir(
 				return fmt.Errorf("SetModTime(%s): %v", entryFullPath, err)
 			}
 		}
-	}
-
-	return nil
-}
-
-func syscallPermissions(permissions os.FileMode) (o uint32) {
-	// Include r/w/x permission bits.
-	o = uint32(permissions & os.ModePerm)
-
-	// Also include setuid/setgid/sticky bits.
-	if permissions&os.ModeSetuid != 0 {
-		o |= syscall.S_ISUID
-	}
-
-	if permissions&os.ModeSetgid != 0 {
-		o |= syscall.S_ISGID
-	}
-
-	if permissions&os.ModeSticky != 0 {
-		o |= syscall.S_ISVTX
-	}
-
-	return
-}
-
-// Create a named pipe at the supplied path.
-func makeNamedPipe(path string, permissions os.FileMode) error {
-	return syscall.Mkfifo(path, syscallPermissions(permissions))
-}
-
-// Create a block device at the supplied path.
-func makeBlockDevice(path string, permissions os.FileMode, dev int32) error {
-	mode := syscallPermissions(permissions) | syscall.S_IFBLK
-	if err := syscall.Mknod(path, mode, int(dev)); err != nil {
-		return fmt.Errorf("syscall.Mknod: %v", err)
-	}
-
-	return nil
-}
-
-// Create a character device at the supplied path.
-func makeCharDevice(path string, permissions os.FileMode, dev int32) error {
-	mode := syscallPermissions(permissions) | syscall.S_IFCHR
-	if err := syscall.Mknod(path, mode, int(dev)); err != nil {
-		return fmt.Errorf("syscall.Mknod: %v", err)
 	}
 
 	return nil
