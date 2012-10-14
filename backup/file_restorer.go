@@ -64,8 +64,10 @@ func (r *fileRestorer) RestoreFile(
 	}
 
 	defer func() {
-		if err = file.Close(); err != nil {
-			err = fmt.Errorf("Close: %v", err)
+		// Close the file and propagate the error, if needed.
+		closeErr := file.Close()
+		if closeErr != nil && err == nil {
+			err = fmt.Errorf("Close: %v", closeErr)
 		}
 	}()
 
