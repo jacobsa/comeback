@@ -54,6 +54,6 @@ func (fs *fileSystem) CreateFile(
 	path string,
 	perms os.FileMode,
 ) (w io.WriteCloser, err error) {
-	err = fmt.Errorf("TODO")
+	w, err = os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, perms)
 	return
 }
