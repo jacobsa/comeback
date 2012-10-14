@@ -102,8 +102,24 @@ func (t *CreateFileTest) FileAlreadyExists() {
 	ExpectThat(t.err, Error(HasSubstr("TODO")))
 }
 
-func (t *CreateFileTest) SetsPermissions() {
-	ExpectEq("TODO", "")
+func (t *CreateFileTest) CreatesCorrectEntry() {
+	t.path = path.Join(t.baseDir, "taco")
+	t.perms = 0664
+
+	// Call
+	t.call()
+	AssertEq(nil, t.err)
+	defer t.w.Close()
+
+	// List
+	entries := t.list()
+
+	AssertThat(entries, ElementsAre(Any()))
+	entry := entries[0]
+
+	ExpectEq(fs.TypeFile, entry.Type)
+	ExpectEq("taco", entry.Name)
+	ExpectEq(0664, entry.Permissions)
 }
 
 func (t *CreateFileTest) SavesDataToCorrectPlace() {
