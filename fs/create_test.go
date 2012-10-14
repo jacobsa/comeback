@@ -88,7 +88,8 @@ func (t *CreateFileTest) NoPermissionsForParent() {
 	// Call
 	t.call()
 
-	ExpectThat(t.err, Error(HasSubstr("TODO")))
+	ExpectThat(t.err, Error(HasSubstr("foo")))
+	ExpectThat(t.err, Error(HasSubstr("permission denied")))
 }
 
 func (t *CreateFileTest) FileAlreadyExists() {
@@ -99,12 +100,12 @@ func (t *CreateFileTest) FileAlreadyExists() {
 	// Call
 	t.call()
 
-	ExpectThat(t.err, Error(HasSubstr("TODO")))
+	ExpectThat(t.err, Error(HasSubstr("file exists")))
 }
 
 func (t *CreateFileTest) CreatesCorrectEntry() {
 	t.path = path.Join(t.baseDir, "taco")
-	t.perms = 0664
+	t.perms = 0611
 
 	// Call
 	t.call()
@@ -119,7 +120,7 @@ func (t *CreateFileTest) CreatesCorrectEntry() {
 
 	ExpectEq(fs.TypeFile, entry.Type)
 	ExpectEq("taco", entry.Name)
-	ExpectEq(0664, entry.Permissions)
+	ExpectEq(0611, entry.Permissions)
 }
 
 func (t *CreateFileTest) SavesDataToCorrectPlace() {
