@@ -17,6 +17,7 @@ package fs_test
 
 import (
 	"github.com/jacobsa/comeback/fs"
+	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
 	"io"
 	"os"
@@ -66,7 +67,13 @@ func (t *CreateFileTest) list() []*fs.DirectoryEntry {
 ////////////////////////////////////////////////////////////////////////
 
 func (t *CreateFileTest) NonExistentParent() {
-	ExpectEq("TODO", "")
+	t.path = "/foo/bar/baz/qux"
+
+	// Call
+	t.call()
+
+	ExpectThat(t.err, Error(HasSubstr("qux")))
+	ExpectThat(t.err, Error(HasSubstr("no such")))
 }
 
 func (t *CreateFileTest) NoPermissionsForParent() {
