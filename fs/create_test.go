@@ -77,7 +77,17 @@ func (t *CreateFileTest) NonExistentParent() {
 }
 
 func (t *CreateFileTest) NoPermissionsForParent() {
-	ExpectEq("TODO", "")
+	dirpath := path.Join(t.baseDir, "foo")
+	t.path = path.Join(dirpath, "taco")
+
+	// Parent
+	err := os.Mkdir(dirpath, 0100)
+	AssertEq(nil, err)
+
+	// Call
+	t.call()
+
+	ExpectThat(t.err, Error(HasSubstr("TODO")))
 }
 
 func (t *CreateFileTest) FileAlreadyExists() {
