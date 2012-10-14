@@ -16,10 +16,45 @@
 package fs
 
 import (
-	"fmt"
 	"os"
+	"syscall"
 )
 
+func syscallPermissions(permissions os.FileMode) (o uint32) {
+	// Include r/w/x permission bits.
+	o = uint32(permissions & os.ModePerm)
+
+	// Also include setuid/setgid/sticky bits.
+	if permissions&os.ModeSetuid != 0 {
+		o |= syscall.S_ISUID
+	}
+
+	if permissions&os.ModeSetgid != 0 {
+		o |= syscall.S_ISGID
+	}
+
+	if permissions&os.ModeSticky != 0 {
+		o |= syscall.S_ISVTX
+	}
+
+	return
+}
+
 func (fs *fileSystem) SetPermissions(path string, permissions os.FileMode) error {
-	return fmt.Errorf("TODO")
+	// Open the file without following symlinks.
+	fd, err := syscall.Open(path, syscall.O_RDONLY|syscall.O_SYMLINK, 0)
+	if err != nil {
+		return err
+	}
+
+	defer syscall.Close(fd)
+
+	// Call fchmod.
+	mode := syscallPermissions(permissions)
+	err = syscall.Fchmod(fd, mode)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

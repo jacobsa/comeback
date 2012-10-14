@@ -150,6 +150,10 @@ func (t *SetPermissionsTest) NamedPipe() {
 	ExpectEq(0754, entry.Permissions)
 }
 
+func (t *SetPermissionsTest) SpecialBits() {
+	ExpectEq("TODO", "")
+}
+
 func (t *SetPermissionsTest) IgnoresOtherBits() {
 	t.path = path.Join(t.baseDir, "taco.txt")
 	t.perms = 0754 | os.ModeNamedPipe | os.ModeTemporary
