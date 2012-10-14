@@ -21,6 +21,7 @@ import (
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/blob/mock"
 	"github.com/jacobsa/comeback/fs/mock"
+	. "github.com/jacobsa/oglematchers"
 	"github.com/jacobsa/oglemock"
 	. "github.com/jacobsa/ogletest"
 	"os"
@@ -81,7 +82,15 @@ func (t *FileRestorerTest) CallsCreateFile() {
 }
 
 func (t *FileRestorerTest) CreateFileReturnsError() {
-	ExpectEq("TODO", "")
+	// File system
+	ExpectCall(t.fileSystem, "CreateFile")(Any(), Any()).
+		WillOnce(oglemock.Return(nil, errors.New("taco")))
+
+	// Call
+	t.call()
+
+	ExpectThat(t.err, Error(HasSubstr("CreateFile")))
+	ExpectThat(t.err, Error(HasSubstr("taco")))
 }
 
 func (t *FileRestorerTest) NoBlobs() {
