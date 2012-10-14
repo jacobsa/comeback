@@ -18,16 +18,33 @@ package fs
 import (
 	"fmt"
 	"os"
+	"syscall"
 )
 
-func (fs *fileSystem) CreateNamedPipe(path string, permissions os.FileMode) error {
-	return fmt.Errorf("TODO")
+func (fs *fileSystem) CreateNamedPipe(path string, perms os.FileMode) error {
+	return syscall.Mkfifo(path, syscallPermissions(perms))
 }
 
-func (fs *fileSystem) CreateBlockDevice(path string, permissions os.FileMode, devNum int32) error {
-	return fmt.Errorf("TODO")
+func (fs *fileSystem) CreateBlockDevice(
+	path string,
+	perms os.FileMode,
+	devNum int32) error {
+	mode := syscallPermissions(perms) | syscall.S_IFBLK
+	if err := syscall.Mknod(path, mode, int(devNum)); err != nil {
+		return fmt.Errorf("syscall.Mknod: %v", err)
+	}
+
+	return nil
 }
 
-func (fs *fileSystem) CreateCharDervice(path string, permissions os.FileMode, devNum int32) error {
-	return fmt.Errorf("TODO")
+func (fs *fileSystem) CreateCharDervice(
+	path string,
+	perms os.FileMode,
+	devNum int32) error {
+	mode := syscallPermissions(perms) | syscall.S_IFCHR
+	if err := syscall.Mknod(path, mode, int(devNum)); err != nil {
+		return fmt.Errorf("syscall.Mknod: %v", err)
+	}
+
+	return nil
 }
