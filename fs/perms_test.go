@@ -16,8 +16,10 @@
 package fs_test
 
 import (
+	"github.com/jacobsa/comeback/fs"
 	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
+	"io/ioutil"
 	"os"
 	"path"
 	"testing"
@@ -44,6 +46,12 @@ func (t *SetPermissionsTest) call() {
 	t.err = t.fileSystem.SetPermissions(t.path, t.perms)
 }
 
+func (t *SetPermissionsTest) list() []*fs.DirectoryEntry {
+	entries, err := t.fileSystem.ReadDir(t.baseDir)
+	AssertEq(nil, err)
+	return entries
+}
+
 func (t *SetPermissionsTest) NonExistentPath() {
 	t.path = path.Join(t.baseDir, "foobar")
 
@@ -55,7 +63,25 @@ func (t *SetPermissionsTest) NonExistentPath() {
 }
 
 func (t *SetPermissionsTest) File() {
-	ExpectEq("TODO", "")
+	t.path = path.Join(t.baseDir, "taco.txt")
+	t.perms = 0754
+
+	// Create
+	err := ioutil.WriteFile(t.path, []byte(""), 0600)
+	AssertEq(nil, err)
+
+	// Call
+	t.call()
+	AssertEq(nil, t.err)
+
+	// List
+	entries := t.list()
+
+	AssertThat(entries, ElementsAre(Any()))
+	entry := entries[0]
+
+	AssertEq(fs.TypeFile, entry.Type)
+	ExpectEq(0754, entry.Permissions)
 }
 
 func (t *SetPermissionsTest) Directory() {
