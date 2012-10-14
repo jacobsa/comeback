@@ -11,6 +11,7 @@ import (
 	backup "github.com/jacobsa/comeback/backup"
 	blob "github.com/jacobsa/comeback/blob"
 	oglemock "github.com/jacobsa/oglemock"
+	os "os"
 	runtime "runtime"
 	unsafe "unsafe"
 )
@@ -42,7 +43,7 @@ func (m *mockFileRestorer) Oglemock_Description() string {
 	return m.description
 }
 
-func (m *mockFileRestorer) RestoreFile(p0 []blob.Score, p1 string) (o0 error) {
+func (m *mockFileRestorer) RestoreFile(p0 []blob.Score, p1 string, p2 os.FileMode) (o0 error) {
 	// Get a file name and line number for the caller.
 	_, file, line, _ := runtime.Caller(1)
 
@@ -52,7 +53,7 @@ func (m *mockFileRestorer) RestoreFile(p0 []blob.Score, p1 string) (o0 error) {
 		"RestoreFile",
 		file,
 		line,
-		[]interface{}{p0, p1})
+		[]interface{}{p0, p1, p2})
 
 	if len(retVals) != 1 {
 		panic(fmt.Sprintf("mockFileRestorer.RestoreFile: invalid return values: %v", retVals))

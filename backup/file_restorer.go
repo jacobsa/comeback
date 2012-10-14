@@ -18,13 +18,14 @@ package backup
 import (
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/fs"
+	"os"
 )
 
 // An object that knows how to restore previously backed up files.
 type FileRestorer interface {
-	// Restore the contents of the supplied scores to the file at the given path,
-	// overwriting its contents if it already exists.
-	RestoreFile(scores []blob.Score, path string) (err error)
+	// Restore the contents of the supplied scores to the file at the given path.
+	// The file must not already exist.
+	RestoreFile(scores []blob.Score, path string, perms os.FileMode) (err error)
 }
 
 // Create a file restorer that uses the supplied blob store and file systems.
