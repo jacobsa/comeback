@@ -16,6 +16,7 @@
 package backup_test
 
 import (
+	"bytes"
 	"errors"
 	"github.com/jacobsa/comeback/backup"
 	"github.com/jacobsa/comeback/blob"
@@ -34,9 +35,22 @@ func TestFileRestorer(t *testing.T) { RunTests(t) }
 // Helpers
 ////////////////////////////////////////////////////////////////////////
 
+type closeSnoopingBuffer struct {
+	bytes.Buffer
+
+	closeError error
+	closeCalled bool
+}
+
+func (b *closeSnoopingBuffer) Close() error {
+	b.closeCalled = true
+	return b.closeError
+}
+
 type FileRestorerTest struct {
 	blobStore mock_blob.MockStore
 	fileSystem mock_fs.MockFileSystem
+	file closeSnoopingBuffer
 
 	fileRestorer backup.FileRestorer
 
@@ -94,7 +108,16 @@ func (t *FileRestorerTest) CreateFileReturnsError() {
 }
 
 func (t *FileRestorerTest) NoBlobs() {
-	ExpectEq("TODO", "")
+	// File system
+	ExpectCall(t.fileSystem, "CreateFile")(Any(), Any()).
+		WillOnce(oglemock.Return(&t.file, nil))
+
+	// Call
+	t.call()
+	AssertEq(nil, t.err)
+
+	ExpectTrue(t.file.closeCalled)
+	ExpectThat(t.file.Bytes(), ElementsAre())
 }
 
 func (t *FileRestorerTest) CallsBlobStore() {
