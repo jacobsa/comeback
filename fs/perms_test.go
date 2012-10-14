@@ -34,7 +34,7 @@ func TestPerms(t *testing.T) { RunTests(t) }
 type SetPermissionsTest struct {
 	fileSystemTest
 
-	path string
+	path  string
 	perms os.FileMode
 
 	err error
@@ -168,7 +168,7 @@ func (t *SetPermissionsTest) SpecialBits() {
 	entry := entries[0]
 
 	AssertEq(fs.TypeFile, entry.Type)
-	ExpectEq(0754 | os.ModeSetuid | os.ModeSetgid | os.ModeSticky, entry.Permissions)
+	ExpectEq(0754|os.ModeSetuid|os.ModeSetgid|os.ModeSticky, entry.Permissions)
 }
 
 func (t *SetPermissionsTest) IgnoresOtherBits() {

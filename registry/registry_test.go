@@ -50,9 +50,9 @@ type registryTest struct {
 	deriver mock_crypto.MockKeyDeriver
 	crypter mock_crypto.MockCrypter
 
-	saltBytes *bytes.Buffer
+	saltBytes      *bytes.Buffer
 	plaintextBytes *bytes.Buffer
-	randBytes io.Reader
+	randBytes      io.Reader
 }
 
 func (t *registryTest) SetUp(i *TestInfo) {
@@ -123,13 +123,13 @@ func (t *extentRegistryTest) SetUp(i *TestInfo) {
 type NewRegistryTest struct {
 	registryTest
 
-	suppliedKey []byte
+	suppliedKey        []byte
 	createCrypterError error
-	createCrypter func([]byte) (crypto.Crypter, error)
+	createCrypter      func([]byte) (crypto.Crypter, error)
 
-	registry Registry
+	registry        Registry
 	returnedCrypter crypto.Crypter
-	err      error
+	err             error
 }
 
 func init() { RegisterTestSuite(&NewRegistryTest{}) }

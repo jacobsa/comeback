@@ -37,7 +37,7 @@ const (
 
 	// The attribute names we use for storing crypto-compatibility data.
 	encryptedDataMarker = "encrypted_data"
-	passwordSaltMarker = "password_salt"
+	passwordSaltMarker  = "password_salt"
 
 	// A time format that works properly with range queries.
 	iso8601TimeFormat = "2006-01-02T15:04:05Z"

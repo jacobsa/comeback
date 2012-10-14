@@ -33,9 +33,9 @@ func NewPbkdf2KeyDeriver(iters int, keyLen int, h func() hash.Hash) KeyDeriver {
 }
 
 type pbkdf2KeyDeriver struct {
-	iters int
+	iters  int
 	keyLen int
-	h func() hash.Hash
+	h      func() hash.Hash
 }
 
 func (d *pbkdf2KeyDeriver) DeriveKey(password string, salt []byte) []byte {
