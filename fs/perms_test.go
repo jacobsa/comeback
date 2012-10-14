@@ -107,7 +107,25 @@ func (t *SetPermissionsTest) Directory() {
 }
 
 func (t *SetPermissionsTest) Symlink() {
-	ExpectEq("TODO", "")
+	t.path = path.Join(t.baseDir, "taco")
+	t.perms = 0754
+
+	// Create
+	err := os.Symlink("/foo/burrito", t.path)
+	AssertEq(nil, err)
+
+	// Call
+	t.call()
+	AssertEq(nil, t.err)
+
+	// List
+	entries := t.list()
+
+	AssertThat(entries, ElementsAre(Any()))
+	entry := entries[0]
+
+	AssertEq(fs.TypeDirectory, entry.Type)
+	ExpectEq(0754, entry.Permissions)
 }
 
 func (t *SetPermissionsTest) Device() {
