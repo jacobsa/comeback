@@ -42,20 +42,20 @@ func (m *mockFileRestorer) Oglemock_Description() string {
 	return m.description
 }
 
-func (m *mockFileRestorer) Restore(p0 []blob.Score, p1 string) (o0 error) {
+func (m *mockFileRestorer) RestoreFile(p0 []blob.Score, p1 string) (o0 error) {
 	// Get a file name and line number for the caller.
 	_, file, line, _ := runtime.Caller(1)
 
 	// Hand the call off to the controller, which does most of the work.
 	retVals := m.controller.HandleMethodCall(
 		m,
-		"Restore",
+		"RestoreFile",
 		file,
 		line,
 		[]interface{}{p0, p1})
 
 	if len(retVals) != 1 {
-		panic(fmt.Sprintf("mockFileRestorer.Restore: invalid return values: %v", retVals))
+		panic(fmt.Sprintf("mockFileRestorer.RestoreFile: invalid return values: %v", retVals))
 	}
 
 	// o0 error

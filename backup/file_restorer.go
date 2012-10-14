@@ -24,7 +24,7 @@ import (
 type FileRestorer interface {
 	// Restore the contents of the supplied scores to the file at the given path,
 	// overwriting its contents if it already exists.
-	Restore(scores []blob.Score, path string) (err error)
+	RestoreFile(scores []blob.Score, path string) (err error)
 }
 
 // Create a file restorer that uses the supplied blob store and file systems.
