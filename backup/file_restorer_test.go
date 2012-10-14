@@ -214,12 +214,18 @@ func (t *FileRestorerTest) WriteReturnsErrorForOneCall() {
 	ExpectThat(t.err, Error(HasSubstr("errorWriteCloser")))
 }
 
-func (t *FileRestorerTest) CallsClose() {
-	ExpectEq("TODO", "")
-}
-
 func (t *FileRestorerTest) CloseReturnsError() {
-	ExpectEq("TODO", "")
+	t.file.closeError = errors.New("taco")
+
+	// File system
+	ExpectCall(t.fileSystem, "CreateFile")(Any(), Any()).
+		WillOnce(oglemock.Return(&t.file, nil))
+
+	// Call
+	t.call()
+
+	ExpectThat(t.err, Error(HasSubstr("Close")))
+	ExpectThat(t.err, Error(HasSubstr("taco")))
 }
 
 func (t *FileRestorerTest) EverythingSucceeds() {
