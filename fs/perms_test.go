@@ -16,7 +16,10 @@
 package fs_test
 
 import (
+	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
+	"os"
+	"path"
 	"testing"
 )
 
@@ -28,12 +31,27 @@ func TestPerms(t *testing.T) { RunTests(t) }
 
 type SetPermissionsTest struct {
 	fileSystemTest
+
+	path string
+	perms os.FileMode
+
+	err error
 }
 
 func init() { RegisterTestSuite(&SetPermissionsTest{}) }
 
+func (t *SetPermissionsTest) call() {
+	t.err = t.fileSystem.SetPermissions(t.path, t.perms)
+}
+
 func (t *SetPermissionsTest) NonExistentPath() {
-	ExpectEq("TODO", "")
+	t.path = path.Join(t.baseDir, "foobar")
+
+	// Call
+	t.call()
+
+	ExpectThat(t.err, Error(HasSubstr("foobar")))
+	ExpectThat(t.err, Error(HasSubstr("no such")))
 }
 
 func (t *SetPermissionsTest) File() {
@@ -49,5 +67,9 @@ func (t *SetPermissionsTest) Symlink() {
 }
 
 func (t *SetPermissionsTest) Device() {
+	ExpectEq("TODO", "")
+}
+
+func (t *SetPermissionsTest) IgnoresOtherBits() {
 	ExpectEq("TODO", "")
 }
