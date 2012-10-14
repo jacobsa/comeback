@@ -73,6 +73,10 @@ func (t *CreateFileTest) NoPermissionsForParent() {
 	ExpectEq("TODO", "")
 }
 
+func (t *CreateFileTest) FileAlreadyExists() {
+	ExpectEq("TODO", "")
+}
+
 func (t *CreateFileTest) SetsPermissions() {
 	ExpectEq("TODO", "")
 }
