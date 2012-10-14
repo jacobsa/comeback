@@ -16,10 +16,33 @@
 package fs
 
 import (
-	"fmt"
+	"syscall"
 	"time"
 )
 
+// Reference: http://stackoverflow.com/questions/10608724/set-modification-date-on-symbolic-link-in-cocoa
 func (fs *fileSystem) SetModTime(path string, mtime time.Time) error {
-	return fmt.Errorf("TODO")
+	// Open the file without following symlinks. Use O_NONBLOCK to allow opening
+	// of named pipes without a writer.
+	fd, err := syscall.Open(path, syscall.O_NONBLOCK|syscall.O_SYMLINK, 0)
+	if err != nil {
+		return err
+	}
+
+	defer syscall.Close(fd)
+
+	// Call futimes.
+	var utimes [2]syscall.Timeval
+	atime := time.Now()
+	atime_ns := atime.UnixNano()
+	mtime_ns := mtime.UnixNano()
+	utimes[0] = syscall.NsecToTimeval(atime_ns)
+	utimes[1] = syscall.NsecToTimeval(mtime_ns)
+
+	err = syscall.Futimes(fd, utimes[0:])
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
