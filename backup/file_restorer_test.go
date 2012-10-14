@@ -16,10 +16,12 @@
 package backup_test
 
 import (
+	"errors"
 	"github.com/jacobsa/comeback/backup"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/blob/mock"
 	"github.com/jacobsa/comeback/fs/mock"
+	"github.com/jacobsa/oglemock"
 	. "github.com/jacobsa/ogletest"
 	"os"
 	"testing"
@@ -67,7 +69,15 @@ func (t *FileRestorerTest) call() {
 ////////////////////////////////////////////////////////////////////////
 
 func (t *FileRestorerTest) CallsCreateFile() {
-	ExpectEq("TODO", "")
+	t.path = "taco"
+	t.perms = 0612
+
+	// File system
+	ExpectCall(t.fileSystem, "CreateFile")("taco", 0612).
+		WillOnce(oglemock.Return(nil, errors.New("")))
+
+	// Call
+	t.call()
 }
 
 func (t *FileRestorerTest) CreateFileReturnsError() {
