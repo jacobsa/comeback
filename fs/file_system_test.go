@@ -68,8 +68,8 @@ func setModTime(path string, mtime time.Time) error {
 	// Call futimes.
 	var utimes [2]syscall.Timeval
 	atime := time.Now()
-	atime_ns := atime.Unix()*1e9 + int64(atime.Nanosecond())
-	mtime_ns := mtime.Unix()*1e9 + int64(mtime.Nanosecond())
+	atime_ns := atime.UnixNano()
+	mtime_ns := mtime.UnixNano()
 	utimes[0] = syscall.NsecToTimeval(atime_ns)
 	utimes[1] = syscall.NsecToTimeval(mtime_ns)
 
