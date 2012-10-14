@@ -150,7 +150,25 @@ func (t *SetPermissionsTest) NamedPipe() {
 }
 
 func (t *SetPermissionsTest) SpecialBits() {
-	ExpectEq("TODO", "")
+	t.path = path.Join(t.baseDir, "taco.txt")
+	t.perms = 0754 | os.ModeSetuid | os.ModeSetgid | os.ModeSticky
+
+	// Create
+	err := ioutil.WriteFile(t.path, []byte(""), 0600)
+	AssertEq(nil, err)
+
+	// Call
+	t.call()
+	AssertEq(nil, t.err)
+
+	// List
+	entries := t.list()
+
+	AssertThat(entries, ElementsAre(Any()))
+	entry := entries[0]
+
+	AssertEq(fs.TypeFile, entry.Type)
+	ExpectEq(0754 | os.ModeSetuid | os.ModeSetgid | os.ModeSticky, entry.Permissions)
 }
 
 func (t *SetPermissionsTest) IgnoresOtherBits() {
