@@ -37,16 +37,25 @@ type FileSystem interface {
 	// it for writing. It is an error if the file already exists.
 	CreateFile(path string, permissions os.FileMode) (w io.WriteCloser, err error)
 
+	// Create a directory at the supplied path with the supplied permissions. The
+	// directory must not already exist.
+	Mkdir(path string, permissions os.FileMode) (err error)
+
 	// Create a file system object of various types.
 	CreateNamedPipe(path string, permissions os.FileMode) error
 	CreateBlockDevice(path string, permissions os.FileMode, devNum int32) error
 	CreateCharDevice(path string, permissions os.FileMode, devNum int32) error
+	CreateSymlink(target, source string, permissions os.FileMode) error
+	CreateHardLink(target, source string, permissions os.FileMode) error
 
 	// Set the modification time for the supplied path, not following symlinks.
 	SetModTime(path string, mtime time.Time) error
 
 	// Set permissions for the supplied path, not following symlinks.
 	SetPermissions(path string, permissions os.FileMode) error
+
+	// Change the owners of the supplied path, not following symlinks.
+	Chown(path string, uid int, gid int) (err error)
 
 	// Write out the supplied data to the supplied path, truncating if the file
 	// already exists and creating with the supplied permissions otherwise.
