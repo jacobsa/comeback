@@ -145,7 +145,7 @@ func (t *DirectoryRestorerTest) ChownReturnsErrorForOneEntry() {
 }
 
 func (t *DirectoryRestorerTest) CallsSetPermissions() {
-	ExpectEq("TODO", "")
+	ExpectEq("TODO: Make all creation functions accept permissions args and get rid of this!", "")
 }
 
 func (t *DirectoryRestorerTest) SetPermissionsReturnsErrorForOneEntry() {
@@ -154,6 +154,7 @@ func (t *DirectoryRestorerTest) SetPermissionsReturnsErrorForOneEntry() {
 
 func (t *DirectoryRestorerTest) CallsSetModTime() {
 	ExpectEq("TODO", "")
+	// NOTE: Not for devices (see restore.go)
 }
 
 func (t *DirectoryRestorerTest) SetModTimeReturnsErrorForOneEntry() {
