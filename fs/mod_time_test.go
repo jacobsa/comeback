@@ -19,6 +19,7 @@ import (
 	"github.com/jacobsa/comeback/fs"
 	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
+	"io/ioutil"
 	"path"
 	"testing"
 	"time"
@@ -73,7 +74,24 @@ func (t *SetModTimeTest) NonExistentPath() {
 }
 
 func (t *SetModTimeTest) File() {
-	ExpectEq("TODO", "")
+	t.path = path.Join(t.baseDir, "taco.txt")
+
+	// Create
+	err := ioutil.WriteFile(t.path, []byte(""), 0600)
+	AssertEq(nil, err)
+
+	// Call
+	t.call()
+	AssertEq(nil, t.err)
+
+	// List
+	entries := t.list()
+
+	AssertThat(entries, ElementsAre(Any()))
+	entry := entries[0]
+
+	AssertEq(fs.TypeFile, entry.Type)
+	ExpectTrue(t.mtime.Equal(entry.MTime), "MTime: %v", entry.MTime)
 }
 
 func (t *SetModTimeTest) Directory() {
