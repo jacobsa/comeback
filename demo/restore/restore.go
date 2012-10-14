@@ -166,31 +166,12 @@ func restoreFile(target string, scores []blob.Score) error {
 	return nil
 }
 
-// Like os.Chmod, but don't follow symlinks.
-func setPermissions(path string, permissions os.FileMode) error {
-	mode := syscallPermissions(permissions)
-
-	// Open the file without following symlinks. Use O_NONBLOCK to allow opening
-	// of named pipes without a writer.
-	fd, err := syscall.Open(path, syscall.O_NONBLOCK|syscall.O_SYMLINK, 0)
-	if err != nil {
-		return err
-	}
-
-	defer syscall.Close(fd)
-
-	// Call fchmod.
-	err = syscall.Fchmod(fd, mode)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // Restore the directory whose contents are described by the referenced blob to
 // the supplied target, which must already exist.
-func restoreDir(basePath, relPath string, score blob.Score) error {
+func restoreDir(
+	basePath, relPath string,
+	score blob.Score,
+	fileSystem fs.FileSystem) error {
 	// Load the appropriate blob.
 	blob, err := g_blobStore.Load(score)
 	if err != nil {
@@ -234,7 +215,8 @@ func restoreDir(basePath, relPath string, score blob.Score) error {
 				return fmt.Errorf("Mkdir: %v", err)
 			}
 
-			if err = restoreDir(basePath, entryRelPath, entry.Scores[0]); err != nil {
+			err = restoreDir(basePath, entryRelPath, entry.Scores[0], fileSystem)
+			if err != nil {
 				return fmt.Errorf("restoreDir: %v", err)
 			}
 
@@ -284,7 +266,8 @@ func restoreDir(basePath, relPath string, score blob.Score) error {
 		// Fix permissions, but not on devices (otherwise we get resource busy
 		// errors).
 		if entry.Type != fs.TypeBlockDevice && entry.Type != fs.TypeCharDevice {
-			if err := setPermissions(entryFullPath, entry.Permissions); err != nil {
+			err := fileSystem.SetPermissions(entryFullPath, entry.Permissions)
+			if err != nil {
 				return fmt.Errorf("setPermissions(%s): %v", entryFullPath, err)
 			}
 		}
@@ -399,6 +382,24 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Create a user registry.
+	userRegistry, err := sys.NewUserRegistry()
+	if err != nil {
+		log.Fatalf("Creating user registry: %v", err)
+	}
+
+	// Create a group registry.
+	groupRegistry, err := sys.NewGroupRegistry()
+	if err != nil {
+		log.Fatalf("Creating group registry: %v", err)
+	}
+
+	// Create a file system.
+	fileSystem, err := fs.NewFileSystem(userRegistry, groupRegistry)
+	if err != nil {
+		log.Fatalf("Creating file system: %v", err)
+	}
+
 	// Open a connection to SimpleDB.
 	db, err := sdb.NewSimpleDB(cfg.SdbRegion, cfg.AccessKey)
 	if err != nil {
@@ -467,7 +468,7 @@ func main() {
 	}
 
 	// Attempt a restore.
-	err = restoreDir(*g_target, "", job.Score)
+	err = restoreDir(*g_target, "", job.Score, fileSystem)
 	if err != nil {
 		log.Fatalf("Restoring: %v", err)
 	}
