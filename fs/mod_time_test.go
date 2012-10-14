@@ -17,7 +17,9 @@ package fs_test
 
 import (
 	"github.com/jacobsa/comeback/fs"
+	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
+	"path"
 	"testing"
 	"time"
 )
@@ -62,7 +64,12 @@ func (t *SetModTimeTest) list() []*fs.DirectoryEntry {
 ////////////////////////////////////////////////////////////////////////
 
 func (t *SetModTimeTest) NonExistentPath() {
-	ExpectEq("TODO", "")
+	t.path = path.Join(t.baseDir, "foobar")
+
+	// Call
+	t.call()
+
+	ExpectThat(t.err, Error(HasSubstr("no such")))
 }
 
 func (t *SetModTimeTest) File() {
