@@ -76,6 +76,70 @@ func (t *DirectoryRestorerTest) call() {
 // Tests
 ////////////////////////////////////////////////////////////////////////
 
-func (t *DirectoryRestorerTest) DoesFoo() {
+func (t *DirectoryRestorerTest) CallsBlobStore() {
+	ExpectEq("TODO", "")
+}
+
+func (t *DirectoryRestorerTest) BlobStoreReturnsError() {
+	ExpectEq("TODO", "")
+}
+
+func (t *DirectoryRestorerTest) BlobStoreReturnsJunk() {
+	ExpectEq("TODO", "")
+}
+
+func (t *DirectoryRestorerTest) NoEntries() {
+	ExpectEq("TODO", "")
+}
+
+func (t *DirectoryRestorerTest) FileEntry_CallsLinkForHardLink() {
+	ExpectEq("TODO", "")
+}
+
+func (t *DirectoryRestorerTest) FileEntry_LinkReturnsError() {
+	ExpectEq("TODO", "")
+}
+
+func (t *DirectoryRestorerTest) FileEntry_LinkSucceeds() {
+	ExpectEq("TODO", "")
+}
+
+func (t *DirectoryRestorerTest) FileEntry_CallsRestoreFile() {
+	ExpectEq("TODO", "")
+}
+
+func (t *DirectoryRestorerTest) FileEntry_RestoreFileReturnsError() {
+	ExpectEq("TODO", "")
+}
+
+func (t *DirectoryRestorerTest) FileEntry_RestoreFileSucceeds() {
+	ExpectEq("TODO", "")
+}
+
+func (t *DirectoryRestorerTest) CallsChown() {
+	ExpectEq("TODO", "")
+}
+
+func (t *DirectoryRestorerTest) ChownReturnsErrorForOneEntry() {
+	ExpectEq("TODO", "")
+}
+
+func (t *DirectoryRestorerTest) CallsSetPermissions() {
+	ExpectEq("TODO", "")
+}
+
+func (t *DirectoryRestorerTest) SetPermissionsReturnsErrorForOneEntry() {
+	ExpectEq("TODO", "")
+}
+
+func (t *DirectoryRestorerTest) CallsSetModTime() {
+	ExpectEq("TODO", "")
+}
+
+func (t *DirectoryRestorerTest) SetModTimeReturnsErrorForOneEntry() {
+	ExpectEq("TODO", "")
+}
+
+func (t *DirectoryRestorerTest) EverythingSucceeds() {
 	ExpectEq("TODO", "")
 }
