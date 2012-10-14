@@ -16,8 +16,10 @@
 package fs_test
 
 import (
+	"github.com/jacobsa/comeback/fs"
 	. "github.com/jacobsa/ogletest"
 	"testing"
+	"time"
 )
 
 func TestModTime(t *testing.T) { RunTests(t) }
@@ -28,9 +30,32 @@ func TestModTime(t *testing.T) { RunTests(t) }
 
 type SetModTimeTest struct {
 	fileSystemTest
+
+	path  string
+	mtime time.Time
+
+	err error
 }
 
 func init() { RegisterTestSuite(&SetModTimeTest{}) }
+
+func (t *SetModTimeTest) SetUp(i *TestInfo) {
+	// Common
+	t.fileSystemTest.SetUp(i)
+
+	// Set a default time.
+	t.mtime = time.Date(2012, time.August, 15, 12, 56, 00, 0, time.Local)
+}
+
+func (t *SetModTimeTest) call() {
+	t.err = t.fileSystem.SetModTime(t.path, t.mtime)
+}
+
+func (t *SetModTimeTest) list() []*fs.DirectoryEntry {
+	entries, err := t.fileSystem.ReadDir(t.baseDir)
+	AssertEq(nil, err)
+	return entries
+}
 
 func (t *SetModTimeTest) DoesFoo() {
 	ExpectEq("TODO", "")
