@@ -17,9 +17,7 @@ package main
 
 import (
 	"bytes"
-	"code.google.com/p/go.crypto/pbkdf2"
 	"crypto/sha256"
-	"encoding/base64"
 	"encoding/hex"
 	"flag"
 	"fmt"
@@ -36,7 +34,6 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
-	"math/rand"
 	"os"
 	"path"
 	"strconv"
@@ -49,42 +46,6 @@ var g_jobIdStr = flag.String("job_id", "", "The job ID to restore.")
 var g_target = flag.String("target", "", "The target directory.")
 
 var g_blobStore blob.Store
-
-// Keep this consistent with the item name used in the backup package.
-const markerItemName = "comeback_marker"
-const saltAttributeName = "password_salt"
-
-func getSalt(domain sdb.Domain) (salt []byte, err error) {
-	// Call the domain.
-	attrs, err := domain.GetAttributes(
-		markerItemName,
-		false, // No need to ask for a consistent read
-		[]string{saltAttributeName},
-	)
-
-	if err != nil {
-		err = fmt.Errorf("GetAttributes: %v", err)
-		return
-	}
-
-	if len(attrs) == 0 {
-		err = fmt.Errorf("Couldn't find salt in the supplied domain.")
-		return
-	}
-
-	if attrs[0].Name != saltAttributeName {
-		panic(fmt.Errorf("Unexpected attribute: %v", attrs[0]))
-	}
-
-	// Base64-decode the salt.
-	salt, err = base64.StdEncoding.DecodeString(attrs[0].Value)
-	if err != nil {
-		err = fmt.Errorf("base64.DecodeString(%s): %v", attrs[0].Value, err)
-		return
-	}
-
-	return
-}
 
 func fromHexHash(h string) (blob.Score, error) {
 	b, err := hex.DecodeString(h)
@@ -457,15 +418,9 @@ func main() {
 	}
 
 	// Read in the password.
-	password := []byte(readPassword("Enter crypto password: "))
+	password := readPassword("Enter crypto password: ")
 	if len(password) == 0 {
 		log.Fatalf("You must enter a password.")
-	}
-
-	// Load the salt.
-	salt, err := getSalt(domain)
-	if err != nil {
-		log.Fatalf("%v\n", err)
 	}
 
 	// Derive a crypto key from the password using PBKDF2, recommended for use by
@@ -474,17 +429,10 @@ func main() {
 	// 800-107 lists SHA-256 as an approved hash function.
 	const pbkdf2Iters = 4096
 	const keyLen = 32 // Minimum key length for AES-SIV
-	cryptoKey := pbkdf2.Key(password, salt, pbkdf2Iters, keyLen, sha256.New)
-
-	// Create the crypter.
-	crypter, err := crypto.NewCrypter(cryptoKey)
-	if err != nil {
-		log.Fatalf("Creating crypter: %v", err)
-	}
+	keyDeriver := crypto.NewPbkdf2KeyDeriver(pbkdf2Iters, keyLen, sha256.New)
 
 	// Create the backup registry.
-	randSrc := rand.New(rand.NewSource(time.Now().UnixNano()))
-	reg, err := registry.NewRegistry(domain, crypter, randSrc)
+	reg, crypter, err := registry.NewRegistry(domain, password, keyDeriver)
 	if err != nil {
 		log.Fatalf("Creating registry: %v", err)
 	}
