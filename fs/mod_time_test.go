@@ -20,6 +20,7 @@ import (
 	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
 	"io/ioutil"
+	"os"
 	"path"
 	"testing"
 	"time"
@@ -95,7 +96,24 @@ func (t *SetModTimeTest) File() {
 }
 
 func (t *SetModTimeTest) Directory() {
-	ExpectEq("TODO", "")
+	t.path = path.Join(t.baseDir, "taco")
+
+	// Create
+	err := os.Mkdir(t.path, 0700)
+	AssertEq(nil, err)
+
+	// Call
+	t.call()
+	AssertEq(nil, t.err)
+
+	// List
+	entries := t.list()
+
+	AssertThat(entries, ElementsAre(Any()))
+	entry := entries[0]
+
+	AssertEq(fs.TypeFile, entry.Type)
+	ExpectTrue(t.mtime.Equal(entry.MTime), "MTime: %v", entry.MTime)
 }
 
 func (t *SetModTimeTest) Symlink() {
