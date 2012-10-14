@@ -41,8 +41,9 @@ func syscallPermissions(permissions os.FileMode) (o uint32) {
 }
 
 func (fs *fileSystem) SetPermissions(path string, permissions os.FileMode) error {
-	// Open the file without following symlinks.
-	fd, err := syscall.Open(path, syscall.O_RDONLY|syscall.O_SYMLINK, 0)
+	// Open the file without following symlinks. Use O_NONBLOCK to allow opening
+	// of named pipes without a writer.
+	fd, err := syscall.Open(path, syscall.O_NONBLOCK|syscall.O_SYMLINK, 0)
 	if err != nil {
 		return err
 	}
