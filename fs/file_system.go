@@ -13,13 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package fs contains file system related functions and types.
 package fs
 
 import (
 	"github.com/jacobsa/comeback/sys"
 	"io"
 	"os"
+	"time"
 )
 
 // FileSystem represents operations performed on a real file system, but is an
@@ -36,6 +36,10 @@ type FileSystem interface {
 	// Write out the supplied data to the supplied path, truncating if the file
 	// already exists and creating with the supplied permissions otherwise.
 	WriteFile(path string, data []byte, permissions os.FileMode) error
+
+	// Set the modification time for the supplied path, without following
+	// symlinks.
+	SetModTime(path string, mtime time.Time) error
 }
 
 // Return a FileSystem that uses the real file system, along with the supplied
