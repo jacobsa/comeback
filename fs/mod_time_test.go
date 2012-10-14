@@ -112,7 +112,7 @@ func (t *SetModTimeTest) Directory() {
 	AssertThat(entries, ElementsAre(Any()))
 	entry := entries[0]
 
-	AssertEq(fs.TypeFile, entry.Type)
+	AssertEq(fs.TypeDirectory, entry.Type)
 	ExpectTrue(t.mtime.Equal(entry.MTime), "MTime: %v", entry.MTime)
 }
 
@@ -133,7 +133,7 @@ func (t *SetModTimeTest) Symlink() {
 	AssertThat(entries, ElementsAre(Any()))
 	entry := entries[0]
 
-	AssertEq(fs.TypeFile, entry.Type)
+	AssertEq(fs.TypeSymlink, entry.Type)
 	ExpectTrue(t.mtime.Equal(entry.MTime), "MTime: %v", entry.MTime)
 }
 
@@ -154,6 +154,6 @@ func (t *SetModTimeTest) NamedPipe() {
 	AssertThat(entries, ElementsAre(Any()))
 	entry := entries[0]
 
-	AssertEq(fs.TypeFile, entry.Type)
+	AssertEq(fs.TypeNamedPipe, entry.Type)
 	ExpectTrue(t.mtime.Equal(entry.MTime), "MTime: %v", entry.MTime)
 }
