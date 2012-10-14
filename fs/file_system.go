@@ -37,9 +37,11 @@ type FileSystem interface {
 	// already exists and creating with the supplied permissions otherwise.
 	WriteFile(path string, data []byte, permissions os.FileMode) error
 
-	// Set the modification time for the supplied path, without following
-	// symlinks.
+	// Set the modification time for the supplied path, not following symlinks.
 	SetModTime(path string, mtime time.Time) error
+
+	// Set permissions for the supplied path, not following symlinks.
+	SetPermissions(path string, permissions os.FileMode) error
 }
 
 // Return a FileSystem that uses the real file system, along with the supplied
