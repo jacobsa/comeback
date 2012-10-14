@@ -19,14 +19,12 @@ import (
 	"github.com/jacobsa/comeback/fs"
 	"github.com/jacobsa/comeback/sys"
 	"github.com/jacobsa/comeback/sys/group"
-	. "github.com/jacobsa/oglematchers"
 	"github.com/jacobsa/oglemock"
 	. "github.com/jacobsa/ogletest"
 	"io/ioutil"
 	"log"
 	"os"
 	"os/user"
-	"path"
 	"strconv"
 	"syscall"
 	"testing"
@@ -139,81 +137,4 @@ func (t *fileSystemTest) TearDown() {
 	if err != nil {
 		log.Fatalf("Couldn't remove: %s", t.baseDir)
 	}
-}
-
-////////////////////////////////////////////////////////////////////////
-// WriteFile
-////////////////////////////////////////////////////////////////////////
-
-type WriteFileTest struct {
-	fileSystemTest
-}
-
-func init() { RegisterTestSuite(&WriteFileTest{}) }
-
-func (t *WriteFileTest) ParentDoesntExist() {
-	filepath := path.Join(t.baseDir, "foo", "bar")
-	data := []byte{}
-
-	err := t.fileSystem.WriteFile(filepath, data, 0600)
-	ExpectThat(err, Error(HasSubstr("foo/bar")))
-	ExpectThat(err, Error(HasSubstr("no such")))
-}
-
-func (t *WriteFileTest) NoWritePermissionsForParent() {
-	parent := path.Join(t.baseDir, "foo")
-	err := os.Mkdir(parent, 0555)
-	AssertEq(nil, err)
-
-	filepath := path.Join(parent, "bar")
-	data := []byte{}
-
-	err = t.fileSystem.WriteFile(filepath, data, 0600)
-	ExpectThat(err, Error(HasSubstr("permission")))
-}
-
-func (t *WriteFileTest) NoWritePermissionsForFile() {
-	filepath := path.Join(t.baseDir, "foo.txt")
-	err := ioutil.WriteFile(filepath, []byte(""), 0400)
-	AssertEq(nil, err)
-
-	data := []byte{}
-
-	err = t.fileSystem.WriteFile(filepath, data, 0600)
-	ExpectThat(err, Error(HasSubstr("permission")))
-}
-
-func (t *WriteFileTest) AlreadyExists() {
-	// Create the file.
-	filepath := path.Join(t.baseDir, "foo.txt")
-	err := ioutil.WriteFile(filepath, []byte("blahblah"), 0600)
-	AssertEq(nil, err)
-
-	// Write it again.
-	data := []byte("taco")
-	err = t.fileSystem.WriteFile(filepath, data, 0644)
-	AssertEq(nil, err)
-
-	// Check its contents.
-	contents, err := ioutil.ReadFile(filepath)
-	AssertEq(nil, err)
-	ExpectThat(contents, DeepEquals(data))
-}
-
-func (t *WriteFileTest) DoesntYetExist() {
-	// Write the file.
-	filepath := path.Join(t.baseDir, "foo.txt")
-	data := []byte("taco")
-	err := t.fileSystem.WriteFile(filepath, data, 0641)
-	AssertEq(nil, err)
-
-	// Check its contents.
-	contents, err := ioutil.ReadFile(filepath)
-	AssertEq(nil, err)
-	ExpectThat(contents, DeepEquals(data))
-
-	// Check its permissions.
-	fi, err := os.Stat(filepath)
-	AssertEq(nil, err)
-	ExpectEq(0641, fi.Mode().Perm())
 }

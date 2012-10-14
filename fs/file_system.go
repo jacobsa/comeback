@@ -19,7 +19,6 @@ package fs
 import (
 	"github.com/jacobsa/comeback/sys"
 	"io"
-	"io/ioutil"
 	"os"
 )
 
@@ -50,8 +49,4 @@ func NewFileSystem(
 type fileSystem struct {
 	userRegistry  sys.UserRegistry
 	groupRegistry sys.GroupRegistry
-}
-
-func (f *fileSystem) WriteFile(path string, data []byte, perm os.FileMode) error {
-	return ioutil.WriteFile(path, data, perm)
 }
