@@ -17,6 +17,7 @@ package fs
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"syscall"
 )
@@ -47,4 +48,12 @@ func (fs *fileSystem) CreateCharDevice(
 	}
 
 	return nil
+}
+
+func (fs *fileSystem) CreateFile(
+	path string,
+	perms os.FileMode,
+) (w io.WriteCloser, err error) {
+	err = fmt.Errorf("TODO")
+	return
 }

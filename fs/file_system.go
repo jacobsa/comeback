@@ -33,6 +33,10 @@ type FileSystem interface {
 	// Open the file named by the supplied path for reading.
 	OpenForReading(path string) (r io.ReadCloser, err error)
 
+	// Create a file at the supplied path with the supplied permissions, opening
+	// it for writing. It is an error if the file already exists.
+	CreateFile(path string, permissions os.FileMode) (w io.WriteCloser, err error)
+
 	// Write out the supplied data to the supplied path, truncating if the file
 	// already exists and creating with the supplied permissions otherwise.
 	WriteFile(path string, data []byte, permissions os.FileMode) error
