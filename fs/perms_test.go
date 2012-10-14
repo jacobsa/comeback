@@ -124,7 +124,29 @@ func (t *SetPermissionsTest) Symlink() {
 	AssertThat(entries, ElementsAre(Any()))
 	entry := entries[0]
 
-	AssertEq(fs.TypeDirectory, entry.Type)
+	AssertEq(fs.TypeSymlink, entry.Type)
+	ExpectEq(0754, entry.Permissions)
+}
+
+func (t *SetPermissionsTest) NamedPipe() {
+	t.path = path.Join(t.baseDir, "taco")
+	t.perms = 0754
+
+	// Create
+	err := makeNamedPipe(t.path, 0300)
+	AssertEq(nil, err)
+
+	// Call
+	t.call()
+	AssertEq(nil, t.err)
+
+	// List
+	entries := t.list()
+
+	AssertThat(entries, ElementsAre(Any()))
+	entry := entries[0]
+
+	AssertEq(fs.TypeNamedPipe, entry.Type)
 	ExpectEq(0754, entry.Permissions)
 }
 
