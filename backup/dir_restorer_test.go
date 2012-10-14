@@ -112,7 +112,27 @@ func (t *DirectoryRestorerTest) FileEntry_RestoreFileReturnsError() {
 	ExpectEq("TODO", "")
 }
 
-func (t *DirectoryRestorerTest) FileEntry_RestoreFileSucceeds() {
+func (t *DirectoryRestorerTest) DirEntry_ZeroScores() {
+	ExpectEq("TODO", "")
+}
+
+func (t *DirectoryRestorerTest) DirEntry_TwoScores() {
+	ExpectEq("TODO", "")
+}
+
+func (t *DirectoryRestorerTest) DirEntry_CallsMkdir() {
+	ExpectEq("TODO", "")
+}
+
+func (t *DirectoryRestorerTest) DirEntry_MkdirReturnsError() {
+	ExpectEq("TODO", "")
+}
+
+func (t *DirectoryRestorerTest) DirEntry_CallsWrapped() {
+	ExpectEq("TODO", "")
+}
+
+func (t *DirectoryRestorerTest) DirEntry_WrappedReturnsError() {
 	ExpectEq("TODO", "")
 }
 
