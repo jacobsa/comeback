@@ -52,10 +52,6 @@ type fileSystem struct {
 	groupRegistry sys.GroupRegistry
 }
 
-func (f *fileSystem) OpenForReading(path string) (r io.ReadCloser, err error) {
-	return os.Open(path)
-}
-
 func (f *fileSystem) WriteFile(path string, data []byte, perm os.FileMode) error {
 	return ioutil.WriteFile(path, data, perm)
 }

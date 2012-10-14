@@ -142,63 +142,6 @@ func (t *fileSystemTest) TearDown() {
 }
 
 ////////////////////////////////////////////////////////////////////////
-// OpenForReading
-////////////////////////////////////////////////////////////////////////
-
-type OpenForReadingTest struct {
-	fileSystemTest
-}
-
-func init() { RegisterTestSuite(&OpenForReadingTest{}) }
-
-func (t *OpenForReadingTest) NonExistentFile() {
-	filepath := path.Join(t.baseDir, "foobar")
-
-	_, err := t.fileSystem.OpenForReading(filepath)
-	ExpectThat(err, Error(HasSubstr("no such")))
-}
-
-func (t *OpenForReadingTest) NoReadPermissions() {
-	filepath := path.Join(t.baseDir, "foo.txt")
-	err := ioutil.WriteFile(filepath, []byte("foo"), 0300)
-	AssertEq(nil, err)
-
-	_, err = t.fileSystem.OpenForReading(filepath)
-	ExpectThat(err, Error(HasSubstr("permission")))
-	ExpectThat(err, Error(HasSubstr("denied")))
-}
-
-func (t *OpenForReadingTest) EmptyFile() {
-	filepath := path.Join(t.baseDir, "foo.txt")
-	contents := []byte{}
-	err := ioutil.WriteFile(filepath, contents, 0400)
-	AssertEq(nil, err)
-
-	f, err := t.fileSystem.OpenForReading(filepath)
-	AssertEq(nil, err)
-	defer f.Close()
-
-	data, err := ioutil.ReadAll(f)
-	AssertEq(nil, err)
-	ExpectThat(data, DeepEquals(contents))
-}
-
-func (t *OpenForReadingTest) FileWithContents() {
-	filepath := path.Join(t.baseDir, "foo.txt")
-	contents := []byte{0xde, 0xad, 0xbe, 0xef}
-	err := ioutil.WriteFile(filepath, contents, 0400)
-	AssertEq(nil, err)
-
-	f, err := t.fileSystem.OpenForReading(filepath)
-	AssertEq(nil, err)
-	defer f.Close()
-
-	data, err := ioutil.ReadAll(f)
-	AssertEq(nil, err)
-	ExpectThat(data, DeepEquals(contents))
-}
-
-////////////////////////////////////////////////////////////////////////
 // WriteFile
 ////////////////////////////////////////////////////////////////////////
 
