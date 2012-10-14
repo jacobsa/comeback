@@ -58,7 +58,6 @@ func (t *SetPermissionsTest) NonExistentPath() {
 	// Call
 	t.call()
 
-	ExpectThat(t.err, Error(HasSubstr("foobar")))
 	ExpectThat(t.err, Error(HasSubstr("no such")))
 }
 
