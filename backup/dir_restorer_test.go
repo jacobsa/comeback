@@ -136,6 +136,38 @@ func (t *DirectoryRestorerTest) DirEntry_WrappedReturnsError() {
 	ExpectEq("TODO", "")
 }
 
+func (t *SymlinkectoryRestorerTest) SymlinkEntry_CallsSymlink() {
+	ExpectEq("TODO", "")
+}
+
+func (t *SymlinkectoryRestorerTest) SymlinkEntry_SymlinkReturnsError() {
+	ExpectEq("TODO", "")
+}
+
+func (t *SymlinkectoryRestorerTest) PipeEntry_CallsCreate() {
+	ExpectEq("TODO", "")
+}
+
+func (t *SymlinkectoryRestorerTest) PipeEntry_CreateReturnsError() {
+	ExpectEq("TODO", "")
+}
+
+func (t *SymlinkectoryRestorerTest) BlockDevEntry_CallsCreate() {
+	ExpectEq("TODO", "")
+}
+
+func (t *SymlinkectoryRestorerTest) BlockDevEntry_CreateReturnsError() {
+	ExpectEq("TODO", "")
+}
+
+func (t *SymlinkectoryRestorerTest) CharDevEntry_CallsCreate() {
+	ExpectEq("TODO", "")
+}
+
+func (t *SymlinkectoryRestorerTest) CharDevEntry_CreateReturnsError() {
+	ExpectEq("TODO", "")
+}
+
 func (t *DirectoryRestorerTest) CallsChown() {
 	ExpectEq("TODO", "")
 }
