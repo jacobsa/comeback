@@ -37,7 +37,7 @@ func (fs *fileSystem) CreateBlockDevice(
 	return nil
 }
 
-func (fs *fileSystem) CreateCharDervice(
+func (fs *fileSystem) CreateCharDevice(
 	path string,
 	perms os.FileMode,
 	devNum int32) error {

@@ -46,7 +46,7 @@ type FileSystem interface {
 	// Create a file system object of various types.
 	CreateNamedPipe(path string, permissions os.FileMode) error
 	CreateBlockDevice(path string, permissions os.FileMode, devNum int32) error
-	CreateCharDervice(path string, permissions os.FileMode, devNum int32) error
+	CreateCharDevice(path string, permissions os.FileMode, devNum int32) error
 }
 
 // Return a FileSystem that uses the real file system, along with the supplied
