@@ -13,6 +13,7 @@ import (
 	io "io"
 	os "os"
 	runtime "runtime"
+	time "time"
 	unsafe "unsafe"
 )
 
@@ -41,6 +42,78 @@ func (m *mockFileSystem) Oglemock_Id() uintptr {
 
 func (m *mockFileSystem) Oglemock_Description() string {
 	return m.description
+}
+
+func (m *mockFileSystem) CreateBlockDevice(p0 string, p1 os.FileMode, p2 int32) (o0 error) {
+	// Get a file name and line number for the caller.
+	_, file, line, _ := runtime.Caller(1)
+
+	// Hand the call off to the controller, which does most of the work.
+	retVals := m.controller.HandleMethodCall(
+		m,
+		"CreateBlockDevice",
+		file,
+		line,
+		[]interface{}{p0, p1, p2})
+
+	if len(retVals) != 1 {
+		panic(fmt.Sprintf("mockFileSystem.CreateBlockDevice: invalid return values: %v", retVals))
+	}
+
+	// o0 error
+	if retVals[0] != nil {
+		o0 = retVals[0].(error)
+	}
+
+	return
+}
+
+func (m *mockFileSystem) CreateCharDevice(p0 string, p1 os.FileMode, p2 int32) (o0 error) {
+	// Get a file name and line number for the caller.
+	_, file, line, _ := runtime.Caller(1)
+
+	// Hand the call off to the controller, which does most of the work.
+	retVals := m.controller.HandleMethodCall(
+		m,
+		"CreateCharDevice",
+		file,
+		line,
+		[]interface{}{p0, p1, p2})
+
+	if len(retVals) != 1 {
+		panic(fmt.Sprintf("mockFileSystem.CreateCharDevice: invalid return values: %v", retVals))
+	}
+
+	// o0 error
+	if retVals[0] != nil {
+		o0 = retVals[0].(error)
+	}
+
+	return
+}
+
+func (m *mockFileSystem) CreateNamedPipe(p0 string, p1 os.FileMode) (o0 error) {
+	// Get a file name and line number for the caller.
+	_, file, line, _ := runtime.Caller(1)
+
+	// Hand the call off to the controller, which does most of the work.
+	retVals := m.controller.HandleMethodCall(
+		m,
+		"CreateNamedPipe",
+		file,
+		line,
+		[]interface{}{p0, p1})
+
+	if len(retVals) != 1 {
+		panic(fmt.Sprintf("mockFileSystem.CreateNamedPipe: invalid return values: %v", retVals))
+	}
+
+	// o0 error
+	if retVals[0] != nil {
+		o0 = retVals[0].(error)
+	}
+
+	return
 }
 
 func (m *mockFileSystem) OpenForReading(p0 string) (o0 io.ReadCloser, o1 error) {
@@ -96,6 +169,54 @@ func (m *mockFileSystem) ReadDir(p0 string) (o0 []*fs.DirectoryEntry, o1 error) 
 	// o1 error
 	if retVals[1] != nil {
 		o1 = retVals[1].(error)
+	}
+
+	return
+}
+
+func (m *mockFileSystem) SetModTime(p0 string, p1 time.Time) (o0 error) {
+	// Get a file name and line number for the caller.
+	_, file, line, _ := runtime.Caller(1)
+
+	// Hand the call off to the controller, which does most of the work.
+	retVals := m.controller.HandleMethodCall(
+		m,
+		"SetModTime",
+		file,
+		line,
+		[]interface{}{p0, p1})
+
+	if len(retVals) != 1 {
+		panic(fmt.Sprintf("mockFileSystem.SetModTime: invalid return values: %v", retVals))
+	}
+
+	// o0 error
+	if retVals[0] != nil {
+		o0 = retVals[0].(error)
+	}
+
+	return
+}
+
+func (m *mockFileSystem) SetPermissions(p0 string, p1 os.FileMode) (o0 error) {
+	// Get a file name and line number for the caller.
+	_, file, line, _ := runtime.Caller(1)
+
+	// Hand the call off to the controller, which does most of the work.
+	retVals := m.controller.HandleMethodCall(
+		m,
+		"SetPermissions",
+		file,
+		line,
+		[]interface{}{p0, p1})
+
+	if len(retVals) != 1 {
+		panic(fmt.Sprintf("mockFileSystem.SetPermissions: invalid return values: %v", retVals))
+	}
+
+	// o0 error
+	if retVals[0] != nil {
+		o0 = retVals[0].(error)
 	}
 
 	return
