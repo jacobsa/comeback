@@ -89,7 +89,7 @@ func (t *SetPermissionsTest) Directory() {
 	t.perms = 0754
 
 	// Create
-	err := os.Mkdir(t.path, 0300)
+	err := os.Mkdir(t.path, 0700)
 	AssertEq(nil, err)
 
 	// Call
@@ -133,7 +133,7 @@ func (t *SetPermissionsTest) NamedPipe() {
 	t.perms = 0754
 
 	// Create
-	err := makeNamedPipe(t.path, 0300)
+	err := makeNamedPipe(t.path, 0700)
 	AssertEq(nil, err)
 
 	// Call
