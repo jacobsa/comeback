@@ -20,6 +20,7 @@ import (
 	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
 	"io"
+	"io/ioutil"
 	"os"
 	"path"
 	"testing"
@@ -91,7 +92,14 @@ func (t *CreateFileTest) NoPermissionsForParent() {
 }
 
 func (t *CreateFileTest) FileAlreadyExists() {
-	ExpectEq("TODO", "")
+	// Create
+	err := ioutil.WriteFile(t.path, []byte{}, 0644)
+	AssertEq(nil, err)
+
+	// Call
+	t.call()
+
+	ExpectThat(t.err, Error(HasSubstr("TODO")))
 }
 
 func (t *CreateFileTest) SetsPermissions() {
