@@ -66,6 +66,42 @@ func (t *FileRestorerTest) call() {
 // Tests
 ////////////////////////////////////////////////////////////////////////
 
-func (t *FileRestorerTest) DoesFoo() {
+func (t *FileRestorerTest) CallsCreateFile() {
+	ExpectEq("TODO", "")
+}
+
+func (t *FileRestorerTest) CreateFileReturnsError() {
+	ExpectEq("TODO", "")
+}
+
+func (t *FileRestorerTest) NoBlobs() {
+	ExpectEq("TODO", "")
+}
+
+func (t *FileRestorerTest) CallsBlobStore() {
+	ExpectEq("TODO", "")
+}
+
+func (t *FileRestorerTest) BlobStoreReturnsErrorForOneCall() {
+	ExpectEq("TODO", "")
+}
+
+func (t *FileRestorerTest) WritesBlobs() {
+	ExpectEq("TODO", "")
+}
+
+func (t *FileRestorerTest) WriteReturnsErrorForOneCall() {
+	ExpectEq("TODO", "")
+}
+
+func (t *FileRestorerTest) CallsClose() {
+	ExpectEq("TODO", "")
+}
+
+func (t *FileRestorerTest) CloseReturnsError() {
+	ExpectEq("TODO", "")
+}
+
+func (t *FileRestorerTest) EverythingSucceeds() {
 	ExpectEq("TODO", "")
 }
