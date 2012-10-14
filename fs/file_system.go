@@ -46,7 +46,7 @@ type FileSystem interface {
 	CreateBlockDevice(path string, permissions os.FileMode, devNum int32) error
 	CreateCharDevice(path string, permissions os.FileMode, devNum int32) error
 	CreateSymlink(target, source string, permissions os.FileMode) error
-	CreateHardLink(target, source string, permissions os.FileMode) error
+	CreateHardLink(target, source string) error
 
 	// Set the modification time for the supplied path, not following symlinks.
 	SetModTime(path string, mtime time.Time) error
