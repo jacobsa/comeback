@@ -117,7 +117,24 @@ func (t *SetModTimeTest) Directory() {
 }
 
 func (t *SetModTimeTest) Symlink() {
-	ExpectEq("TODO", "")
+	t.path = path.Join(t.baseDir, "taco")
+
+	// Create
+	err := os.Symlink("/foo/burrito", t.path)
+	AssertEq(nil, err)
+
+	// Call
+	t.call()
+	AssertEq(nil, t.err)
+
+	// List
+	entries := t.list()
+
+	AssertThat(entries, ElementsAre(Any()))
+	entry := entries[0]
+
+	AssertEq(fs.TypeFile, entry.Type)
+	ExpectTrue(t.mtime.Equal(entry.MTime), "MTime: %v", entry.MTime)
 }
 
 func (t *SetModTimeTest) NamedPipe() {
