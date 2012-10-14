@@ -61,6 +61,22 @@ func (t *SetModTimeTest) list() []*fs.DirectoryEntry {
 // Tests
 ////////////////////////////////////////////////////////////////////////
 
-func (t *SetModTimeTest) DoesFoo() {
+func (t *SetModTimeTest) NonExistentPath() {
+	ExpectEq("TODO", "")
+}
+
+func (t *SetModTimeTest) File() {
+	ExpectEq("TODO", "")
+}
+
+func (t *SetModTimeTest) Directory() {
+	ExpectEq("TODO", "")
+}
+
+func (t *SetModTimeTest) Symlink() {
+	ExpectEq("TODO", "")
+}
+
+func (t *SetModTimeTest) NamedPipe() {
 	ExpectEq("TODO", "")
 }
