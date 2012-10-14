@@ -56,6 +56,35 @@ func (r *fileRestorer) RestoreFile(
 	path string,
 	perms os.FileMode,
 ) (err error) {
-	err = fmt.Errorf("TODO")
+	// Open the file for writing.
+	file, err := r.fileSystem.CreateFile(path, perms)
+	if err != nil {
+		err = fmt.Errorf("CreateFile: %v", err)
+		return
+	}
+
+	defer func() {
+		if err = file.Close(); err != nil {
+			err = fmt.Errorf("Close: %v", err)
+		}
+	}()
+
+	// Process each blob.
+	for _, score := range scores {
+		// Load the blob.
+		var blob []byte
+		blob, err = r.blobStore.Load(score)
+		if err != nil {
+			err = fmt.Errorf("blob.Store.Load: %v", err)
+			return
+		}
+
+		// Write it to the file.
+		if _, err = file.Write(blob); err != nil {
+			err = fmt.Errorf("Write: %v", err)
+			return
+		}
+	}
+
 	return
 }
