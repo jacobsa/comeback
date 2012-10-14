@@ -38,7 +38,6 @@ import (
 	"path"
 	"strconv"
 	"syscall"
-	"time"
 )
 
 var g_configFile = flag.String("config", "", "Path to config file.")
@@ -102,36 +101,6 @@ func chooseGroupId(gid sys.GroupId, groupname *string) (sys.GroupId, error) {
 	}
 
 	return betterGid, nil
-}
-
-// Set the modification time for the supplied path without following symlinks
-// (as syscall.Chtimes and therefore os.Chtimes do).
-//
-// c.f. http://stackoverflow.com/questions/10608724/set-modification-date-on-symbolic-link-in-cocoa
-func setModTime(path string, mtime time.Time) error {
-	// Open the file without following symlinks. Use O_NONBLOCK to allow opening
-	// of named pipes without a writer.
-	fd, err := syscall.Open(path, syscall.O_NONBLOCK|syscall.O_SYMLINK, 0)
-	if err != nil {
-		return err
-	}
-
-	defer syscall.Close(fd)
-
-	// Call futimes.
-	var utimes [2]syscall.Timeval
-	atime := time.Now()
-	atime_ns := atime.UnixNano()
-	mtime_ns := mtime.UnixNano()
-	utimes[0] = syscall.NsecToTimeval(atime_ns)
-	utimes[1] = syscall.NsecToTimeval(mtime_ns)
-
-	err = syscall.Futimes(fd, utimes[0:])
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 // Restore the file whose contents are described by the referenced blobs to the
@@ -268,15 +237,16 @@ func restoreDir(
 		if entry.Type != fs.TypeBlockDevice && entry.Type != fs.TypeCharDevice {
 			err := fileSystem.SetPermissions(entryFullPath, entry.Permissions)
 			if err != nil {
-				return fmt.Errorf("setPermissions(%s): %v", entryFullPath, err)
+				return fmt.Errorf("SetPermissions(%s): %v", entryFullPath, err)
 			}
 		}
 
 		// Fix modification time, but not on devices (otherwise we get resource
 		// busy errors).
 		if entry.Type != fs.TypeBlockDevice && entry.Type != fs.TypeCharDevice {
-			if err = setModTime(entryFullPath, entry.MTime); err != nil {
-				return fmt.Errorf("setModTime(%s): %v", entryFullPath, err)
+			err = fileSystem.SetModTime(entryFullPath, entry.MTime)
+			if err != nil {
+				return fmt.Errorf("SetModTime(%s): %v", entryFullPath, err)
 			}
 		}
 	}
