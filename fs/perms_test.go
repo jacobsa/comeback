@@ -128,10 +128,24 @@ func (t *SetPermissionsTest) Symlink() {
 	ExpectEq(0754, entry.Permissions)
 }
 
-func (t *SetPermissionsTest) Device() {
-	ExpectEq("TODO", "")
-}
-
 func (t *SetPermissionsTest) IgnoresOtherBits() {
-	ExpectEq("TODO", "")
+	t.path = path.Join(t.baseDir, "taco.txt")
+	t.perms = 0754 | os.ModeNamedPipe | os.ModeTemporary
+
+	// Create
+	err := ioutil.WriteFile(t.path, []byte(""), 0600)
+	AssertEq(nil, err)
+
+	// Call
+	t.call()
+	AssertEq(nil, t.err)
+
+	// List
+	entries := t.list()
+
+	AssertThat(entries, ElementsAre(Any()))
+	entry := entries[0]
+
+	AssertEq(fs.TypeFile, entry.Type)
+	ExpectEq(0754, entry.Permissions)
 }
