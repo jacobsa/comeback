@@ -170,7 +170,28 @@ func (t *FileRestorerTest) BlobStoreReturnsErrorForOneCall() {
 }
 
 func (t *FileRestorerTest) WritesBlobs() {
-	ExpectEq("TODO", "")
+	t.scores = []blob.Score{
+		blob.ComputeScore([]byte("foo")),
+		blob.ComputeScore([]byte("bar")),
+	}
+
+	// File system
+	ExpectCall(t.fileSystem, "CreateFile")(Any(), Any()).
+		WillOnce(oglemock.Return(&t.file, nil))
+
+	// Blob store
+	blob0 := []byte("taco")
+	blob1 := []byte("burrito")
+
+	ExpectCall(t.blobStore, "Load")(Any()).
+		WillOnce(oglemock.Return(blob0, nil)).
+		WillOnce(oglemock.Return(blob1, nil))
+
+	// Call
+	t.call()
+
+	AssertTrue(t.file.closeCalled)
+	ExpectEq("tacoburrito", t.file.String())
 }
 
 func (t *FileRestorerTest) WriteReturnsErrorForOneCall() {
