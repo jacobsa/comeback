@@ -123,5 +123,21 @@ func (t *CreateFileTest) CreatesCorrectEntry() {
 }
 
 func (t *CreateFileTest) SavesDataToCorrectPlace() {
-	ExpectEq("TODO", "")
+	// Call
+	t.call()
+	AssertEq(nil, t.err)
+
+	// Write
+	expected := []byte("taco")
+	_, err := t.w.Write(expected)
+	AssertEq(nil, err)
+
+	// Close
+	AssertEq(nil, t.w.Close())
+
+	// Read
+	data, err := ioutil.ReadFile(t.path)
+	AssertEq(nil, err)
+
+	ExpectThat(data, DeepEquals(expected))
 }
