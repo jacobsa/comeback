@@ -37,9 +37,10 @@ type FileSystem interface {
 	// it for writing. It is an error if the file already exists.
 	CreateFile(path string, permissions os.FileMode) (w io.WriteCloser, err error)
 
-	// Write out the supplied data to the supplied path, truncating if the file
-	// already exists and creating with the supplied permissions otherwise.
-	WriteFile(path string, data []byte, permissions os.FileMode) error
+	// Create a file system object of various types.
+	CreateNamedPipe(path string, permissions os.FileMode) error
+	CreateBlockDevice(path string, permissions os.FileMode, devNum int32) error
+	CreateCharDevice(path string, permissions os.FileMode, devNum int32) error
 
 	// Set the modification time for the supplied path, not following symlinks.
 	SetModTime(path string, mtime time.Time) error
@@ -47,10 +48,9 @@ type FileSystem interface {
 	// Set permissions for the supplied path, not following symlinks.
 	SetPermissions(path string, permissions os.FileMode) error
 
-	// Create a file system object of various types.
-	CreateNamedPipe(path string, permissions os.FileMode) error
-	CreateBlockDevice(path string, permissions os.FileMode, devNum int32) error
-	CreateCharDevice(path string, permissions os.FileMode, devNum int32) error
+	// Write out the supplied data to the supplied path, truncating if the file
+	// already exists and creating with the supplied permissions otherwise.
+	WriteFile(path string, data []byte, permissions os.FileMode) error
 }
 
 // Return a FileSystem that uses the real file system, along with the supplied
