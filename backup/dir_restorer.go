@@ -127,3 +127,45 @@ func (r *dirRestorer) RestoreDirectory(
 	err = fmt.Errorf("TODO")
 	return
 }
+
+func (r *dirRestorer) chooseUserId(
+	uid sys.UserId,
+	username *string,
+) (sys.UserId, error) {
+	// If there is no symbolic username, just return the UID.
+	if username == nil {
+		return uid, nil
+	}
+
+	// Attempt to look up the username. If it's not found, return the UID.
+	betterUid, err := r.userRegistry.FindByName(*username)
+
+	if _, ok := err.(sys.NotFoundError); ok {
+		return uid, nil
+	} else if err != nil {
+		return 0, fmt.Errorf("userRegistry.FindByName: %v", err)
+	}
+
+	return betterUid, nil
+}
+
+func (r *dirRestorer) chooseGroupId(
+	gid sys.GroupId,
+	groupname *string,
+) (sys.GroupId, error) {
+	// If there is no symbolic groupname, just return the UID.
+	if groupname == nil {
+		return gid, nil
+	}
+
+	// Attempt to look up the groupname. If it's not found, return the UID.
+	betterGid, err := r.groupRegistry.FindByName(*groupname)
+
+	if _, ok := err.(sys.NotFoundError); ok {
+		return gid, nil
+	} else if err != nil {
+		return 0, fmt.Errorf("groupRegistry.FindByName: %v", err)
+	}
+
+	return betterGid, nil
+}
