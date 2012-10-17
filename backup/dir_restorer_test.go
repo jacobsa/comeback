@@ -702,7 +702,36 @@ func (t *DirectoryRestorerTest) CallsChown() {
 }
 
 func (t *DirectoryRestorerTest) ChownReturnsErrorForOneEntry() {
-	ExpectEq("TODO", "")
+	// Blob store
+	entries := []*fs.DirectoryEntry{
+		&fs.DirectoryEntry{
+			Type: fs.TypeFile,
+		},
+		&fs.DirectoryEntry{
+			Type: fs.TypeFile,
+		},
+		&fs.DirectoryEntry{
+			Type: fs.TypeFile,
+		},
+	}
+
+	ExpectCall(t.blobStore, "Load")(Any()).
+		WillOnce(returnEntries(entries))
+
+	// Uninteresting calls
+	ExpectCall(t.fileRestorer, "RestoreFile")(Any(), Any()).
+		WillRepeatedly(oglemock.Return(nil))
+
+	// Chown
+	ExpectCall(t.fileSystem, "Chown")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return(nil)).
+		WillOnce(oglemock.Return(errors.New("taco")))
+
+	// Call
+	t.call()
+
+	ExpectThat(t.err, Error(HasSubstr("Chown")))
+	ExpectThat(t.err, Error(HasSubstr("taco")))
 }
 
 func (t *DirectoryRestorerTest) CallsUserRegistry() {
