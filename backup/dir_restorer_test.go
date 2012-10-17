@@ -43,6 +43,10 @@ func returnEntries(entries []*fs.DirectoryEntry) oglemock.Action {
 	return oglemock.Return(data, nil)
 }
 
+func makeStrPtr(s string) *string {
+	return &s
+}
+
 type DirectoryRestorerTest struct {
 	blobStore    mock_blob.MockStore
 	fileSystem   mock_fs.MockFileSystem
@@ -139,7 +143,29 @@ func (t *DirectoryRestorerTest) NoEntries() {
 }
 
 func (t *DirectoryRestorerTest) FileEntry_CallsLinkForHardLink() {
-	ExpectEq("TODO", "")
+	t.basePath = "/foo"
+	t.relPath = "bar/baz"
+
+	// Blob store
+	entries := []*fs.DirectoryEntry{
+		&fs.DirectoryEntry{
+			Name: "taco",
+			Type: fs.TypeFile,
+			HardLinkTarget: makeStrPtr("burrito/enchilada"),
+		},
+	}
+
+	ExpectCall(t.blobStore, "Load")(Any()).
+		WillOnce(returnEntries(entries))
+
+	// File system
+	ExpectCall(t.fileSystem, "CreateHardLink")(
+		"/foo/burrito/enchilada",
+		"/foo/bar/baz/taco",
+	).WillOnce(oglemock.Return(errors.New("")))
+
+	// Call
+	t.call()
 }
 
 func (t *DirectoryRestorerTest) FileEntry_LinkReturnsError() {
