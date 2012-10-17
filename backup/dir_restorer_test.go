@@ -91,7 +91,15 @@ func (t *DirectoryRestorerTest) CallsBlobStore() {
 }
 
 func (t *DirectoryRestorerTest) BlobStoreReturnsError() {
-	ExpectEq("TODO", "")
+	// Blob store
+	ExpectCall(t.blobStore, "Load")(Any()).
+		WillOnce(oglemock.Return(nil, errors.New("taco")))
+
+	// Call
+	t.call()
+
+	ExpectThat(t.err, Error(HasSubstr("Load")))
+	ExpectThat(t.err, Error(HasSubstr("taco")))
 }
 
 func (t *DirectoryRestorerTest) BlobStoreReturnsJunk() {
