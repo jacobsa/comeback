@@ -620,34 +620,39 @@ func (t *DirectoryRestorerTest) CallsChown() {
 	// Blob store
 	entries := []*fs.DirectoryEntry{
 		&fs.DirectoryEntry{
-			Name:           "taco",
 			Type:           fs.TypeFile,
-			HardLinkTarget: makeStrPtr(""),
+			HardLinkTarget: makeStrPtr(""),  // Shouldn't call for hard link
 		},
 		&fs.DirectoryEntry{
 			Name: "burrito",
 			Type: fs.TypeFile,
+			Uid: 17,
+			Gid: 19,
 		},
 		&fs.DirectoryEntry{
 			Name:   "enchilada",
 			Type:   fs.TypeDirectory,
 			Scores: []blob.Score{nil},
+			Uid: 17,
+			Gid: 19,
 		},
 		&fs.DirectoryEntry{
 			Name: "queso",
 			Type: fs.TypeSymlink,
+			Uid: 17,
+			Gid: 19,
 		},
 		&fs.DirectoryEntry{
-			Name: "blah0", // Shouldn't call for devices
-			Type: fs.TypeBlockDevice,
+			Type: fs.TypeBlockDevice,  // Shouldn't call for device
 		},
 		&fs.DirectoryEntry{
-			Name: "blah1", // Shouldn't call for devices
-			Type: fs.TypeCharDevice,
+			Type: fs.TypeCharDevice,  // Shouldn't call for device
 		},
 		&fs.DirectoryEntry{
 			Name: "carnitas",
 			Type: fs.TypeNamedPipe,
+			Uid: 17,
+			Gid: 19,
 		},
 	}
 
@@ -680,7 +685,17 @@ func (t *DirectoryRestorerTest) CallsChown() {
 		WillRepeatedly(oglemock.Return(nil))
 
 	// Chown
-	ExpectCall(t.fileSystem, "Chown")(TODO)
+	ExpectCall(t.fileSystem, "Chown")("/foo/bar/baz/burrito", 17, 19).
+		WillOnce(oglemock.Return(nil))
+
+	ExpectCall(t.fileSystem, "Chown")("/foo/bar/baz/enchilada", 17, 19).
+		WillOnce(oglemock.Return(nil))
+
+	ExpectCall(t.fileSystem, "Chown")("/foo/bar/baz/queso", 17, 19).
+		WillOnce(oglemock.Return(nil))
+
+	ExpectCall(t.fileSystem, "Chown")("/foo/bar/baz/carnitas", 17, 19).
+		WillOnce(oglemock.Return(errors.New("")))
 
 	// Call
 	t.call()
