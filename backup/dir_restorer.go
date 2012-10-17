@@ -20,6 +20,10 @@ import (
 	"github.com/jacobsa/comeback/fs"
 )
 
+////////////////////////////////////////////////////////////////////////
+// Public
+////////////////////////////////////////////////////////////////////////
+
 // An object that knows how to restore previously backed up directories.
 type DirectoryRestorer interface {
 	// Recursively restore a directory based on the listing named by the supplied
@@ -33,7 +37,43 @@ func NewDirectoryRestorer(
 	blobStore blob.Store,
 	fileSystem fs.FileSystem,
 	fileRestorer FileRestorer,
-) (restorer DirectoryRestorer, err error)
+) (restorer DirectoryRestorer, err error) {
+	createRestorer := func(wrapped DirectoryRestorer) DirectoryRestorer {
+		restorer, err := NewNonRecursiveDirectoryRestorer(
+			blobStore,
+			fileSystem,
+			fileRestorer,
+			wrapped,
+		)
+
+		if err != nil {
+			panic(err)
+		}
+
+		return restorer
+	}
+
+	return &onDemandDirRestorer{createRestorer}, nil
+}
+
+////////////////////////////////////////////////////////////////////////
+// Implementation details
+////////////////////////////////////////////////////////////////////////
+
+// A directory restorer that creates a new directory restorer for each call.
+// This breaks a self-dependency that would be needed to make use of
+// NewNonRecursiveDirectoryRestorer.
+type onDemandDirRestorer struct {
+	createRestorer func(wrapped DirectoryRestorer) DirectoryRestorer
+}
+
+func (r *onDemandDirRestorer) RestoreDirectory(
+	score blob.Score,
+	basePath string,
+	relPath string,
+) (err error) {
+	return r.createRestorer(r).RestoreDirectory(score, basePath, relPath)
+}
 
 // Split out for testability. You should not use this directly.
 func NewNonRecursiveDirectoryRestorer(
