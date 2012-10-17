@@ -57,3 +57,8 @@ func (fs *fileSystem) CreateFile(
 	w, err = os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, perms)
 	return
 }
+
+func (fs *fileSystem) CreateHardLink(target, source string) (err error) {
+	err = os.Link(target, source)
+	return
+}
