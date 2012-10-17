@@ -447,7 +447,7 @@ func (t *DirectoryRestorerTest) SymlinkEntry_SymlinkReturnsError() {
 	// Blob store
 	entries := []*fs.DirectoryEntry{
 		&fs.DirectoryEntry{
-			Type:        fs.TypeSymlink,
+			Type: fs.TypeSymlink,
 		},
 	}
 
@@ -495,7 +495,7 @@ func (t *DirectoryRestorerTest) PipeEntry_CreateReturnsError() {
 	// Blob store
 	entries := []*fs.DirectoryEntry{
 		&fs.DirectoryEntry{
-			Type:        fs.TypeNamedPipe,
+			Type: fs.TypeNamedPipe,
 		},
 	}
 
@@ -520,10 +520,10 @@ func (t *DirectoryRestorerTest) BlockDevEntry_CallsCreate() {
 	// Blob store
 	entries := []*fs.DirectoryEntry{
 		&fs.DirectoryEntry{
-			Name:        "taco",
-			Type:        fs.TypeBlockDevice,
+			Name:         "taco",
+			Type:         fs.TypeBlockDevice,
 			DeviceNumber: 17,
-			Permissions: 0712,
+			Permissions:  0712,
 		},
 	}
 
@@ -545,7 +545,7 @@ func (t *DirectoryRestorerTest) BlockDevEntry_CreateReturnsError() {
 	// Blob store
 	entries := []*fs.DirectoryEntry{
 		&fs.DirectoryEntry{
-			Type:        fs.TypeBlockDevice,
+			Type: fs.TypeBlockDevice,
 		},
 	}
 
@@ -570,10 +570,10 @@ func (t *DirectoryRestorerTest) CharDevEntry_CallsCreate() {
 	// Blob store
 	entries := []*fs.DirectoryEntry{
 		&fs.DirectoryEntry{
-			Name:        "taco",
-			Type:        fs.TypeCharDevice,
+			Name:         "taco",
+			Type:         fs.TypeCharDevice,
 			DeviceNumber: 17,
-			Permissions: 0712,
+			Permissions:  0712,
 		},
 	}
 
@@ -595,7 +595,7 @@ func (t *DirectoryRestorerTest) CharDevEntry_CreateReturnsError() {
 	// Blob store
 	entries := []*fs.DirectoryEntry{
 		&fs.DirectoryEntry{
-			Type:        fs.TypeCharDevice,
+			Type: fs.TypeCharDevice,
 		},
 	}
 
@@ -620,34 +620,34 @@ func (t *DirectoryRestorerTest) CallsChown() {
 	// Blob store
 	entries := []*fs.DirectoryEntry{
 		&fs.DirectoryEntry{
-			Name: "taco",
-			Type:        fs.TypeFile,
+			Name:           "taco",
+			Type:           fs.TypeFile,
 			HardLinkTarget: makeStrPtr(""),
 		},
 		&fs.DirectoryEntry{
 			Name: "burrito",
-			Type:        fs.TypeFile,
+			Type: fs.TypeFile,
 		},
 		&fs.DirectoryEntry{
-			Name: "enchilada",
-			Type:        fs.TypeDirectory,
+			Name:   "enchilada",
+			Type:   fs.TypeDirectory,
 			Scores: []blob.Score{nil},
 		},
 		&fs.DirectoryEntry{
 			Name: "queso",
-			Type:        fs.TypeSymlink,
+			Type: fs.TypeSymlink,
 		},
 		&fs.DirectoryEntry{
-			Name: "blah0",  // Shouldn't call for devices
-			Type:        fs.TypeBlockDevice,
+			Name: "blah0", // Shouldn't call for devices
+			Type: fs.TypeBlockDevice,
 		},
 		&fs.DirectoryEntry{
-			Name: "blah1",  // Shouldn't call for devices
-			Type:        fs.TypeCharDevice,
+			Name: "blah1", // Shouldn't call for devices
+			Type: fs.TypeCharDevice,
 		},
 		&fs.DirectoryEntry{
 			Name: "carnitas",
-			Type:        fs.TypeNamedPipe,
+			Type: fs.TypeNamedPipe,
 		},
 	}
 
