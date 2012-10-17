@@ -16,250 +16,28 @@
 package main
 
 import (
-	"bytes"
 	"crypto/sha256"
-	"encoding/hex"
 	"flag"
 	"fmt"
 	"github.com/jacobsa/aws/s3"
 	"github.com/jacobsa/aws/sdb"
+	"github.com/jacobsa/comeback/backup"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/config"
 	"github.com/jacobsa/comeback/crypto"
 	"github.com/jacobsa/comeback/fs"
 	s3_kv "github.com/jacobsa/comeback/kv/s3"
 	"github.com/jacobsa/comeback/registry"
-	"github.com/jacobsa/comeback/repr"
 	"github.com/jacobsa/comeback/sys"
-	"io"
 	"io/ioutil"
 	"log"
 	"os"
-	"path"
 	"strconv"
 )
 
 var g_configFile = flag.String("config", "", "Path to config file.")
 var g_jobIdStr = flag.String("job_id", "", "The job ID to restore.")
 var g_target = flag.String("target", "", "The target directory.")
-
-var g_blobStore blob.Store
-
-func fromHexHash(h string) (blob.Score, error) {
-	b, err := hex.DecodeString(h)
-	if err != nil {
-		return nil, fmt.Errorf("Invalid hex string: %s", h)
-	}
-
-	return blob.Score(b), nil
-}
-
-func chooseUserId(uid sys.UserId, username *string) (sys.UserId, error) {
-	// If there is no symbolic username, just return the UID.
-	if username == nil {
-		return uid, nil
-	}
-
-	// Create a user registry.
-	registry, err := sys.NewUserRegistry()
-	if err != nil {
-		return 0, fmt.Errorf("Creating user registry: %v", err)
-	}
-
-	// Attempt to look up the username. If it's not found, return the UID.
-	betterUid, err := registry.FindByName(*username)
-
-	if _, ok := err.(sys.NotFoundError); ok {
-		return uid, nil
-	} else if err != nil {
-		return 0, fmt.Errorf("Looking up user: %v", err)
-	}
-
-	return betterUid, nil
-}
-
-func chooseGroupId(gid sys.GroupId, groupname *string) (sys.GroupId, error) {
-	// If there is no symbolic groupname, just return the GID.
-	if groupname == nil {
-		return gid, nil
-	}
-
-	// Create a group registry.
-	registry, err := sys.NewGroupRegistry()
-	if err != nil {
-		return 0, fmt.Errorf("Creating group registry: %v", err)
-	}
-
-	// Attempt to look up the groupname. If it's not found, return the GID.
-	betterGid, err := registry.FindByName(*groupname)
-
-	if _, ok := err.(sys.NotFoundError); ok {
-		return gid, nil
-	} else if err != nil {
-		return 0, fmt.Errorf("Looking up group: %v", err)
-	}
-
-	return betterGid, nil
-}
-
-// Restore the file whose contents are described by the referenced blobs to the
-// supplied target, whose parent must already exist.
-func restoreFile(target string, scores []blob.Score) error {
-	// Open the file.
-	//
-	// TODO(jacobsa): Fix permissions race condition here, since we create the
-	// file with 0666.
-	f, err := os.Create(target)
-	defer f.Close()
-
-	if err != nil {
-		return fmt.Errorf("Create: %v", err)
-	}
-
-	// Process each blob.
-	for _, score := range scores {
-		// Load the blob.
-		blob, err := g_blobStore.Load(score)
-		if err != nil {
-			return fmt.Errorf("Loading blob: %v", err)
-		}
-
-		// Write out its contents.
-		_, err = io.Copy(f, bytes.NewReader(blob))
-		if err != nil {
-			return fmt.Errorf("Copy: %v", err)
-		}
-	}
-
-	return nil
-}
-
-// Restore the directory whose contents are described by the referenced blob to
-// the supplied target, which must already exist.
-func restoreDir(
-	basePath, relPath string,
-	score blob.Score,
-	fileSystem fs.FileSystem) error {
-	// Load the appropriate blob.
-	blob, err := g_blobStore.Load(score)
-	if err != nil {
-		return fmt.Errorf("Loading blob: %v", err)
-	}
-
-	// Parse its contents.
-	entries, err := repr.Unmarshal(blob)
-	if err != nil {
-		return fmt.Errorf("Parsing blob: %v", err)
-	}
-
-	// Deal with each entry.
-	for _, entry := range entries {
-		entryRelPath := path.Join(relPath, entry.Name)
-		entryFullPath := path.Join(basePath, entryRelPath)
-
-		// Switch on type.
-		switch entry.Type {
-		case fs.TypeFile:
-			// Is this a hard link to another file?
-			if entry.HardLinkTarget != nil {
-				// Create the hard link.
-				targetFullPath := path.Join(basePath, *entry.HardLinkTarget)
-				if err := os.Link(targetFullPath, entryFullPath); err != nil {
-					return fmt.Errorf("os.Link: %v", err)
-				}
-			} else {
-				// Create the file using its blobs.
-				if err := restoreFile(entryFullPath, entry.Scores); err != nil {
-					return fmt.Errorf("restoreFile: %v", err)
-				}
-			}
-
-		case fs.TypeDirectory:
-			if len(entry.Scores) != 1 {
-				return fmt.Errorf("Wrong number of scores: %v", entry)
-			}
-
-			if err = os.Mkdir(entryFullPath, 0700); err != nil {
-				return fmt.Errorf("Mkdir: %v", err)
-			}
-
-			err = restoreDir(basePath, entryRelPath, entry.Scores[0], fileSystem)
-			if err != nil {
-				return fmt.Errorf("restoreDir: %v", err)
-			}
-
-		case fs.TypeSymlink:
-			err = os.Symlink(entry.Target, entryFullPath)
-			if err != nil {
-				return fmt.Errorf("Symlink: %v", err)
-			}
-
-		case fs.TypeNamedPipe:
-			err = fileSystem.CreateNamedPipe(entryFullPath, entry.Permissions)
-			if err != nil {
-				return fmt.Errorf("CreateNamedPipe: %v", err)
-			}
-
-		case fs.TypeBlockDevice:
-			err = fileSystem.CreateBlockDevice(
-				entryFullPath,
-				entry.Permissions,
-				entry.DeviceNumber)
-
-			if err != nil {
-				return fmt.Errorf("CreateBlockDevice: %v", err)
-			}
-
-		case fs.TypeCharDevice:
-			err = fileSystem.CreateCharDevice(
-				entryFullPath,
-				entry.Permissions,
-				entry.DeviceNumber)
-
-			if err != nil {
-				return fmt.Errorf("CreateCharDevice: %v", err)
-			}
-
-		default:
-			return fmt.Errorf("Don't know how to deal with entry: %v", entry)
-		}
-
-		// Fix ownership.
-		uid, err := chooseUserId(entry.Uid, entry.Username)
-		if err != nil {
-			return fmt.Errorf("chooseUserId: %v", err)
-		}
-
-		gid, err := chooseGroupId(entry.Gid, entry.Groupname)
-		if err != nil {
-			return fmt.Errorf("chooseGroupId: %v", err)
-		}
-
-		if err = os.Lchown(entryFullPath, int(uid), int(gid)); err != nil {
-			return fmt.Errorf("Chown: %v", err)
-		}
-
-		// Fix permissions, but not on devices (otherwise we get resource busy
-		// errors).
-		if entry.Type != fs.TypeBlockDevice && entry.Type != fs.TypeCharDevice {
-			err := fileSystem.SetPermissions(entryFullPath, entry.Permissions)
-			if err != nil {
-				return fmt.Errorf("SetPermissions(%s): %v", entryFullPath, err)
-			}
-		}
-
-		// Fix modification time, but not on devices (otherwise we get resource
-		// busy errors).
-		if entry.Type != fs.TypeBlockDevice && entry.Type != fs.TypeCharDevice {
-			err = fileSystem.SetModTime(entryFullPath, entry.MTime)
-			if err != nil {
-				return fmt.Errorf("SetModTime(%s): %v", entryFullPath, err)
-			}
-		}
-	}
-
-	return nil
-}
 
 func main() {
 	var err error
@@ -377,9 +155,30 @@ func main() {
 	}
 
 	// Create the blob store.
-	g_blobStore = blob.NewKvBasedBlobStore(kvStore)
-	g_blobStore = blob.NewCheckingStore(g_blobStore)
-	g_blobStore = blob.NewEncryptingStore(crypter, g_blobStore)
+	blobStore := blob.NewKvBasedBlobStore(kvStore)
+	blobStore = blob.NewCheckingStore(blobStore)
+	blobStore = blob.NewEncryptingStore(crypter, blobStore)
+
+	// Create file restorer.
+	fileRestorer, err := backup.NewFileRestorer(
+		blobStore,
+		fileSystem,
+	)
+
+	if err != nil {
+		log.Fatalln("NewFileRestorer:", err)
+	}
+
+	// Create directory restorer.
+	dirRestorer, err := backup.NewDirectoryRestorer(
+		blobStore,
+		fileSystem,
+		fileRestorer,
+	)
+
+	if err != nil {
+		log.Fatalln("NewDirectoryRestorer:", err)
+	}
 
 	// Find the requested job.
 	job, err := reg.FindBackup(jobId)
@@ -400,7 +199,12 @@ func main() {
 	}
 
 	// Attempt a restore.
-	err = restoreDir(*g_target, "", job.Score, fileSystem)
+	err = dirRestorer.RestoreDirectory(
+		job.Score,
+		*g_target,
+		"",
+	)
+
 	if err != nil {
 		log.Fatalf("Restoring: %v", err)
 	}
