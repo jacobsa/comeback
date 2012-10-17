@@ -390,7 +390,29 @@ func (t *DirectoryRestorerTest) DirEntry_CallsWrapped() {
 }
 
 func (t *DirectoryRestorerTest) DirEntry_WrappedReturnsError() {
-	ExpectEq("TODO", "")
+	// Blob store
+	entries := []*fs.DirectoryEntry{
+		&fs.DirectoryEntry{
+			Type:           fs.TypeDirectory,
+			Scores: []blob.Score{blob.ComputeScore([]byte(""))},
+		},
+	}
+
+	ExpectCall(t.blobStore, "Load")(Any()).
+		WillOnce(returnEntries(entries))
+
+	// File system
+	ExpectCall(t.fileSystem, "Mkdir")(Any(), Any()).
+		WillOnce(oglemock.Return(nil))
+
+	// Wrapped
+	ExpectCall(t.wrapped, "RestoreDirectory")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return(errors.New("taco")))
+
+	// Call
+	t.call()
+
+	ExpectThat(t.err, Error(Equals("taco")))
 }
 
 func (t *DirectoryRestorerTest) SymlinkEntry_CallsSymlink() {
