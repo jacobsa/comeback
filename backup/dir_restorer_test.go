@@ -130,8 +130,7 @@ func (t *DirectoryRestorerTest) BlobStoreReturnsJunk() {
 
 func (t *DirectoryRestorerTest) NoEntries() {
 	// Blob store
-	entries := []*fs.DirectoryEntry{
-	}
+	entries := []*fs.DirectoryEntry{}
 
 	ExpectCall(t.blobStore, "Load")(Any()).
 		WillOnce(returnEntries(entries))
@@ -149,8 +148,8 @@ func (t *DirectoryRestorerTest) FileEntry_CallsLinkForHardLink() {
 	// Blob store
 	entries := []*fs.DirectoryEntry{
 		&fs.DirectoryEntry{
-			Name: "taco",
-			Type: fs.TypeFile,
+			Name:           "taco",
+			Type:           fs.TypeFile,
 			HardLinkTarget: makeStrPtr("burrito/enchilada"),
 		},
 	}
