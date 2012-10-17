@@ -113,12 +113,12 @@ func NewNonRecursiveDirectoryRestorer(
 }
 
 type dirRestorer struct {
-	blobStore    blob.Store
-	fileSystem   fs.FileSystem
-	fileRestorer FileRestorer
-	userRegistry sys.UserRegistry
+	blobStore     blob.Store
+	fileSystem    fs.FileSystem
+	fileRestorer  FileRestorer
+	userRegistry  sys.UserRegistry
 	groupRegistry sys.GroupRegistry
-	wrapped      DirectoryRestorer
+	wrapped       DirectoryRestorer
 }
 
 func (r *dirRestorer) RestoreDirectory(

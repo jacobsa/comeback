@@ -51,12 +51,12 @@ func makeStrPtr(s string) *string {
 }
 
 type DirectoryRestorerTest struct {
-	blobStore    mock_blob.MockStore
-	fileSystem   mock_fs.MockFileSystem
-	fileRestorer mock_backup.MockFileRestorer
-	userRegistry mock_sys.MockUserRegistry
+	blobStore     mock_blob.MockStore
+	fileSystem    mock_fs.MockFileSystem
+	fileRestorer  mock_backup.MockFileRestorer
+	userRegistry  mock_sys.MockUserRegistry
 	groupRegistry mock_sys.MockGroupRegistry
-	wrapped      mock_backup.MockDirectoryRestorer
+	wrapped       mock_backup.MockDirectoryRestorer
 
 	dirRestorer backup.DirectoryRestorer
 
@@ -629,44 +629,44 @@ func (t *DirectoryRestorerTest) CallsChown() {
 	entries := []*fs.DirectoryEntry{
 		&fs.DirectoryEntry{
 			Type:           fs.TypeFile,
-			HardLinkTarget: makeStrPtr(""),  // Shouldn't call for hard link
+			HardLinkTarget: makeStrPtr(""), // Shouldn't call for hard link
 		},
 		&fs.DirectoryEntry{
 			Name: "burrito",
 			Type: fs.TypeFile,
-			Uid: 17,
-			Gid: 19,
+			Uid:  17,
+			Gid:  19,
 		},
 		&fs.DirectoryEntry{
 			Name:   "enchilada",
 			Type:   fs.TypeDirectory,
 			Scores: []blob.Score{blob.ComputeScore([]byte(""))},
-			Uid: 17,
-			Gid: 19,
+			Uid:    17,
+			Gid:    19,
 		},
 		&fs.DirectoryEntry{
 			Name: "queso",
 			Type: fs.TypeSymlink,
-			Uid: 17,
-			Gid: 19,
+			Uid:  17,
+			Gid:  19,
 		},
 		&fs.DirectoryEntry{
 			Name: "carnitas",
 			Type: fs.TypeBlockDevice,
-			Uid: 17,
-			Gid: 19,
+			Uid:  17,
+			Gid:  19,
 		},
 		&fs.DirectoryEntry{
 			Name: "nachos",
 			Type: fs.TypeCharDevice,
-			Uid: 17,
-			Gid: 19,
+			Uid:  17,
+			Gid:  19,
 		},
 		&fs.DirectoryEntry{
 			Name: "barbacoa",
 			Type: fs.TypeNamedPipe,
-			Uid: 17,
-			Gid: 19,
+			Uid:  17,
+			Gid:  19,
 		},
 	}
 
@@ -764,7 +764,7 @@ func (t *DirectoryRestorerTest) CallsUserRegistry() {
 	// Blob store
 	entries := []*fs.DirectoryEntry{
 		&fs.DirectoryEntry{
-			Type: fs.TypeFile,
+			Type:     fs.TypeFile,
 			Username: makeStrPtr("taco"),
 		},
 	}
@@ -788,7 +788,7 @@ func (t *DirectoryRestorerTest) UserRegistryReturnsError() {
 	// Blob store
 	entries := []*fs.DirectoryEntry{
 		&fs.DirectoryEntry{
-			Type: fs.TypeFile,
+			Type:     fs.TypeFile,
 			Username: makeStrPtr(""),
 		},
 	}
@@ -815,9 +815,9 @@ func (t *DirectoryRestorerTest) UserRegistrySaysNotFound() {
 	// Blob store
 	entries := []*fs.DirectoryEntry{
 		&fs.DirectoryEntry{
-			Type: fs.TypeFile,
+			Type:     fs.TypeFile,
 			Username: makeStrPtr(""),
-			Uid: 17,
+			Uid:      17,
 		},
 	}
 
@@ -844,7 +844,7 @@ func (t *DirectoryRestorerTest) CallsChownForSymbolicUsername() {
 	// Blob store
 	entries := []*fs.DirectoryEntry{
 		&fs.DirectoryEntry{
-			Type: fs.TypeFile,
+			Type:     fs.TypeFile,
 			Username: makeStrPtr(""),
 		},
 	}
@@ -872,7 +872,7 @@ func (t *DirectoryRestorerTest) CallsGroupRegistry() {
 	// Blob store
 	entries := []*fs.DirectoryEntry{
 		&fs.DirectoryEntry{
-			Type: fs.TypeFile,
+			Type:      fs.TypeFile,
 			Groupname: makeStrPtr("taco"),
 		},
 	}
@@ -896,7 +896,7 @@ func (t *DirectoryRestorerTest) GroupRegistryReturnsError() {
 	// Blob store
 	entries := []*fs.DirectoryEntry{
 		&fs.DirectoryEntry{
-			Type: fs.TypeFile,
+			Type:      fs.TypeFile,
 			Groupname: makeStrPtr(""),
 		},
 	}
@@ -923,9 +923,9 @@ func (t *DirectoryRestorerTest) GroupRegistrySaysNotFound() {
 	// Blob store
 	entries := []*fs.DirectoryEntry{
 		&fs.DirectoryEntry{
-			Type: fs.TypeFile,
+			Type:      fs.TypeFile,
 			Groupname: makeStrPtr(""),
-			Gid: 17,
+			Gid:       17,
 		},
 	}
 
@@ -952,7 +952,7 @@ func (t *DirectoryRestorerTest) CallsChownForSymbolicGroupname() {
 	// Blob store
 	entries := []*fs.DirectoryEntry{
 		&fs.DirectoryEntry{
-			Type: fs.TypeFile,
+			Type:      fs.TypeFile,
 			Groupname: makeStrPtr(""),
 		},
 	}
@@ -991,33 +991,33 @@ func (t *DirectoryRestorerTest) CallsSetModTime() {
 	entries := []*fs.DirectoryEntry{
 		&fs.DirectoryEntry{
 			Type:           fs.TypeFile,
-			HardLinkTarget: makeStrPtr(""),  // Shouldn't call for hard link
+			HardLinkTarget: makeStrPtr(""), // Shouldn't call for hard link
 		},
 		&fs.DirectoryEntry{
-			Name: "burrito",
-			Type: fs.TypeFile,
+			Name:  "burrito",
+			Type:  fs.TypeFile,
 			MTime: mtimes[0],
 		},
 		&fs.DirectoryEntry{
 			Name:   "enchilada",
 			Type:   fs.TypeDirectory,
 			Scores: []blob.Score{blob.ComputeScore([]byte(""))},
-			MTime: mtimes[1],
+			MTime:  mtimes[1],
 		},
 		&fs.DirectoryEntry{
-			Name: "queso",
-			Type: fs.TypeSymlink,
+			Name:  "queso",
+			Type:  fs.TypeSymlink,
 			MTime: mtimes[2],
 		},
 		&fs.DirectoryEntry{
-			Type: fs.TypeBlockDevice,  // Shouldn't call for device
+			Type: fs.TypeBlockDevice, // Shouldn't call for device
 		},
 		&fs.DirectoryEntry{
-			Type: fs.TypeCharDevice,  // Shouldn't call for device
+			Type: fs.TypeCharDevice, // Shouldn't call for device
 		},
 		&fs.DirectoryEntry{
-			Name: "carnitas",
-			Type: fs.TypeNamedPipe,
+			Name:  "carnitas",
+			Type:  fs.TypeNamedPipe,
 			MTime: mtimes[3],
 		},
 	}
