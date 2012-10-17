@@ -30,6 +30,7 @@ import (
 	"github.com/jacobsa/oglemock"
 	. "github.com/jacobsa/ogletest"
 	"testing"
+	"time"
 )
 
 func TestDirectoryRestorer(t *testing.T) { RunTests(t) }
@@ -957,8 +958,97 @@ func (t *DirectoryRestorerTest) CallsChownForSymbolicGroupname() {
 }
 
 func (t *DirectoryRestorerTest) CallsSetModTime() {
-	ExpectEq("TODO", "")
-	// NOTE: Not for devices (see restore.go)
+	t.basePath = "/foo"
+	t.relPath = "bar/baz"
+
+	// Blob store
+	mtimes := []time.Time{
+		time.Now(),
+		time.Now(),
+		time.Now(),
+		time.Now(),
+	}
+
+	entries := []*fs.DirectoryEntry{
+		&fs.DirectoryEntry{
+			Type:           fs.TypeFile,
+			HardLinkTarget: makeStrPtr(""),  // Shouldn't call for hard link
+		},
+		&fs.DirectoryEntry{
+			Name: "burrito",
+			Type: fs.TypeFile,
+			MTime: mtimes[0],
+		},
+		&fs.DirectoryEntry{
+			Name:   "enchilada",
+			Type:   fs.TypeDirectory,
+			Scores: []blob.Score{nil},
+			MTime: mtimes[1],
+		},
+		&fs.DirectoryEntry{
+			Name: "queso",
+			Type: fs.TypeSymlink,
+			MTime: mtimes[2],
+		},
+		&fs.DirectoryEntry{
+			Type: fs.TypeBlockDevice,  // Shouldn't call for device
+		},
+		&fs.DirectoryEntry{
+			Type: fs.TypeCharDevice,  // Shouldn't call for device
+		},
+		&fs.DirectoryEntry{
+			Name: "carnitas",
+			Type: fs.TypeNamedPipe,
+			MTime: mtimes[3],
+		},
+	}
+
+	ExpectCall(t.blobStore, "Load")(Any()).
+		WillOnce(returnEntries(entries))
+
+	// Uninteresting calls
+	ExpectCall(t.fileSystem, "CreateHardLink")(Any(), Any()).
+		WillRepeatedly(oglemock.Return(nil))
+
+	ExpectCall(t.fileRestorer, "RestoreFile")(Any(), Any()).
+		WillRepeatedly(oglemock.Return(nil))
+
+	ExpectCall(t.fileSystem, "Mkdir")(Any(), Any()).
+		WillRepeatedly(oglemock.Return(nil))
+
+	ExpectCall(t.wrapped, "RestoreDirectory")(Any(), Any()).
+		WillRepeatedly(oglemock.Return(nil))
+
+	ExpectCall(t.fileSystem, "CreateSymlink")(Any(), Any(), Any()).
+		WillRepeatedly(oglemock.Return(nil))
+
+	ExpectCall(t.fileSystem, "CreateBlockDevice")(Any(), Any(), Any()).
+		WillRepeatedly(oglemock.Return(nil))
+
+	ExpectCall(t.fileSystem, "CreateCharDevice")(Any(), Any(), Any()).
+		WillRepeatedly(oglemock.Return(nil))
+
+	ExpectCall(t.fileSystem, "CreateNamedPipe")(Any(), Any()).
+		WillRepeatedly(oglemock.Return(nil))
+
+	ExpectCall(t.fileSystem, "Chown")(Any(), Any(), Any()).
+		WillRepeatedly(oglemock.Return(nil))
+
+	// SetModTime
+	ExpectCall(t.fileSystem, "SetModTime")("/foo/bar/baz/burrito", mtimes[0]).
+		WillOnce(oglemock.Return(nil))
+
+	ExpectCall(t.fileSystem, "Chown")("/foo/bar/baz/enchilada", mtimes[1]).
+		WillOnce(oglemock.Return(nil))
+
+	ExpectCall(t.fileSystem, "Chown")("/foo/bar/baz/queso", mtimes[2]).
+		WillOnce(oglemock.Return(nil))
+
+	ExpectCall(t.fileSystem, "Chown")("/foo/bar/baz/carnitas", mtimes[3]).
+		WillOnce(oglemock.Return(errors.New("")))
+
+	// Call
+	t.call()
 }
 
 func (t *DirectoryRestorerTest) SetModTimeReturnsErrorForOneEntry() {
