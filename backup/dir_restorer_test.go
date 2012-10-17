@@ -690,6 +690,38 @@ func (t *DirectoryRestorerTest) ChownReturnsErrorForOneEntry() {
 	ExpectEq("TODO", "")
 }
 
+func (t *DirectoryRestorerTest) CallsUserRegistry() {
+	ExpectEq("TODO", "")
+}
+
+func (t *DirectoryRestorerTest) UserRegistryReturnsError() {
+	ExpectEq("TODO", "")
+}
+
+func (t *DirectoryRestorerTest) UserRegistrySaysNotFound() {
+	ExpectEq("TODO", "")
+}
+
+func (t *DirectoryRestorerTest) CallsChownForSymbolicUsername() {
+	ExpectEq("TODO", "")
+}
+
+func (t *DirectoryRestorerTest) CallsGroupRegistry() {
+	ExpectEq("TODO", "")
+}
+
+func (t *DirectoryRestorerTest) GroupRegistryReturnsError() {
+	ExpectEq("TODO", "")
+}
+
+func (t *DirectoryRestorerTest) GroupRegistrySaysNotFound() {
+	ExpectEq("TODO", "")
+}
+
+func (t *DirectoryRestorerTest) CallsChownForSymbolicGroupname() {
+	ExpectEq("TODO", "")
+}
+
 func (t *DirectoryRestorerTest) CallsSetModTime() {
 	ExpectEq("TODO", "")
 	// NOTE: Not for devices (see restore.go)
