@@ -16,6 +16,7 @@
 package backup
 
 import (
+	"fmt"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/fs"
 )
@@ -81,4 +82,7 @@ func NewNonRecursiveDirectoryRestorer(
 	fileSystem fs.FileSystem,
 	fileRestorer FileRestorer,
 	wrapped DirectoryRestorer,
-) (restorer DirectoryRestorer, err error)
+) (restorer DirectoryRestorer, err error) {
+	err = fmt.Errorf("TODO")
+	return
+}
