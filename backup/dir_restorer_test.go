@@ -849,19 +849,111 @@ func (t *DirectoryRestorerTest) CallsChownForSymbolicUsername() {
 }
 
 func (t *DirectoryRestorerTest) CallsGroupRegistry() {
-	ExpectEq("TODO", "")
+	// Blob store
+	entries := []*fs.DirectoryEntry{
+		&fs.DirectoryEntry{
+			Type: fs.TypeFile,
+			Groupname: makeStrPtr("taco"),
+		},
+	}
+
+	ExpectCall(t.blobStore, "Load")(Any()).
+		WillOnce(returnEntries(entries))
+
+	// File restorer
+	ExpectCall(t.fileRestorer, "RestoreFile")(Any(), Any()).
+		WillRepeatedly(oglemock.Return(nil))
+
+	// Group registry
+	ExpectCall(t.groupRegistry, "FindByName")("taco").
+		WillOnce(oglemock.Return(0, errors.New("")))
+
+	// Call
+	t.call()
 }
 
 func (t *DirectoryRestorerTest) GroupRegistryReturnsError() {
-	ExpectEq("TODO", "")
+	// Blob store
+	entries := []*fs.DirectoryEntry{
+		&fs.DirectoryEntry{
+			Type: fs.TypeFile,
+			Groupname: makeStrPtr(""),
+		},
+	}
+
+	ExpectCall(t.blobStore, "Load")(Any()).
+		WillOnce(returnEntries(entries))
+
+	// File restorer
+	ExpectCall(t.fileRestorer, "RestoreFile")(Any(), Any()).
+		WillRepeatedly(oglemock.Return(nil))
+
+	// Group registry
+	ExpectCall(t.groupRegistry, "FindByName")(Any()).
+		WillOnce(oglemock.Return(0, errors.New("taco")))
+
+	// Call
+	t.call()
+
+	ExpectThat(t.err, Error(HasSubstr("FindByName")))
+	ExpectThat(t.err, Error(HasSubstr("taco")))
 }
 
 func (t *DirectoryRestorerTest) GroupRegistrySaysNotFound() {
-	ExpectEq("TODO", "")
+	// Blob store
+	entries := []*fs.DirectoryEntry{
+		&fs.DirectoryEntry{
+			Type: fs.TypeFile,
+			Groupname: makeStrPtr(""),
+			Gid: 17,
+		},
+	}
+
+	ExpectCall(t.blobStore, "Load")(Any()).
+		WillOnce(returnEntries(entries))
+
+	// File restorer
+	ExpectCall(t.fileRestorer, "RestoreFile")(Any(), Any()).
+		WillRepeatedly(oglemock.Return(nil))
+
+	// Group registry
+	ExpectCall(t.groupRegistry, "FindByName")(Any()).
+		WillOnce(oglemock.Return(0, sys.NotFoundError("")))
+
+	// Chown
+	ExpectCall(t.fileSystem, "Chown")(Any(), Any(), 17).
+		WillOnce(oglemock.Return(errors.New("")))
+
+	// Call
+	t.call()
 }
 
 func (t *DirectoryRestorerTest) CallsChownForSymbolicGroupname() {
-	ExpectEq("TODO", "")
+	// Blob store
+	entries := []*fs.DirectoryEntry{
+		&fs.DirectoryEntry{
+			Type: fs.TypeFile,
+			Groupname: makeStrPtr(""),
+		},
+	}
+
+	ExpectCall(t.blobStore, "Load")(Any()).
+		WillOnce(returnEntries(entries))
+
+	// File restorer
+	ExpectCall(t.fileRestorer, "RestoreFile")(Any(), Any()).
+		WillRepeatedly(oglemock.Return(nil))
+
+	// Group registry
+	ExpectCall(t.groupRegistry, "FindByName")(Any()).
+		WillOnce(oglemock.Return(17, nil))
+
+	// Chown
+	ExpectCall(t.fileSystem, "Chown")(Any(), Any(), 17).
+		WillOnce(oglemock.Return(errors.New("")))
+
+	// Call
+	t.call()
 }
 
 func (t *DirectoryRestorerTest) CallsSetModTime() {
