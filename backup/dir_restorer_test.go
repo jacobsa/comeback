@@ -24,6 +24,7 @@ import (
 	"github.com/jacobsa/comeback/fs"
 	"github.com/jacobsa/comeback/fs/mock"
 	"github.com/jacobsa/comeback/repr"
+	"github.com/jacobsa/comeback/sys"
 	"github.com/jacobsa/comeback/sys/mock"
 	. "github.com/jacobsa/oglematchers"
 	"github.com/jacobsa/oglemock"
@@ -757,7 +758,7 @@ func (t *DirectoryRestorerTest) CallsUserRegistry() {
 
 	// User registry
 	ExpectCall(t.userRegistry, "FindByName")("taco").
-		WillOnce(oglemock.Return(errors.New("")))
+		WillOnce(oglemock.Return(0, errors.New("")))
 
 	// Call
 	t.call()
@@ -781,7 +782,7 @@ func (t *DirectoryRestorerTest) UserRegistryReturnsError() {
 
 	// User registry
 	ExpectCall(t.userRegistry, "FindByName")(Any()).
-		WillOnce(oglemock.Return(errors.New("taco")))
+		WillOnce(oglemock.Return(0, errors.New("taco")))
 
 	// Call
 	t.call()
@@ -791,11 +792,60 @@ func (t *DirectoryRestorerTest) UserRegistryReturnsError() {
 }
 
 func (t *DirectoryRestorerTest) UserRegistrySaysNotFound() {
-	ExpectEq("TODO", "")
+	// Blob store
+	entries := []*fs.DirectoryEntry{
+		&fs.DirectoryEntry{
+			Type: fs.TypeFile,
+			Username: makeStrPtr(""),
+			Uid: 17,
+		},
+	}
+
+	ExpectCall(t.blobStore, "Load")(Any()).
+		WillOnce(returnEntries(entries))
+
+	// File restorer
+	ExpectCall(t.fileRestorer, "RestoreFile")(Any(), Any()).
+		WillRepeatedly(oglemock.Return(nil))
+
+	// User registry
+	ExpectCall(t.userRegistry, "FindByName")(Any()).
+		WillOnce(oglemock.Return(0, sys.NotFoundError("")))
+
+	// Chown
+	ExpectCall(t.fileSystem, "Chown")(Any(), 17, Any()).
+		WillOnce(oglemock.Return(errors.New("")))
+
+	// Call
+	t.call()
 }
 
 func (t *DirectoryRestorerTest) CallsChownForSymbolicUsername() {
-	ExpectEq("TODO", "")
+	// Blob store
+	entries := []*fs.DirectoryEntry{
+		&fs.DirectoryEntry{
+			Type: fs.TypeFile,
+			Username: makeStrPtr(""),
+		},
+	}
+
+	ExpectCall(t.blobStore, "Load")(Any()).
+		WillOnce(returnEntries(entries))
+
+	// File restorer
+	ExpectCall(t.fileRestorer, "RestoreFile")(Any(), Any()).
+		WillRepeatedly(oglemock.Return(nil))
+
+	// User registry
+	ExpectCall(t.userRegistry, "FindByName")(Any()).
+		WillOnce(oglemock.Return(17, nil))
+
+	// Chown
+	ExpectCall(t.fileSystem, "Chown")(Any(), 17, Any()).
+		WillOnce(oglemock.Return(errors.New("")))
+
+	// Call
+	t.call()
 }
 
 func (t *DirectoryRestorerTest) CallsGroupRegistry() {
