@@ -38,7 +38,7 @@ func TestFileRestorer(t *testing.T) { RunTests(t) }
 type closeSnoopingBuffer struct {
 	bytes.Buffer
 
-	closeError error
+	closeError  error
 	closeCalled bool
 }
 
@@ -67,17 +67,17 @@ func (w *errorWriteCloser) Write(p []byte) (n int, err error) {
 }
 
 type FileRestorerTest struct {
-	blobStore mock_blob.MockStore
+	blobStore  mock_blob.MockStore
 	fileSystem mock_fs.MockFileSystem
-	file closeSnoopingBuffer
+	file       closeSnoopingBuffer
 
 	fileRestorer backup.FileRestorer
 
 	scores []blob.Score
-	path string
-	perms os.FileMode
+	path   string
+	perms  os.FileMode
 
-	err    error
+	err error
 }
 
 func init() { RegisterTestSuite(&FileRestorerTest{}) }

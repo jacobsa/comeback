@@ -32,18 +32,18 @@ func TestDirectoryRestorer(t *testing.T) { RunTests(t) }
 ////////////////////////////////////////////////////////////////////////
 
 type DirectoryRestorerTest struct {
-	blobStore mock_blob.MockStore
-	fileSystem mock_fs.MockFileSystem
+	blobStore    mock_blob.MockStore
+	fileSystem   mock_fs.MockFileSystem
 	fileRestorer mock_backup.MockFileRestorer
-	wrapped mock_backup.MockDirectoryRestorer
+	wrapped      mock_backup.MockDirectoryRestorer
 
 	dirRestorer backup.DirectoryRestorer
 
-	score blob.Score
+	score    blob.Score
 	basePath string
-	relPath string
+	relPath  string
 
-	err    error
+	err error
 }
 
 func init() { RegisterTestSuite(&DirectoryRestorerTest{}) }

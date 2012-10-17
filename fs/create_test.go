@@ -38,7 +38,7 @@ type CreateFileTest struct {
 	path  string
 	perms os.FileMode
 
-	w io.WriteCloser
+	w   io.WriteCloser
 	err error
 }
 

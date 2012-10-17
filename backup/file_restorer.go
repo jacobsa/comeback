@@ -47,7 +47,7 @@ func NewFileRestorer(
 ////////////////////////////////////////////////////////////////////////
 
 type fileRestorer struct {
-	blobStore blob.Store
+	blobStore  blob.Store
 	fileSystem fs.FileSystem
 }
 
