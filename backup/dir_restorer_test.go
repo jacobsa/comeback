@@ -132,9 +132,8 @@ func (t *DirectoryRestorerTest) BlobStoreReturnsJunk() {
 	// Call
 	t.call()
 
-	ExpectThat(t.err, Error(HasSubstr("invalid")))
+	ExpectThat(t.err, Error(HasSubstr("Invalid")))
 	ExpectThat(t.err, Error(HasSubstr("data")))
-	ExpectThat(t.err, Error(HasSubstr("taco")))
 }
 
 func (t *DirectoryRestorerTest) NoEntries() {

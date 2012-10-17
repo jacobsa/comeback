@@ -177,7 +177,10 @@ func (r *dirRestorer) RestoreDirectory(
 		case fs.TypeDirectory:
 			// Directory listings should be composed of exactly one score.
 			if len(entry.Scores) != 1 {
-				err = fmt.Errorf("Expected exactly one score: %v", entry)
+				err = fmt.Errorf(
+					"Expected exactly one score for directory entry: %v",
+					entry)
+
 				return
 			}
 
@@ -195,7 +198,6 @@ func (r *dirRestorer) RestoreDirectory(
 			)
 
 			if err != nil {
-				err = fmt.Errorf("RestoreDirectory: %v", err)
 				return
 			}
 
