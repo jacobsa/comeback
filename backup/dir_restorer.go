@@ -83,6 +83,22 @@ func NewNonRecursiveDirectoryRestorer(
 	fileRestorer FileRestorer,
 	wrapped DirectoryRestorer,
 ) (restorer DirectoryRestorer, err error) {
+	restorer = &dirRestorer{blobStore, fileSystem, fileRestorer, wrapped}
+	return
+}
+
+type dirRestorer struct {
+	blobStore blob.Store
+	fileSystem fs.FileSystem
+	fileRestorer FileRestorer
+	wrapped DirectoryRestorer
+}
+
+func (r *dirRestorer) RestoreDirectory(
+	score blob.Score,
+	basePath string,
+	relPath string,
+) (err error) {
 	err = fmt.Errorf("TODO")
 	return
 }
