@@ -213,7 +213,34 @@ func (t *DirectoryRestorerTest) FileEntry_LinkSucceeds() {
 }
 
 func (t *DirectoryRestorerTest) FileEntry_CallsRestoreFile() {
-	ExpectEq("TODO", "")
+	t.basePath = "/foo"
+	t.relPath = "bar/baz"
+
+	// Blob store
+	entries := []*fs.DirectoryEntry{
+		&fs.DirectoryEntry{
+			Name:           "taco",
+			Type:           fs.TypeFile,
+			Permissions: 0712,
+			Scores: []blob.Score{
+				blob.ComputeScore([]byte("burrito")),
+				blob.ComputeScore([]byte("enchilada")),
+			},
+		},
+	}
+
+	ExpectCall(t.blobStore, "Load")(Any()).
+		WillOnce(returnEntries(entries))
+
+	// File restorer
+	ExpectCall(t.fileRestorer, "RestoreFile")(
+		DeepEquals(entries[0].Scores),
+		"/foo/bar/baz/taco",
+		0712,
+	).WillOnce(oglemock.Return(errors.New("")))
+
+	// Call
+	t.call()
 }
 
 func (t *DirectoryRestorerTest) FileEntry_RestoreFileReturnsError() {
