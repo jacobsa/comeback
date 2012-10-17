@@ -136,35 +136,35 @@ func (t *DirectoryRestorerTest) DirEntry_WrappedReturnsError() {
 	ExpectEq("TODO", "")
 }
 
-func (t *SymlinkectoryRestorerTest) SymlinkEntry_CallsSymlink() {
+func (t *DirectoryRestorerTest) SymlinkEntry_CallsSymlink() {
 	ExpectEq("TODO", "")
 }
 
-func (t *SymlinkectoryRestorerTest) SymlinkEntry_SymlinkReturnsError() {
+func (t *DirectoryRestorerTest) SymlinkEntry_SymlinkReturnsError() {
 	ExpectEq("TODO", "")
 }
 
-func (t *SymlinkectoryRestorerTest) PipeEntry_CallsCreate() {
+func (t *DirectoryRestorerTest) PipeEntry_CallsCreate() {
 	ExpectEq("TODO", "")
 }
 
-func (t *SymlinkectoryRestorerTest) PipeEntry_CreateReturnsError() {
+func (t *DirectoryRestorerTest) PipeEntry_CreateReturnsError() {
 	ExpectEq("TODO", "")
 }
 
-func (t *SymlinkectoryRestorerTest) BlockDevEntry_CallsCreate() {
+func (t *DirectoryRestorerTest) BlockDevEntry_CallsCreate() {
 	ExpectEq("TODO", "")
 }
 
-func (t *SymlinkectoryRestorerTest) BlockDevEntry_CreateReturnsError() {
+func (t *DirectoryRestorerTest) BlockDevEntry_CreateReturnsError() {
 	ExpectEq("TODO", "")
 }
 
-func (t *SymlinkectoryRestorerTest) CharDevEntry_CallsCreate() {
+func (t *DirectoryRestorerTest) CharDevEntry_CallsCreate() {
 	ExpectEq("TODO", "")
 }
 
-func (t *SymlinkectoryRestorerTest) CharDevEntry_CreateReturnsError() {
+func (t *DirectoryRestorerTest) CharDevEntry_CreateReturnsError() {
 	ExpectEq("TODO", "")
 }
 
