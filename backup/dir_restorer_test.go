@@ -702,6 +702,9 @@ func (t *DirectoryRestorerTest) CallsChown() {
 	ExpectCall(t.fileSystem, "CreateNamedPipe")(Any(), Any()).
 		WillRepeatedly(oglemock.Return(nil))
 
+	ExpectCall(t.fileSystem, "SetModTime")(Any(), Any()).
+		WillRepeatedly(oglemock.Return(nil))
+
 	// Chown
 	ExpectCall(t.fileSystem, "Chown")("/foo/bar/baz/burrito", 17, 19).
 		WillOnce(oglemock.Return(nil))
@@ -743,7 +746,7 @@ func (t *DirectoryRestorerTest) ChownReturnsErrorForOneEntry() {
 		WillOnce(returnEntries(entries))
 
 	// Uninteresting calls
-	ExpectCall(t.fileRestorer, "RestoreFile")(Any(), Any()).
+	ExpectCall(t.fileRestorer, "RestoreFile")(Any(), Any(), Any()).
 		WillRepeatedly(oglemock.Return(nil))
 
 	// Chown
@@ -771,7 +774,7 @@ func (t *DirectoryRestorerTest) CallsUserRegistry() {
 		WillOnce(returnEntries(entries))
 
 	// File restorer
-	ExpectCall(t.fileRestorer, "RestoreFile")(Any(), Any()).
+	ExpectCall(t.fileRestorer, "RestoreFile")(Any(), Any(), Any()).
 		WillRepeatedly(oglemock.Return(nil))
 
 	// User registry
@@ -795,7 +798,7 @@ func (t *DirectoryRestorerTest) UserRegistryReturnsError() {
 		WillOnce(returnEntries(entries))
 
 	// File restorer
-	ExpectCall(t.fileRestorer, "RestoreFile")(Any(), Any()).
+	ExpectCall(t.fileRestorer, "RestoreFile")(Any(), Any(), Any()).
 		WillRepeatedly(oglemock.Return(nil))
 
 	// User registry
@@ -823,7 +826,7 @@ func (t *DirectoryRestorerTest) UserRegistrySaysNotFound() {
 		WillOnce(returnEntries(entries))
 
 	// File restorer
-	ExpectCall(t.fileRestorer, "RestoreFile")(Any(), Any()).
+	ExpectCall(t.fileRestorer, "RestoreFile")(Any(), Any(), Any()).
 		WillRepeatedly(oglemock.Return(nil))
 
 	// User registry
@@ -851,7 +854,7 @@ func (t *DirectoryRestorerTest) CallsChownForSymbolicUsername() {
 		WillOnce(returnEntries(entries))
 
 	// File restorer
-	ExpectCall(t.fileRestorer, "RestoreFile")(Any(), Any()).
+	ExpectCall(t.fileRestorer, "RestoreFile")(Any(), Any(), Any()).
 		WillRepeatedly(oglemock.Return(nil))
 
 	// User registry
@@ -879,7 +882,7 @@ func (t *DirectoryRestorerTest) CallsGroupRegistry() {
 		WillOnce(returnEntries(entries))
 
 	// File restorer
-	ExpectCall(t.fileRestorer, "RestoreFile")(Any(), Any()).
+	ExpectCall(t.fileRestorer, "RestoreFile")(Any(), Any(), Any()).
 		WillRepeatedly(oglemock.Return(nil))
 
 	// Group registry
@@ -903,7 +906,7 @@ func (t *DirectoryRestorerTest) GroupRegistryReturnsError() {
 		WillOnce(returnEntries(entries))
 
 	// File restorer
-	ExpectCall(t.fileRestorer, "RestoreFile")(Any(), Any()).
+	ExpectCall(t.fileRestorer, "RestoreFile")(Any(), Any(), Any()).
 		WillRepeatedly(oglemock.Return(nil))
 
 	// Group registry
@@ -931,7 +934,7 @@ func (t *DirectoryRestorerTest) GroupRegistrySaysNotFound() {
 		WillOnce(returnEntries(entries))
 
 	// File restorer
-	ExpectCall(t.fileRestorer, "RestoreFile")(Any(), Any()).
+	ExpectCall(t.fileRestorer, "RestoreFile")(Any(), Any(), Any()).
 		WillRepeatedly(oglemock.Return(nil))
 
 	// Group registry
@@ -959,7 +962,7 @@ func (t *DirectoryRestorerTest) CallsChownForSymbolicGroupname() {
 		WillOnce(returnEntries(entries))
 
 	// File restorer
-	ExpectCall(t.fileRestorer, "RestoreFile")(Any(), Any()).
+	ExpectCall(t.fileRestorer, "RestoreFile")(Any(), Any(), Any()).
 		WillRepeatedly(oglemock.Return(nil))
 
 	// Group registry
@@ -1027,13 +1030,13 @@ func (t *DirectoryRestorerTest) CallsSetModTime() {
 	ExpectCall(t.fileSystem, "CreateHardLink")(Any(), Any()).
 		WillRepeatedly(oglemock.Return(nil))
 
-	ExpectCall(t.fileRestorer, "RestoreFile")(Any(), Any()).
+	ExpectCall(t.fileRestorer, "RestoreFile")(Any(), Any(), Any()).
 		WillRepeatedly(oglemock.Return(nil))
 
 	ExpectCall(t.fileSystem, "Mkdir")(Any(), Any()).
 		WillRepeatedly(oglemock.Return(nil))
 
-	ExpectCall(t.wrapped, "RestoreDirectory")(Any(), Any()).
+	ExpectCall(t.wrapped, "RestoreDirectory")(Any(), Any(), Any()).
 		WillRepeatedly(oglemock.Return(nil))
 
 	ExpectCall(t.fileSystem, "CreateSymlink")(Any(), Any(), Any()).
@@ -1086,7 +1089,7 @@ func (t *DirectoryRestorerTest) SetModTimeReturnsErrorForOneEntry() {
 		WillOnce(returnEntries(entries))
 
 	// Uninteresting calls
-	ExpectCall(t.fileRestorer, "RestoreFile")(Any(), Any()).
+	ExpectCall(t.fileRestorer, "RestoreFile")(Any(), Any(), Any()).
 		WillRepeatedly(oglemock.Return(nil))
 
 	ExpectCall(t.fileSystem, "Chown")(Any(), Any(), Any()).
@@ -1116,7 +1119,7 @@ func (t *DirectoryRestorerTest) EverythingSucceeds() {
 		WillOnce(returnEntries(entries))
 
 	// File restorer
-	ExpectCall(t.fileRestorer, "RestoreFile")(Any(), Any()).
+	ExpectCall(t.fileRestorer, "RestoreFile")(Any(), Any(), Any()).
 		WillOnce(oglemock.Return(nil))
 
 	// File system
