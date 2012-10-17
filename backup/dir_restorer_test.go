@@ -650,13 +650,19 @@ func (t *DirectoryRestorerTest) CallsChown() {
 			Gid: 19,
 		},
 		&fs.DirectoryEntry{
-			Type: fs.TypeBlockDevice,  // Shouldn't call for device
-		},
-		&fs.DirectoryEntry{
-			Type: fs.TypeCharDevice,  // Shouldn't call for device
-		},
-		&fs.DirectoryEntry{
 			Name: "carnitas",
+			Type: fs.TypeBlockDevice,
+			Uid: 17,
+			Gid: 19,
+		},
+		&fs.DirectoryEntry{
+			Name: "nachos",
+			Type: fs.TypeCharDevice,
+			Uid: 17,
+			Gid: 19,
+		},
+		&fs.DirectoryEntry{
+			Name: "barbacoa",
 			Type: fs.TypeNamedPipe,
 			Uid: 17,
 			Gid: 19,
@@ -702,6 +708,12 @@ func (t *DirectoryRestorerTest) CallsChown() {
 		WillOnce(oglemock.Return(nil))
 
 	ExpectCall(t.fileSystem, "Chown")("/foo/bar/baz/carnitas", 17, 19).
+		WillOnce(oglemock.Return(nil))
+
+	ExpectCall(t.fileSystem, "Chown")("/foo/bar/baz/nachos", 17, 19).
+		WillOnce(oglemock.Return(nil))
+
+	ExpectCall(t.fileSystem, "Chown")("/foo/bar/baz/barbacoa", 17, 19).
 		WillOnce(oglemock.Return(errors.New("")))
 
 	// Call
