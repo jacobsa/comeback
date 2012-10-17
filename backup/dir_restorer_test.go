@@ -740,11 +740,54 @@ func (t *DirectoryRestorerTest) ChownReturnsErrorForOneEntry() {
 }
 
 func (t *DirectoryRestorerTest) CallsUserRegistry() {
-	ExpectEq("TODO", "")
+	// Blob store
+	entries := []*fs.DirectoryEntry{
+		&fs.DirectoryEntry{
+			Type: fs.TypeFile,
+			Username: makeStrPtr("taco"),
+		},
+	}
+
+	ExpectCall(t.blobStore, "Load")(Any()).
+		WillOnce(returnEntries(entries))
+
+	// File restorer
+	ExpectCall(t.fileRestorer, "RestoreFile")(Any(), Any()).
+		WillRepeatedly(oglemock.Return(nil))
+
+	// User registry
+	ExpectCall(t.userRegistry, "FindByName")("taco").
+		WillOnce(oglemock.Return(errors.New("")))
+
+	// Call
+	t.call()
 }
 
 func (t *DirectoryRestorerTest) UserRegistryReturnsError() {
-	ExpectEq("TODO", "")
+	// Blob store
+	entries := []*fs.DirectoryEntry{
+		&fs.DirectoryEntry{
+			Type: fs.TypeFile,
+			Username: makeStrPtr(""),
+		},
+	}
+
+	ExpectCall(t.blobStore, "Load")(Any()).
+		WillOnce(returnEntries(entries))
+
+	// File restorer
+	ExpectCall(t.fileRestorer, "RestoreFile")(Any(), Any()).
+		WillRepeatedly(oglemock.Return(nil))
+
+	// User registry
+	ExpectCall(t.userRegistry, "FindByName")(Any()).
+		WillOnce(oglemock.Return(errors.New("taco")))
+
+	// Call
+	t.call()
+
+	ExpectThat(t.err, Error(HasSubstr("FindByName")))
+	ExpectThat(t.err, Error(HasSubstr("taco")))
 }
 
 func (t *DirectoryRestorerTest) UserRegistrySaysNotFound() {
