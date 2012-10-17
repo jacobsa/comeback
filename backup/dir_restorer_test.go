@@ -21,7 +21,9 @@ import (
 	"github.com/jacobsa/comeback/backup/mock"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/blob/mock"
+	"github.com/jacobsa/comeback/fs"
 	"github.com/jacobsa/comeback/fs/mock"
+	"github.com/jacobsa/comeback/repr"
 	. "github.com/jacobsa/oglematchers"
 	"github.com/jacobsa/oglemock"
 	. "github.com/jacobsa/ogletest"
@@ -33,6 +35,13 @@ func TestDirectoryRestorer(t *testing.T) { RunTests(t) }
 ////////////////////////////////////////////////////////////////////////
 // Helpers
 ////////////////////////////////////////////////////////////////////////
+
+func returnEntries(entries []*fs.DirectoryEntry) oglemock.Action {
+	data, err := repr.Marshal(entries)
+	AssertEq(nil, err)
+
+	return oglemock.Return(data, nil)
+}
 
 type DirectoryRestorerTest struct {
 	blobStore    mock_blob.MockStore
@@ -116,7 +125,17 @@ func (t *DirectoryRestorerTest) BlobStoreReturnsJunk() {
 }
 
 func (t *DirectoryRestorerTest) NoEntries() {
-	ExpectEq("TODO", "")
+	// Blob store
+	entries := []*fs.DirectoryEntry{
+	}
+
+	ExpectCall(t.blobStore, "Load")(Any()).
+		WillOnce(returnEntries(entries))
+
+	// Call
+	t.call()
+
+	ExpectEq(nil, t.err)
 }
 
 func (t *DirectoryRestorerTest) FileEntry_CallsLinkForHardLink() {
