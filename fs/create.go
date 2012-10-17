@@ -62,7 +62,18 @@ func (fs *fileSystem) CreateSymlink(
 	target string,
 	source string,
 	permissions os.FileMode) (err error) {
-	err = fmt.Errorf("TODO")
+	// Create the link.
+	if err = os.Symlink(target, source); err != nil {
+		return
+	}
+
+	// Set the permissions. This is meaningless on POSIX operating systems in
+	// general, but OS X lets you do it.
+	if err = SetPermissions(source, permissions); err != nil {
+		err = fmt.Errorf("SetPermissions: %v", err)
+		return
+	}
+
 	return
 }
 
