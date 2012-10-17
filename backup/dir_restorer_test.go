@@ -664,7 +664,7 @@ func (t *DirectoryRestorerTest) CallsChown() {
 	ExpectCall(t.fileSystem, "Mkdir")(Any(), Any()).
 		WillRepeatedly(oglemock.Return(nil))
 
-	ExpectCall(t.dirRestorer, "RestoreDirectory")(Any(), Any()).
+	ExpectCall(t.wrapped, "RestoreDirectory")(Any(), Any()).
 		WillRepeatedly(oglemock.Return(nil))
 
 	ExpectCall(t.fileSystem, "CreateSymlink")(Any(), Any(), Any()).
