@@ -58,6 +58,11 @@ func (fs *fileSystem) CreateFile(
 	return
 }
 
+func (fs *fileSystem) Mkdir(path string, permissions os.FileMode) (err error) {
+	err = os.Mkdir(path, permissions)
+	return
+}
+
 func (fs *fileSystem) CreateSymlink(
 	target string,
 	source string,
@@ -69,7 +74,7 @@ func (fs *fileSystem) CreateSymlink(
 
 	// Set the permissions. This is meaningless on POSIX operating systems in
 	// general, but OS X lets you do it.
-	if err = SetPermissions(source, permissions); err != nil {
+	if err = fs.SetPermissions(source, permissions); err != nil {
 		err = fmt.Errorf("SetPermissions: %v", err)
 		return
 	}
