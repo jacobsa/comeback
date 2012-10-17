@@ -614,7 +614,76 @@ func (t *DirectoryRestorerTest) CharDevEntry_CreateReturnsError() {
 }
 
 func (t *DirectoryRestorerTest) CallsChown() {
-	ExpectEq("TODO", "")
+	t.basePath = "/foo"
+	t.relPath = "bar/baz"
+
+	// Blob store
+	entries := []*fs.DirectoryEntry{
+		&fs.DirectoryEntry{
+			Name: "taco",
+			Type:        fs.TypeFile,
+			HardLinkTarget: makeStrPtr(""),
+		},
+		&fs.DirectoryEntry{
+			Name: "burrito",
+			Type:        fs.TypeFile,
+		},
+		&fs.DirectoryEntry{
+			Name: "enchilada",
+			Type:        fs.TypeDirectory,
+			Scores: []blob.Score{nil},
+		},
+		&fs.DirectoryEntry{
+			Name: "queso",
+			Type:        fs.TypeSymlink,
+		},
+		&fs.DirectoryEntry{
+			Name: "blah0",  // Shouldn't call for devices
+			Type:        fs.TypeBlockDevice,
+		},
+		&fs.DirectoryEntry{
+			Name: "blah1",  // Shouldn't call for devices
+			Type:        fs.TypeCharDevice,
+		},
+		&fs.DirectoryEntry{
+			Name: "carnitas",
+			Type:        fs.TypeNamedPipe,
+		},
+	}
+
+	ExpectCall(t.blobStore, "Load")(Any()).
+		WillOnce(returnEntries(entries))
+
+	// Uninteresting calls
+	ExpectCall(t.fileSystem, "CreateHardLink")(Any(), Any()).
+		WillRepeatedly(oglemock.Return(nil))
+
+	ExpectCall(t.fileRestorer, "RestoreFile")(Any(), Any()).
+		WillRepeatedly(oglemock.Return(nil))
+
+	ExpectCall(t.fileSystem, "Mkdir")(Any(), Any()).
+		WillRepeatedly(oglemock.Return(nil))
+
+	ExpectCall(t.dirRestorer, "RestoreDirectory")(Any(), Any()).
+		WillRepeatedly(oglemock.Return(nil))
+
+	ExpectCall(t.fileSystem, "CreateSymlink")(Any(), Any(), Any()).
+		WillRepeatedly(oglemock.Return(nil))
+
+	ExpectCall(t.fileSystem, "CreateBlockDevice")(Any(), Any(), Any()).
+		WillRepeatedly(oglemock.Return(nil))
+
+	ExpectCall(t.fileSystem, "CreateCharDevice")(Any(), Any(), Any()).
+		WillRepeatedly(oglemock.Return(nil))
+
+	ExpectCall(t.fileSystem, "CreateNamedPipe")(Any(), Any()).
+		WillRepeatedly(oglemock.Return(nil))
+
+	// Chown
+	ExpectCall(t.fileSystem, "Chown")(TODO)
+
+	// Call
+	t.call()
 }
 
 func (t *DirectoryRestorerTest) ChownReturnsErrorForOneEntry() {
