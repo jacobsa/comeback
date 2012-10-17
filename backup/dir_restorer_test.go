@@ -219,8 +219,8 @@ func (t *DirectoryRestorerTest) FileEntry_CallsRestoreFile() {
 	// Blob store
 	entries := []*fs.DirectoryEntry{
 		&fs.DirectoryEntry{
-			Name:           "taco",
-			Type:           fs.TypeFile,
+			Name:        "taco",
+			Type:        fs.TypeFile,
 			Permissions: 0712,
 			Scores: []blob.Score{
 				blob.ComputeScore([]byte("burrito")),
@@ -247,7 +247,7 @@ func (t *DirectoryRestorerTest) FileEntry_RestoreFileReturnsError() {
 	// Blob store
 	entries := []*fs.DirectoryEntry{
 		&fs.DirectoryEntry{
-			Type:           fs.TypeFile,
+			Type: fs.TypeFile,
 		},
 	}
 
@@ -269,7 +269,7 @@ func (t *DirectoryRestorerTest) DirEntry_ZeroScores() {
 	// Blob store
 	entries := []*fs.DirectoryEntry{
 		&fs.DirectoryEntry{
-			Type:           fs.TypeDirectory,
+			Type:   fs.TypeDirectory,
 			Scores: []blob.Score{},
 		},
 	}
@@ -290,7 +290,7 @@ func (t *DirectoryRestorerTest) DirEntry_TwoScores() {
 	// Blob store
 	entries := []*fs.DirectoryEntry{
 		&fs.DirectoryEntry{
-			Type:           fs.TypeDirectory,
+			Type: fs.TypeDirectory,
 			Scores: []blob.Score{
 				blob.ComputeScore([]byte("a")),
 				blob.ComputeScore([]byte("b")),
@@ -317,10 +317,10 @@ func (t *DirectoryRestorerTest) DirEntry_CallsMkdir() {
 	// Blob store
 	entries := []*fs.DirectoryEntry{
 		&fs.DirectoryEntry{
-			Name: "taco",
-			Type:           fs.TypeDirectory,
+			Name:        "taco",
+			Type:        fs.TypeDirectory,
 			Permissions: 0712,
-			Scores: []blob.Score{blob.ComputeScore([]byte(""))},
+			Scores:      []blob.Score{blob.ComputeScore([]byte(""))},
 		},
 	}
 
@@ -339,7 +339,7 @@ func (t *DirectoryRestorerTest) DirEntry_MkdirReturnsError() {
 	// Blob store
 	entries := []*fs.DirectoryEntry{
 		&fs.DirectoryEntry{
-			Type:           fs.TypeDirectory,
+			Type:   fs.TypeDirectory,
 			Scores: []blob.Score{blob.ComputeScore([]byte(""))},
 		},
 	}
@@ -365,8 +365,8 @@ func (t *DirectoryRestorerTest) DirEntry_CallsWrapped() {
 	// Blob store
 	entries := []*fs.DirectoryEntry{
 		&fs.DirectoryEntry{
-			Name: "taco",
-			Type:           fs.TypeDirectory,
+			Name:   "taco",
+			Type:   fs.TypeDirectory,
 			Scores: []blob.Score{blob.ComputeScore([]byte("burrito"))},
 		},
 	}
@@ -393,7 +393,7 @@ func (t *DirectoryRestorerTest) DirEntry_WrappedReturnsError() {
 	// Blob store
 	entries := []*fs.DirectoryEntry{
 		&fs.DirectoryEntry{
-			Type:           fs.TypeDirectory,
+			Type:   fs.TypeDirectory,
 			Scores: []blob.Score{blob.ComputeScore([]byte(""))},
 		},
 	}
