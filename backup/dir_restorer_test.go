@@ -444,7 +444,25 @@ func (t *DirectoryRestorerTest) SymlinkEntry_CallsSymlink() {
 }
 
 func (t *DirectoryRestorerTest) SymlinkEntry_SymlinkReturnsError() {
-	ExpectEq("TODO", "")
+	// Blob store
+	entries := []*fs.DirectoryEntry{
+		&fs.DirectoryEntry{
+			Type:        fs.TypeSymlink,
+		},
+	}
+
+	ExpectCall(t.blobStore, "Load")(Any()).
+		WillOnce(returnEntries(entries))
+
+	// File system
+	ExpectCall(t.fileSystem, "CreateSymlink")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return(errors.New("taco")))
+
+	// Call
+	t.call()
+
+	ExpectThat(t.err, Error(HasSubstr("CreateSymlink")))
+	ExpectThat(t.err, Error(HasSubstr("taco")))
 }
 
 func (t *DirectoryRestorerTest) PipeEntry_CallsCreate() {
