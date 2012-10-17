@@ -24,6 +24,7 @@ import (
 	"github.com/jacobsa/comeback/fs"
 	"github.com/jacobsa/comeback/fs/mock"
 	"github.com/jacobsa/comeback/repr"
+	"github.com/jacobsa/comeback/sys/mock"
 	. "github.com/jacobsa/oglematchers"
 	"github.com/jacobsa/oglemock"
 	. "github.com/jacobsa/ogletest"
@@ -51,6 +52,8 @@ type DirectoryRestorerTest struct {
 	blobStore    mock_blob.MockStore
 	fileSystem   mock_fs.MockFileSystem
 	fileRestorer mock_backup.MockFileRestorer
+	userRegistry mock_sys.MockUserRegistry
+	groupRegistry mock_sys.MockGroupRegistry
 	wrapped      mock_backup.MockDirectoryRestorer
 
 	dirRestorer backup.DirectoryRestorer
@@ -71,6 +74,8 @@ func (t *DirectoryRestorerTest) SetUp(i *TestInfo) {
 	t.blobStore = mock_blob.NewMockStore(i.MockController, "blobStore")
 	t.fileSystem = mock_fs.NewMockFileSystem(i.MockController, "fileSystem")
 	t.fileRestorer = mock_backup.NewMockFileRestorer(i.MockController, "fileRestorer")
+	t.userRegistry = mock_sys.NewMockUserRegistry(i.MockController, "userRegistry")
+	t.groupRegistry = mock_sys.NewMockGroupRegistry(i.MockController, "groupRegistry")
 	t.wrapped = mock_backup.NewMockDirectoryRestorer(i.MockController, "wrapped")
 
 	// Create restorer.
