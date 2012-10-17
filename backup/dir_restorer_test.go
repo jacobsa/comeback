@@ -266,11 +266,48 @@ func (t *DirectoryRestorerTest) FileEntry_RestoreFileReturnsError() {
 }
 
 func (t *DirectoryRestorerTest) DirEntry_ZeroScores() {
-	ExpectEq("TODO", "")
+	// Blob store
+	entries := []*fs.DirectoryEntry{
+		&fs.DirectoryEntry{
+			Type:           fs.TypeDirectory,
+			Scores: []blob.Score{},
+		},
+	}
+
+	ExpectCall(t.blobStore, "Load")(Any()).
+		WillOnce(returnEntries(entries))
+
+	// Call
+	t.call()
+
+	ExpectThat(t.err, Error(HasSubstr("directory")))
+	ExpectThat(t.err, Error(HasSubstr("entry")))
+	ExpectThat(t.err, Error(HasSubstr("exactly one")))
+	ExpectThat(t.err, Error(HasSubstr("score")))
 }
 
 func (t *DirectoryRestorerTest) DirEntry_TwoScores() {
-	ExpectEq("TODO", "")
+	// Blob store
+	entries := []*fs.DirectoryEntry{
+		&fs.DirectoryEntry{
+			Type:           fs.TypeDirectory,
+			Scores: []blob.Score{
+				blob.ComputeScore([]byte("a")),
+				blob.ComputeScore([]byte("b")),
+			},
+		},
+	}
+
+	ExpectCall(t.blobStore, "Load")(Any()).
+		WillOnce(returnEntries(entries))
+
+	// Call
+	t.call()
+
+	ExpectThat(t.err, Error(HasSubstr("directory")))
+	ExpectThat(t.err, Error(HasSubstr("entry")))
+	ExpectThat(t.err, Error(HasSubstr("exactly one")))
+	ExpectThat(t.err, Error(HasSubstr("score")))
 }
 
 func (t *DirectoryRestorerTest) DirEntry_CallsMkdir() {
