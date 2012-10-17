@@ -1100,5 +1100,30 @@ func (t *DirectoryRestorerTest) SetModTimeReturnsErrorForOneEntry() {
 }
 
 func (t *DirectoryRestorerTest) EverythingSucceeds() {
-	ExpectEq("TODO", "")
+	// Blob store
+	entries := []*fs.DirectoryEntry{
+		&fs.DirectoryEntry{
+			Type: fs.TypeFile,
+		},
+	}
+
+	ExpectCall(t.blobStore, "Load")(Any()).
+		WillOnce(returnEntries(entries))
+
+	// File restorer
+	ExpectCall(t.fileRestorer, "RestoreFile")(Any(), Any()).
+		WillOnce(oglemock.Return(nil))
+
+	// File system
+	ExpectCall(t.fileSystem, "Chown")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return(nil))
+
+	// SetModTime
+	ExpectCall(t.fileSystem, "SetModTime")(Any(), Any()).
+		WillOnce(oglemock.Return(nil))
+
+	// Call
+	t.call()
+
+	ExpectEq(nil, t.err)
 }
