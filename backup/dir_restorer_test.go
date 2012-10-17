@@ -466,11 +466,51 @@ func (t *DirectoryRestorerTest) SymlinkEntry_SymlinkReturnsError() {
 }
 
 func (t *DirectoryRestorerTest) PipeEntry_CallsCreate() {
-	ExpectEq("TODO", "")
+	t.basePath = "/foo"
+	t.relPath = "bar/baz"
+
+	// Blob store
+	entries := []*fs.DirectoryEntry{
+		&fs.DirectoryEntry{
+			Name:        "taco",
+			Type:        fs.TypeNamedPipe,
+			Permissions: 0712,
+		},
+	}
+
+	ExpectCall(t.blobStore, "Load")(Any()).
+		WillOnce(returnEntries(entries))
+
+	// File system
+	ExpectCall(t.fileSystem, "CreateNamedPipe")(
+		"/foo/bar/baz/taco",
+		0712,
+	).WillOnce(oglemock.Return(errors.New("")))
+
+	// Call
+	t.call()
 }
 
 func (t *DirectoryRestorerTest) PipeEntry_CreateReturnsError() {
-	ExpectEq("TODO", "")
+	// Blob store
+	entries := []*fs.DirectoryEntry{
+		&fs.DirectoryEntry{
+			Type:        fs.TypeNamedPipe,
+		},
+	}
+
+	ExpectCall(t.blobStore, "Load")(Any()).
+		WillOnce(returnEntries(entries))
+
+	// File system
+	ExpectCall(t.fileSystem, "CreateNamedPipe")(Any(), Any()).
+		WillOnce(oglemock.Return(errors.New("taco")))
+
+	// Call
+	t.call()
+
+	ExpectThat(t.err, Error(HasSubstr("CreateNamedPipe")))
+	ExpectThat(t.err, Error(HasSubstr("taco")))
 }
 
 func (t *DirectoryRestorerTest) BlockDevEntry_CallsCreate() {
