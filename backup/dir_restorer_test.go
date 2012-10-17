@@ -644,7 +644,7 @@ func (t *DirectoryRestorerTest) CallsChown() {
 		&fs.DirectoryEntry{
 			Name:   "enchilada",
 			Type:   fs.TypeDirectory,
-			Scores: []blob.Score{nil},
+			Scores: []blob.Score{blob.ComputeScore([]byte(""))},
 			Uid: 17,
 			Gid: 19,
 		},
@@ -681,13 +681,13 @@ func (t *DirectoryRestorerTest) CallsChown() {
 	ExpectCall(t.fileSystem, "CreateHardLink")(Any(), Any()).
 		WillRepeatedly(oglemock.Return(nil))
 
-	ExpectCall(t.fileRestorer, "RestoreFile")(Any(), Any()).
+	ExpectCall(t.fileRestorer, "RestoreFile")(Any(), Any(), Any()).
 		WillRepeatedly(oglemock.Return(nil))
 
 	ExpectCall(t.fileSystem, "Mkdir")(Any(), Any()).
 		WillRepeatedly(oglemock.Return(nil))
 
-	ExpectCall(t.wrapped, "RestoreDirectory")(Any(), Any()).
+	ExpectCall(t.wrapped, "RestoreDirectory")(Any(), Any(), Any()).
 		WillRepeatedly(oglemock.Return(nil))
 
 	ExpectCall(t.fileSystem, "CreateSymlink")(Any(), Any(), Any()).
@@ -999,7 +999,7 @@ func (t *DirectoryRestorerTest) CallsSetModTime() {
 		&fs.DirectoryEntry{
 			Name:   "enchilada",
 			Type:   fs.TypeDirectory,
-			Scores: []blob.Score{nil},
+			Scores: []blob.Score{blob.ComputeScore([]byte(""))},
 			MTime: mtimes[1],
 		},
 		&fs.DirectoryEntry{
