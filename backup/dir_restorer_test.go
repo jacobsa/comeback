@@ -416,7 +416,31 @@ func (t *DirectoryRestorerTest) DirEntry_WrappedReturnsError() {
 }
 
 func (t *DirectoryRestorerTest) SymlinkEntry_CallsSymlink() {
-	ExpectEq("TODO", "")
+	t.basePath = "/foo"
+	t.relPath = "bar/baz"
+
+	// Blob store
+	entries := []*fs.DirectoryEntry{
+		&fs.DirectoryEntry{
+			Name:        "taco",
+			Type:        fs.TypeSymlink,
+			Target:      "burrito",
+			Permissions: 0712,
+		},
+	}
+
+	ExpectCall(t.blobStore, "Load")(Any()).
+		WillOnce(returnEntries(entries))
+
+	// File system
+	ExpectCall(t.fileSystem, "CreateSymlink")(
+		"burrito",
+		"/foo/bar/baz/taco",
+		0712,
+	).WillOnce(oglemock.Return(errors.New("")))
+
+	// Call
+	t.call()
 }
 
 func (t *DirectoryRestorerTest) SymlinkEntry_SymlinkReturnsError() {
