@@ -58,6 +58,14 @@ func (fs *fileSystem) CreateFile(
 	return
 }
 
+func (fs *fileSystem) CreateSymlink(
+	target string,
+	source string,
+	permissions os.FileMode) (err error) {
+	err = fmt.Errorf("TODO")
+	return
+}
+
 func (fs *fileSystem) CreateHardLink(target, source string) (err error) {
 	err = os.Link(target, source)
 	return
