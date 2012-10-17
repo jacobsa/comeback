@@ -19,7 +19,9 @@ import (
 	"fmt"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/fs"
+	"github.com/jacobsa/comeback/repr"
 	"github.com/jacobsa/comeback/sys"
+	"path"
 )
 
 ////////////////////////////////////////////////////////////////////////
@@ -124,8 +126,158 @@ func (r *dirRestorer) RestoreDirectory(
 	basePath string,
 	relPath string,
 ) (err error) {
-	err = fmt.Errorf("TODO")
-	return
+	// Load the appropriate blob.
+	blob, err := r.blobStore.Load(score)
+	if err != nil {
+		err = fmt.Errorf("Loading blob: %v", err)
+		return
+	}
+
+	// Parse its contents.
+	entries, err := repr.Unmarshal(blob)
+	if err != nil {
+		err = fmt.Errorf("Invalid data in blob: %v", err)
+		return
+	}
+
+	// Deal with each entry.
+	for _, entry := range entries {
+		entryRelPath := path.Join(relPath, entry.Name)
+		entryFullPath := path.Join(basePath, entryRelPath)
+
+		// Switch on type.
+		switch entry.Type {
+		case fs.TypeFile:
+			// Is this a hard link to another file?
+			if entry.HardLinkTarget != nil {
+				// Create the hard link.
+				targetFullPath := path.Join(basePath, *entry.HardLinkTarget)
+				err = r.fileSystem.CreateHardLink(targetFullPath, entryFullPath)
+				if err != nil {
+					err = fmt.Errorf("CreateHardLink: %v", err)
+					return
+				}
+
+				// There's nothing else to do for a hard link.
+				continue
+			}
+
+			// Create the file using its blobs.
+			err = r.fileRestorer.RestoreFile(
+				entry.Scores,
+				entryFullPath,
+				entry.Permissions,
+			)
+
+			if err != nil {
+				err = fmt.Errorf("RestoreFile: %v", err)
+				return
+			}
+
+		case fs.TypeDirectory:
+			// Directory listings should be composed of exactly one score.
+			if len(entry.Scores) != 1 {
+				err = fmt.Errorf("Expected exactly one score: %v", entry)
+				return
+			}
+
+			// Create the directory.
+			if err = r.fileSystem.Mkdir(entryFullPath, entry.Permissions); err != nil {
+				err = fmt.Errorf("Mkdir: %v", err)
+				return
+			}
+
+			// Restore to the directory.
+			err = r.wrapped.RestoreDirectory(
+				entry.Scores[0],
+				basePath,
+				entryRelPath,
+			)
+
+			if err != nil {
+				err = fmt.Errorf("RestoreDirectory: %v", err)
+				return
+			}
+
+		case fs.TypeSymlink:
+			err = r.fileSystem.CreateSymlink(
+				entry.Target,
+				entryFullPath,
+				entry.Permissions,
+			)
+
+			if err != nil {
+				err = fmt.Errorf("CreateSymlink: %v", err)
+				return
+			}
+
+		case fs.TypeNamedPipe:
+			err = r.fileSystem.CreateNamedPipe(entryFullPath, entry.Permissions)
+			if err != nil {
+				err = fmt.Errorf("CreateNamedPipe: %v", err)
+				return
+			}
+
+		case fs.TypeBlockDevice:
+			err = r.fileSystem.CreateBlockDevice(
+				entryFullPath,
+				entry.Permissions,
+				entry.DeviceNumber,
+			)
+
+			if err != nil {
+				err = fmt.Errorf("CreateBlockDevice: %v", err)
+				return
+			}
+
+		case fs.TypeCharDevice:
+			err = r.fileSystem.CreateCharDevice(
+				entryFullPath,
+				entry.Permissions,
+				entry.DeviceNumber,
+			)
+
+			if err != nil {
+				err = fmt.Errorf("CreateCharDevice: %v", err)
+				return
+			}
+
+		default:
+			return fmt.Errorf("Don't know how to deal with entry: %v", entry)
+		}
+
+		// Fix ownership.
+		var uid sys.UserId
+		uid, err = r.chooseUserId(entry.Uid, entry.Username)
+		if err != nil {
+			err = fmt.Errorf("chooseUserId: %v", err)
+			return
+		}
+
+		var gid sys.GroupId
+		gid, err = r.chooseGroupId(entry.Gid, entry.Groupname)
+		if err != nil {
+			err = fmt.Errorf("chooseGroupId: %v", err)
+			return
+		}
+
+		if err = r.fileSystem.Chown(entryFullPath, int(uid), int(gid)); err != nil {
+			err = fmt.Errorf("Chown: %v", err)
+			return
+		}
+
+		// Fix modification time, but not on devices (otherwise we get resource
+		// busy errors).
+		if entry.Type != fs.TypeBlockDevice && entry.Type != fs.TypeCharDevice {
+			err = r.fileSystem.SetModTime(entryFullPath, entry.MTime)
+			if err != nil {
+				err = fmt.Errorf("SetModTime(%s): %v", entryFullPath, err)
+				return
+			}
+		}
+	}
+
+	return nil
 }
 
 func (r *dirRestorer) chooseUserId(

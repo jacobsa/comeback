@@ -600,6 +600,10 @@ func (t *DirectoryRestorerTest) CharDevEntry_CallsCreate() {
 	t.call()
 }
 
+func (t *DirectoryRestorerTest) UnknownEntryType() {
+	ExpectEq("TODO", "")
+}
+
 func (t *DirectoryRestorerTest) CharDevEntry_CreateReturnsError() {
 	// Blob store
 	entries := []*fs.DirectoryEntry{
