@@ -16,11 +16,14 @@
 package backup_test
 
 import (
+	"errors"
 	"github.com/jacobsa/comeback/backup"
 	"github.com/jacobsa/comeback/backup/mock"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/blob/mock"
 	"github.com/jacobsa/comeback/fs/mock"
+	. "github.com/jacobsa/oglematchers"
+	"github.com/jacobsa/oglemock"
 	. "github.com/jacobsa/ogletest"
 	"testing"
 )
@@ -77,7 +80,14 @@ func (t *DirectoryRestorerTest) call() {
 ////////////////////////////////////////////////////////////////////////
 
 func (t *DirectoryRestorerTest) CallsBlobStore() {
-	ExpectEq("TODO", "")
+	t.score = []byte("taco")
+
+	// Blob store
+	ExpectCall(t.blobStore, "Load")(DeepEquals(t.score)).
+		WillOnce(oglemock.Return(nil, errors.New("")))
+
+	// Call
+	t.call()
 }
 
 func (t *DirectoryRestorerTest) BlobStoreReturnsError() {
