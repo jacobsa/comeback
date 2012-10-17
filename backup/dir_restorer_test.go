@@ -749,6 +749,9 @@ func (t *DirectoryRestorerTest) ChownReturnsErrorForOneEntry() {
 	ExpectCall(t.fileRestorer, "RestoreFile")(Any(), Any(), Any()).
 		WillRepeatedly(oglemock.Return(nil))
 
+	ExpectCall(t.fileSystem, "SetModTime")(Any(), Any()).
+		WillRepeatedly(oglemock.Return(nil))
+
 	// Chown
 	ExpectCall(t.fileSystem, "Chown")(Any(), Any(), Any()).
 		WillOnce(oglemock.Return(nil)).
