@@ -1050,13 +1050,13 @@ func (t *DirectoryRestorerTest) CallsSetModTime() {
 	ExpectCall(t.fileSystem, "SetModTime")("/foo/bar/baz/burrito", mtimes[0]).
 		WillOnce(oglemock.Return(nil))
 
-	ExpectCall(t.fileSystem, "Chown")("/foo/bar/baz/enchilada", mtimes[1]).
+	ExpectCall(t.fileSystem, "SetModTime")("/foo/bar/baz/enchilada", mtimes[1]).
 		WillOnce(oglemock.Return(nil))
 
-	ExpectCall(t.fileSystem, "Chown")("/foo/bar/baz/queso", mtimes[2]).
+	ExpectCall(t.fileSystem, "SetModTime")("/foo/bar/baz/queso", mtimes[2]).
 		WillOnce(oglemock.Return(nil))
 
-	ExpectCall(t.fileSystem, "Chown")("/foo/bar/baz/carnitas", mtimes[3]).
+	ExpectCall(t.fileSystem, "SetModTime")("/foo/bar/baz/carnitas", mtimes[3]).
 		WillOnce(oglemock.Return(errors.New("")))
 
 	// Call
@@ -1064,7 +1064,39 @@ func (t *DirectoryRestorerTest) CallsSetModTime() {
 }
 
 func (t *DirectoryRestorerTest) SetModTimeReturnsErrorForOneEntry() {
-	ExpectEq("TODO", "")
+	// Blob store
+	entries := []*fs.DirectoryEntry{
+		&fs.DirectoryEntry{
+			Type: fs.TypeFile,
+		},
+		&fs.DirectoryEntry{
+			Type: fs.TypeFile,
+		},
+		&fs.DirectoryEntry{
+			Type: fs.TypeFile,
+		},
+	}
+
+	ExpectCall(t.blobStore, "Load")(Any()).
+		WillOnce(returnEntries(entries))
+
+	// Uninteresting calls
+	ExpectCall(t.fileRestorer, "RestoreFile")(Any(), Any()).
+		WillRepeatedly(oglemock.Return(nil))
+
+	ExpectCall(t.fileSystem, "Chown")(Any(), Any(), Any()).
+		WillRepeatedly(oglemock.Return(nil))
+
+	// SetModTime
+	ExpectCall(t.fileSystem, "SetModTime")(Any(), Any()).
+		WillOnce(oglemock.Return(nil)).
+		WillOnce(oglemock.Return(errors.New("taco")))
+
+	// Call
+	t.call()
+
+	ExpectThat(t.err, Error(HasSubstr("SetModTime")))
+	ExpectThat(t.err, Error(HasSubstr("taco")))
 }
 
 func (t *DirectoryRestorerTest) EverythingSucceeds() {
