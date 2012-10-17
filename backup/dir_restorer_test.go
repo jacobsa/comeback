@@ -311,15 +311,82 @@ func (t *DirectoryRestorerTest) DirEntry_TwoScores() {
 }
 
 func (t *DirectoryRestorerTest) DirEntry_CallsMkdir() {
-	ExpectEq("TODO", "")
+	t.basePath = "/foo"
+	t.relPath = "bar/baz"
+
+	// Blob store
+	entries := []*fs.DirectoryEntry{
+		&fs.DirectoryEntry{
+			Name: "taco",
+			Type:           fs.TypeDirectory,
+			Permissions: 0712,
+			Scores: []blob.Score{blob.ComputeScore([]byte(""))},
+		},
+	}
+
+	ExpectCall(t.blobStore, "Load")(Any()).
+		WillOnce(returnEntries(entries))
+
+	// File system
+	ExpectCall(t.fileSystem, "Mkdir")("/foo/bar/baz/taco", 0712).
+		WillOnce(oglemock.Return(errors.New("")))
+
+	// Call
+	t.call()
 }
 
 func (t *DirectoryRestorerTest) DirEntry_MkdirReturnsError() {
-	ExpectEq("TODO", "")
+	// Blob store
+	entries := []*fs.DirectoryEntry{
+		&fs.DirectoryEntry{
+			Type:           fs.TypeDirectory,
+			Scores: []blob.Score{blob.ComputeScore([]byte(""))},
+		},
+	}
+
+	ExpectCall(t.blobStore, "Load")(Any()).
+		WillOnce(returnEntries(entries))
+
+	// File system
+	ExpectCall(t.fileSystem, "Mkdir")(Any(), Any()).
+		WillOnce(oglemock.Return(errors.New("taco")))
+
+	// Call
+	t.call()
+
+	ExpectThat(t.err, Error(HasSubstr("Mkdir")))
+	ExpectThat(t.err, Error(HasSubstr("taco")))
 }
 
 func (t *DirectoryRestorerTest) DirEntry_CallsWrapped() {
-	ExpectEq("TODO", "")
+	t.basePath = "/foo"
+	t.relPath = "bar/baz"
+
+	// Blob store
+	entries := []*fs.DirectoryEntry{
+		&fs.DirectoryEntry{
+			Name: "taco",
+			Type:           fs.TypeDirectory,
+			Scores: []blob.Score{blob.ComputeScore([]byte("burrito"))},
+		},
+	}
+
+	ExpectCall(t.blobStore, "Load")(Any()).
+		WillOnce(returnEntries(entries))
+
+	// File system
+	ExpectCall(t.fileSystem, "Mkdir")(Any(), Any()).
+		WillOnce(oglemock.Return(nil))
+
+	// Wrapped
+	ExpectCall(t.wrapped, "RestoreDirectory")(
+		DeepEquals(blob.ComputeScore([]byte("burrito"))),
+		"/foo",
+		"bar/baz/taco",
+	).WillOnce(oglemock.Return(errors.New("")))
+
+	// Call
+	t.call()
 }
 
 func (t *DirectoryRestorerTest) DirEntry_WrappedReturnsError() {
