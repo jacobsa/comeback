@@ -59,3 +59,8 @@ func (fs *fileSystem) SetPermissions(path string, permissions os.FileMode) error
 
 	return nil
 }
+
+func (fs *fileSystem) Chown(path string, uid int, gid int) (err error) {
+	err = os.Lchown(path, uid, gid)
+	return
+}
