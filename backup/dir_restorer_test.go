@@ -168,7 +168,26 @@ func (t *DirectoryRestorerTest) FileEntry_CallsLinkForHardLink() {
 }
 
 func (t *DirectoryRestorerTest) FileEntry_LinkReturnsError() {
-	ExpectEq("TODO", "")
+	// Blob store
+	entries := []*fs.DirectoryEntry{
+		&fs.DirectoryEntry{
+			Type:           fs.TypeFile,
+			HardLinkTarget: makeStrPtr(""),
+		},
+	}
+
+	ExpectCall(t.blobStore, "Load")(Any()).
+		WillOnce(returnEntries(entries))
+
+	// File system
+	ExpectCall(t.fileSystem, "CreateHardLink")(Any(), Any()).
+		WillOnce(oglemock.Return(errors.New("taco")))
+
+	// Call
+	t.call()
+
+	ExpectThat(t.err, Error(HasSubstr("CreateHardLink")))
+	ExpectThat(t.err, Error(HasSubstr("taco")))
 }
 
 func (t *DirectoryRestorerTest) FileEntry_LinkSucceeds() {
