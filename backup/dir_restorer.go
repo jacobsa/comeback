@@ -29,7 +29,7 @@ import (
 type DirectoryRestorer interface {
 	// Recursively restore a directory based on the listing named by the supplied
 	// score. The first call should set basePath to the target directory and
-	// relPath to the empty string.
+	// relPath to the empty string. The target directory must already exist.
 	RestoreDirectory(score blob.Score, basePath, relPath string) (err error)
 }
 
