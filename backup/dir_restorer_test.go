@@ -1055,17 +1055,25 @@ func (t *DirectoryRestorerTest) CallsSetModTime() {
 		WillRepeatedly(oglemock.Return(nil))
 
 	// SetModTime
-	ExpectCall(t.fileSystem, "SetModTime")("/foo/bar/baz/burrito", mtimes[0]).
-		WillOnce(oglemock.Return(nil))
+	ExpectCall(t.fileSystem, "SetModTime")(
+		"/foo/bar/baz/burrito",
+		DeepEquals(mtimes[0]),
+	).WillOnce(oglemock.Return(nil))
 
-	ExpectCall(t.fileSystem, "SetModTime")("/foo/bar/baz/enchilada", mtimes[1]).
-		WillOnce(oglemock.Return(nil))
+	ExpectCall(t.fileSystem, "SetModTime")(
+		"/foo/bar/baz/enchilada",
+		DeepEquals(mtimes[1]),
+	).WillOnce(oglemock.Return(nil))
 
-	ExpectCall(t.fileSystem, "SetModTime")("/foo/bar/baz/queso", mtimes[2]).
-		WillOnce(oglemock.Return(nil))
+	ExpectCall(t.fileSystem, "SetModTime")(
+		"/foo/bar/baz/queso",
+		DeepEquals(mtimes[2]),
+	).WillOnce(oglemock.Return(nil))
 
-	ExpectCall(t.fileSystem, "SetModTime")("/foo/bar/baz/carnitas", mtimes[3]).
-		WillOnce(oglemock.Return(errors.New("")))
+	ExpectCall(t.fileSystem, "SetModTime")(
+		"/foo/bar/baz/carnitas",
+		DeepEquals(mtimes[3]),
+	).WillOnce(oglemock.Return(nil))
 
 	// Call
 	t.call()
