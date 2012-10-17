@@ -85,6 +85,8 @@ func (t *DirectoryRestorerTest) SetUp(i *TestInfo) {
 		t.blobStore,
 		t.fileSystem,
 		t.fileRestorer,
+		t.userRegistry,
+		t.groupRegistry,
 		t.wrapped,
 	)
 

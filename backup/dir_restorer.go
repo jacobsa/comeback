@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/fs"
+	"github.com/jacobsa/comeback/sys"
 )
 
 ////////////////////////////////////////////////////////////////////////
@@ -39,11 +40,23 @@ func NewDirectoryRestorer(
 	fileSystem fs.FileSystem,
 	fileRestorer FileRestorer,
 ) (restorer DirectoryRestorer, err error) {
+	userRegistry, err := sys.NewUserRegistry()
+	if err != nil {
+		err = fmt.Errorf("NewUserRegistry: %v", err)
+	}
+
+	groupRegistry, err := sys.NewGroupRegistry()
+	if err != nil {
+		err = fmt.Errorf("NewGroupRegistry: %v", err)
+	}
+
 	createRestorer := func(wrapped DirectoryRestorer) DirectoryRestorer {
 		restorer, err := NewNonRecursiveDirectoryRestorer(
 			blobStore,
 			fileSystem,
 			fileRestorer,
+			userRegistry,
+			groupRegistry,
 			wrapped,
 		)
 
@@ -81,9 +94,19 @@ func NewNonRecursiveDirectoryRestorer(
 	blobStore blob.Store,
 	fileSystem fs.FileSystem,
 	fileRestorer FileRestorer,
+	userRegistry sys.UserRegistry,
+	groupRegistry sys.GroupRegistry,
 	wrapped DirectoryRestorer,
 ) (restorer DirectoryRestorer, err error) {
-	restorer = &dirRestorer{blobStore, fileSystem, fileRestorer, wrapped}
+	restorer = &dirRestorer{
+		blobStore,
+		fileSystem,
+		fileRestorer,
+		userRegistry,
+		groupRegistry,
+		wrapped,
+	}
+
 	return
 }
 
@@ -91,6 +114,8 @@ type dirRestorer struct {
 	blobStore    blob.Store
 	fileSystem   fs.FileSystem
 	fileRestorer FileRestorer
+	userRegistry sys.UserRegistry
+	groupRegistry sys.GroupRegistry
 	wrapped      DirectoryRestorer
 }
 
