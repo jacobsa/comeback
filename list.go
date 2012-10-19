@@ -33,10 +33,21 @@ func runList(args []string) {
 	}
 
 	// Print each.
+	log.Println("")
+	log.Println("")
 	log.Println("Recent backups:")
+	log.Println("")
+	log.Printf(
+		"  %-16s   %-40s   %-29s   %s\n",
+		"ID",
+		"JOB NAME",
+		"START TIME",
+		"SCORE",
+	)
+
 	for _, job := range jobs {
 		log.Printf(
-			"  %16x %40s %v %s\n",
+			"  %16x   %-40s   %-29s   %s\n",
 			job.Id,
 			job.Name,
 			job.StartTime,
