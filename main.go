@@ -44,6 +44,8 @@ func main() {
 	// Find and run the appropriate command.
 	for _, cmd := range commands {
 		if cmd.Name == cmdName {
+			cmd.Flags.Parse(args[1:])
+			args = cmd.Flags.Args()
 			cmd.Run(args)
 			return
 		}

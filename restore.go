@@ -16,18 +16,20 @@
 package main
 
 import (
-	"flag"
 	"log"
 	"os"
 	"strconv"
 )
 
-var g_jobIdStr = flag.String("job_id", "", "The job ID to restore.")
-var g_target = flag.String("target", "", "The target directory.")
-
 var cmdRestore = &Command{
 	Name: "restore",
-	Run: runRestore,
+}
+
+var g_jobIdStr = cmdRestore.Flags.String("job_id", "", "The job ID to restore.")
+var g_target = cmdRestore.Flags.String("target", "", "The target directory.")
+
+func init() {
+	cmdRestore.Run = runRestore  // Break flag-related dependency loop.
 }
 
 func runRestore(args []string) {
