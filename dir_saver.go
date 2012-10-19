@@ -17,13 +17,53 @@ package main
 
 import (
 	"github.com/jacobsa/comeback/backup"
+	"github.com/jacobsa/comeback/fs"
+	"github.com/jacobsa/comeback/sys"
+	"log"
 	"sync"
 )
 
 var g_dirSaverOnce sync.Once
 var g_dirSaver backup.DirectorySaver
 
-func initDirSaver()
+func initDirSaver() {
+	blobStore := getBlobStore()
+
+	// Create a user registry.
+	userRegistry, err := sys.NewUserRegistry()
+	if err != nil {
+		log.Fatalln("Creating user registry:", err)
+	}
+
+	// Create a group registry.
+	groupRegistry, err := sys.NewGroupRegistry()
+	if err != nil {
+		log.Fatalln("Creating group registry:", err)
+	}
+
+	// Create a file system.
+	fileSystem, err := fs.NewFileSystem(userRegistry, groupRegistry)
+	if err != nil {
+		log.Fatalln("Creating file system:", err)
+	}
+
+	// Create the file saver.
+	const chunkSize = 1<<24  // 16 MiB
+	fileSaver, err := backup.NewFileSaver(blobStore, chunkSize)
+	if err != nil {
+		log.Fatalln("Creating file saver:", err)
+	}
+
+	// Create the directory saver.
+	g_dirSaver, err = backup.NewDirectorySaver(
+		blobStore,
+		fileSystem,
+		fileSaver)
+
+	if err != nil {
+		log.Fatalln("Creating directory saver:", err)
+	}
+}
 
 func getDirSaver() backup.DirectorySaver {
 	g_dirSaverOnce.Do(initDirSaver)
