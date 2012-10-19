@@ -24,6 +24,7 @@ import (
 var commands = []*Command{
 	cmdList,
 	cmdSave,
+	cmdRestore,
 }
 
 func main() {
