@@ -26,10 +26,11 @@ var g_registryOnce sync.Once
 var g_registry registry.Registry
 var g_crypter crypto.Crypter
 
-func getRegistryAndCrypter() (registry.Registry, crypto.Crypter) {
-	g_registryOnce.Do(func() {
-		log.Fatalln("TODO: g_registryOnce")
-	})
+func initRegistryAndCrypter() {
+	log.Fatalln("TODO: initRegistryAndCrypter")
+}
 
+func getRegistryAndCrypter() (registry.Registry, crypto.Crypter) {
+	g_registryOnce.Do(initRegistryAndCrypter)
 	return g_registry, g_crypter
 }
