@@ -16,14 +16,37 @@
 package main
 
 import (
+	"github.com/jacobsa/aws/s3"
 	"github.com/jacobsa/comeback/blob"
+	s3_kv "github.com/jacobsa/comeback/kv/s3"
+	"log"
 	"sync"
 )
 
 var g_blobStoreOnce sync.Once
 var g_blobStore blob.Store
 
-func initBlobStore()
+func initBlobStore() {
+	cfg := getConfig()
+
+	// Open a connection to S3.
+	bucket, err := s3.OpenBucket(cfg.S3Bucket, cfg.S3Region, cfg.AccessKey)
+	if err != nil {
+		log.Fatalln("Creating S3 bucket:", err)
+	}
+
+	// Create the kv store.
+	kvStore, err := s3_kv.NewS3KvStore(bucket)
+	if err != nil {
+		log.Fatalln("Creating kv store:", err)
+	}
+
+	// Create the blob store.
+	crypter := getCrypter()
+	g_blobStore = blob.NewKvBasedBlobStore(kvStore)
+	g_blobStore = blob.NewCheckingStore(g_blobStore)
+	g_blobStore = blob.NewEncryptingStore(crypter, g_blobStore)
+}
 
 func getBlobStore() blob.Store {
 	g_blobStoreOnce.Do(initBlobStore)
