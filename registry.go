@@ -16,7 +16,20 @@
 package main
 
 import (
+	"github.com/jacobsa/comeback/crypto"
 	"github.com/jacobsa/comeback/registry"
+	"log"
+	"sync"
 )
 
-func getRegistry() registry.Registry
+var g_registryOnce sync.Once
+var g_registry registry.Registry
+var g_crypter crypto.Crypter
+
+func getRegistryAndCrypter() (registry.Registry, crypto.Crypter) {
+	g_registryOnce.Do(func() {
+		log.Fatalln("TODO: g_registryOnce")
+	})
+
+	return g_registry, g_crypter
+}
