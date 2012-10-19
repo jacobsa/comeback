@@ -50,7 +50,7 @@ func runList(args []string) {
 			"  %16x   %-40s   %-33s   %s\n",
 			job.Id,
 			job.Name,
-			job.StartTime,
+			job.StartTime.Local(),
 			job.Score.Hex(),
 		)
 	}
