@@ -16,11 +16,57 @@
 package main
 
 import (
+	"flag"
+	"github.com/jacobsa/comeback/registry"
+	"log"
+	"time"
 )
+
+var g_jobName = flag.String("job", "", "Job name within the config file.")
 
 var cmdSave = &Command{
 	Name: "save",
 	Run: runSave,
 }
 
-func runSave(args []string)
+func runSave(args []string) {
+	cfg := getConfig()
+
+	// Look for the specified job.
+	if *g_jobName == "" {
+		log.Fatalln("You must set the -job flag.")
+	}
+
+	job, ok := cfg.Jobs[*g_jobName]
+	if !ok {
+		log.Fatalln("Unknown job:", *g_jobName)
+	}
+
+	// Grab dependencies.
+	dirSaver := getDirSaver()
+	reg := getRegistry()
+
+	// Choose a start time for the job.
+	startTime := time.Now()
+
+	// Call the directory saver.
+	score, err := dirSaver.Save(job.BasePath, "", job.Excludes)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	// Register the successful backup.
+	randSrc := getRandSrc()
+	completedJob := registry.CompletedJob{
+		Id:        randUint64(randSrc),
+		Name:      *g_jobName,
+		StartTime: startTime,
+		Score:     score,
+	}
+
+	if err = reg.RecordBackup(completedJob); err != nil {
+		log.Fatalln("Recoding to registry:", err)
+	}
+
+	log.Printf("Successfully backed up. ID: %16x\n", completedJob.Id)
+}
