@@ -18,12 +18,15 @@ package main
 import (
 	"math/rand"
 	"sync"
+	"time"
 )
 
 var g_randSrcOnce sync.Once
 var g_randSrc *rand.Rand
 
-func initRandSrc()
+func initRandSrc() {
+	g_randSrc = rand.New(rand.NewSource(time.Now().UnixNano()))
+}
 
 func getRandSrc() *rand.Rand {
 	g_randSrcOnce.Do(initRandSrc)
