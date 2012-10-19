@@ -34,8 +34,12 @@ func init() {
 
 func runRestore(args []string) {
 	// Parse the job ID.
-	if len(*g_jobIdStr) != 16 {
+	if len(*g_jobIdStr) == 0 {
 		log.Fatalln("You must set the -job_id flag.")
+	}
+
+	if len(*g_jobIdStr) != 16 {
+		log.Fatalln("Invalid job ID:", *g_jobIdStr)
 	}
 
 	jobId, err := strconv.ParseUint(*g_jobIdStr, 16, 64)
