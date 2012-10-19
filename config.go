@@ -17,6 +17,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"github.com/jacobsa/comeback/config"
 	"io/ioutil"
 	"log"
@@ -47,7 +48,12 @@ func initConfig() {
 	}
 
 	// Read in the AWS access key secret.
-	g_config.AccessKey.Secret = readPassword("Enter AWS access key secret: ")
+	prompt := fmt.Sprintf(
+		"Enter secret for AWS access key %s: ",
+		g_config.AccessKey.Id,
+	)
+
+	g_config.AccessKey.Secret = readPassword(prompt)
 	if len(g_config.AccessKey.Secret) == 0 {
 		log.Fatalln("You must enter an access key secret.")
 	}
