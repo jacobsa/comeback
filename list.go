@@ -25,5 +25,22 @@ var cmdList = &Command{
 }
 
 func runList(args []string) {
-	log.Fatalln("TODO: Implement list.")
+	// Ask the registry for a list.
+	registry := getRegistry()
+	jobs, err := registry.ListRecentBackups()
+	if err != nil {
+		log.Fatalln("Listing recent backups:", err)
+	}
+
+	// Print each.
+	log.Println("Recent backups:")
+	for _, job := range jobs {
+		log.Printf(
+			"  %16x %40s %v %s\n",
+			job.Id,
+			job.Name,
+			job.StartTime,
+			job.Score.Hex(),
+		)
+	}
 }
