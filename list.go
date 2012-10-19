@@ -26,7 +26,7 @@ var cmdList = &Command{
 
 func runList(args []string) {
 	// Ask the registry for a list.
-	registry, _ := getRegistryAndCrypter()
+	registry, := getRegistry()
 	jobs, err := registry.ListRecentBackups()
 	if err != nil {
 		log.Fatalln("Listing recent backups:", err)

@@ -22,15 +22,21 @@ import (
 	"sync"
 )
 
-var g_registryOnce sync.Once
+var g_registryAndCrypterOnce sync.Once
 var g_registry registry.Registry
 var g_crypter crypto.Crypter
 
 func initRegistryAndCrypter() {
-	log.Fatalln("TODO: initRegistryAndCrypter")
+	// Read in the crypto password.
+	cryptoPassword := readPassword(
 }
 
-func getRegistryAndCrypter() (registry.Registry, crypto.Crypter) {
-	g_registryOnce.Do(initRegistryAndCrypter)
-	return g_registry, g_crypter
+func getRegistry() registry.Registry {
+	g_registryAndCrypterOnce.Do(initRegistryAndCrypter)
+	return g_registry
+}
+
+func getCrypter() crypto.Crypter {
+	g_registryAndCrypterOnce.Do(initRegistryAndCrypter)
+	return g_crypter
 }
