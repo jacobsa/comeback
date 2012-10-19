@@ -16,6 +16,7 @@
 package main
 
 import (
+	"crypto/sha256"
 	"github.com/jacobsa/comeback/crypto"
 	"github.com/jacobsa/comeback/registry"
 	"log"
@@ -28,7 +29,29 @@ var g_crypter crypto.Crypter
 
 func initRegistryAndCrypter() {
 	// Read in the crypto password.
-	cryptoPassword := readPassword(
+	cryptoPassword := readPassword("Entry crypto password: ")
+	if len(cryptoPassword) == 0 {
+		log.Fatalln("You must enter a password.")
+	}
+
+	// Derive a crypto key from the password using PBKDF2, recommended for use by
+	// NIST Special Publication 800-132. The latter says that PBKDF2 is approved
+	// for use with HMAC and any approved hash function. Special Publication
+	// 800-107 lists SHA-256 as an approved hash function.
+	const pbkdf2Iters = 4096
+	const keyLen = 32 // Minimum key length for AES-SIV
+	keyDeriver := crypto.NewPbkdf2KeyDeriver(pbkdf2Iters, keyLen, sha256.New)
+
+	// Create the registry and crypter.
+	var err error
+	g_registry, g_crypter, err = registry.NewRegistry(
+		domain,
+		cryptoPassword,
+		keyDeriver)
+
+	if err != nil {
+		log.Fatalln("Creating registry:", err)
+	}
 }
 
 func getRegistry() registry.Registry {
