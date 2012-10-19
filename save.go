@@ -16,37 +16,11 @@
 package main
 
 import (
-	"flag"
-	"log"
 )
 
-// The set of commands supported by the tool.
-var commands = []*Command{
-	cmdList,
-	cmdSave,
+var cmdSave = &Command{
+	Name: "save",
+	Run: runSave,
 }
 
-func main() {
-	flag.Parse()
-
-	// Set up bare logging output.
-	log.SetFlags(0)
-
-	// We get the command name.
-	args := flag.Args()
-	if len(args) < 1 {
-		log.Fatalln("Missing command name.")
-	}
-
-	cmdName := args[0]
-
-	// Find and run the appropriate command.
-	for _, cmd := range commands {
-		if cmd.Name == cmdName {
-			cmd.Run(args)
-			return
-		}
-	}
-
-	log.Fatalln("Unknown command:", cmdName)
-}
+func runSave(args []string)
