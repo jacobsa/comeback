@@ -16,17 +16,19 @@
 package main
 
 import (
-	"flag"
 	"github.com/jacobsa/comeback/registry"
 	"log"
 	"time"
 )
 
-var g_jobName = flag.String("job", "", "Job name within the config file.")
-
 var cmdSave = &Command{
 	Name: "save",
-	Run: runSave,
+}
+
+var g_jobName = cmdSave.Flags.String("job", "", "Job name within the config file.")
+
+func init() {
+	cmdSave.Run = runSave  // Break flag-related dependency loop.
 }
 
 func runSave(args []string) {
