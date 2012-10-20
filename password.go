@@ -16,24 +16,53 @@
 package main
 
 /*
-#include <pwd.h>
-#include <stdlib.h>
-#include <unistd.h>
+#include <termios.h>
 */
 import "C"
 
 import (
-	"unsafe"
+	"bufio"
+	"fmt"
+	"log"
+	"os"
 )
 
-const (
-	maxPasswordSize = 256
-)
+func getTermSettings() (settings C.struct_termios) {
+	res := C.tcgetattr(C.int(os.Stdout.Fd()), &settings)
+	if res != 0 {
+		panic(res)
+	}
+
+	return
+}
+
+func setTermSettings(settings C.struct_termios) {
+	res := C.tcsetattr(C.int(os.Stdout.Fd()), 0, &settings)
+	if res != 0 {
+		panic(res)
+	}
+}
 
 func readPassword(prompt string) string {
-	cPrompt := C.CString(prompt)
-	defer C.free(unsafe.Pointer(cPrompt))
+	// Grab the current terminal settings, making sure they are later restored.
+	origTermSettings := getTermSettings()
+	defer setTermSettings(origTermSettings)
 
-	cPass := C.getpass(cPrompt)
-	return C.GoString(cPass)
+	// Disable echoing.
+	newTermSettings := origTermSettings
+	newTermSettings.c_lflag = newTermSettings.c_lflag & ^C.tcflag_t(C.ECHO)
+	setTermSettings(newTermSettings)
+
+	// Display the prompt.
+	fmt.Print(prompt)
+
+	// Read from stdin. Add a newline for the user pressing enter.
+	reader := bufio.NewReader(os.Stdin)
+	line, err := reader.ReadString('\n')
+	fmt.Println("")
+	if err != nil {
+		log.Fatalln("ReadString:", err)
+	}
+
+	return line[0:len(line)-1]
 }
