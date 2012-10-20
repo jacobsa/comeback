@@ -25,8 +25,11 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
+	"sync"
 )
 
+// Thin wrapper around tcgetattr.
 func getTermSettings() (settings C.struct_termios) {
 	res := C.tcgetattr(C.int(os.Stdout.Fd()), &settings)
 	if res != 0 {
@@ -36,6 +39,7 @@ func getTermSettings() (settings C.struct_termios) {
 	return
 }
 
+// Thin wrapper around tcsetattr.
 func setTermSettings(settings C.struct_termios) {
 	res := C.tcsetattr(C.int(os.Stdout.Fd()), 0, &settings)
 	if res != 0 {
@@ -43,10 +47,36 @@ func setTermSettings(settings C.struct_termios) {
 	}
 }
 
+// A handler for SIGINT that calls the supplied function before terminating.
+func handleInterrupt(c <-chan os.Signal, f func()) {
+	// Wait for a signal.
+	<-c
+	f()
+
+	// c.f. http://stackoverflow.com/questions/1101957/are-there-any-standard-exit-status-codes-in-linux
+	os.Exit(-1)
+}
+
 func readPassword(prompt string) string {
-	// Grab the current terminal settings, making sure they are later restored.
+	// Grab the current terminal settings.
 	origTermSettings := getTermSettings()
-	defer setTermSettings(origTermSettings)
+
+	// Set up a function that will restore the terminal settings exactly once.
+	var restoreOnce sync.Once
+	restore := func() {
+		restoreOnce.Do(func() { setTermSettings(origTermSettings) })
+	}
+
+	// Make sure that the settings are restored if we return normally.
+	defer restore()
+
+	// Also make sure the settings are restored if the user hits Ctrl-C while the
+	// password is being read. The signal handler remains running even after
+	// we're done because there is no way to re-enable the default signal
+	// handler.
+	signalChan := make(chan os.Signal)
+	go handleInterrupt(signalChan, restore)
+	signal.Notify(signalChan, os.Interrupt)
 
 	// Disable echoing.
 	newTermSettings := origTermSettings
