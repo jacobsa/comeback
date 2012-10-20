@@ -21,6 +21,7 @@ import (
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/fs"
 	"github.com/jacobsa/comeback/repr"
+	"log"
 	"path"
 	"regexp"
 )
@@ -172,6 +173,8 @@ func (s *dirSaver) Save(
 
 	// Save the data for each entry.
 	for _, entry := range entries {
+		log.Println("Processing:", path.Join(relPath, entry.Name))
+
 		// Call the appropriate method based on this entry's type.
 		switch entry.Type {
 		case fs.TypeFile:
