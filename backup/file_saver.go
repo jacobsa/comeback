@@ -20,6 +20,7 @@ import (
 	"github.com/jacobsa/comeback/blob"
 	"io"
 	"io/ioutil"
+	"runtime"
 )
 
 // An object that knows how to save files to some underlying storage.
@@ -37,12 +38,22 @@ func NewFileSaver(store blob.Store, chunkSize uint32) (FileSaver, error) {
 		return nil, fmt.Errorf("Chunk size must be positive.")
 	}
 
-	return &fileSaver{blobStore: store, chunkSize: chunkSize}, nil
+	saver := &fileSaver{blobStore: store, chunkSize: chunkSize}
+	startWorkers(saver)
+	runtime.SetFinalizer(saver, stopWorkers)
+
+	return saver, nil
 }
 
 type fileSaver struct {
 	blobStore blob.Store
 	chunkSize uint32
+}
+
+func startWorkers(f *fileSaver) {
+}
+
+func stopWorkers(f *fileSaver) {
 }
 
 // Read 16 MiB from the supplied reader, returning less iff the reader returns
