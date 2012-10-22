@@ -47,7 +47,20 @@ type executor struct {
 	workChan chan<- Work
 }
 
-func startWorkers(e *executor, numWorkers int)
+func startWorkers(e *executor, numWorkers int) {
+	workChan := make(chan Work)
+	e.workChan = workChan
+
+	processWork := func() {
+		for w := range workChan {
+			w()
+		}
+	}
+
+	for i := 0; i < numWorkers; i++ {
+		go processWork()
+	}
+}
 
 func (e *executor) Add(w Work) {
 	e.workChan <- w
