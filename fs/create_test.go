@@ -105,7 +105,7 @@ func (t *CreateFileTest) FileAlreadyExists() {
 
 func (t *CreateFileTest) CreatesCorrectEntry() {
 	t.path = path.Join(t.baseDir, "taco")
-	t.perms = 0611
+	t.perms = 0674  // Conflicts with default umask
 
 	// Call
 	t.call()
@@ -120,7 +120,7 @@ func (t *CreateFileTest) CreatesCorrectEntry() {
 
 	ExpectEq(fs.TypeFile, entry.Type)
 	ExpectEq("taco", entry.Name)
-	ExpectEq(0611, entry.Permissions)
+	ExpectEq(0674, entry.Permissions)
 }
 
 func (t *CreateFileTest) SavesDataToCorrectPlace() {
