@@ -49,9 +49,18 @@ func initDirSaver() {
 		log.Fatalln("Creating file system:", err)
 	}
 
+	// Set up parallelism. Leave one CPU alone, if possible.
+	numCPUs := runtime.NumCPU()
+
+	numFileSaverWorkers := numCPUs
+	if numCPUs > 1 {
+		numFileSaverWorkers--
+	}
+
+	runtime.GOMAXPROCS(numFileSaverWorkers)
+
 	// Create the file saver.
 	const chunkSize = 1 << 24 // 16 MiB
-	numFileSaverWorkers := runtime.NumCPU()
 
 	fileSaver, err := backup.NewFileSaver(
 		blobStore,
