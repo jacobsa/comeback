@@ -118,7 +118,8 @@ func (s *fileSaver) Save(r io.Reader) (scores []blob.Score, err error) {
 
 	// Read back scores.
 	scores = make([]blob.Score, numBlobs)
-	for result := range results {
+	for numReceived := 0; numReceived < numBlobs; numReceived++ {
+		result := <-results
 		if result.err != nil {
 			err = fmt.Errorf("Storing chunk %d: %v", result.index, result.err)
 			return
