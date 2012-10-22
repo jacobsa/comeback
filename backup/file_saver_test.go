@@ -32,7 +32,7 @@ import (
 )
 
 const (
-	chunkSize = 1 << 14
+	chunkSize           = 1 << 14
 	numFileSaverWorkers = 5
 )
 
@@ -55,7 +55,7 @@ func returnStoreError(err string) oglemock.Action {
 
 type FileSaverTest struct {
 	blobStore mock_blob.MockStore
-	executor concurrent.Executor
+	executor  concurrent.Executor
 	reader    io.Reader
 	fileSaver backup.FileSaver
 
@@ -446,13 +446,13 @@ func (t *FileSaverTest) StoresFinishOutOfOrder() {
 	}
 
 	ExpectCall(t.blobStore, "Store")(DeepEquals(chunk0)).
-		WillOnce(sleepThenReturn(200 * time.Millisecond, score0))
+		WillOnce(sleepThenReturn(200*time.Millisecond, score0))
 
 	ExpectCall(t.blobStore, "Store")(DeepEquals(chunk1)).
-		WillOnce(sleepThenReturn(100 * time.Millisecond, score1))
+		WillOnce(sleepThenReturn(100*time.Millisecond, score1))
 
 	ExpectCall(t.blobStore, "Store")(DeepEquals(chunk2)).
-		WillOnce(sleepThenReturn(150 * time.Millisecond, score2))
+		WillOnce(sleepThenReturn(150*time.Millisecond, score2))
 
 	// Call
 	t.callSaver()
