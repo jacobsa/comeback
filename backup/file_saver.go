@@ -46,13 +46,11 @@ func NewFileSaver(store blob.Store, chunkSize uint32) (FileSaver, error) {
 }
 
 type fileSaverResult struct {
-	index int
 	score blob.Score
 	err error
 }
 
 type fileSaverWork struct {
-	index int
 	data []byte
 	resultChan chan<- fileSaverResult
 }
@@ -70,7 +68,7 @@ func startWorkers(s *fileSaver) {
 	processWork := func() {
 		for item := range work {
 			score, err := s.blobStore.Store(item.data)
-			item.resultChan <- fileSaverResult{item.index, score, err}
+			item.resultChan <- fileSaverResult{score, err}
 		}
 	}
 
@@ -94,9 +92,7 @@ func getChunk(r io.Reader, chunkSize uint32) ([]byte, error) {
 func (s *fileSaver) Save(r io.Reader) (scores []blob.Score, err error) {
 	// Turn the file into chunks, giving each to the saver's workers to store in
 	// the blob store.
-	var numBlobs int
-	results := make(chan fileSaverResult)
-
+	resultChans := make([]<-chan fileSaverResult, 0)
 	for {
 		var chunk []byte
 		chunk, err = getChunk(r, s.chunkSize)
@@ -110,22 +106,27 @@ func (s *fileSaver) Save(r io.Reader) (scores []blob.Score, err error) {
 			break
 		}
 
-		// Add the chunk to the queue of work.
-		workItem := fileSaverWork{numBlobs, chunk, results}
+		// Add the chunk to the queue of work. Make sure to use a buffered channel
+		// for the result so that the workers don't block on sending to it while we
+		// block on sending to them.
+		resultChan := make(chan fileSaverResult, 1)
+		resultChans = append(resultChans, resultChan)
+
+		workItem := fileSaverWork{chunk, resultChan}
 		s.work <- workItem
-		numBlobs++
 	}
 
 	// Read back scores.
-	scores = make([]blob.Score, numBlobs)
-	for numReceived := 0; numReceived < numBlobs; numReceived++ {
-		result := <-results
+	scores = make([]blob.Score, len(resultChans))
+
+	for i, resultChan := range resultChans {
+		result := <-resultChan
 		if result.err != nil {
-			err = fmt.Errorf("Storing chunk %d: %v", result.index, result.err)
+			err = fmt.Errorf("Storing chunk %d: %v", i, result.err)
 			return
 		}
 
-		scores[result.index] = result.score
+		scores[i] = result.score
 	}
 
 	return scores, nil
