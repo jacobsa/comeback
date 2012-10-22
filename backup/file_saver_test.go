@@ -28,6 +28,7 @@ import (
 	"io"
 	"testing"
 	"testing/iotest"
+	"time"
 )
 
 const (
@@ -410,5 +411,47 @@ func (t *FileSaverTest) AllStoresSuccessful() {
 }
 
 func (t *FileSaverTest) StoresFinishOutOfOrder() {
-	ExpectEq("TODO", "")
+	// Chunks
+	chunk0 := makeChunk('a')
+	chunk1 := makeChunk('b')
+	chunk2 := makeChunk('c')
+
+	// Reader
+	t.reader = io.MultiReader(
+		bytes.NewReader(chunk0),
+		bytes.NewReader(chunk1),
+		bytes.NewReader(chunk2),
+	)
+
+	// Blob store
+	score0 := blob.ComputeScore([]byte("taco"))
+	score1 := blob.ComputeScore([]byte("burrito"))
+	score2 := blob.ComputeScore([]byte("enchilada"))
+
+	sleepThenReturn := func(d time.Duration, s blob.Score) oglemock.Action {
+		return oglemock.Invoke(func([]byte) (blob.Score, error) {
+			time.Sleep(d)
+			return s, nil
+		})
+	}
+
+	ExpectCall(t.blobStore, "Store")(DeepEquals(chunk0)).
+		WillOnce(sleepThenReturn(200 * time.Millisecond, score0))
+
+	ExpectCall(t.blobStore, "Store")(DeepEquals(chunk1)).
+		WillOnce(sleepThenReturn(100 * time.Millisecond, score1))
+
+	ExpectCall(t.blobStore, "Store")(DeepEquals(chunk2)).
+		WillOnce(sleepThenReturn(150 * time.Millisecond, score2))
+
+	// Call
+	t.callSaver()
+
+	AssertEq(nil, t.err)
+	ExpectThat(
+		t.scores,
+		ElementsAre(
+			DeepEquals(score0),
+			DeepEquals(score1),
+			DeepEquals(score2)))
 }
