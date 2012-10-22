@@ -63,13 +63,13 @@ func (t *ExecutorTest) NumWorkersOne() {
 	}
 
 	// The first call should have been quick.
-	ExpectLt(waitTimes[0], float64(sleepDuration) * 0.10)
+	ExpectLt(waitTimes[0], time.Duration(float64(sleepDuration) * 0.10))
 
 	// All of the others should have taken about as long as the piece of work
 	// sleeps.
 	for i := 1; i < len(waitTimes); i++ {
-		ExpectGt(waitTimes[0], float64(sleepDuration) * 0.75)
-		ExpectLt(waitTimes[0], float64(sleepDuration) * 1.25)
+		ExpectGt(waitTimes[i], time.Duration(float64(sleepDuration) * 0.75))
+		ExpectLt(waitTimes[i], time.Duration(float64(sleepDuration) * 1.25))
 	}
 }
 
