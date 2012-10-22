@@ -75,6 +75,14 @@ func (s *fileSaver) Save(r io.Reader) (scores []blob.Score, err error) {
 	// Turn the file into chunks, giving them to the blob store in parallel.
 	resultChans := make([]<-chan result, 0)
 
+	// Make sure we drain results before returning, even if we return early. This
+	// makes it easy to avoid races in tests.
+	defer func() {
+		for _, c := range resultChans {
+			<-c
+		}
+	}()
+
 	for {
 		// Read the chunk.
 		var chunk []byte
@@ -99,6 +107,9 @@ func (s *fileSaver) Save(r io.Reader) (scores []blob.Score, err error) {
 			var r result
 			r.score, r.err = s.blobStore.Store(chunk)
 			resultChan <- r
+
+			// Close the channel since it can no longer be written to.
+			close(resultChan)
 		}
 
 		s.executor.Add(processChunk)
@@ -117,5 +128,5 @@ func (s *fileSaver) Save(r io.Reader) (scores []blob.Score, err error) {
 		scores[i] = result.score
 	}
 
-	return scores, nil
+	return
 }
