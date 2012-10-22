@@ -45,15 +45,39 @@ func NewFileSaver(store blob.Store, chunkSize uint32) (FileSaver, error) {
 	return saver, nil
 }
 
+type fileSaverWork struct {
+	index int
+	data []byte
+	score blob.Score
+	err error
+	result chan<- fileSaverWork
+}
+
 type fileSaver struct {
 	blobStore blob.Store
 	chunkSize uint32
+	work chan<- fileSaverWork
 }
 
 func startWorkers(f *fileSaver) {
+	work := make(chan fileSaverWork)
+	f.work = work
+
+	processWork := func() {
+		for item := range work {
+			item.score, item.err = f.blobStore.Store(item.data)
+			item.result <- item
+		}
+	}
+
+	const numWorkers = 1
+	for i := 0; i < numWorkers; i++ {
+		go processWork()
+	}
 }
 
 func stopWorkers(f *fileSaver) {
+	close(f.work)
 }
 
 // Read 16 MiB from the supplied reader, returning less iff the reader returns
