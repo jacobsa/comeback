@@ -15,6 +15,10 @@
 
 package concurrent
 
+import (
+	"runtime"
+)
+
 // An item of work, used by the Executor interface.
 type Work func()
 
@@ -39,6 +43,7 @@ func NewExecutor(numWorkers int) Executor {
 
 	e := &executor{}
 	startWorkers(e, numWorkers)
+	runtime.SetFinalizer(e, stopWorkers)
 
 	return e
 }
@@ -60,6 +65,10 @@ func startWorkers(e *executor, numWorkers int) {
 	for i := 0; i < numWorkers; i++ {
 		go processWork()
 	}
+}
+
+func stopWorkers(e *executor) {
+	close(e.workChan)
 }
 
 func (e *executor) Add(w Work) {
