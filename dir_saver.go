@@ -17,9 +17,11 @@ package main
 
 import (
 	"github.com/jacobsa/comeback/backup"
+	"github.com/jacobsa/comeback/concurrent"
 	"github.com/jacobsa/comeback/fs"
 	"github.com/jacobsa/comeback/sys"
 	"log"
+	"runtime"
 	"sync"
 )
 
@@ -49,7 +51,14 @@ func initDirSaver() {
 
 	// Create the file saver.
 	const chunkSize = 1 << 24 // 16 MiB
-	fileSaver, err := backup.NewFileSaver(blobStore, chunkSize)
+	numFileSaverWorkers := runtime.NumCPU()
+
+	fileSaver, err := backup.NewFileSaver(
+		blobStore,
+		chunkSize,
+		concurrent.NewExecutor(numFileSaverWorkers),
+	)
+
 	if err != nil {
 		log.Fatalln("Creating file saver:", err)
 	}
