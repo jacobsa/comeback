@@ -45,12 +45,16 @@ func NewFileSaver(store blob.Store, chunkSize uint32) (FileSaver, error) {
 	return saver, nil
 }
 
+type fileSaverResult struct {
+	index int
+	score blob.Score
+	err error
+}
+
 type fileSaverWork struct {
 	index int
 	data []byte
-	score blob.Score
-	err error
-	result chan<- fileSaverWork
+	resultChan chan<- fileSaverResult
 }
 
 type fileSaver struct {
@@ -59,14 +63,14 @@ type fileSaver struct {
 	work chan<- fileSaverWork
 }
 
-func startWorkers(f *fileSaver) {
+func startWorkers(s *fileSaver) {
 	work := make(chan fileSaverWork)
-	f.work = work
+	s.work = work
 
 	processWork := func() {
 		for item := range work {
-			item.score, item.err = f.blobStore.Store(item.data)
-			item.result <- item
+			score, err := s.blobStore.Store(item.data)
+			item.resultChan <- fileSaverResult{item.index, score, err}
 		}
 	}
 
@@ -76,8 +80,8 @@ func startWorkers(f *fileSaver) {
 	}
 }
 
-func stopWorkers(f *fileSaver) {
-	close(f.work)
+func stopWorkers(s *fileSaver) {
+	close(s.work)
 }
 
 // Read 16 MiB from the supplied reader, returning less iff the reader returns
@@ -88,12 +92,17 @@ func getChunk(r io.Reader, chunkSize uint32) ([]byte, error) {
 }
 
 func (s *fileSaver) Save(r io.Reader) (scores []blob.Score, err error) {
-	// Turn the file into chunks, saving each to the blob store.
-	scores = []blob.Score{}
+	// Turn the file into chunks, giving each to the saver's workers to store in
+	// the blob store.
+	var numBlobs int
+	results := make(chan fileSaverResult)
+
 	for {
-		chunk, err := getChunk(r, s.chunkSize)
+		var chunk []byte
+		chunk, err = getChunk(r, s.chunkSize)
 		if err != nil {
-			return nil, fmt.Errorf("Reading chunk: %v", err)
+			err = fmt.Errorf("Reading chunk: %v", err)
+			return
 		}
 
 		// Are we done?
@@ -101,13 +110,21 @@ func (s *fileSaver) Save(r io.Reader) (scores []blob.Score, err error) {
 			break
 		}
 
-		// Store the chunk.
-		score, err := s.blobStore.Store(chunk)
-		if err != nil {
-			return nil, fmt.Errorf("Storing chunk: %v", err)
+		// Add the chunk to the queue of work.
+		workItem := fileSaverWork{numBlobs, chunk, results}
+		s.work <- workItem
+		numBlobs++
+	}
+
+	// Read back scores.
+	scores = make([]blob.Score, numBlobs)
+	for result := range results {
+		if result.err != nil {
+			err = fmt.Errorf("Storing chunk %d: %v", result.index, result.err)
+			return
 		}
 
-		scores = append(scores, score)
+		scores[result.index] = result.score
 	}
 
 	return scores, nil
