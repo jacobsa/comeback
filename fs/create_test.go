@@ -409,3 +409,116 @@ func (t *CreateSymlinkTest) CreatesCorrectEntry() {
 	ExpectEq("/burrito", entry.Target)
 	ExpectEq(0674, entry.Permissions)
 }
+
+////////////////////////////////////////////////////////////////////////
+// CreateHardLink
+////////////////////////////////////////////////////////////////////////
+
+type CreateHardLinkTest struct {
+	fileSystemTest
+
+	target  string
+	source  string
+
+	err error
+}
+
+func init() { RegisterTestSuite(&CreateHardLinkTest{}) }
+
+func (t *CreateHardLinkTest) SetUp(i *TestInfo) {
+	// Common
+	t.fileSystemTest.SetUp(i)
+
+	// Set up defaults.
+	t.source = path.Join(t.baseDir, "taco")
+	t.target = "/foo/bar"
+}
+
+func (t *CreateHardLinkTest) call() {
+	t.err = t.fileSystem.CreateHardLink(t.target, t.source)
+}
+
+func (t *CreateHardLinkTest) list() []*fs.DirectoryEntry {
+	entries, err := t.fileSystem.ReadDir(t.baseDir)
+	AssertEq(nil, err)
+	return entries
+}
+
+func (t *CreateHardLinkTest) NonExistentParent() {
+	t.source = "/foo/bar/baz/qux"
+
+	// Call
+	t.call()
+
+	ExpectThat(t.err, Error(HasSubstr("qux")))
+	ExpectThat(t.err, Error(HasSubstr("no such")))
+}
+
+func (t *CreateHardLinkTest) NoPermissionsForParent() {
+	dirpath := path.Join(t.baseDir, "foo")
+	t.source = path.Join(dirpath, "taco")
+
+	// Parent
+	err := os.Mkdir(dirpath, 0100)
+	AssertEq(nil, err)
+
+	// Call
+	t.call()
+
+	ExpectThat(t.err, Error(HasSubstr("foo")))
+	ExpectThat(t.err, Error(HasSubstr("permission denied")))
+}
+
+func (t *CreateHardLinkTest) TargetDoesntExist() {
+	t.source = path.Join(t.baseDir, "taco")
+	t.target = "/burrito"
+
+	// Call
+	t.call()
+	AssertEq(nil, t.err)
+
+	ExpectThat(t.err, Error(HasSubstr("TODO")))
+}
+
+func (t *CreateHardLinkTest) FileAlreadyExistsWithSameName() {
+	// Create
+	err := ioutil.WriteFile(t.source, []byte{}, 0644)
+	AssertEq(nil, err)
+
+	// Call
+	t.call()
+
+	ExpectThat(t.err, Error(HasSubstr("file exists")))
+}
+
+func (t *CreateHardLinkTest) CreatesCorrectEntry() {
+	t.source = path.Join(t.baseDir, "taco")
+	t.target = path.Join(t.baseDir, "burrito")
+
+	// Create target
+	err := ioutil.WriteFile(t.target, []byte{}, 0644)
+	AssertEq(nil, err)
+
+	// Call
+	t.call()
+	AssertEq(nil, t.err)
+
+	// List
+	entries := t.list()
+
+	AssertThat(entries, ElementsAre(Any(), Any()))
+
+	entry0 := entries[0]
+	ExpectEq(fs.TypeFile, entry0.Type)
+	ExpectEq("burrito", entry0.Name)
+
+	entry1 := entries[1]
+	ExpectEq(fs.TypeFile, entry1.Type)
+	ExpectEq("taco", entry1.Name)
+
+	AssertNe(0, entry0.ContainingDevice)
+	ExpectEq(entry1.ContainingDevice, entry0.ContainingDevice)
+
+	AssertNe(0, entry0.Inode)
+	ExpectEq(entry1.Inode, entry0.Inode)
+}
