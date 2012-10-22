@@ -98,7 +98,3 @@ func (t *ExecutorTest) NumWorkersLarger() {
 	ExpectGt(actual, time.Duration(float64(expected) * 0.75))
 	ExpectLt(actual, time.Duration(float64(expected) * 1.25))
 }
-
-func (t *ExecutorTest) ShutsDownWorkers() {
-	ExpectEq("TODO", "")
-}
