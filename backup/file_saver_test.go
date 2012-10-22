@@ -21,6 +21,7 @@ import (
 	"github.com/jacobsa/comeback/backup"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/blob/mock"
+	"github.com/jacobsa/comeback/concurrent"
 	. "github.com/jacobsa/oglematchers"
 	"github.com/jacobsa/oglemock"
 	. "github.com/jacobsa/ogletest"
@@ -52,6 +53,7 @@ func returnStoreError(err string) oglemock.Action {
 
 type FileSaverTest struct {
 	blobStore mock_blob.MockStore
+	executor concurrent.Executor
 	reader    io.Reader
 	fileSaver backup.FileSaver
 
@@ -62,8 +64,11 @@ type FileSaverTest struct {
 func init() { RegisterTestSuite(&FileSaverTest{}) }
 
 func (t *FileSaverTest) SetUp(i *TestInfo) {
+	const numWorkers = 1
+
 	t.blobStore = mock_blob.NewMockStore(i.MockController, "blobStore")
-	t.fileSaver, _ = backup.NewFileSaver(t.blobStore, chunkSize)
+	t.executor = concurrent.NewExecutor(numWorkers)
+	t.fileSaver, _ = backup.NewFileSaver(t.blobStore, chunkSize, t.executor)
 }
 
 func (t *FileSaverTest) callSaver() {
@@ -75,7 +80,7 @@ func (t *FileSaverTest) callSaver() {
 ////////////////////////////////////////////////////////////////////////
 
 func (t *FileSaverTest) ZeroChunkSize() {
-	_, err := backup.NewFileSaver(t.blobStore, 0)
+	_, err := backup.NewFileSaver(t.blobStore, 0, t.executor)
 	ExpectThat(err, Error(HasSubstr("size")))
 	ExpectThat(err, Error(HasSubstr("positive")))
 }

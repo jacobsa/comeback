@@ -32,17 +32,22 @@ type FileSaver interface {
 }
 
 // Create a file saver that uses the supplied blob store, splitting files into
-// chunks of the specified size.
-func NewFileSaver(store blob.Store, chunkSize uint32) (s FileSaver, err error) {
+// chunks of the specified size. The executor will be used for scheduling calls
+// to the blob store, and may be used to control the degree of parallelism in
+// those calls.
+func NewFileSaver(
+	store blob.Store,
+	chunkSize uint32,
+	executor concurrent.Executor,
+) (s FileSaver, err error) {
 	if chunkSize == 0 {
 		return nil, fmt.Errorf("Chunk size must be positive.")
 	}
 
-	const numWorkers = 1
 	s = &fileSaver{
 		store,
 		chunkSize,
-		concurrent.NewExecutor(numWorkers),
+		executor,
 	}
 
 	return
