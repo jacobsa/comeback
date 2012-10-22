@@ -35,6 +35,18 @@ func init() { RegisterTestSuite(&ExecutorTest{}) }
 // Tests
 ////////////////////////////////////////////////////////////////////////
 
-func (t *ExecutorTest) DoesFoo() {
+func (t *ExecutorTest) NumWorkersZero() {
+	ExpectEq("TODO", "")
+}
+
+func (t *ExecutorTest) NumWorkersOne() {
+	ExpectEq("TODO", "")
+}
+
+func (t *ExecutorTest) NumWorkersSixteen() {
+	ExpectEq("TODO", "")
+}
+
+func (t *ExecutorTest) ShutsDownWorkers() {
 	ExpectEq("TODO", "")
 }
