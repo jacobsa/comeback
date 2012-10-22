@@ -20,6 +20,7 @@ import (
 	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
 	"testing"
+	"time"
 )
 
 func TestExecutor(t *testing.T) { RunTests(t) }
@@ -43,7 +44,33 @@ func (t *ExecutorTest) NumWorkersZero() {
 }
 
 func (t *ExecutorTest) NumWorkersOne() {
-	ExpectEq("TODO", "")
+	e := concurrent.NewExecutor(1)
+
+	// Set up a piece of work that blocks for awhile then returns.
+	sleepDuration := 100 * time.Millisecond
+	w := concurrent.Work(func() { time.Sleep(sleepDuration) })
+
+	// Schedule it several times and record the amount of time it takes each
+	// instance.
+	waitTimes := []time.Duration{}
+	const numIters = 16;
+	for i := 0; i < numIters; i++ {
+		before := time.Now()
+		e.Add(w)
+		after := time.Now()
+
+		waitTimes = append(waitTimes, after.Sub(before))
+	}
+
+	// The first call should have been quick.
+	ExpectLt(waitTimes[0], float64(sleepDuration) * 0.10)
+
+	// All of the others should have taken about as long as the piece of work
+	// sleeps.
+	for i := 1; i < len(waitTimes); i++ {
+		ExpectGt(waitTimes[0], float64(sleepDuration) * 0.75)
+		ExpectLt(waitTimes[0], float64(sleepDuration) * 1.25)
+	}
 }
 
 func (t *ExecutorTest) NumWorkersSixteen() {

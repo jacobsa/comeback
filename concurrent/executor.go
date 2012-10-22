@@ -31,5 +31,5 @@ type Executor interface {
 
 // Create an executor with the specified number of workers running in parallel.
 // Calls to Add will block if numWorkers pieces of work are currently in
-// progress.
+// progress. numWorkers must be non-zero.
 func NewExecutor(numWorkers int) (e Executor)
