@@ -22,8 +22,22 @@ import (
 	"syscall"
 )
 
-func (fs *fileSystem) CreateNamedPipe(path string, perms os.FileMode) error {
-	return syscall.Mkfifo(path, syscallPermissions(perms))
+func (fs *fileSystem) CreateNamedPipe(
+	path string,
+	perms os.FileMode,
+) (err error) {
+	// Create the pipe.
+	if err = syscall.Mkfifo(path, syscallPermissions(perms)); err != nil {
+		return
+	}
+
+	// Fix any changes to the permission made by the process's umask value.
+	if err = fs.SetPermissions(path, perms); err != nil {
+		err = fmt.Errorf("SetPermissions: %v", err)
+		return
+	}
+
+	return
 }
 
 func (fs *fileSystem) CreateBlockDevice(
@@ -63,7 +77,10 @@ func (fs *fileSystem) CreateFile(
 	w = f
 
 	// Fix any changes to the permission made by the process's umask value.
-	fs.setPermissions(int(f.Fd()), perms)
+	if err = fs.setPermissions(int(f.Fd()), perms); err != nil {
+		err = fmt.Errorf("setPermissions: %v", err)
+		return
+	}
 
 	return
 }
