@@ -32,4 +32,23 @@ type Executor interface {
 // Create an executor with the specified number of workers running in parallel.
 // Calls to Add will block if numWorkers pieces of work are currently in
 // progress. numWorkers must be non-zero.
-func NewExecutor(numWorkers int) (e Executor)
+func NewExecutor(numWorkers int) Executor {
+	if numWorkers == 0 {
+		panic("numWorkers must be non-zero.")
+	}
+
+	e := &executor{}
+	startWorkers(e, numWorkers)
+
+	return e
+}
+
+type executor struct {
+	workChan chan<- Work
+}
+
+func startWorkers(e *executor, numWorkers int)
+
+func (e *executor) Add(w Work) {
+	e.workChan <- w
+}
