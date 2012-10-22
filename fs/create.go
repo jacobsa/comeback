@@ -31,7 +31,7 @@ func (fs *fileSystem) CreateNamedPipe(
 		return
 	}
 
-	// Fix any changes to the permission made by the process's umask value.
+	// Fix any changes to the permissions made by the process's umask value.
 	if err = fs.SetPermissions(path, perms); err != nil {
 		err = fmt.Errorf("SetPermissions: %v", err)
 		return
@@ -43,22 +43,40 @@ func (fs *fileSystem) CreateNamedPipe(
 func (fs *fileSystem) CreateBlockDevice(
 	path string,
 	perms os.FileMode,
-	devNum int32) error {
+	devNum int32,
+) (err error) {
+	// Create the device.
 	mode := syscallPermissions(perms) | syscall.S_IFBLK
-	if err := syscall.Mknod(path, mode, int(devNum)); err != nil {
-		return fmt.Errorf("syscall.Mknod: %v", err)
+	if err = syscall.Mknod(path, mode, int(devNum)); err != nil {
+		err = fmt.Errorf("syscall.Mknod: %v", err)
+		return
 	}
 
-	return nil
+	// Fix any changes to the permissions made by the process's umask value.
+	if err = fs.SetPermissions(path, perms); err != nil {
+		err = fmt.Errorf("SetPermissions: %v", err)
+		return
+	}
+
+	return
 }
 
 func (fs *fileSystem) CreateCharDevice(
 	path string,
 	perms os.FileMode,
-	devNum int32) error {
+	devNum int32,
+) (err error) {
+	// Create the device.
 	mode := syscallPermissions(perms) | syscall.S_IFCHR
-	if err := syscall.Mknod(path, mode, int(devNum)); err != nil {
-		return fmt.Errorf("syscall.Mknod: %v", err)
+	if err = syscall.Mknod(path, mode, int(devNum)); err != nil {
+		err = fmt.Errorf("syscall.Mknod: %v", err)
+		return
+	}
+
+	// Fix any changes to the permissions made by the process's umask value.
+	if err = fs.SetPermissions(path, perms); err != nil {
+		err = fmt.Errorf("SetPermissions: %v", err)
+		return
 	}
 
 	return nil
@@ -76,7 +94,7 @@ func (fs *fileSystem) CreateFile(
 
 	w = f
 
-	// Fix any changes to the permission made by the process's umask value.
+	// Fix any changes to the permissions made by the process's umask value.
 	if err = fs.setPermissions(int(f.Fd()), perms); err != nil {
 		err = fmt.Errorf("setPermissions: %v", err)
 		return
@@ -85,23 +103,17 @@ func (fs *fileSystem) CreateFile(
 	return
 }
 
-func (fs *fileSystem) Mkdir(path string, permissions os.FileMode) (err error) {
-	err = os.Mkdir(path, permissions)
-	return
-}
-
-func (fs *fileSystem) CreateSymlink(
-	target string,
-	source string,
-	permissions os.FileMode) (err error) {
-	// Create the link.
-	if err = os.Symlink(target, source); err != nil {
+func (fs *fileSystem) Mkdir(
+	path string,
+	perms os.FileMode,
+) (err error) {
+	// Create the directory.
+	if err = os.Mkdir(path, perms); err != nil {
 		return
 	}
 
-	// Set the permissions. This is meaningless on POSIX operating systems in
-	// general, but OS X lets you do it.
-	if err = fs.SetPermissions(source, permissions); err != nil {
+	// Fix any changes to the permissions made by the process's umask value.
+	if err = fs.SetPermissions(path, perms); err != nil {
 		err = fmt.Errorf("SetPermissions: %v", err)
 		return
 	}
@@ -109,7 +121,30 @@ func (fs *fileSystem) CreateSymlink(
 	return
 }
 
-func (fs *fileSystem) CreateHardLink(target, source string) (err error) {
+func (fs *fileSystem) CreateSymlink(
+	target string,
+	source string,
+	perms os.FileMode,
+) (err error) {
+	// Create the link.
+	if err = os.Symlink(target, source); err != nil {
+		return
+	}
+
+	// Set the permissions. This is meaningless on POSIX operating systems in
+	// general, but OS X lets you do it.
+	if err = fs.SetPermissions(source, perms); err != nil {
+		err = fmt.Errorf("SetPermissions: %v", err)
+		return
+	}
+
+	return
+}
+
+func (fs *fileSystem) CreateHardLink(
+	target string,
+	source string,
+) (err error) {
 	err = os.Link(target, source)
 	return
 }
