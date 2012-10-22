@@ -50,7 +50,7 @@ func (t *ExecutorTest) NumWorkersOne() {
 	sleepDuration := 100 * time.Millisecond
 	w := concurrent.Work(func() { time.Sleep(sleepDuration) })
 
-	// Schedule it several times and record the amount of time it takes each
+	// Schedule it many times and record the amount of time it takes in each
 	// instance.
 	waitTimes := []time.Duration{}
 	const numIters = 16;
@@ -73,8 +73,30 @@ func (t *ExecutorTest) NumWorkersOne() {
 	}
 }
 
-func (t *ExecutorTest) NumWorkersSixteen() {
-	ExpectEq("TODO", "")
+func (t *ExecutorTest) NumWorkersLarger() {
+	const numWorkers = 16
+	e := concurrent.NewExecutor(numWorkers)
+
+	// Set up a piece of work that blocks for awhile then returns.
+	sleepDuration := 100 * time.Millisecond
+	w := concurrent.Work(func() { time.Sleep(sleepDuration) })
+
+	// Schedule it many times and record the total amount of time we spend
+	// scheduling.
+	const numIters = 256;
+
+	before := time.Now()
+	for i := 0; i < numIters; i++ {
+		e.Add(w)
+	}
+	after := time.Now()
+
+	// Make sure the throughput is as expected.
+	expected := time.Duration(float64(sleepDuration * numIters) / numWorkers)
+	actual := after.Sub(before)
+
+	ExpectGt(actual, time.Duration(float64(expected) * 0.75))
+	ExpectLt(actual, time.Duration(float64(expected) * 1.25))
 }
 
 func (t *ExecutorTest) ShutsDownWorkers() {
