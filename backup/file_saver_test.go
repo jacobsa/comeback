@@ -33,6 +33,7 @@ import (
 
 const (
 	chunkSize = 1 << 14
+	numFileSaverWorkers = 5
 )
 
 func TestRegisterFilesTest(t *testing.T) { RunTests(t) }
@@ -65,10 +66,8 @@ type FileSaverTest struct {
 func init() { RegisterTestSuite(&FileSaverTest{}) }
 
 func (t *FileSaverTest) SetUp(i *TestInfo) {
-	const numWorkers = 1
-
 	t.blobStore = mock_blob.NewMockStore(i.MockController, "blobStore")
-	t.executor = concurrent.NewExecutor(numWorkers)
+	t.executor = concurrent.NewExecutor(numFileSaverWorkers)
 	t.fileSaver, _ = backup.NewFileSaver(t.blobStore, chunkSize, t.executor)
 }
 
@@ -420,6 +419,8 @@ func (t *FileSaverTest) AllStoresSuccessful() {
 }
 
 func (t *FileSaverTest) StoresFinishOutOfOrder() {
+	AssertGt(numFileSaverWorkers, 1)
+
 	// Chunks
 	chunk0 := makeChunk('a')
 	chunk1 := makeChunk('b')
