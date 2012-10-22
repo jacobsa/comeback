@@ -431,7 +431,7 @@ func (t *CreateHardLinkTest) SetUp(i *TestInfo) {
 
 	// Set up defaults.
 	t.source = path.Join(t.baseDir, "taco")
-	t.target = "/foo/bar"
+	t.target = path.Join(t.baseDir, "burrito")
 }
 
 func (t *CreateHardLinkTest) call() {
@@ -458,8 +458,12 @@ func (t *CreateHardLinkTest) NoPermissionsForParent() {
 	dirpath := path.Join(t.baseDir, "foo")
 	t.source = path.Join(dirpath, "taco")
 
+	// Create target
+	err := ioutil.WriteFile(t.target, []byte{}, 0644)
+	AssertEq(nil, err)
+
 	// Parent
-	err := os.Mkdir(dirpath, 0100)
+	err = os.Mkdir(dirpath, 0100)
 	AssertEq(nil, err)
 
 	// Call
@@ -475,14 +479,19 @@ func (t *CreateHardLinkTest) TargetDoesntExist() {
 
 	// Call
 	t.call()
-	AssertEq(nil, t.err)
 
-	ExpectThat(t.err, Error(HasSubstr("TODO")))
+	ExpectThat(t.err, Error(HasSubstr("burrito")))
+	ExpectThat(t.err, Error(HasSubstr("no such")))
+	ExpectThat(t.err, Error(HasSubstr("file")))
 }
 
 func (t *CreateHardLinkTest) FileAlreadyExistsWithSameName() {
-	// Create
+	// Create source
 	err := ioutil.WriteFile(t.source, []byte{}, 0644)
+	AssertEq(nil, err)
+
+	// Create target
+	err = ioutil.WriteFile(t.target, []byte{}, 0644)
 	AssertEq(nil, err)
 
 	// Call
