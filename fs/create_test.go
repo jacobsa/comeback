@@ -316,3 +316,96 @@ func (t *CreateNamedPipeTest) CreatesCorrectEntry() {
 	ExpectEq("taco", entry.Name)
 	ExpectEq(0674, entry.Permissions)
 }
+
+////////////////////////////////////////////////////////////////////////
+// CreateSymlink
+////////////////////////////////////////////////////////////////////////
+
+type CreateSymlinkTest struct {
+	fileSystemTest
+
+	target  string
+	source  string
+	perms os.FileMode
+
+	err error
+}
+
+func init() { RegisterTestSuite(&CreateSymlinkTest{}) }
+
+func (t *CreateSymlinkTest) SetUp(i *TestInfo) {
+	// Common
+	t.fileSystemTest.SetUp(i)
+
+	// Set up defaults.
+	t.source = path.Join(t.baseDir, "taco")
+	t.target = "/foo/bar"
+	t.perms = 0644
+}
+
+func (t *CreateSymlinkTest) call() {
+	t.err = t.fileSystem.CreateSymlink(t.target, t.source, t.perms)
+}
+
+func (t *CreateSymlinkTest) list() []*fs.DirectoryEntry {
+	entries, err := t.fileSystem.ReadDir(t.baseDir)
+	AssertEq(nil, err)
+	return entries
+}
+
+func (t *CreateSymlinkTest) NonExistentParent() {
+	t.source = "/foo/bar/baz/qux"
+
+	// Call
+	t.call()
+
+	ExpectThat(t.err, Error(HasSubstr("qux")))
+	ExpectThat(t.err, Error(HasSubstr("no such")))
+}
+
+func (t *CreateSymlinkTest) NoPermissionsForParent() {
+	dirpath := path.Join(t.baseDir, "foo")
+	t.source = path.Join(dirpath, "taco")
+
+	// Parent
+	err := os.Mkdir(dirpath, 0100)
+	AssertEq(nil, err)
+
+	// Call
+	t.call()
+
+	ExpectThat(t.err, Error(HasSubstr("foo")))
+	ExpectThat(t.err, Error(HasSubstr("permission denied")))
+}
+
+func (t *CreateSymlinkTest) FileAlreadyExistsWithSameName() {
+	// Create
+	err := ioutil.WriteFile(t.source, []byte{}, 0644)
+	AssertEq(nil, err)
+
+	// Call
+	t.call()
+
+	ExpectThat(t.err, Error(HasSubstr("file exists")))
+}
+
+func (t *CreateSymlinkTest) CreatesCorrectEntry() {
+	t.source = path.Join(t.baseDir, "taco")
+	t.target = "/burrito"
+	t.perms = 0674  // Conflicts with default umask
+
+	// Call
+	t.call()
+	AssertEq(nil, t.err)
+
+	// List
+	entries := t.list()
+
+	AssertThat(entries, ElementsAre(Any()))
+	entry := entries[0]
+
+	ExpectEq(fs.TypeSymlink, entry.Type)
+	ExpectEq("taco", entry.Name)
+	ExpectEq("/burrito", entry.Target)
+	ExpectEq(0674, entry.Permissions)
+}
