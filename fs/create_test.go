@@ -268,7 +268,6 @@ func (t *CreateNamedPipeTest) NonExistentParent() {
 	// Call
 	t.call()
 
-	ExpectThat(t.err, Error(HasSubstr("qux")))
 	ExpectThat(t.err, Error(HasSubstr("no such")))
 }
 
@@ -283,7 +282,6 @@ func (t *CreateNamedPipeTest) NoPermissionsForParent() {
 	// Call
 	t.call()
 
-	ExpectThat(t.err, Error(HasSubstr("foo")))
 	ExpectThat(t.err, Error(HasSubstr("permission denied")))
 }
 
