@@ -28,7 +28,7 @@ var cmdSave = &Command{
 var g_jobName = cmdSave.Flags.String("job", "", "Job name within the config file.")
 
 func init() {
-	cmdSave.Run = runSave  // Break flag-related dependency loop.
+	cmdSave.Run = runSave // Break flag-related dependency loop.
 }
 
 func runSave(args []string) {

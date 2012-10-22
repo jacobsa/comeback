@@ -48,7 +48,7 @@ func initDirSaver() {
 	}
 
 	// Create the file saver.
-	const chunkSize = 1<<24  // 16 MiB
+	const chunkSize = 1 << 24 // 16 MiB
 	fileSaver, err := backup.NewFileSaver(blobStore, chunkSize)
 	if err != nil {
 		log.Fatalln("Creating file saver:", err)

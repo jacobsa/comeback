@@ -21,7 +21,7 @@ import (
 
 var cmdList = &Command{
 	Name: "list",
-	Run: runList,
+	Run:  runList,
 }
 
 func runList(args []string) {
