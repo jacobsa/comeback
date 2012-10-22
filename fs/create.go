@@ -54,7 +54,17 @@ func (fs *fileSystem) CreateFile(
 	path string,
 	perms os.FileMode,
 ) (w io.WriteCloser, err error) {
-	w, err = os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, perms)
+	// Open the file.
+	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, perms)
+	if err != nil {
+		return
+	}
+
+	w = f
+
+	// Fix any changes to the permission made by the process's umask value.
+	fs.setPermissions(int(f.Fd()), perms)
+
 	return
 }
 
