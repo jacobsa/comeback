@@ -351,10 +351,12 @@ func (t *FileSaverTest) ErrorStoringOneChunk() {
 
 	// Blob store
 	score0 := blob.ComputeScore([]byte(""))
+	score2 := blob.ComputeScore([]byte(""))
 
 	ExpectCall(t.blobStore, "Store")(Any()).
 		WillOnce(oglemock.Return(score0, nil)).
-		WillOnce(returnStoreError("taco"))
+		WillOnce(returnStoreError("taco")).
+		WillOnce(oglemock.Return(score2, nil))
 
 	// Call
 	t.callSaver()
