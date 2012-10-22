@@ -20,7 +20,7 @@ import (
 )
 
 type Command struct {
-	Name string
-	Run func(args []string)
+	Name  string
+	Run   func(args []string)
 	Flags flag.FlagSet
 }

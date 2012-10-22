@@ -29,7 +29,7 @@ var g_jobIdStr = cmdRestore.Flags.String("job_id", "", "The job ID to restore.")
 var g_target = cmdRestore.Flags.String("target", "", "The target directory.")
 
 func init() {
-	cmdRestore.Run = runRestore  // Break flag-related dependency loop.
+	cmdRestore.Run = runRestore // Break flag-related dependency loop.
 }
 
 func runRestore(args []string) {

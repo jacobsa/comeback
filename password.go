@@ -94,5 +94,5 @@ func readPassword(prompt string) string {
 		log.Fatalln("ReadString:", err)
 	}
 
-	return line[0:len(line)-1]
+	return line[0 : len(line)-1]
 }
