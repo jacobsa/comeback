@@ -44,9 +44,11 @@ func runSave(args []string) {
 		log.Fatalln("Unknown job:", *g_jobName)
 	}
 
-	// Grab dependencies.
-	dirSaver := getDirSaver()
+	// Grab dependencies. Make sure to get the registry first, because otherwise
+	// the user will have to wait for bucket keys to be listed before being
+	// prompted for a crypto password.
 	reg := getRegistry()
+	dirSaver := getDirSaver()
 
 	// Choose a start time for the job.
 	startTime := time.Now()

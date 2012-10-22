@@ -52,9 +52,10 @@ func runRestore(args []string) {
 		log.Fatalln("You must set the -target flag.")
 	}
 
-	// Grab dependencies.
-	dirRestorer := getDirRestorer()
+	// Grab dependencies. Make sure to get the registry first, because it takes
+	// less time to construct.
 	reg := getRegistry()
+	dirRestorer := getDirRestorer()
 
 	// Find the requested job.
 	job, err := reg.FindBackup(jobId)
