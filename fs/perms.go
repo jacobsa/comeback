@@ -40,6 +40,13 @@ func syscallPermissions(permissions os.FileMode) (o uint32) {
 	return
 }
 
+// Set permissions on the supplied file descriptor.
+func (fs *fileSystem) setPermissions(fd int, perms os.FileMode) (err error) {
+	mode := syscallPermissions(perms)
+	err = syscall.Fchmod(fd, mode)
+	return
+}
+
 func (fs *fileSystem) SetPermissions(path string, permissions os.FileMode) error {
 	// Open the file without following symlinks. Use O_NONBLOCK to allow opening
 	// of named pipes without a writer.
@@ -50,14 +57,8 @@ func (fs *fileSystem) SetPermissions(path string, permissions os.FileMode) error
 
 	defer syscall.Close(fd)
 
-	// Call fchmod.
-	mode := syscallPermissions(permissions)
-	err = syscall.Fchmod(fd, mode)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	// Set permissions.
+	return fs.setPermissions(fd, permissions)
 }
 
 func (fs *fileSystem) Chown(path string, uid int, gid int) (err error) {
