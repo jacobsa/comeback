@@ -397,3 +397,7 @@ func (t *FileSaverTest) AllStoresSuccessful() {
 		t.scores,
 		ElementsAre(DeepEquals(score0), DeepEquals(score1), DeepEquals(score2)))
 }
+
+func (t *FileSaverTest) StoresFinishOutOfOrder() {
+	ExpectEq("TODO", "")
+}
