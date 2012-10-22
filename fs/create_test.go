@@ -101,7 +101,7 @@ func (t *CreateFileTest) FileAlreadyExists() {
 
 func (t *CreateFileTest) CreatesCorrectEntry() {
 	t.path = path.Join(t.baseDir, "taco")
-	t.perms = 0674  // Conflicts with default umask
+	t.perms = 0674 // Conflicts with default umask
 
 	// Call
 	t.call()
@@ -211,7 +211,7 @@ func (t *MkdirTest) FileAlreadyExistsWithSameName() {
 
 func (t *MkdirTest) CreatesCorrectEntry() {
 	t.path = path.Join(t.baseDir, "taco")
-	t.perms = 0674  // Conflicts with default umask
+	t.perms = 0674 // Conflicts with default umask
 
 	// Call
 	t.call()
@@ -298,7 +298,7 @@ func (t *CreateNamedPipeTest) FileAlreadyExistsWithSameName() {
 
 func (t *CreateNamedPipeTest) CreatesCorrectEntry() {
 	t.path = path.Join(t.baseDir, "taco")
-	t.perms = 0674  // Conflicts with default umask
+	t.perms = 0674 // Conflicts with default umask
 
 	// Call
 	t.call()
@@ -322,9 +322,9 @@ func (t *CreateNamedPipeTest) CreatesCorrectEntry() {
 type CreateSymlinkTest struct {
 	fileSystemTest
 
-	target  string
-	source  string
-	perms os.FileMode
+	target string
+	source string
+	perms  os.FileMode
 
 	err error
 }
@@ -390,7 +390,7 @@ func (t *CreateSymlinkTest) FileAlreadyExistsWithSameName() {
 func (t *CreateSymlinkTest) CreatesCorrectEntry() {
 	t.source = path.Join(t.baseDir, "taco")
 	t.target = "/burrito"
-	t.perms = 0674  // Conflicts with default umask
+	t.perms = 0674 // Conflicts with default umask
 
 	// Call
 	t.call()
@@ -415,8 +415,8 @@ func (t *CreateSymlinkTest) CreatesCorrectEntry() {
 type CreateHardLinkTest struct {
 	fileSystemTest
 
-	target  string
-	source  string
+	target string
+	source string
 
 	err error
 }
