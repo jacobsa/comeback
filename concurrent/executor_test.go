@@ -16,6 +16,8 @@
 package concurrent_test
 
 import (
+	"github.com/jacobsa/comeback/concurrent"
+	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
 	"testing"
 )
@@ -36,7 +38,8 @@ func init() { RegisterTestSuite(&ExecutorTest{}) }
 ////////////////////////////////////////////////////////////////////////
 
 func (t *ExecutorTest) NumWorkersZero() {
-	ExpectEq("TODO", "")
+	f := func() { concurrent.NewExecutor(0) }
+	ExpectThat(f, Panics(HasSubstr("non-zero")))
 }
 
 func (t *ExecutorTest) NumWorkersOne() {
