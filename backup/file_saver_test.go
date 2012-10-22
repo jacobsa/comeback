@@ -21,16 +21,19 @@ import (
 	"github.com/jacobsa/comeback/backup"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/blob/mock"
+	"github.com/jacobsa/comeback/concurrent"
 	. "github.com/jacobsa/oglematchers"
 	"github.com/jacobsa/oglemock"
 	. "github.com/jacobsa/ogletest"
 	"io"
 	"testing"
 	"testing/iotest"
+	"time"
 )
 
 const (
-	chunkSize = 1 << 14
+	chunkSize           = 1 << 14
+	numFileSaverWorkers = 5
 )
 
 func TestRegisterFilesTest(t *testing.T) { RunTests(t) }
@@ -52,6 +55,7 @@ func returnStoreError(err string) oglemock.Action {
 
 type FileSaverTest struct {
 	blobStore mock_blob.MockStore
+	executor  concurrent.Executor
 	reader    io.Reader
 	fileSaver backup.FileSaver
 
@@ -63,7 +67,8 @@ func init() { RegisterTestSuite(&FileSaverTest{}) }
 
 func (t *FileSaverTest) SetUp(i *TestInfo) {
 	t.blobStore = mock_blob.NewMockStore(i.MockController, "blobStore")
-	t.fileSaver, _ = backup.NewFileSaver(t.blobStore, chunkSize)
+	t.executor = concurrent.NewExecutor(numFileSaverWorkers)
+	t.fileSaver, _ = backup.NewFileSaver(t.blobStore, chunkSize, t.executor)
 }
 
 func (t *FileSaverTest) callSaver() {
@@ -75,7 +80,7 @@ func (t *FileSaverTest) callSaver() {
 ////////////////////////////////////////////////////////////////////////
 
 func (t *FileSaverTest) ZeroChunkSize() {
-	_, err := backup.NewFileSaver(t.blobStore, 0)
+	_, err := backup.NewFileSaver(t.blobStore, 0, t.executor)
 	ExpectThat(err, Error(HasSubstr("size")))
 	ExpectThat(err, Error(HasSubstr("positive")))
 }
@@ -94,11 +99,18 @@ func (t *FileSaverTest) NoDataInReader() {
 func (t *FileSaverTest) ReadErrorInFirstChunk() {
 	// Chunks
 	chunk0 := makeChunk('a')
+	chunk1 := makeChunk('b')
+	chunk2 := makeChunk('c')
 
 	// Reader
 	t.reader = io.MultiReader(
 		iotest.TimeoutReader(bytes.NewReader(chunk0)),
+		bytes.NewReader(chunk1),
+		bytes.NewReader(chunk2),
 	)
+
+	// Blob store
+	ExpectCall(t.blobStore, "Store")(Any()).Times(0)
 
 	// Call
 	t.callSaver()
@@ -108,15 +120,17 @@ func (t *FileSaverTest) ReadErrorInFirstChunk() {
 	ExpectThat(t.err, Error(HasSubstr(iotest.ErrTimeout.Error())))
 }
 
-func (t *FileSaverTest) ReadErrorInSecondChunk() {
+func (t *FileSaverTest) ReadErrorInMiddleChunk() {
 	// Chunks
 	chunk0 := makeChunk('a')
 	chunk1 := makeChunk('b')
+	chunk2 := makeChunk('b')
 
 	// Reader
 	t.reader = io.MultiReader(
 		bytes.NewReader(chunk0),
 		iotest.TimeoutReader(bytes.NewReader(chunk1)),
+		bytes.NewReader(chunk2),
 	)
 
 	// Blob store
@@ -337,10 +351,12 @@ func (t *FileSaverTest) ErrorStoringOneChunk() {
 
 	// Blob store
 	score0 := blob.ComputeScore([]byte(""))
+	score2 := blob.ComputeScore([]byte(""))
 
 	ExpectCall(t.blobStore, "Store")(Any()).
 		WillOnce(oglemock.Return(score0, nil)).
-		WillOnce(returnStoreError("taco"))
+		WillOnce(returnStoreError("taco")).
+		WillOnce(oglemock.Return(score2, nil))
 
 	// Call
 	t.callSaver()
@@ -379,9 +395,13 @@ func (t *FileSaverTest) AllStoresSuccessful() {
 	score1 := blob.ComputeScore([]byte("burrito"))
 	score2 := blob.ComputeScore([]byte("enchilada"))
 
-	ExpectCall(t.blobStore, "Store")(Any()).
-		WillOnce(oglemock.Return(score0, nil)).
-		WillOnce(oglemock.Return(score1, nil)).
+	ExpectCall(t.blobStore, "Store")(DeepEquals(chunk0)).
+		WillOnce(oglemock.Return(score0, nil))
+
+	ExpectCall(t.blobStore, "Store")(DeepEquals(chunk1)).
+		WillOnce(oglemock.Return(score1, nil))
+
+	ExpectCall(t.blobStore, "Store")(DeepEquals(chunk2)).
 		WillOnce(oglemock.Return(score2, nil))
 
 	// Call
@@ -390,5 +410,60 @@ func (t *FileSaverTest) AllStoresSuccessful() {
 	AssertEq(nil, t.err)
 	ExpectThat(
 		t.scores,
-		ElementsAre(DeepEquals(score0), DeepEquals(score1), DeepEquals(score2)))
+		ElementsAre(
+			DeepEquals(score0),
+			DeepEquals(score1),
+			DeepEquals(score2),
+		),
+	)
+}
+
+func (t *FileSaverTest) StoresFinishOutOfOrder() {
+	AssertGt(numFileSaverWorkers, 1)
+
+	// Chunks
+	chunk0 := makeChunk('a')
+	chunk1 := makeChunk('b')
+	chunk2 := makeChunk('c')
+
+	// Reader
+	t.reader = io.MultiReader(
+		bytes.NewReader(chunk0),
+		bytes.NewReader(chunk1),
+		bytes.NewReader(chunk2),
+	)
+
+	// Blob store
+	score0 := blob.ComputeScore([]byte("taco"))
+	score1 := blob.ComputeScore([]byte("burrito"))
+	score2 := blob.ComputeScore([]byte("enchilada"))
+
+	sleepThenReturn := func(d time.Duration, s blob.Score) oglemock.Action {
+		return oglemock.Invoke(func([]byte) (blob.Score, error) {
+			time.Sleep(d)
+			return s, nil
+		})
+	}
+
+	ExpectCall(t.blobStore, "Store")(DeepEquals(chunk0)).
+		WillOnce(sleepThenReturn(200*time.Millisecond, score0))
+
+	ExpectCall(t.blobStore, "Store")(DeepEquals(chunk1)).
+		WillOnce(sleepThenReturn(100*time.Millisecond, score1))
+
+	ExpectCall(t.blobStore, "Store")(DeepEquals(chunk2)).
+		WillOnce(sleepThenReturn(150*time.Millisecond, score2))
+
+	// Call
+	t.callSaver()
+
+	AssertEq(nil, t.err)
+	ExpectThat(
+		t.scores,
+		ElementsAre(
+			DeepEquals(score0),
+			DeepEquals(score1),
+			DeepEquals(score2),
+		),
+	)
 }
