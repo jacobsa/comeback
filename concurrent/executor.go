@@ -28,3 +28,8 @@ type Executor interface {
 	// There are no guarantees on the order in which scheduled work is run.
 	Add(w Work)
 }
+
+// Create an executor with the specified number of workers running in parallel.
+// Calls to Add will block if numWorkers pieces of work are currently in
+// progress.
+func NewExecutor(numWorkers int) (e Executor)
