@@ -396,9 +396,13 @@ func (t *FileSaverTest) AllStoresSuccessful() {
 	score1 := blob.ComputeScore([]byte("burrito"))
 	score2 := blob.ComputeScore([]byte("enchilada"))
 
-	ExpectCall(t.blobStore, "Store")(Any()).
-		WillOnce(oglemock.Return(score0, nil)).
-		WillOnce(oglemock.Return(score1, nil)).
+	ExpectCall(t.blobStore, "Store")(DeepEquals(chunk0)).
+		WillOnce(oglemock.Return(score0, nil))
+
+	ExpectCall(t.blobStore, "Store")(DeepEquals(chunk1)).
+		WillOnce(oglemock.Return(score1, nil))
+
+	ExpectCall(t.blobStore, "Store")(DeepEquals(chunk2)).
 		WillOnce(oglemock.Return(score2, nil))
 
 	// Call
@@ -407,7 +411,12 @@ func (t *FileSaverTest) AllStoresSuccessful() {
 	AssertEq(nil, t.err)
 	ExpectThat(
 		t.scores,
-		ElementsAre(DeepEquals(score0), DeepEquals(score1), DeepEquals(score2)))
+		ElementsAre(
+			DeepEquals(score0),
+			DeepEquals(score1),
+			DeepEquals(score2),
+		),
+	)
 }
 
 func (t *FileSaverTest) StoresFinishOutOfOrder() {
@@ -453,5 +462,7 @@ func (t *FileSaverTest) StoresFinishOutOfOrder() {
 		ElementsAre(
 			DeepEquals(score0),
 			DeepEquals(score1),
-			DeepEquals(score2)))
+			DeepEquals(score2),
+		),
+	)
 }
