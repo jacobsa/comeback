@@ -51,7 +51,7 @@ func NewFileSaver(store blob.Store, chunkSize uint32) (s FileSaver, err error) {
 type fileSaver struct {
 	blobStore blob.Store
 	chunkSize uint32
-	executor concurrent.Executor
+	executor  concurrent.Executor
 }
 
 // Read 16 MiB from the supplied reader, returning less iff the reader returns
@@ -64,7 +64,7 @@ func getChunk(r io.Reader, chunkSize uint32) ([]byte, error) {
 func (s *fileSaver) Save(r io.Reader) (scores []blob.Score, err error) {
 	type result struct {
 		score blob.Score
-		err error
+		err   error
 	}
 
 	// Turn the file into chunks, giving them to the blob store in parallel.

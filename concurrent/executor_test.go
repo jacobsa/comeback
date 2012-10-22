@@ -53,7 +53,7 @@ func (t *ExecutorTest) NumWorkersOne() {
 	// Schedule it many times and record the amount of time it takes in each
 	// instance.
 	waitTimes := []time.Duration{}
-	const numIters = 16;
+	const numIters = 16
 	for i := 0; i < numIters; i++ {
 		before := time.Now()
 		e.Add(w)
@@ -63,13 +63,13 @@ func (t *ExecutorTest) NumWorkersOne() {
 	}
 
 	// The first call should have been quick.
-	ExpectLt(waitTimes[0], time.Duration(float64(sleepDuration) * 0.10))
+	ExpectLt(waitTimes[0], time.Duration(float64(sleepDuration)*0.10))
 
 	// All of the others should have taken about as long as the piece of work
 	// sleeps.
 	for i := 1; i < len(waitTimes); i++ {
-		ExpectGt(waitTimes[i], time.Duration(float64(sleepDuration) * 0.75))
-		ExpectLt(waitTimes[i], time.Duration(float64(sleepDuration) * 1.25))
+		ExpectGt(waitTimes[i], time.Duration(float64(sleepDuration)*0.75))
+		ExpectLt(waitTimes[i], time.Duration(float64(sleepDuration)*1.25))
 	}
 }
 
@@ -83,7 +83,7 @@ func (t *ExecutorTest) NumWorkersLarger() {
 
 	// Schedule it many times and record the total amount of time we spend
 	// scheduling.
-	const numIters = 256;
+	const numIters = 256
 
 	before := time.Now()
 	for i := 0; i < numIters; i++ {
@@ -92,9 +92,9 @@ func (t *ExecutorTest) NumWorkersLarger() {
 	after := time.Now()
 
 	// Make sure the throughput is as expected.
-	expected := time.Duration(float64(sleepDuration * numIters) / numWorkers)
+	expected := time.Duration(float64(sleepDuration*numIters) / numWorkers)
 	actual := after.Sub(before)
 
-	ExpectGt(actual, time.Duration(float64(expected) * 0.75))
-	ExpectLt(actual, time.Duration(float64(expected) * 1.25))
+	ExpectGt(actual, time.Duration(float64(expected)*0.75))
+	ExpectLt(actual, time.Duration(float64(expected)*1.25))
 }
