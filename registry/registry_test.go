@@ -1421,7 +1421,15 @@ func (t *UpdateScoreSetVersionTest) CallsPutAttributesWithNonZeroLastVersion() {
 }
 
 func (t *UpdateScoreSetVersionTest) PutAttributesReturnsError() {
-	ExpectEq("TODO", "")
+	// Domain
+	ExpectCall(t.domain, "PutAttributes")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return(errors.New("taco")))
+
+	// Call
+	t.callRegistry()
+
+	ExpectThat(t.err, Error(HasSubstr("PutAttributes")))
+	ExpectThat(t.err, Error(HasSubstr("taco")))
 }
 
 func (t *UpdateScoreSetVersionTest) PutAttributesSucceeds() {
