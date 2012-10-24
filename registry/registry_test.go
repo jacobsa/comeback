@@ -1365,7 +1365,19 @@ func (t *UpdateScoreSetVersionTest) callRegistry() {
 	t.err = t.registry.UpdateScoreSetVersion(t.newVersion, t.lastVersion)
 }
 
-func (t *UpdateScoreSetVersionTest) DoesFoo() {
+func (t *UpdateScoreSetVersionTest) CallsSetAttributesWithZeroLastVersion() {
+	ExpectEq("TODO", "")
+}
+
+func (t *UpdateScoreSetVersionTest) CallsSetAttributesWithNonZeroLastVersion() {
+	ExpectEq("TODO", "")
+}
+
+func (t *UpdateScoreSetVersionTest) SetAttributesReturnsError() {
+	ExpectEq("TODO", "")
+}
+
+func (t *UpdateScoreSetVersionTest) SetAttributesSucceeds() {
 	ExpectEq("TODO", "")
 }
 
@@ -1386,6 +1398,22 @@ func (t *GetCurrentScoreSetVersionTest) callRegistry() {
 	t.version, t.err = t.registry.GetCurrentScoreSetVersion()
 }
 
-func (t *GetCurrentScoreSetVersionTest) DoesFoo() {
+func (t *GetCurrentScoreSetVersionTest) CallsGetAttributes() {
+	ExpectEq("TODO", "")
+}
+
+func (t *GetCurrentScoreSetVersionTest) GetAttributesReturnsError() {
+	ExpectEq("TODO", "")
+}
+
+func (t *GetCurrentScoreSetVersionTest) MissingVersionAttribute() {
+	ExpectEq("TODO", "")
+}
+
+func (t *GetCurrentScoreSetVersionTest) VersionAttributeIsJunk() {
+	ExpectEq("TODO", "")
+}
+
+func (t *GetCurrentScoreSetVersionTest) VersionAttributeIsLegal() {
 	ExpectEq("TODO", "")
 }
