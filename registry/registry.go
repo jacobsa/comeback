@@ -426,10 +426,10 @@ func (r *registry) UpdateScoreSetVersion(
 		sdb.PutUpdate{Name: "score_set_version", Value: formatVersion(newVersion)},
 	}
 
-	var precond *sdb.Precondition
+	precond := &sdb.Precondition{Name: "score_set_version"}
 	if lastVersion != 0 {
 		formatted := formatVersion(lastVersion)
-		precond = &sdb.Precondition{Name: "score_set_version", Value: &formatted}
+		precond.Value = &formatted
 	}
 
 	if err = r.domain.PutAttributes(markerItemName, updates, precond); err != nil {
