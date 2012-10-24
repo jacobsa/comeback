@@ -44,6 +44,10 @@ const (
 // Helpers
 ////////////////////////////////////////////////////////////////////////
 
+func makeStrPtr(s string) *string {
+	return &s
+}
+
 type registryTest struct {
 	db      mock_sdb.MockSimpleDB
 	domain  mock_sdb.MockDomain
@@ -1388,7 +1392,32 @@ func (t *UpdateScoreSetVersionTest) CallsPutAttributesWithZeroLastVersion() {
 }
 
 func (t *UpdateScoreSetVersionTest) CallsPutAttributesWithNonZeroLastVersion() {
-	ExpectEq("TODO", "")
+	t.newVersion = 0xdeadbeef
+	t.lastVersion = 0xfeedface
+
+	// Domain
+	ExpectCall(t.domain, "PutAttributes")(
+		"comeback_marker",
+		ElementsAre(
+			DeepEquals(
+				sdb.PutUpdate{
+					Name:  "score_set_version",
+					Value: "00000000deadbeef",
+				},
+			),
+		),
+		Pointee(
+			DeepEquals(
+				sdb.Precondition{
+					Name: "score_set_version",
+					Value: makeStrPtr("00000000feedface"),
+				},
+			),
+		),
+	).WillOnce(oglemock.Return(errors.New("")))
+
+	// Call
+	t.callRegistry()
 }
 
 func (t *UpdateScoreSetVersionTest) PutAttributesReturnsError() {
