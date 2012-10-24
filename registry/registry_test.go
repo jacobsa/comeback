@@ -1433,7 +1433,14 @@ func (t *UpdateScoreSetVersionTest) PutAttributesReturnsError() {
 }
 
 func (t *UpdateScoreSetVersionTest) PutAttributesSucceeds() {
-	ExpectEq("TODO", "")
+	// Domain
+	ExpectCall(t.domain, "PutAttributes")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return(nil))
+
+	// Call
+	t.callRegistry()
+
+	ExpectEq(nil, t.err)
 }
 
 ////////////////////////////////////////////////////////////////////////
