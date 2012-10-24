@@ -1502,9 +1502,38 @@ func (t *GetCurrentScoreSetVersionTest) MissingVersionAttribute() {
 }
 
 func (t *GetCurrentScoreSetVersionTest) VersionAttributeIsJunk() {
-	ExpectEq("TODO", "")
+	// Domain
+	attrs := []sdb.Attribute{
+		sdb.Attribute{Name: "foo"},
+		sdb.Attribute{Name: "score_set_version", Value: "asdf"},
+		sdb.Attribute{Name: "bar"},
+	}
+
+	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return(attrs, nil))
+
+	// Call
+	t.callRegistry()
+
+	ExpectThat(t.err, Error(HasSubstr("Invalid")))
+	ExpectThat(t.err, Error(HasSubstr("version")))
+	ExpectThat(t.err, Error(HasSubstr("asdf")))
 }
 
 func (t *GetCurrentScoreSetVersionTest) VersionAttributeIsLegal() {
-	ExpectEq("TODO", "")
+	// Domain
+	attrs := []sdb.Attribute{
+		sdb.Attribute{Name: "foo"},
+		sdb.Attribute{Name: "score_set_version", Value: "00000000feedface"},
+		sdb.Attribute{Name: "bar"},
+	}
+
+	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return(attrs, nil))
+
+	// Call
+	t.callRegistry()
+
+	AssertEq(nil, t.err)
+	ExpectEq(uint64(0xfeedface), t.version)
 }
