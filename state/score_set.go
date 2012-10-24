@@ -17,18 +17,28 @@ package state
 
 import (
 	"github.com/jacobsa/comeback/blob"
+	"sync"
 )
 
 // A score set represents a monitonically growing set of blob scores. It is
 // safe to call any of its methods concurrently. The zero value represents the
 // empty set.
 type ScoreSet struct {
+	mutex sync.RWMutex
+	hexScores map[string]bool  // Protected by mutex
 }
 
 func (s *ScoreSet) Add(score blob.Score) {
-	panic("TODO")
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	s.hexScores[score.Hex()] = true
 }
 
 func (s *ScoreSet) Contains(score blob.Score) bool {
-	panic("TODO")
+	s.mutex.RLock()
+	defer s.mutex.RUnlock()
+
+	_, ok := s.hexScores[score.Hex()]
+	return ok
 }
