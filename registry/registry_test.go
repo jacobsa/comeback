@@ -1365,19 +1365,19 @@ func (t *UpdateScoreSetVersionTest) callRegistry() {
 	t.err = t.registry.UpdateScoreSetVersion(t.newVersion, t.lastVersion)
 }
 
-func (t *UpdateScoreSetVersionTest) CallsSetAttributesWithZeroLastVersion() {
+func (t *UpdateScoreSetVersionTest) CallsPutAttributesWithZeroLastVersion() {
 	ExpectEq("TODO", "")
 }
 
-func (t *UpdateScoreSetVersionTest) CallsSetAttributesWithNonZeroLastVersion() {
+func (t *UpdateScoreSetVersionTest) CallsPutAttributesWithNonZeroLastVersion() {
 	ExpectEq("TODO", "")
 }
 
-func (t *UpdateScoreSetVersionTest) SetAttributesReturnsError() {
+func (t *UpdateScoreSetVersionTest) PutAttributesReturnsError() {
 	ExpectEq("TODO", "")
 }
 
-func (t *UpdateScoreSetVersionTest) SetAttributesSucceeds() {
+func (t *UpdateScoreSetVersionTest) PutAttributesSucceeds() {
 	ExpectEq("TODO", "")
 }
 
