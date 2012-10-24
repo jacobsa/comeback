@@ -414,11 +414,29 @@ func (r *registry) FindBackup(jobId uint64) (job CompletedJob, err error) {
 	return
 }
 
+func formatVersion(v uint64) string {
+	return fmt.Sprintf("%016x", v)
+}
+
 func (r *registry) UpdateScoreSetVersion(
 	newVersion uint64,
 	lastVersion uint64,
 ) (err error) {
-	err = fmt.Errorf("TODO")
+	updates := []sdb.PutUpdate{
+		sdb.PutUpdate{Name: "score_set_version", Value: formatVersion(newVersion)},
+	}
+
+	var precond *sdb.Precondition
+	if lastVersion != 0 {
+		formatted := formatVersion(lastVersion)
+		precond = &sdb.Precondition{Name: "score_set_version", Value: &formatted}
+	}
+
+	if err = r.domain.PutAttributes(markerItemName, updates, precond); err != nil {
+		err = fmt.Errorf("PutAttributes: %v", err)
+		return
+	}
+
 	return
 }
 
