@@ -1461,7 +1461,15 @@ func (t *GetCurrentScoreSetVersionTest) callRegistry() {
 }
 
 func (t *GetCurrentScoreSetVersionTest) CallsGetAttributes() {
-	ExpectEq("TODO", "")
+	// Domain
+	ExpectCall(t.domain, "GetAttributes")(
+		"comeback_marker",
+		false,
+		ElementsAre("score_set_version"),
+	).WillOnce(oglemock.Return(nil, errors.New("")))
+
+	// Call
+	t.callRegistry()
 }
 
 func (t *GetCurrentScoreSetVersionTest) GetAttributesReturnsError() {
