@@ -17,7 +17,6 @@ package state
 
 import (
 	"io"
-	"github.com/jacobsa/comeback/blob"
 )
 
 // State that should be saved between runs of the program.
@@ -35,4 +34,4 @@ type State struct {
 }
 
 func LoadState(r io.Reader) (state State, err error)
-func SaveState(w io.Writer, state State) state
+func SaveState(w io.Writer, state State) (err error)
