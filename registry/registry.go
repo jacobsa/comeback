@@ -55,6 +55,14 @@ type Registry interface {
 
 	// Find a particular completed job by ID.
 	FindBackup(jobId uint64) (job CompletedJob, err error)
+
+	// Take note of the version of the score set we're writing out as the latest,
+	// ensuring that it still is the latest. A version of zero means there was no
+	// previous version.
+	UpdateScoreSetVersion(newVersion, lastVersion uint64) (err error)
+
+	// Return the latest score set version number, or zero if there is none.
+	GetCurrentScoreSetVersion() (version uint64, err error)
 }
 
 // Create a registry that stores data in the supplied SimpleDB domain, deriving
@@ -403,5 +411,18 @@ func (r *registry) FindBackup(jobId uint64) (job CompletedJob, err error) {
 	}
 
 	job.Id = jobId
+	return
+}
+
+func (r *registry) UpdateScoreSetVersion(
+	newVersion uint64,
+	lastVersion uint64,
+) (err error) {
+	err = fmt.Errorf("TODO")
+	return
+}
+
+func (r *registry) GetCurrentScoreSetVersion() (version uint64, err error) {
+	err = fmt.Errorf("TODO")
 	return
 }
