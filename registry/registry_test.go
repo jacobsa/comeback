@@ -1473,7 +1473,15 @@ func (t *GetCurrentScoreSetVersionTest) CallsGetAttributes() {
 }
 
 func (t *GetCurrentScoreSetVersionTest) GetAttributesReturnsError() {
-	ExpectEq("TODO", "")
+	// Domain
+	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return(nil, errors.New("taco")))
+
+	// Call
+	t.callRegistry()
+
+	ExpectThat(t.err, Error(HasSubstr("GetAttributes")))
+	ExpectThat(t.err, Error(HasSubstr("taco")))
 }
 
 func (t *GetCurrentScoreSetVersionTest) MissingVersionAttribute() {
