@@ -1366,7 +1366,25 @@ func (t *UpdateScoreSetVersionTest) callRegistry() {
 }
 
 func (t *UpdateScoreSetVersionTest) CallsPutAttributesWithZeroLastVersion() {
-	ExpectEq("TODO", "")
+	t.newVersion = 0xdeadbeef
+	t.lastVersion = 0
+
+	// Domain
+	ExpectCall(t.domain, "PutAttributes")(
+		"comeback_marker",
+		ElementsAre(
+			DeepEquals(
+				sdb.PutUpdate{
+					Name:  "score_set_version",
+					Value: "00000000deadbeef",
+				},
+			),
+		),
+		Pointee(DeepEquals(sdb.Precondition{Name: "score_set_version", Value: nil})),
+	).WillOnce(oglemock.Return(errors.New("")))
+
+	// Call
+	t.callRegistry()
 }
 
 func (t *UpdateScoreSetVersionTest) CallsPutAttributesWithNonZeroLastVersion() {
