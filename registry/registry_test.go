@@ -1485,7 +1485,20 @@ func (t *GetCurrentScoreSetVersionTest) GetAttributesReturnsError() {
 }
 
 func (t *GetCurrentScoreSetVersionTest) MissingVersionAttribute() {
-	ExpectEq("TODO", "")
+	// Domain
+	attrs := []sdb.Attribute{
+		sdb.Attribute{Name: "foo"},
+		sdb.Attribute{Name: "bar"},
+	}
+
+	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return(attrs, nil))
+
+	// Call
+	t.callRegistry()
+
+	AssertEq(nil, t.err)
+	ExpectEq(0, t.version)
 }
 
 func (t *GetCurrentScoreSetVersionTest) VersionAttributeIsJunk() {
