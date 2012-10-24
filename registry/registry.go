@@ -422,6 +422,13 @@ func (r *registry) UpdateScoreSetVersion(
 	newVersion uint64,
 	lastVersion uint64,
 ) (err error) {
+	// Catch stupid errors.
+	if newVersion == lastVersion {
+		err = fmt.Errorf("New and old versions must not be identical.")
+		return
+	}
+
+	// Call the domain.
 	updates := []sdb.PutUpdate{
 		sdb.PutUpdate{Name: "score_set_version", Value: formatVersion(newVersion)},
 	}

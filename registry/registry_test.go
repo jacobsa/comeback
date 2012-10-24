@@ -1369,6 +1369,24 @@ func (t *UpdateScoreSetVersionTest) callRegistry() {
 	t.err = t.registry.UpdateScoreSetVersion(t.newVersion, t.lastVersion)
 }
 
+func (t *UpdateScoreSetVersionTest) SetUp(i *TestInfo) {
+	t.extentRegistryTest.SetUp(i)
+
+	// Set up defaults.
+	t.newVersion = 1
+	t.lastVersion = 2
+}
+
+func (t *UpdateScoreSetVersionTest) VersionsIdentical() {
+	t.newVersion = 0xdeadbeef
+	t.lastVersion = 0xdeadbeef
+
+	// Call
+	t.callRegistry()
+
+	ExpectThat(t.err, Error(HasSubstr("identical")))
+}
+
 func (t *UpdateScoreSetVersionTest) CallsPutAttributesWithZeroLastVersion() {
 	t.newVersion = 0xdeadbeef
 	t.lastVersion = 0
