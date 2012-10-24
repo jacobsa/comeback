@@ -1346,3 +1346,46 @@ func (t *FindBackupTest) EverythingOkay() {
 		t.job.StartTime,
 	)
 }
+
+////////////////////////////////////////////////////////////////////////
+// UpdateScoreSetVersion
+////////////////////////////////////////////////////////////////////////
+
+type UpdateScoreSetVersionTest struct {
+	extentRegistryTest
+
+	newVersion  uint64
+	lastVersion uint64
+	err         error
+}
+
+func init() { RegisterTestSuite(&UpdateScoreSetVersionTest{}) }
+
+func (t *UpdateScoreSetVersionTest) callRegistry() {
+	t.err = t.registry.UpdateScoreSetVersion(t.newVersion, t.lastVersion)
+}
+
+func (t *UpdateScoreSetVersionTest) DoesFoo() {
+	ExpectEq("TODO", "")
+}
+
+////////////////////////////////////////////////////////////////////////
+// GetCurrentScoreSetVersion
+////////////////////////////////////////////////////////////////////////
+
+type GetCurrentScoreSetVersionTest struct {
+	extentRegistryTest
+
+	version uint64
+	err     error
+}
+
+func init() { RegisterTestSuite(&GetCurrentScoreSetVersionTest{}) }
+
+func (t *GetCurrentScoreSetVersionTest) callRegistry() {
+	t.version, t.err = t.registry.GetCurrentScoreSetVersion()
+}
+
+func (t *GetCurrentScoreSetVersionTest) DoesFoo() {
+	ExpectEq("TODO", "")
+}

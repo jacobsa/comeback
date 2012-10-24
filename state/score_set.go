@@ -24,8 +24,8 @@ import (
 // safe to call any of its methods concurrently. The zero value represents the
 // empty set.
 type ScoreSet struct {
-	mutex sync.RWMutex
-	hexScores map[string]bool  // Protected by mutex
+	mutex     sync.RWMutex
+	hexScores map[string]bool // Protected by mutex
 }
 
 func (s *ScoreSet) Add(score blob.Score) {
