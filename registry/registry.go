@@ -441,6 +441,30 @@ func (r *registry) UpdateScoreSetVersion(
 }
 
 func (r *registry) GetCurrentScoreSetVersion() (version uint64, err error) {
-	err = fmt.Errorf("TODO")
+	// Call the domain.
+	attrs, err := r.domain.GetAttributes(
+		sdb.ItemName(markerItemName),
+		false, // Consistent read unnecessary
+		[]string{"score_set_version"},
+	)
+
+	if err != nil {
+		err = fmt.Errorf("GetAttributes: %v", err)
+		return
+	}
+
+	// Look for a version attribute.
+	for _, attr := range attrs {
+		if attr.Name == "score_set_version" {
+			if version, err = strconv.ParseUint(attr.Value, 16, 64); err != nil {
+				err = fmt.Errorf("Invalid score set version: %s", attr.Value)
+				return
+			}
+
+			return
+		}
+	}
+
+	// We didn't find one. Return zero.
 	return
 }
