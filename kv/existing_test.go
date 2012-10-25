@@ -71,12 +71,12 @@ type ExistingKeysStore_ContainsTest struct {
 	ExistingKeysStoreTest
 
 	key []byte
-	val []byte
+	res bool
 	err error
 }
 
 func (t *ExistingKeysStore_ContainsTest) call() {
-	t.err = t.store.Contains(t.key, t.val)
+	t.res, t.err = t.store.Contains(t.key)
 }
 
 func (t *ExistingKeysStore_ContainsTest) DoesFoo() {
