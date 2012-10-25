@@ -89,7 +89,17 @@ func (t *ExistingKeysStore_SetTest) WrappedReturnsError() {
 }
 
 func (t *ExistingKeysStore_SetTest) WrappedSucceeds() {
-	ExpectEq("TODO", "")
+	t.key = []byte("queso")
+
+	// Wrapped
+	ExpectCall(t.wrapped, "Set")(Any(), Any()).
+		WillOnce(oglemock.Return(nil))
+
+	// Call
+	t.call()
+
+	AssertEq(nil, t.err)
+	ExpectTrue(t.existingKeys.Contains("queso"))
 }
 
 ////////////////////////////////////////////////////////////////////////
