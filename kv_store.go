@@ -16,28 +16,34 @@
 package main
 
 import (
-	"github.com/jacobsa/comeback/blob"
+	"github.com/jacobsa/aws/s3"
+	"github.com/jacobsa/comeback/kv"
+	s3_kv "github.com/jacobsa/comeback/kv/s3"
+	"log"
 	"sync"
 )
 
-var g_blobStoreOnce sync.Once
-var g_blobStore blob.Store
+var g_kvStoreOnce sync.Once
+var g_kvStore kv.Store
 
-func initBlobStore() {
-	kvStore := getKvStore()
-	crypter := getCrypter()
+func initKvStore() {
+	cfg := getConfig()
+	var err error
 
-	// Store blobs in a key/value store.
-	g_blobStore = blob.NewKvBasedBlobStore(kvStore)
+	// Open a connection to S3.
+	bucket, err := s3.OpenBucket(cfg.S3Bucket, cfg.S3Region, cfg.AccessKey)
+	if err != nil {
+		log.Fatalln("Creating S3 bucket:", err)
+	}
 
-	// Make sure the values returned by the key/value store aren't corrupted.
-	g_blobStore = blob.NewCheckingStore(g_blobStore)
-
-	// Encrypt blob data.
-	g_blobStore = blob.NewEncryptingStore(crypter, g_blobStore)
+	// Store keys and values in S3.
+	g_kvStore, err = s3_kv.NewS3KvStore(bucket)
+	if err != nil {
+		log.Fatalln("Creating S3 kv store:", err)
+	}
 }
 
-func getBlobStore() blob.Store {
-	g_blobStoreOnce.Do(initBlobStore)
-	return g_blobStore
+func getKvStore() kv.Store {
+	g_kvStoreOnce.Do(initKvStore)
+	return g_kvStore
 }
