@@ -120,10 +120,23 @@ func (t *ExistingKeysStore_ContainsTest) call() {
 	t.res, t.err = t.store.Contains(t.key)
 }
 
-func (t *ExistingKeysStore_ContainsTest) KeyInSet() {
-	ExpectEq("TODO", "")
+func (t *ExistingKeysStore_ContainsTest) KeyNotInSet() {
+	t.key = []byte("taco")
+
+	// Call
+	t.call()
+
+	AssertEq(nil, t.err)
+	ExpectFalse(t.res)
 }
 
-func (t *ExistingKeysStore_ContainsTest) KeyNotInSet() {
-	ExpectEq("TODO", "")
+func (t *ExistingKeysStore_ContainsTest) KeyInSet() {
+	t.key = []byte("taco")
+	t.existingKeys.Add("taco")
+
+	// Call
+	t.call()
+
+	AssertEq(nil, t.err)
+	ExpectTrue(t.res)
 }
