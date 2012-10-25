@@ -35,29 +35,6 @@ func NewS3KvStore(bucket s3.Bucket) (kv.Store, error) {
 	return store, nil
 }
 
-func getAllKeys(bucket s3.Bucket) ([]string, error) {
-	keys := []string{}
-	for {
-		var prevKey string
-		if len(keys) > 0 {
-			prevKey = keys[len(keys)-1]
-		}
-
-		partialKeys, err := bucket.ListKeys(prevKey)
-		if err != nil {
-			return nil, fmt.Errorf("ListKeys: %v", err)
-		}
-
-		if len(partialKeys) == 0 {
-			break
-		}
-
-		keys = append(keys, partialKeys...)
-	}
-
-	return keys, nil
-}
-
 type kvStore struct {
 	bucket s3.Bucket
 }
