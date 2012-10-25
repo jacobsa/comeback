@@ -31,16 +31,27 @@ func initState() {
 
 	// Open the specified file.
 	f, err := os.Open(cfg.StateFile)
-	if err != nil {
-		log.Fatalln("Opening state file:", err)
-	}
 
-	defer f.Close()
+	// Special case: if the error is that the file doesn't exist, initialize a
+	// new one.
+	if err != nil && os.IsNotExist(err) {
+		g_state = state.State{
+			ExistingScores: nil,
+			ExistingScoresVersion: 0,
+		}
+	} else {
+		// Handle other Open errors.
+		if err != nil {
+			log.Fatalln("Opening state file:", err)
+		}
 
-	// Load the state struct.
-	g_state, err = state.LoadState(f)
-	if err != nil {
-		log.Fatalln("LoadState:", err)
+		defer f.Close()
+
+		// Load the state struct.
+		g_state, err = state.LoadState(f)
+		if err != nil {
+			log.Fatalln("LoadState:", err)
+		}
 	}
 
 	// Throw out the existing scores set if it's out of date.
