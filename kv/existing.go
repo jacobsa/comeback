@@ -40,7 +40,9 @@ type existingKeysStore struct {
 
 func (s *existingKeysStore) Set(key []byte, val []byte) (err error) {
 	err = s.wrapped.Set(key, val)
-	if err != nil {
+
+	// Store the key if the Set call was successful.
+	if err == nil {
 		s.keys.Add(string(key))
 	}
 
