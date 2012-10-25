@@ -41,6 +41,18 @@ func (t *StringSetTest) SetUp(i *TestInfo) {
 // Tests
 ////////////////////////////////////////////////////////////////////////
 
-func (t *StringSetTest) DoesFoo() {
+func (t *StringSetTest) EmptySet() {
+	ExpectEq("TODO", "")
+}
+
+func (t *StringSetTest) SomeElements() {
+	ExpectEq("TODO", "")
+}
+
+func (t *StringSetTest) AddTwice() {
+	ExpectEq("TODO", "")
+}
+
+func (t *StringSetTest) EncodingRoundTrip() {
 	ExpectEq("TODO", "")
 }
