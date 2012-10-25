@@ -13,31 +13,5 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
-
-import (
-	"github.com/jacobsa/comeback/blob"
-	"sync"
-)
-
-var g_blobStoreOnce sync.Once
-var g_blobStore blob.Store
-
-func initBlobStore() {
-	kvStore := getKvStore()
-	crypter := getCrypter()
-
-	// Store blobs in a key/value store.
-	g_blobStore = blob.NewKvBasedBlobStore(kvStore)
-
-	// Make sure the values returned by the key/value store aren't corrupted.
-	g_blobStore = blob.NewCheckingStore(g_blobStore)
-
-	// Encrypt blob data.
-	g_blobStore = blob.NewEncryptingStore(crypter, g_blobStore)
-}
-
-func getBlobStore() blob.Store {
-	g_blobStoreOnce.Do(initBlobStore)
-	return g_blobStore
-}
+// Package state contains code for saving state between comeback runs.
+package state

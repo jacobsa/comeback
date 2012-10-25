@@ -36,6 +36,7 @@ type jsonConfig struct {
 	S3Region    s3.Region           `json:"s3_region"`
 	SdbDomain   string              `json:"simpledb_domain"`
 	SdbRegion   sdb.Region          `json:"simpledb_region"`
+	StateFile   string              `json:"state_file"`
 }
 
 // Parse the supplied JSON configuration data.
@@ -53,6 +54,7 @@ func Parse(data []byte) (*Config, error) {
 		S3Region:  jCfg.S3Region,
 		SdbDomain: jCfg.SdbDomain,
 		SdbRegion: jCfg.SdbRegion,
+		StateFile: jCfg.StateFile,
 		AccessKey: aws.AccessKey{Id: jCfg.AccessKeyId},
 	}
 

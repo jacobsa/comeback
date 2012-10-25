@@ -262,6 +262,19 @@ func (t *ParseTest) SimpleDBConfiguration() {
 	ExpectEq("burrito", t.cfg.SdbRegion)
 }
 
+func (t *ParseTest) StateFile() {
+	t.data = `
+	{
+		"state_file": "taco"
+	}
+	`
+
+	t.parse()
+	AssertEq(nil, t.err)
+
+	ExpectEq("taco", t.cfg.StateFile)
+}
+
 func (t *ParseTest) UnknownKeys() {
 	t.data = `
 	{

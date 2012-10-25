@@ -44,6 +44,10 @@ const (
 // Helpers
 ////////////////////////////////////////////////////////////////////////
 
+func makeStrPtr(s string) *string {
+	return &s
+}
+
 type registryTest struct {
 	db      mock_sdb.MockSimpleDB
 	domain  mock_sdb.MockDomain
@@ -1345,4 +1349,209 @@ func (t *FindBackupTest) EverythingOkay() {
 		"Time: %v",
 		t.job.StartTime,
 	)
+}
+
+////////////////////////////////////////////////////////////////////////
+// UpdateScoreSetVersion
+////////////////////////////////////////////////////////////////////////
+
+type UpdateScoreSetVersionTest struct {
+	extentRegistryTest
+
+	newVersion  uint64
+	lastVersion uint64
+	err         error
+}
+
+func init() { RegisterTestSuite(&UpdateScoreSetVersionTest{}) }
+
+func (t *UpdateScoreSetVersionTest) callRegistry() {
+	t.err = t.registry.UpdateScoreSetVersion(t.newVersion, t.lastVersion)
+}
+
+func (t *UpdateScoreSetVersionTest) SetUp(i *TestInfo) {
+	t.extentRegistryTest.SetUp(i)
+
+	// Set up defaults.
+	t.newVersion = 1
+	t.lastVersion = 2
+}
+
+func (t *UpdateScoreSetVersionTest) VersionsIdentical() {
+	t.newVersion = 0xdeadbeef
+	t.lastVersion = 0xdeadbeef
+
+	// Call
+	t.callRegistry()
+
+	ExpectThat(t.err, Error(HasSubstr("identical")))
+}
+
+func (t *UpdateScoreSetVersionTest) CallsPutAttributesWithZeroLastVersion() {
+	t.newVersion = 0xdeadbeef
+	t.lastVersion = 0
+
+	// Domain
+	ExpectCall(t.domain, "PutAttributes")(
+		"comeback_marker",
+		ElementsAre(
+			DeepEquals(
+				sdb.PutUpdate{
+					Name:  "score_set_version",
+					Value: "00000000deadbeef",
+				},
+			),
+		),
+		Pointee(DeepEquals(sdb.Precondition{Name: "score_set_version", Value: nil})),
+	).WillOnce(oglemock.Return(errors.New("")))
+
+	// Call
+	t.callRegistry()
+}
+
+func (t *UpdateScoreSetVersionTest) CallsPutAttributesWithNonZeroLastVersion() {
+	t.newVersion = 0xdeadbeef
+	t.lastVersion = 0xfeedface
+
+	// Domain
+	ExpectCall(t.domain, "PutAttributes")(
+		"comeback_marker",
+		ElementsAre(
+			DeepEquals(
+				sdb.PutUpdate{
+					Name:  "score_set_version",
+					Value: "00000000deadbeef",
+				},
+			),
+		),
+		Pointee(
+			DeepEquals(
+				sdb.Precondition{
+					Name: "score_set_version",
+					Value: makeStrPtr("00000000feedface"),
+				},
+			),
+		),
+	).WillOnce(oglemock.Return(errors.New("")))
+
+	// Call
+	t.callRegistry()
+}
+
+func (t *UpdateScoreSetVersionTest) PutAttributesReturnsError() {
+	// Domain
+	ExpectCall(t.domain, "PutAttributes")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return(errors.New("taco")))
+
+	// Call
+	t.callRegistry()
+
+	ExpectThat(t.err, Error(HasSubstr("PutAttributes")))
+	ExpectThat(t.err, Error(HasSubstr("taco")))
+}
+
+func (t *UpdateScoreSetVersionTest) PutAttributesSucceeds() {
+	// Domain
+	ExpectCall(t.domain, "PutAttributes")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return(nil))
+
+	// Call
+	t.callRegistry()
+
+	ExpectEq(nil, t.err)
+}
+
+////////////////////////////////////////////////////////////////////////
+// GetCurrentScoreSetVersion
+////////////////////////////////////////////////////////////////////////
+
+type GetCurrentScoreSetVersionTest struct {
+	extentRegistryTest
+
+	version uint64
+	err     error
+}
+
+func init() { RegisterTestSuite(&GetCurrentScoreSetVersionTest{}) }
+
+func (t *GetCurrentScoreSetVersionTest) callRegistry() {
+	t.version, t.err = t.registry.GetCurrentScoreSetVersion()
+}
+
+func (t *GetCurrentScoreSetVersionTest) CallsGetAttributes() {
+	// Domain
+	ExpectCall(t.domain, "GetAttributes")(
+		"comeback_marker",
+		false,
+		ElementsAre("score_set_version"),
+	).WillOnce(oglemock.Return(nil, errors.New("")))
+
+	// Call
+	t.callRegistry()
+}
+
+func (t *GetCurrentScoreSetVersionTest) GetAttributesReturnsError() {
+	// Domain
+	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return(nil, errors.New("taco")))
+
+	// Call
+	t.callRegistry()
+
+	ExpectThat(t.err, Error(HasSubstr("GetAttributes")))
+	ExpectThat(t.err, Error(HasSubstr("taco")))
+}
+
+func (t *GetCurrentScoreSetVersionTest) MissingVersionAttribute() {
+	// Domain
+	attrs := []sdb.Attribute{
+		sdb.Attribute{Name: "foo"},
+		sdb.Attribute{Name: "bar"},
+	}
+
+	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return(attrs, nil))
+
+	// Call
+	t.callRegistry()
+
+	AssertEq(nil, t.err)
+	ExpectEq(0, t.version)
+}
+
+func (t *GetCurrentScoreSetVersionTest) VersionAttributeIsJunk() {
+	// Domain
+	attrs := []sdb.Attribute{
+		sdb.Attribute{Name: "foo"},
+		sdb.Attribute{Name: "score_set_version", Value: "asdf"},
+		sdb.Attribute{Name: "bar"},
+	}
+
+	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return(attrs, nil))
+
+	// Call
+	t.callRegistry()
+
+	ExpectThat(t.err, Error(HasSubstr("Invalid")))
+	ExpectThat(t.err, Error(HasSubstr("version")))
+	ExpectThat(t.err, Error(HasSubstr("asdf")))
+}
+
+func (t *GetCurrentScoreSetVersionTest) VersionAttributeIsLegal() {
+	// Domain
+	attrs := []sdb.Attribute{
+		sdb.Attribute{Name: "foo"},
+		sdb.Attribute{Name: "score_set_version", Value: "00000000feedface"},
+		sdb.Attribute{Name: "bar"},
+	}
+
+	ExpectCall(t.domain, "GetAttributes")(Any(), Any(), Any()).
+		WillOnce(oglemock.Return(attrs, nil))
+
+	// Call
+	t.callRegistry()
+
+	AssertEq(nil, t.err)
+	ExpectEq(uint64(0xfeedface), t.version)
 }

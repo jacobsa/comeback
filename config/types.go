@@ -49,4 +49,7 @@ type Config struct {
 	// associated region.
 	SdbDomain string
 	SdbRegion sdb.Region
+
+	// A file on the local machine where state can be saved between runs.
+	StateFile string
 }

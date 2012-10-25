@@ -55,6 +55,14 @@ type Registry interface {
 
 	// Find a particular completed job by ID.
 	FindBackup(jobId uint64) (job CompletedJob, err error)
+
+	// Take note of the version of the score set we're writing out as the latest,
+	// ensuring that it still is the latest. A version of zero means there was no
+	// previous version.
+	UpdateScoreSetVersion(newVersion, lastVersion uint64) (err error)
+
+	// Return the latest score set version number, or zero if there is none.
+	GetCurrentScoreSetVersion() (version uint64, err error)
 }
 
 // Create a registry that stores data in the supplied SimpleDB domain, deriving
@@ -403,5 +411,67 @@ func (r *registry) FindBackup(jobId uint64) (job CompletedJob, err error) {
 	}
 
 	job.Id = jobId
+	return
+}
+
+func formatVersion(v uint64) string {
+	return fmt.Sprintf("%016x", v)
+}
+
+func (r *registry) UpdateScoreSetVersion(
+	newVersion uint64,
+	lastVersion uint64,
+) (err error) {
+	// Catch stupid errors.
+	if newVersion == lastVersion {
+		err = fmt.Errorf("New and old versions must not be identical.")
+		return
+	}
+
+	// Call the domain.
+	updates := []sdb.PutUpdate{
+		sdb.PutUpdate{Name: "score_set_version", Value: formatVersion(newVersion)},
+	}
+
+	precond := &sdb.Precondition{Name: "score_set_version"}
+	if lastVersion != 0 {
+		formatted := formatVersion(lastVersion)
+		precond.Value = &formatted
+	}
+
+	if err = r.domain.PutAttributes(markerItemName, updates, precond); err != nil {
+		err = fmt.Errorf("PutAttributes: %v", err)
+		return
+	}
+
+	return
+}
+
+func (r *registry) GetCurrentScoreSetVersion() (version uint64, err error) {
+	// Call the domain.
+	attrs, err := r.domain.GetAttributes(
+		sdb.ItemName(markerItemName),
+		false, // Consistent read unnecessary
+		[]string{"score_set_version"},
+	)
+
+	if err != nil {
+		err = fmt.Errorf("GetAttributes: %v", err)
+		return
+	}
+
+	// Look for a version attribute.
+	for _, attr := range attrs {
+		if attr.Name == "score_set_version" {
+			if version, err = strconv.ParseUint(attr.Value, 16, 64); err != nil {
+				err = fmt.Errorf("Invalid score set version: %s", attr.Value)
+				return
+			}
+
+			return
+		}
+	}
+
+	// We didn't find one. Return zero.
 	return
 }

@@ -43,6 +43,7 @@ func (t *ValidateTest) SetUp(i *TestInfo) {
 		S3Region:  "foo",
 		SdbDomain: "foo",
 		SdbRegion: "foo",
+		StateFile: "foo",
 		AccessKey: aws.AccessKey{
 			Id:     "foo",
 			Secret: "foo",
@@ -131,6 +132,15 @@ func (t *ValidateTest) MissingSdbRegion() {
 
 	ExpectThat(err, Error(HasSubstr("SimpleDB")))
 	ExpectThat(err, Error(HasSubstr("region")))
+}
+
+func (t *ValidateTest) MissingStateFile() {
+	t.cfg.StateFile = ""
+
+	err := config.Validate(t.cfg)
+
+	ExpectThat(err, Error(HasSubstr("state")))
+	ExpectThat(err, Error(HasSubstr("file")))
 }
 
 func (t *ValidateTest) MissingAccessKeyId() {

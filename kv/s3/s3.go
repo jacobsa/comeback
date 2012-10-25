@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"github.com/jacobsa/aws/s3"
 	"github.com/jacobsa/comeback/kv"
-	"sync"
 )
 
 // Create a key/value store that stores data in the supplied S3 bucket. Keys
@@ -29,54 +28,15 @@ import (
 //
 // This function blocks while listing keys in the bucket.
 func NewS3KvStore(bucket s3.Bucket) (kv.Store, error) {
-	// List the keys in the bucket.
-	keys, err := getAllKeys(bucket)
-	if err != nil {
-		return nil, err
-	}
-
-	// Create an appropriate map for efficient lookups.
-	keyMap := make(map[string]bool)
-	for _, key := range keys {
-		keyMap[key] = true
-	}
-
 	store := &kvStore{
 		bucket:    bucket,
-		knownKeys: keyMap,
 	}
 
 	return store, nil
 }
 
-func getAllKeys(bucket s3.Bucket) ([]string, error) {
-	keys := []string{}
-	for {
-		var prevKey string
-		if len(keys) > 0 {
-			prevKey = keys[len(keys)-1]
-		}
-
-		partialKeys, err := bucket.ListKeys(prevKey)
-		if err != nil {
-			return nil, fmt.Errorf("ListKeys: %v", err)
-		}
-
-		if len(partialKeys) == 0 {
-			break
-		}
-
-		keys = append(keys, partialKeys...)
-	}
-
-	return keys, nil
-}
-
 type kvStore struct {
 	bucket s3.Bucket
-
-	mutex     sync.RWMutex
-	knownKeys map[string]bool // Protected by mutex
 }
 
 func (s *kvStore) Set(key []byte, val []byte) error {
@@ -84,11 +44,6 @@ func (s *kvStore) Set(key []byte, val []byte) error {
 	if err := s.bucket.StoreObject(string(key), val); err != nil {
 		return fmt.Errorf("StoreObject: %v", err)
 	}
-
-	// Record the fact that the key is now known.
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-	s.knownKeys[string(key)] = true
 
 	return nil
 }
@@ -103,9 +58,7 @@ func (s *kvStore) Get(key []byte) (val []byte, err error) {
 }
 
 func (s *kvStore) Contains(key []byte) (res bool, err error) {
-	s.mutex.RLock()
-	defer s.mutex.RUnlock()
-
-	_, ok := s.knownKeys[string(key)]
-	return ok, nil
+	// Unsupported.
+	res = false
+	return
 }
