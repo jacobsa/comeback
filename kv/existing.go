@@ -16,7 +16,6 @@
 package kv
 
 import (
-	"fmt"
 	"github.com/jacobsa/comeback/state"
 )
 
@@ -40,16 +39,19 @@ type existingKeysStore struct {
 }
 
 func (s *existingKeysStore) Set(key []byte, val []byte) (err error) {
-	err = fmt.Errorf("TODO")
+	err = s.wrapped.Set(key, val)
+	if err != nil {
+		s.keys.Add(string(key))
+	}
+
 	return
 }
 
 func (s *existingKeysStore) Get(key []byte) (val []byte, err error) {
-	err = fmt.Errorf("TODO")
-	return
+	return s.wrapped.Get(key)
 }
 
 func (s *existingKeysStore) Contains(key []byte) (res bool, err error) {
-	err = fmt.Errorf("TODO")
+	res = s.keys.Contains(string(key))
 	return
 }
