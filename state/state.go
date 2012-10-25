@@ -16,6 +16,7 @@
 package state
 
 import (
+	"encoding/gob"
 	"io"
 )
 
@@ -34,5 +35,14 @@ type State struct {
 	ExistingScoresVersion uint64
 }
 
-func LoadState(r io.Reader) (state State, err error)
-func SaveState(w io.Writer, state State) (err error)
+func LoadState(r io.Reader) (state State, err error) {
+	decoder := gob.NewDecoder(r)
+	err = decoder.Decode(&state)
+	return
+}
+
+func SaveState(w io.Writer, state State) (err error) {
+	encoder := gob.NewEncoder(w)
+	err = encoder.Encode(state)
+	return
+}
