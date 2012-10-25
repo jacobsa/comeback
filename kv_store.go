@@ -41,10 +41,13 @@ func initKvStore() {
 	// If we don't know the set of keys in S3, find out.
 	stateStruct := getState()
 	if stateStruct.ExistingScores == nil {
+		log.Println("Listing keys in S3 bucket...")
 		allKeys, err := s3util.ListAllKeys(bucket)
 		if err != nil {
 			log.Fatalln("Creating S3 bucket:", err)
 		}
+
+		log.Println("Done listing.")
 
 		stateStruct.ExistingScores = state.NewStringSet()
 		for _, key := range allKeys {
