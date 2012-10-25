@@ -63,8 +63,8 @@ func (t *ExistingKeysStore_SetTest) call() {
 }
 
 func (t *ExistingKeysStore_SetTest) CallsWrapped() {
-	t.key = []byte{0x01, 0x02}
-	t.val = []byte{0x03, 0x04}
+	t.key = []byte("taco")
+	t.val = []byte("burrito")
 
 	// Wrapped
 	ExpectCall(t.wrapped, "Set")(DeepEquals(t.key), DeepEquals(t.val)).
@@ -75,7 +75,17 @@ func (t *ExistingKeysStore_SetTest) CallsWrapped() {
 }
 
 func (t *ExistingKeysStore_SetTest) WrappedReturnsError() {
-	ExpectEq("TODO", "")
+	t.key = []byte("queso")
+
+	// Wrapped
+	ExpectCall(t.wrapped, "Set")(Any(), Any()).
+		WillOnce(oglemock.Return(errors.New("taco")))
+
+	// Call
+	t.call()
+
+	ExpectThat(t.err, Error(Equals("taco")))
+	ExpectFalse(t.existingKeys.Contains("queso"))
 }
 
 func (t *ExistingKeysStore_SetTest) WrappedSucceeds() {
