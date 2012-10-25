@@ -16,6 +16,7 @@
 package state
 
 import (
+	"fmt"
 	"sync"
 )
 
@@ -51,4 +52,14 @@ func (s *stringSet) Contains(str string) bool {
 
 	_, ok := s.elems[str]
 	return ok
+}
+
+func (s *stringSet) GobDecode(b []byte) (err error) {
+	err = fmt.Errorf("TODO")
+	return
+}
+
+func (s *stringSet) GobEncode() (b []byte, err error) {
+	err = fmt.Errorf("TODO")
+	return
 }

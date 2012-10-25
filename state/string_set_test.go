@@ -16,6 +16,8 @@
 package state_test
 
 import (
+	"bytes"
+	"encoding/gob"
 	"github.com/jacobsa/comeback/state"
 	. "github.com/jacobsa/ogletest"
 	"testing"
@@ -66,6 +68,23 @@ func (t *StringSetTest) AddTwice() {
 	ExpectFalse(t.set.Contains("burrito"))
 }
 
-func (t *StringSetTest) EncodingRoundTrip() {
-	ExpectEq("TODO", "")
+func (t *StringSetTest) GobRoundTrip() {
+	// Contents
+	t.set.Add("taco")
+	t.set.Add("burrito")
+
+	// Encode
+	buf := new(bytes.Buffer)
+	encoder := gob.NewEncoder(buf)
+	AssertEq(nil, encoder.Encode(t.set))
+
+	// Decode
+	decoder := gob.NewDecoder(buf)
+	var decodedSet state.StringSet
+	AssertEq(nil, decoder.Decode(decodedSet))
+
+	ExpectFalse(t.set.Contains(""))
+	ExpectTrue(t.set.Contains("taco"))
+	ExpectTrue(t.set.Contains("burrito"))
+	ExpectFalse(t.set.Contains("enchilada"))
 }
