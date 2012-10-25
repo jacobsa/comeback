@@ -34,8 +34,8 @@ func TestExisting(t *testing.T) { RunTests(t) }
 
 type ExistingKeysStoreTest struct {
 	existingKeys state.StringSet
-	wrapped mock_kv.MockStore
-	store kv.Store
+	wrapped      mock_kv.MockStore
+	store        kv.Store
 }
 
 func (t *ExistingKeysStoreTest) SetUp(i *TestInfo) {

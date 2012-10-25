@@ -41,7 +41,7 @@ func NewStringSet() StringSet {
 ////////////////////////////////////////////////////////////////////////
 
 type stringSet struct {
-	mutex     sync.RWMutex
+	mutex sync.RWMutex
 	elems map[string]bool // Protected by mutex
 }
 

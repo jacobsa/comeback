@@ -37,7 +37,7 @@ func initState() {
 	if err != nil && os.IsNotExist(err) {
 		log.Println("No state file found. Using fresh state.")
 		g_state = state.State{
-			ExistingScores: nil,
+			ExistingScores:        nil,
 			ExistingScoresVersion: 0,
 		}
 	} else {

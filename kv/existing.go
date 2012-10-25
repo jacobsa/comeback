@@ -34,7 +34,7 @@ func NewExistingKeysStore(
 ////////////////////////////////////////////////////////////////////////
 
 type existingKeysStore struct {
-	keys state.StringSet
+	keys    state.StringSet
 	wrapped Store
 }
 

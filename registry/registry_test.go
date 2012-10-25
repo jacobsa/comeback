@@ -1427,7 +1427,7 @@ func (t *UpdateScoreSetVersionTest) CallsPutAttributesWithNonZeroLastVersion() {
 		Pointee(
 			DeepEquals(
 				sdb.Precondition{
-					Name: "score_set_version",
+					Name:  "score_set_version",
 					Value: makeStrPtr("00000000feedface"),
 				},
 			),

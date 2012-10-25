@@ -29,7 +29,7 @@ import (
 // This function blocks while listing keys in the bucket.
 func NewS3KvStore(bucket s3.Bucket) (kv.Store, error) {
 	store := &kvStore{
-		bucket:    bucket,
+		bucket: bucket,
 	}
 
 	return store, nil

@@ -19,8 +19,8 @@ import (
 	"github.com/jacobsa/aws/s3"
 	"github.com/jacobsa/aws/s3/s3util"
 	"github.com/jacobsa/comeback/kv"
-	"github.com/jacobsa/comeback/state"
 	s3_kv "github.com/jacobsa/comeback/kv/s3"
+	"github.com/jacobsa/comeback/state"
 	"log"
 	"sync"
 )
