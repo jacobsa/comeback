@@ -76,7 +76,7 @@ func (t *StringSetTest) GobRoundTrip() {
 	// Encode
 	buf := new(bytes.Buffer)
 	encoder := gob.NewEncoder(buf)
-	AssertEq(nil, encoder.Encode(t.set))
+	AssertEq(nil, encoder.Encode(&t.set))
 
 	// Decode
 	decoder := gob.NewDecoder(buf)
@@ -96,7 +96,7 @@ func (t *StringSetTest) DecodingOverwritesContents() {
 	// Encode
 	buf := new(bytes.Buffer)
 	encoder := gob.NewEncoder(buf)
-	AssertEq(nil, encoder.Encode(t.set))
+	AssertEq(nil, encoder.Encode(&t.set))
 
 	// Destination
 	decodedSet := state.NewStringSet()
