@@ -44,9 +44,41 @@ func (t *ExistingKeysStoreTest) SetUp(i *TestInfo) {
 }
 
 ////////////////////////////////////////////////////////////////////////
-// Tests
+// Set
 ////////////////////////////////////////////////////////////////////////
 
-func (t *ExistingKeysStoreTest) DoesFoo() {
+type ExistingKeysStore_SetTest struct {
+	ExistingKeysStoreTest
+
+	key []byte
+	val []byte
+	err error
+}
+
+func (t *ExistingKeysStore_SetTest) call() {
+	t.err = t.store.Set(t.key, t.val)
+}
+
+func (t *ExistingKeysStore_SetTest) DoesFoo() {
+	ExpectEq("TODO", "")
+}
+
+////////////////////////////////////////////////////////////////////////
+// Contains
+////////////////////////////////////////////////////////////////////////
+
+type ExistingKeysStore_ContainsTest struct {
+	ExistingKeysStoreTest
+
+	key []byte
+	val []byte
+	err error
+}
+
+func (t *ExistingKeysStore_ContainsTest) call() {
+	t.err = t.store.Contains(t.key, t.val)
+}
+
+func (t *ExistingKeysStore_ContainsTest) DoesFoo() {
 	ExpectEq("TODO", "")
 }
