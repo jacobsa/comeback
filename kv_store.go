@@ -17,7 +17,9 @@ package main
 
 import (
 	"github.com/jacobsa/aws/s3"
+	"github.com/jacobsa/aws/s3/s3util"
 	"github.com/jacobsa/comeback/kv"
+	"github.com/jacobsa/comeback/state"
 	s3_kv "github.com/jacobsa/comeback/kv/s3"
 	"log"
 	"sync"
@@ -36,11 +38,28 @@ func initKvStore() {
 		log.Fatalln("Creating S3 bucket:", err)
 	}
 
+	// If we don't know the set of keys in S3, find out.
+	stateStruct := getState()
+	if stateStruct.ExistingScores == nil {
+		allKeys, err := s3util.ListAllKeys(bucket)
+		if err != nil {
+			log.Fatalln("Creating S3 bucket:", err)
+		}
+
+		stateStruct.ExistingScores = state.NewStringSet()
+		for _, key := range allKeys {
+			stateStruct.ExistingScores.Add(key)
+		}
+	}
+
 	// Store keys and values in S3.
 	g_kvStore, err = s3_kv.NewS3KvStore(bucket)
 	if err != nil {
 		log.Fatalln("Creating S3 kv store:", err)
 	}
+
+	// Respond efficiently to Contains requests.
+	g_kvStore = kv.NewExistingKeysStore(stateStruct.ExistingScores, g_kvStore)
 }
 
 func getKvStore() kv.Store {
