@@ -16,6 +16,8 @@
 package state
 
 import (
+	"bytes"
+	"encoding/gob"
 	"fmt"
 	"sync"
 )
@@ -54,12 +56,34 @@ func (s *stringSet) Contains(str string) bool {
 	return ok
 }
 
+func (s *stringSet) getElems() (elems []string) {
+	s.mutex.RLock()
+	defer s.mutex.RUnlock()
+
+	for elem, _ := range s.elems {
+		elems = append(elems, elem)
+	}
+
+	return
+}
+
 func (s *stringSet) GobDecode(b []byte) (err error) {
 	err = fmt.Errorf("TODO")
 	return
 }
 
 func (s *stringSet) GobEncode() (b []byte, err error) {
-	err = fmt.Errorf("TODO")
+	// Get a list of elements, correctly dealing with locking.
+	elems := s.getElems()
+
+	// Encode the list.
+	buf := new(bytes.Buffer)
+	encoder := gob.NewEncoder(buf)
+	if err = encoder.Encode(elems); err != nil {
+		err = fmt.Errorf("Encoding list: %v", err)
+		return
+	}
+
+	b = buf.Bytes()
 	return
 }
