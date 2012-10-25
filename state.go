@@ -42,6 +42,18 @@ func initState() {
 	if err != nil {
 		log.Fatalln("LoadState:", err)
 	}
+
+	// Throw out the existing scores set if it's out of date.
+	reg := getRegistry()
+	currentVersion, err := reg.GetCurrentScoreSetVersion()
+	if err != nil {
+		log.Fatalln("GetCurrentScoreSetVersion:", err)
+	}
+
+	if g_state.ExistingScoresVersion != currentVersion {
+		g_state.ExistingScores = nil
+		g_state.ExistingScoresVersion = currentVersion
+	}
 }
 
 func getState() state.State {
