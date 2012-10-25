@@ -58,7 +58,12 @@ func (t *StringSetTest) SomeElements() {
 }
 
 func (t *StringSetTest) AddTwice() {
-	ExpectEq("TODO", "")
+	t.set.Add("taco")
+	t.set.Add("taco")
+
+	ExpectFalse(t.set.Contains(""))
+	ExpectTrue(t.set.Contains("taco"))
+	ExpectFalse(t.set.Contains("burrito"))
 }
 
 func (t *StringSetTest) EncodingRoundTrip() {
