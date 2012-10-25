@@ -59,7 +59,15 @@ func (t *ExistingKeysStore_SetTest) call() {
 	t.err = t.store.Set(t.key, t.val)
 }
 
-func (t *ExistingKeysStore_SetTest) DoesFoo() {
+func (t *ExistingKeysStore_SetTest) CallsWrapped() {
+	ExpectEq("TODO", "")
+}
+
+func (t *ExistingKeysStore_SetTest) WrappedReturnsError() {
+	ExpectEq("TODO", "")
+}
+
+func (t *ExistingKeysStore_SetTest) WrappedSucceeds() {
 	ExpectEq("TODO", "")
 }
 
@@ -79,6 +87,10 @@ func (t *ExistingKeysStore_ContainsTest) call() {
 	t.res, t.err = t.store.Contains(t.key)
 }
 
-func (t *ExistingKeysStore_ContainsTest) DoesFoo() {
+func (t *ExistingKeysStore_ContainsTest) KeyInSet() {
+	ExpectEq("TODO", "")
+}
+
+func (t *ExistingKeysStore_ContainsTest) KeyNotInSet() {
 	ExpectEq("TODO", "")
 }
