@@ -35,8 +35,6 @@ type ExistingKeysStoreTest struct {
 	store kv.Store
 }
 
-func init() { RegisterTestSuite(&ExistingKeysStoreTest{}) }
-
 func (t *ExistingKeysStoreTest) SetUp(i *TestInfo) {
 	t.existingKeys = state.NewStringSet()
 	t.wrapped = mock_kv.NewMockStore(i.MockController, "wrapped")
@@ -54,6 +52,8 @@ type ExistingKeysStore_SetTest struct {
 	val []byte
 	err error
 }
+
+func init() { RegisterTestSuite(&ExistingKeysStore_SetTest{}) }
 
 func (t *ExistingKeysStore_SetTest) call() {
 	t.err = t.store.Set(t.key, t.val)
@@ -82,6 +82,8 @@ type ExistingKeysStore_ContainsTest struct {
 	res bool
 	err error
 }
+
+func init() { RegisterTestSuite(&ExistingKeysStore_ContainsTest{}) }
 
 func (t *ExistingKeysStore_ContainsTest) call() {
 	t.res, t.err = t.store.Contains(t.key)
