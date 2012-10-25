@@ -67,6 +67,10 @@ func (s *stringSet) getElems() (elems []string) {
 	return
 }
 
+func init() {
+	gob.Register(stringSet{})
+}
+
 func (s *stringSet) GobDecode(b []byte) (err error) {
 	err = fmt.Errorf("TODO")
 	return
