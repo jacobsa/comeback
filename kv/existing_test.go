@@ -16,9 +16,12 @@
 package kv_test
 
 import (
+	"errors"
 	"github.com/jacobsa/comeback/kv"
 	"github.com/jacobsa/comeback/kv/mock"
 	"github.com/jacobsa/comeback/state"
+	. "github.com/jacobsa/oglematchers"
+	"github.com/jacobsa/oglemock"
 	. "github.com/jacobsa/ogletest"
 	"testing"
 )
@@ -60,7 +63,15 @@ func (t *ExistingKeysStore_SetTest) call() {
 }
 
 func (t *ExistingKeysStore_SetTest) CallsWrapped() {
-	ExpectEq("TODO", "")
+	t.key = []byte{0x01, 0x02}
+	t.val = []byte{0x03, 0x04}
+
+	// Wrapped
+	ExpectCall(t.wrapped, "Set")(DeepEquals(t.key), DeepEquals(t.val)).
+		WillOnce(oglemock.Return(errors.New("")))
+
+	// Call
+	t.call()
 }
 
 func (t *ExistingKeysStore_SetTest) WrappedReturnsError() {
