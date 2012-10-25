@@ -35,7 +35,7 @@ func initState() {
 		log.Fatalln("Opening state file:", err)
 	}
 
-	defer f.close()
+	defer f.Close()
 
 	// Load the state struct.
 	g_state, err = state.LoadState(f)
