@@ -82,7 +82,25 @@ func init() {
 }
 
 func (s *stringSet) GobDecode(b []byte) (err error) {
-	err = fmt.Errorf("TODO")
+	// Decode the list of elements.
+	buf := bytes.NewBuffer(b)
+	decoder := gob.NewDecoder(buf)
+
+	var elems []string
+	if err = decoder.Decode(&elems); err != nil {
+		err = fmt.Errorf("Decoding list: %v", err)
+		return
+	}
+
+	// Overwrite our map.
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	s.elems = make(map[string]bool)
+	for _, elem := range elems {
+		s.elems[elem] = true
+	}
+
 	return
 }
 
