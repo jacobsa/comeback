@@ -88,3 +88,24 @@ func (t *StringSetTest) GobRoundTrip() {
 	ExpectTrue(decodedSet.Contains("burrito"))
 	ExpectFalse(decodedSet.Contains("enchilada"))
 }
+
+func (t *StringSetTest) DecodingOverwritesContents() {
+	// Source contents
+	t.set.Add("taco")
+
+	// Encode
+	buf := new(bytes.Buffer)
+	encoder := gob.NewEncoder(buf)
+	AssertEq(nil, encoder.Encode(t.set))
+
+	// Destination
+	decodedSet := state.NewStringSet()
+	decodedSet.Add("burrito")
+
+	// Decode
+	decoder := gob.NewDecoder(buf)
+	AssertEq(nil, decoder.Decode(&decodedSet))
+
+	ExpectTrue(decodedSet.Contains("taco"))
+	ExpectFalse(decodedSet.Contains("burrito"))
+}
