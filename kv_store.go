@@ -47,7 +47,7 @@ func initKvStore() {
 			log.Fatalln("Creating S3 bucket:", err)
 		}
 
-		log.Println("Done listing.")
+		log.Println("Listed", len(allKeys), "keys.")
 
 		stateStruct.ExistingScores = state.NewStringSet()
 		for _, key := range allKeys {
