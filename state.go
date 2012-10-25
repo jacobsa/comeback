@@ -56,7 +56,7 @@ func initState() {
 	}
 }
 
-func getState() state.State {
+func getState() *state.State {
 	g_stateOnce.Do(initState)
-	return g_state
+	return &g_state
 }
