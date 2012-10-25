@@ -81,7 +81,7 @@ func (t *StringSetTest) GobRoundTrip() {
 	// Decode
 	decoder := gob.NewDecoder(buf)
 	var decodedSet state.StringSet
-	AssertEq(nil, decoder.Decode(decodedSet))
+	AssertEq(nil, decoder.Decode(&decodedSet))
 
 	ExpectFalse(decodedSet.Contains(""))
 	ExpectTrue(decodedSet.Contains("taco"))
