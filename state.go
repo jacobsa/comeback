@@ -35,6 +35,7 @@ func initState() {
 	// Special case: if the error is that the file doesn't exist, initialize a
 	// new one.
 	if err != nil && os.IsNotExist(err) {
+		log.Println("No state file found. Using fresh state.")
 		g_state = state.State{
 			ExistingScores: nil,
 			ExistingScoresVersion: 0,
@@ -48,6 +49,8 @@ func initState() {
 		defer f.Close()
 
 		// Load the state struct.
+		log.Println("Loading from state file.")
+
 		g_state, err = state.LoadState(f)
 		if err != nil {
 			log.Fatalln("LoadState:", err)
@@ -62,6 +65,7 @@ func initState() {
 	}
 
 	if g_state.ExistingScoresVersion != currentVersion {
+		log.Println("Scores in state file are stale. Throwing out.")
 		g_state.ExistingScores = nil
 		g_state.ExistingScoresVersion = currentVersion
 	}
