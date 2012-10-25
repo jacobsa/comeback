@@ -77,5 +77,10 @@ func Validate(c *Config) error {
 		return fmt.Errorf("You must specify a SimpleDB region.")
 	}
 
+	// Validate state file.
+	if c.StateFile == "" {
+		return fmt.Errorf("You must specify a state file path.")
+	}
+
 	return nil
 }
