@@ -16,37 +16,35 @@
 package state
 
 import (
-	"github.com/jacobsa/comeback/blob"
 	"sync"
 )
 
-// A score set represents a monitonically growing set of blob scores. It is
-// safe to call any of its methods concurrently. The zero value represents the
-// empty set.
-type ScoreSet interface {
-	Add(score blob.Score)
-	Contains(score blob.Score) bool
+// A string set represents a monitonically growing set of strings. It is safe
+// to call any of its methods concurrently.
+type StringSet interface {
+	Add(str string)
+	Contains(str string) bool
 }
 
-// Create an empty score set.
-func NewScoreSet() ScoreSet
+// Create an empty set.
+func NewStringSet() StringSet
 
-type scoreSet struct {
+type stringSet struct {
 	mutex     sync.RWMutex
-	hexScores map[string]bool // Protected by mutex
+	elems map[string]bool // Protected by mutex
 }
 
-func (s *scoreSet) Add(score blob.Score) {
+func (s *stringSet) Add(str string) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	s.hexScores[score.Hex()] = true
+	s.elems[str] = true
 }
 
-func (s *scoreSet) Contains(score blob.Score) bool {
+func (s *stringSet) Contains(str string) bool {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 
-	_, ok := s.hexScores[score.Hex()]
+	_, ok := s.elems[str]
 	return ok
 }
