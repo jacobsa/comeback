@@ -78,7 +78,7 @@ func (s *stringSet) getElems() (elems []string) {
 func init() {
 	// Make sure that stringSets can be encoded where StringSet interface
 	// variables are expected.
-	gob.Register(stringSet{})
+	gob.Register(&stringSet{})
 }
 
 func (s *stringSet) GobDecode(b []byte) (err error) {
