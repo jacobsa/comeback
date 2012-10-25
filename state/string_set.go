@@ -27,7 +27,11 @@ type StringSet interface {
 }
 
 // Create an empty set.
-func NewStringSet() StringSet
+func NewStringSet() StringSet {
+	return &stringSet{
+		elems: make(map[string]bool),
+	}
+}
 
 type stringSet struct {
 	mutex     sync.RWMutex
