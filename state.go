@@ -60,3 +60,34 @@ func getState() *state.State {
 	g_stateOnce.Do(initState)
 	return &g_state
 }
+
+func saveState() {
+	var err error
+
+	cfg := getConfig()
+	stateStruct := getState()
+	randSrc := getRandSrc()
+	reg := getRegistry()
+
+	// Assign a new random version for the existing scores.
+	lastVersion := g_state.ExistingScoresVersion
+	g_state.ExistingScoresVersion = randUint64(randSrc)
+
+	// Update the registry.
+	err = reg.UpdateScoreSetVersion(g_state.ExistingScoresVersion, lastVersion)
+	if err != nil {
+		log.Fatalln("UpdateScoreSetVersion:", err)
+	}
+
+	// Write out the state.
+	f, err := os.Create(cfg.StateFile)
+	if err != nil {
+		log.Fatalln("Creating state file:", err)
+	}
+
+	defer f.Close()
+
+	if err = state.SaveState(f, *stateStruct); err != nil {
+		log.Fatalln("SaveState:", err)
+	}
+}
