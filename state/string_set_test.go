@@ -42,11 +42,19 @@ func (t *StringSetTest) SetUp(i *TestInfo) {
 ////////////////////////////////////////////////////////////////////////
 
 func (t *StringSetTest) EmptySet() {
-	ExpectEq("TODO", "")
+	ExpectFalse(t.set.Contains(""))
+	ExpectFalse(t.set.Contains("taco"))
+	ExpectFalse(t.set.Contains("burrito"))
 }
 
 func (t *StringSetTest) SomeElements() {
-	ExpectEq("TODO", "")
+	t.set.Add("taco")
+	t.set.Add("burrito")
+
+	ExpectFalse(t.set.Contains(""))
+	ExpectTrue(t.set.Contains("taco"))
+	ExpectTrue(t.set.Contains("burrito"))
+	ExpectFalse(t.set.Contains("enchilada"))
 }
 
 func (t *StringSetTest) AddTwice() {
