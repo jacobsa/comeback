@@ -40,9 +40,9 @@ func TestStat(t *testing.T) { RunTests(t) }
 type StatTest struct {
 	fileSystemTest
 
-	path string
+	path  string
 	entry fs.DirectoryEntry
-	err error
+	err   error
 }
 
 func init() { RegisterTestSuite(&StatTest{}) }
