@@ -264,171 +264,104 @@ func (t *StatTest) Symlinks() {
 	var err error
 	var entry *fs.DirectoryEntry
 
-	// Link 0
-	path0 := path.Join(t.baseDir, "burrito")
-	err = os.Symlink("/foo/burrito", path0)
+	// Link
+	t.path = path.Join(t.baseDir, "burrito")
+	err = os.Symlink("/foo/burrito", t.path)
 	AssertEq(nil, err)
 
-	err = setPermissions(path0, 0714|syscall.S_ISGID)
+	err = setPermissions(t.path, 0714|syscall.S_ISGID)
 	AssertEq(nil, err)
 
-	mtime0 := time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)
-	err = setModTime(path0, mtime0)
-	AssertEq(nil, err)
-
-	// Link 1
-	path1 := path.Join(t.baseDir, "enchilada")
-	err = os.Symlink("/foo/enchilada", path1)
-	AssertEq(nil, err)
-
-	err = setPermissions(path1, 0454|syscall.S_ISVTX|syscall.S_ISUID)
-	AssertEq(nil, err)
-
-	mtime1 := time.Date(1985, time.March, 18, 15, 33, 0, 0, time.Local)
-	err = setModTime(path1, mtime1)
+	mtime := time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)
+	err = setModTime(t.path, mtime)
 	AssertEq(nil, err)
 
 	// Call
 	t.call()
 
 	AssertEq(nil, t.err)
-	AssertThat(entries, ElementsAre(Any(), Any()))
 
-	entry = entries[0]
-	ExpectEq(fs.TypeSymlink, entry.Type)
-	ExpectEq("burrito", entry.Name)
-	ExpectEq("/foo/burrito", entry.Target)
-	ExpectEq(0, entry.DeviceNumber)
-	ExpectEq(0714|os.ModeSetgid, entry.Permissions)
-	ExpectEq(t.myUid, entry.Uid)
+	ExpectEq(fs.TypeSymlink, t.entry.Type)
+	ExpectEq("burrito", t.entry.Name)
+	ExpectEq("/foo/burrito", t.entry.Target)
+	ExpectEq(0, t.entry.DeviceNumber)
+	ExpectEq(0714|os.ModeSetgid, t.entry.Permissions)
+	ExpectEq(t.myUid, t.entry.Uid)
 	ExpectThat(entry.Username, Pointee(Equals(t.myUsername)))
-	ExpectEq(t.myGid, entry.Gid)
+	ExpectEq(t.myGid, t.entry.Gid)
 	ExpectThat(entry.Groupname, Pointee(Equals(t.myGroupname)))
-	ExpectTrue(entry.MTime.Equal(mtime0), "%v", entry.MTime)
-	ExpectThat(entry.Scores, ElementsAre())
-
-	entry = entries[1]
-	ExpectEq(fs.TypeSymlink, entry.Type)
-	ExpectEq("enchilada", entry.Name)
-	ExpectEq("/foo/enchilada", entry.Target)
-	ExpectEq(0, entry.DeviceNumber)
-	ExpectEq(0454|os.ModeSetuid|os.ModeSticky, entry.Permissions)
-	ExpectEq(t.myUid, entry.Uid)
-	ExpectThat(entry.Username, Pointee(Equals(t.myUsername)))
-	ExpectEq(t.myGid, entry.Gid)
-	ExpectThat(entry.Groupname, Pointee(Equals(t.myGroupname)))
-	ExpectTrue(entry.MTime.Equal(mtime1), "%v", entry.MTime)
+	ExpectTrue(entry.MTime.Equal(mtime0), "%v", t.entry.MTime)
 	ExpectThat(entry.Scores, ElementsAre())
 }
 
 func (t *StatTest) CharDevices() {
-	var err error
+	t.path = "/dev/urandom"
 
 	// Call
 	t.call()
 
 	AssertEq(nil, err)
 
-	entry := findEntry(entries, "urandom")
-	AssertNe(nil, entry)
-	ExpectEq(fs.TypeCharDevice, entry.Type)
-	ExpectEq("urandom", entry.Name)
-	ExpectEq("", entry.Target)
+	AssertNe(nil, t.entry)
+	ExpectEq(fs.TypeCharDevice, t.entry.Type)
+	ExpectEq("urandom", t.entry.Name)
+	ExpectEq("", t.entry.Target)
 	urandomDevNumber := entry.DeviceNumber
-	ExpectEq(os.FileMode(0666), entry.Permissions)
-	ExpectEq(0, entry.Uid)
+	ExpectEq(os.FileMode(0666), t.entry.Permissions)
+	ExpectEq(0, t.entry.Uid)
 	ExpectThat(entry.Username, Pointee(Equals("root")))
-	ExpectEq(0, entry.Gid)
+	ExpectEq(0, t.entry.Gid)
 	ExpectThat(entry.Groupname, Pointee(Equals("wheel")))
 	ExpectGe(time.Since(entry.MTime), 0)
 	ExpectLt(time.Since(entry.MTime), 365*24*time.Hour)
-
-	entry = findEntry(entries, "random")
-	AssertNe(nil, entry)
-	randomDevNumber := entry.DeviceNumber
-
-	ExpectNe(urandomDevNumber, randomDevNumber)
 }
 
 func (t *StatTest) BlockDevices() {
-	var err error
+	t.path = "/dev/disk0"
 
 	// Call
 	t.call()
 
 	AssertEq(nil, err)
 
-	entry := findEntry(entries, "disk0")
-	AssertNe(nil, entry)
-	ExpectEq(fs.TypeBlockDevice, entry.Type)
-	ExpectEq("disk0", entry.Name)
-	ExpectEq("", entry.Target)
+	AssertNe(nil, t.entry)
+	ExpectEq(fs.TypeBlockDevice, t.entry.Type)
+	ExpectEq("disk0", t.entry.Name)
+	ExpectEq("", t.entry.Target)
 	disk0DevNumber := entry.DeviceNumber
-	ExpectEq(os.FileMode(0640), entry.Permissions)
-	ExpectEq(0, entry.Uid)
+	ExpectEq(os.FileMode(0640), t.entry.Permissions)
+	ExpectEq(0, t.entry.Uid)
 	ExpectThat(entry.Username, Pointee(Equals("root")))
-	ExpectEq(5, entry.Gid)
+	ExpectEq(5, t.entry.Gid)
 	ExpectThat(entry.Groupname, Pointee(Equals("operator")))
 	ExpectGe(time.Since(entry.MTime), 0)
 	ExpectLt(time.Since(entry.MTime), 365*24*time.Hour)
-
-	entry = findEntry(entries, "disk0s1")
-	AssertNe(nil, entry)
-	disk0s1DevNumber := entry.DeviceNumber
-
-	ExpectNe(disk0DevNumber, disk0s1DevNumber)
 }
 
 func (t *StatTest) NamedPipes() {
-	var err error
-	var entry *fs.DirectoryEntry
-
-	// Pipe 0
-	path0 := path.Join(t.baseDir, "burrito")
-	err = makeNamedPipe(path0, 0714|syscall.S_ISGID)
+	// Pipe
+	t.path = path.Join(t.baseDir, "burrito")
+	err = makeNamedPipe(path, 0714|syscall.S_ISGID)
 	AssertEq(nil, err)
 
-	mtime0 := time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)
-	err = setModTime(path0, mtime0)
-	AssertEq(nil, err)
-
-	// Pipe 1
-	path1 := path.Join(t.baseDir, "enchilada")
-	err = makeNamedPipe(path1, 0454|syscall.S_ISVTX|syscall.S_ISUID)
-	AssertEq(nil, err)
-
-	mtime1 := time.Date(1985, time.March, 18, 15, 33, 0, 0, time.Local)
-	err = setModTime(path1, mtime1)
+	mtime := time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)
+	err = setModTime(path, mtime)
 	AssertEq(nil, err)
 
 	// Call
 	t.call()
 
 	AssertEq(nil, t.err)
-	AssertThat(entries, ElementsAre(Any(), Any()))
 
-	entry = entries[0]
-	ExpectEq(fs.TypeNamedPipe, entry.Type)
-	ExpectEq("burrito", entry.Name)
-	ExpectEq("", entry.Target)
-	ExpectEq(0714|os.ModeSetgid, entry.Permissions)
-	ExpectEq(t.myUid, entry.Uid)
+	ExpectEq(fs.TypeNamedPipe, t.entry.Type)
+	ExpectEq("burrito", t.entry.Name)
+	ExpectEq("", t.entry.Target)
+	ExpectEq(0714|os.ModeSetgid, t.entry.Permissions)
+	ExpectEq(t.myUid, t.entry.Uid)
 	ExpectThat(entry.Username, Pointee(Equals(t.myUsername)))
-	ExpectEq(t.myGid, entry.Gid)
+	ExpectEq(t.myGid, t.entry.Gid)
 	ExpectThat(entry.Groupname, Pointee(Equals(t.myGroupname)))
-	ExpectTrue(entry.MTime.Equal(mtime0), "%v", entry.MTime)
-	ExpectThat(entry.Scores, ElementsAre())
-
-	entry = entries[1]
-	ExpectEq(fs.TypeNamedPipe, entry.Type)
-	ExpectEq("enchilada", entry.Name)
-	ExpectEq("", entry.Target)
-	ExpectEq(0454|os.ModeSetuid|os.ModeSticky, entry.Permissions)
-	ExpectEq(t.myUid, entry.Uid)
-	ExpectThat(entry.Username, Pointee(Equals(t.myUsername)))
-	ExpectEq(t.myGid, entry.Gid)
-	ExpectThat(entry.Groupname, Pointee(Equals(t.myGroupname)))
-	ExpectTrue(entry.MTime.Equal(mtime1), "%v", entry.MTime)
+	ExpectTrue(entry.MTime.Equal(mtime0), "%v", t.entry.MTime)
 	ExpectThat(entry.Scores, ElementsAre())
 }
 
