@@ -42,11 +42,46 @@ func (t *ScoreMapTest) SetUp(i *TestInfo) {
 ////////////////////////////////////////////////////////////////////////
 
 func (t *ScoreMapTest) EmptyMap() {
-	ExpectEq("TODO", "")
+	var key state.ScoreMapKey
+
+	key = state.ScoreMapKey{Path: ""}
+	ExpectEq(nil, t.m.Get(key))
+
+	key = state.ScoreMapKey{Path: "taco"}
+	ExpectEq(nil, t.m.Get(key))
+
+	key = state.ScoreMapKey{Path: "burrito"}
+	ExpectEq(nil, t.m.Get(key))
 }
 
 func (t *ScoreMapTest) SomeElements() {
-	ExpectEq("TODO", "")
+	// Add taco
+	tacoKey := state.ScoreMapKey{
+		Path: "taco",
+		Size: 17,
+	}
+
+	tacoScores := []blob.Score{
+		blob.ComputeScore("foo"),
+		blob.ComputeScore("bar"),
+	}
+
+	t.m.Add(tacoKey, tacoScores)
+
+	// Add burrito
+	burritoKey := tacoKey
+	burritoKey.Path = "burrito"
+
+	burritoScores := []blob.Score{
+		blob.ComputeScore("baz"),
+	}
+
+	t.m.Add(burritoKey, burritoScores)
+
+	// Look up
+	ExpectThat(t.m.Get(tacoKey), DeepEquals(tacoScores))
+	ExpectThat(t.m.Get(burritoKey), DeepEquals(burritoScores))
+	ExpectEq(nil, t.m.Get(state.ScoreMapKey{}))
 }
 
 func (t *ScoreMapTest) AddTwice() {
