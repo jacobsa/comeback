@@ -87,7 +87,24 @@ func (t *ScoreMapTest) SomeElements() {
 }
 
 func (t *ScoreMapTest) AddTwice() {
-	ExpectEq("TODO", "")
+	key := state.ScoreMapKey{Path: "taco"}
+
+	// First
+	scores0 := []blob.Score{
+		blob.ComputeScore([]byte("foo")),
+	}
+
+	t.m.Set(key, scores0)
+
+	// Second
+	scores1 := []blob.Score{
+		blob.ComputeScore([]byte("bar")),
+	}
+
+	t.m.Set(key, scores1)
+
+	// Look up
+	ExpectThat(t.m.Get(key), DeepEquals(scores1))
 }
 
 func (t *ScoreMapTest) GobRoundTrip() {
