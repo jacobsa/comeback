@@ -31,7 +31,7 @@ import (
 	"time"
 )
 
-func TestReadDir(t *testing.T) { RunTests(t) }
+func TestStat(t *testing.T) { RunTests(t) }
 
 ////////////////////////////////////////////////////////////////////////
 // Helpers
@@ -102,43 +102,43 @@ func makeNamedPipe(path string, permissions uint32) error {
 }
 
 ////////////////////////////////////////////////////////////////////////
-// ReadDir
+// Stat
 ////////////////////////////////////////////////////////////////////////
 
-type ReadDirTest struct {
+type StatTest struct {
 	fileSystemTest
 }
 
-func init() { RegisterTestSuite(&ReadDirTest{}) }
+func init() { RegisterTestSuite(&StatTest{}) }
 
-func (t *ReadDirTest) NonExistentPath() {
+func (t *StatTest) NonExistentPath() {
 	dirpath := path.Join(t.baseDir, "foobar")
 
-	_, err := t.fileSystem.ReadDir(dirpath)
+	_, err := t.fileSystem.Stat(dirpath)
 	ExpectThat(err, Error(HasSubstr("no such")))
 }
 
-func (t *ReadDirTest) NotADirectory() {
+func (t *StatTest) NotADirectory() {
 	dirpath := path.Join(t.baseDir, "foo.txt")
 	err := ioutil.WriteFile(dirpath, []byte("foo"), 0400)
 	AssertEq(nil, err)
 
-	_, err = t.fileSystem.ReadDir(dirpath)
+	_, err = t.fileSystem.Stat(dirpath)
 	ExpectThat(err, Error(HasSubstr("readdirent")))
 	ExpectThat(err, Error(HasSubstr("invalid argument")))
 }
 
-func (t *ReadDirTest) NoReadPermissions() {
+func (t *StatTest) NoReadPermissions() {
 	dirpath := path.Join(t.baseDir, "foo")
 	err := os.Mkdir(dirpath, 0100)
 	AssertEq(nil, err)
 
-	_, err = t.fileSystem.ReadDir(dirpath)
+	_, err = t.fileSystem.Stat(dirpath)
 	ExpectThat(err, Error(HasSubstr("permission")))
 	ExpectThat(err, Error(HasSubstr("denied")))
 }
 
-func (t *ReadDirTest) ErrorLookingUpOwnerId() {
+func (t *StatTest) ErrorLookingUpOwnerId() {
 	var err error
 
 	// Create a mock user registry, and a new file system that uses it.
@@ -156,13 +156,13 @@ func (t *ReadDirTest) ErrorLookingUpOwnerId() {
 		WillOnce(oglemock.Return("", errors.New("taco")))
 
 	// Call
-	_, err = t.fileSystem.ReadDir(t.baseDir)
+	_, err = t.fileSystem.Stat(t.baseDir)
 	ExpectThat(err, Error(HasSubstr("Looking up")))
 	ExpectThat(err, Error(HasSubstr("user")))
 	ExpectThat(err, Error(HasSubstr("taco")))
 }
 
-func (t *ReadDirTest) ErrorLookingUpGroupId() {
+func (t *StatTest) ErrorLookingUpGroupId() {
 	var err error
 
 	// Create a mock group registry, and a new file system that uses it.
@@ -180,13 +180,13 @@ func (t *ReadDirTest) ErrorLookingUpGroupId() {
 		WillOnce(oglemock.Return("", errors.New("taco")))
 
 	// Call
-	_, err = t.fileSystem.ReadDir(t.baseDir)
+	_, err = t.fileSystem.Stat(t.baseDir)
 	ExpectThat(err, Error(HasSubstr("Looking up")))
 	ExpectThat(err, Error(HasSubstr("group")))
 	ExpectThat(err, Error(HasSubstr("taco")))
 }
 
-func (t *ReadDirTest) UnknownOwnerId() {
+func (t *StatTest) UnknownOwnerId() {
 	var err error
 
 	// Create a mock user registry, and a new file system that uses it.
@@ -204,7 +204,7 @@ func (t *ReadDirTest) UnknownOwnerId() {
 		WillOnce(oglemock.Return("", sys.NotFoundError("taco")))
 
 	// Call
-	entries, err := t.fileSystem.ReadDir(t.baseDir)
+	entries, err := t.fileSystem.Stat(t.baseDir)
 	AssertEq(nil, err)
 	AssertThat(entries, ElementsAre(Any()))
 
@@ -212,7 +212,7 @@ func (t *ReadDirTest) UnknownOwnerId() {
 	ExpectEq(nil, entries[0].Username)
 }
 
-func (t *ReadDirTest) UnknownGroupId() {
+func (t *StatTest) UnknownGroupId() {
 	var err error
 
 	// Create a mock group registry, and a new file system that uses it.
@@ -230,7 +230,7 @@ func (t *ReadDirTest) UnknownGroupId() {
 		WillOnce(oglemock.Return("", sys.NotFoundError("taco")))
 
 	// Call
-	entries, err := t.fileSystem.ReadDir(t.baseDir)
+	entries, err := t.fileSystem.Stat(t.baseDir)
 	AssertEq(nil, err)
 	AssertThat(entries, ElementsAre(Any()))
 
@@ -238,7 +238,7 @@ func (t *ReadDirTest) UnknownGroupId() {
 	ExpectEq(nil, entries[0].Groupname)
 }
 
-func (t *ReadDirTest) RegularFiles() {
+func (t *StatTest) RegularFiles() {
 	var err error
 	var entry *fs.DirectoryEntry
 
@@ -267,7 +267,7 @@ func (t *ReadDirTest) RegularFiles() {
 	AssertEq(nil, err)
 
 	// Call
-	entries, err := t.fileSystem.ReadDir(t.baseDir)
+	entries, err := t.fileSystem.Stat(t.baseDir)
 	AssertEq(nil, err)
 	AssertThat(entries, ElementsAre(Any(), Any()))
 
@@ -310,7 +310,7 @@ func (t *ReadDirTest) RegularFiles() {
 	ExpectNe(t.baseDirInode, entry.Inode)
 }
 
-func (t *ReadDirTest) Directories() {
+func (t *StatTest) Directories() {
 	var err error
 	var entry *fs.DirectoryEntry
 
@@ -339,7 +339,7 @@ func (t *ReadDirTest) Directories() {
 	AssertEq(nil, err)
 
 	// Call
-	entries, err := t.fileSystem.ReadDir(t.baseDir)
+	entries, err := t.fileSystem.Stat(t.baseDir)
 	AssertEq(nil, err)
 	AssertThat(entries, ElementsAre(Any(), Any()))
 
@@ -370,7 +370,7 @@ func (t *ReadDirTest) Directories() {
 	ExpectThat(entry.Scores, ElementsAre())
 }
 
-func (t *ReadDirTest) Symlinks() {
+func (t *StatTest) Symlinks() {
 	var err error
 	var entry *fs.DirectoryEntry
 
@@ -399,7 +399,7 @@ func (t *ReadDirTest) Symlinks() {
 	AssertEq(nil, err)
 
 	// Call
-	entries, err := t.fileSystem.ReadDir(t.baseDir)
+	entries, err := t.fileSystem.Stat(t.baseDir)
 	AssertEq(nil, err)
 	AssertThat(entries, ElementsAre(Any(), Any()))
 
@@ -430,11 +430,11 @@ func (t *ReadDirTest) Symlinks() {
 	ExpectThat(entry.Scores, ElementsAre())
 }
 
-func (t *ReadDirTest) CharDevices() {
+func (t *StatTest) CharDevices() {
 	var err error
 
 	// Call
-	entries, err := t.fileSystem.ReadDir("/dev")
+	entries, err := t.fileSystem.Stat("/dev")
 	AssertEq(nil, err)
 
 	entry := findEntry(entries, "urandom")
@@ -458,11 +458,11 @@ func (t *ReadDirTest) CharDevices() {
 	ExpectNe(urandomDevNumber, randomDevNumber)
 }
 
-func (t *ReadDirTest) BlockDevices() {
+func (t *StatTest) BlockDevices() {
 	var err error
 
 	// Call
-	entries, err := t.fileSystem.ReadDir("/dev")
+	entries, err := t.fileSystem.Stat("/dev")
 	AssertEq(nil, err)
 
 	entry := findEntry(entries, "disk0")
@@ -486,7 +486,7 @@ func (t *ReadDirTest) BlockDevices() {
 	ExpectNe(disk0DevNumber, disk0s1DevNumber)
 }
 
-func (t *ReadDirTest) NamedPipes() {
+func (t *StatTest) NamedPipes() {
 	var err error
 	var entry *fs.DirectoryEntry
 
@@ -509,7 +509,7 @@ func (t *ReadDirTest) NamedPipes() {
 	AssertEq(nil, err)
 
 	// Call
-	entries, err := t.fileSystem.ReadDir(t.baseDir)
+	entries, err := t.fileSystem.Stat(t.baseDir)
 	AssertEq(nil, err)
 	AssertThat(entries, ElementsAre(Any(), Any()))
 
@@ -538,7 +538,7 @@ func (t *ReadDirTest) NamedPipes() {
 	ExpectThat(entry.Scores, ElementsAre())
 }
 
-func (t *ReadDirTest) SortsByName() {
+func (t *StatTest) SortsByName() {
 	var err error
 
 	// File 0
@@ -557,7 +557,7 @@ func (t *ReadDirTest) SortsByName() {
 	AssertEq(nil, err)
 
 	// Call
-	entries, err := t.fileSystem.ReadDir(t.baseDir)
+	entries, err := t.fileSystem.Stat(t.baseDir)
 	AssertEq(nil, err)
 	AssertThat(entries, ElementsAre(Any(), Any(), Any()))
 
