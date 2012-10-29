@@ -74,6 +74,13 @@ func (fs *fileSystem) convertFileInfo(fi os.FileInfo) (entry *DirectoryEntry, er
 		entry.Type = TypeFile
 		entry.ContainingDevice = statT.Dev
 		entry.Inode = statT.Ino
+
+		if statT.Size < 0 {
+			panic(fmt.Sprintf("Unexpected size: %d", statT.Size))
+		}
+
+		entry.Size = uint64(statT.Size)
+
 	case os.ModeDir:
 		entry.Type = TypeDirectory
 	case os.ModeSymlink:
