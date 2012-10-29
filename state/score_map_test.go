@@ -16,6 +16,8 @@
 package state_test
 
 import (
+	"bytes"
+	"encoding/gob"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/state"
 	. "github.com/jacobsa/oglematchers"
@@ -108,7 +110,28 @@ func (t *ScoreMapTest) AddTwice() {
 }
 
 func (t *ScoreMapTest) GobRoundTrip() {
-	ExpectEq("TODO", "")
+	// Contents
+	key0 := state.ScoreMapKey{Path: "taco"}
+	scores0 := []blob.Score{blob.ComputeScore([]byte("foo"))}
+	t.m.Set(key0, scores0)
+
+	key1 := state.ScoreMapKey{Path: "burrito"}
+	scores1 := []blob.Score{blob.ComputeScore([]byte("bar"))}
+	t.m.Set(key1, scores1)
+
+	// Encode
+	buf := new(bytes.Buffer)
+	encoder := gob.NewEncoder(buf)
+	AssertEq(nil, encoder.Encode(&t.m))
+
+	// Decode
+	decoder := gob.NewDecoder(buf)
+	var decoded state.ScoreMap
+	AssertEq(nil, decoder.Decode(&decoded))
+
+	ExpectThat(decoded.Get(key0), DeepEquals(scores0))
+	ExpectThat(decoded.Get(key1), DeepEquals(scores1))
+	ExpectEq(nil, decoded.Get(state.ScoreMapKey{}))
 }
 
 func (t *ScoreMapTest) DecodingOverwritesContents() {
