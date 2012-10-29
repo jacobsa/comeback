@@ -35,6 +35,10 @@ type ScoreMap interface {
 	Get(key ScoreMapKey) (scores []blob.Score)
 }
 
+// Create an empty map.
+func NewScoreMap() ScoreMap
+
+// Contains fields used by git for a similar purpose according to racy-git.txt.
 type ScoreMapKey struct {
 	Path        string
 	Permissions os.FileMode
