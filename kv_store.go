@@ -62,7 +62,7 @@ func initKvStore() {
 	}
 
 	// Respond efficiently to Contains requests.
-	g_kvStore = kv.NewExistingKeysStore(stateStruct.ExistingScores, g_kvStore)
+	g_kvStore = state.NewExistingKeysStore(stateStruct.ExistingScores, g_kvStore)
 }
 
 func getKvStore() kv.Store {

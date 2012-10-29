@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package kv_test
+package state_test
 
 import (
 	"errors"
@@ -41,7 +41,7 @@ type ExistingKeysStoreTest struct {
 func (t *ExistingKeysStoreTest) SetUp(i *TestInfo) {
 	t.existingKeys = state.NewStringSet()
 	t.wrapped = mock_kv.NewMockStore(i.MockController, "wrapped")
-	t.store = kv.NewExistingKeysStore(t.existingKeys, t.wrapped)
+	t.store = state.NewExistingKeysStore(t.existingKeys, t.wrapped)
 }
 
 ////////////////////////////////////////////////////////////////////////
