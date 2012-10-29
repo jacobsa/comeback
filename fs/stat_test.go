@@ -156,10 +156,9 @@ func (t *StatTest) UnknownOwnerId() {
 	t.call()
 
 	AssertEq(nil, t.err)
-	AssertThat(entries, ElementsAre(Any()))
 
-	ExpectEq(t.myUid, entries[0].Uid)
-	ExpectEq(nil, entries[0].Username)
+	ExpectEq(t.myUid, t.entry.Uid)
+	ExpectEq(nil, t.entry.Username)
 }
 
 func (t *StatTest) UnknownGroupId() {
@@ -183,83 +182,48 @@ func (t *StatTest) UnknownGroupId() {
 	t.call()
 
 	AssertEq(nil, t.err)
-	AssertThat(entries, ElementsAre(Any()))
 
-	ExpectEq(t.myGid, entries[0].Gid)
-	ExpectEq(nil, entries[0].Groupname)
+	ExpectEq(t.myGid, t.entry.Gid)
+	ExpectEq(nil, t.entry.Groupname)
 }
 
-func (t *StatTest) RegularFiles() {
+func (t *StatTest) RegularFile() {
 	var err error
 	var entry *fs.DirectoryEntry
 
-	// File 0
-	path0 := path.Join(t.baseDir, "burrito.txt")
-	err = ioutil.WriteFile(path0, []byte("queso"), 0600)
+	// File
+	t.path = path.Join(t.baseDir, "burrito.txt")
+	err = ioutil.WriteFile(t.path, []byte("queso"), 0600)
 	AssertEq(nil, err)
 
-	err = setPermissions(path0, 0714|syscall.S_ISGID)
+	err = setPermissions(t.path, 0714|syscall.S_ISGID)
 	AssertEq(nil, err)
 
-	mtime0 := time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)
-	err = setModTime(path0, mtime0)
-	AssertEq(nil, err)
-
-	// File 1
-	path1 := path.Join(t.baseDir, "enchilada.txt")
-	err = ioutil.WriteFile(path1, []byte("carnitas"), 0600)
-	AssertEq(nil, err)
-
-	err = setPermissions(path1, 0454|syscall.S_ISVTX|syscall.S_ISUID)
-	AssertEq(nil, err)
-
-	mtime1 := time.Date(1985, time.March, 18, 15, 33, 0, 0, time.Local)
-	err = setModTime(path1, mtime1)
+	mtime := time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)
+	err = setModTime(t.path, mtime)
 	AssertEq(nil, err)
 
 	// Call
 	t.call()
 
 	AssertEq(nil, t.err)
-	AssertThat(entries, ElementsAre(Any(), Any()))
 
-	// Entry 0
-	entry = entries[0]
-	ExpectEq(fs.TypeFile, entry.Type)
-	ExpectEq("burrito.txt", entry.Name)
-	ExpectEq("", entry.Target)
-	ExpectEq(0, entry.DeviceNumber)
-	ExpectEq(0714|os.ModeSetgid, entry.Permissions)
-	ExpectEq(t.myUid, entry.Uid)
+	ExpectEq(fs.TypeFile, t.entry.Type)
+	ExpectEq("burrito.txt", t.entry.Name)
+	ExpectEq("", t.entry.Target)
+	ExpectEq(0, t.entry.DeviceNumber)
+	ExpectEq(0714|os.ModeSetgid, t.entry.Permissions)
+	ExpectEq(t.myUid, t.entry.Uid)
 	ExpectThat(entry.Username, Pointee(Equals(t.myUsername)))
-	ExpectEq(t.myGid, entry.Gid)
+	ExpectEq(t.myGid, t.entry.Gid)
 	ExpectThat(entry.Groupname, Pointee(Equals(t.myGroupname)))
-	ExpectTrue(entry.MTime.Equal(mtime0), "%v", entry.MTime)
-	ExpectEq(len("queso"), entry.Size)
+	ExpectTrue(entry.MTime.Equal(mtime), "%v", t.entry.MTime)
+	ExpectEq(len("queso"), t.entry.Size)
 	ExpectThat(entry.Scores, ElementsAre())
 
-	AssertNe(0, entry.Inode)
-	ExpectEq(t.baseDirContainingDevice, entry.ContainingDevice)
-	ExpectNe(t.baseDirInode, entry.Inode)
-
-	// Entry 1
-	entry = entries[1]
-	ExpectEq(fs.TypeFile, entry.Type)
-	ExpectEq("enchilada.txt", entry.Name)
-	ExpectEq("", entry.Target)
-	ExpectEq(0, entry.DeviceNumber)
-	ExpectEq(0454|os.ModeSetuid|os.ModeSticky, entry.Permissions)
-	ExpectEq(t.myUid, entry.Uid)
-	ExpectThat(entry.Username, Pointee(Equals(t.myUsername)))
-	ExpectEq(t.myGid, entry.Gid)
-	ExpectThat(entry.Groupname, Pointee(Equals(t.myGroupname)))
-	ExpectTrue(entry.MTime.Equal(mtime1), "%v", entry.MTime)
-	ExpectEq(len("carnitas"), entry.Size)
-	ExpectThat(entry.Scores, ElementsAre())
-
-	AssertNe(0, entry.Inode)
-	ExpectEq(t.baseDirContainingDevice, entry.ContainingDevice)
-	ExpectNe(t.baseDirInode, entry.Inode)
+	AssertNe(0, t.entry.Inode)
+	ExpectEq(t.baseDirContainingDevice, t.entry.ContainingDevice)
+	ExpectNe(t.baseDirInode, t.entry.Inode)
 }
 
 func (t *StatTest) Directories() {
