@@ -99,16 +99,26 @@ func (fs *fileSystem) convertFileInfo(fi os.FileInfo) (entry *DirectoryEntry, er
 }
 
 func (fs *fileSystem) Stat(path string) (entry DirectoryEntry, err error) {
+	// Call stat.
 	var fi os.FileInfo
 	if fi, err = os.Lstat(path); err != nil {
 		return
 	}
 
+	// Convert to an entry.
 	var entryPtr *DirectoryEntry
 	if entryPtr, err = fs.convertFileInfo(fi); err != nil {
 		return
 	}
 
 	entry = *entryPtr
+
+	// Convert symlinks.
+	if entry.Type == TypeSymlink {
+		if entry.Target, err = os.Readlink(path); err != nil {
+			return
+		}
+	}
+
 	return
 }
