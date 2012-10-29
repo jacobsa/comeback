@@ -16,7 +16,9 @@
 package state_test
 
 import (
+	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/state"
+	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
 	"testing"
 )
@@ -55,28 +57,28 @@ func (t *ScoreMapTest) EmptyMap() {
 }
 
 func (t *ScoreMapTest) SomeElements() {
-	// Add taco
+	// Set taco
 	tacoKey := state.ScoreMapKey{
 		Path: "taco",
 		Size: 17,
 	}
 
 	tacoScores := []blob.Score{
-		blob.ComputeScore("foo"),
-		blob.ComputeScore("bar"),
+		blob.ComputeScore([]byte("foo")),
+		blob.ComputeScore([]byte("bar")),
 	}
 
-	t.m.Add(tacoKey, tacoScores)
+	t.m.Set(tacoKey, tacoScores)
 
-	// Add burrito
+	// Set burrito
 	burritoKey := tacoKey
 	burritoKey.Path = "burrito"
 
 	burritoScores := []blob.Score{
-		blob.ComputeScore("baz"),
+		blob.ComputeScore([]byte("baz")),
 	}
 
-	t.m.Add(burritoKey, burritoScores)
+	t.m.Set(burritoKey, burritoScores)
 
 	// Look up
 	ExpectThat(t.m.Get(tacoKey), DeepEquals(tacoScores))
