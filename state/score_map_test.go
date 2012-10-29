@@ -41,6 +41,22 @@ func (t *ScoreMapTest) SetUp(i *TestInfo) {
 // Tests
 ////////////////////////////////////////////////////////////////////////
 
-func (t *ScoreMapTest) DoesFoo() {
+func (t *ScoreMapTest) EmptyMap() {
+	ExpectEq("TODO", "")
+}
+
+func (t *ScoreMapTest) SomeElements() {
+	ExpectEq("TODO", "")
+}
+
+func (t *ScoreMapTest) AddTwice() {
+	ExpectEq("TODO", "")
+}
+
+func (t *ScoreMapTest) GobRoundTrip() {
+	ExpectEq("TODO", "")
+}
+
+func (t *ScoreMapTest) DecodingOverwritesContents() {
 	ExpectEq("TODO", "")
 }
