@@ -16,9 +16,13 @@
 package state
 
 import (
+	"bytes"
+	"encoding/gob"
+	"fmt"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/sys"
 	"os"
+	"sync"
 	"time"
 )
 
@@ -38,7 +42,11 @@ type ScoreMap interface {
 }
 
 // Create an empty map.
-func NewScoreMap() ScoreMap
+func NewScoreMap() ScoreMap {
+	return &scoreMap{
+		elems: make(map[ScoreMapKey][]blob.Score),
+	}
+}
 
 // Contains fields used by git for a similar purpose according to racy-git.txt.
 type ScoreMapKey struct {
@@ -49,4 +57,74 @@ type ScoreMapKey struct {
 	MTime       time.Time
 	Inode       uint64
 	Size        uint64
+}
+
+////////////////////////////////////////////////////////////////////////
+// Implementation
+////////////////////////////////////////////////////////////////////////
+
+type scoreMap struct {
+	mutex sync.RWMutex
+	elems map[ScoreMapKey][]blob.Score // Protected by mutex
+}
+
+func (s *scoreMap) Set(key ScoreMapKey, scores []blob.Score) {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	s.elems[key] = scores
+}
+
+func (s *scoreMap) Get(key ScoreMapKey) (scores []blob.Score) {
+	s.mutex.RLock()
+	defer s.mutex.RUnlock()
+
+	scores, _ = s.elems[key]
+	return
+}
+
+////////////////////////////////////////////////////////////////////////
+// Gob encoding
+////////////////////////////////////////////////////////////////////////
+
+func init() {
+	// Make sure that scoreMaps can be encoded where ScoreMap interface variables
+	// are expected.
+	gob.Register(&scoreMap{})
+}
+
+func (s *scoreMap) GobDecode(b []byte) (err error) {
+	// Decode the map of elements.
+	buf := bytes.NewBuffer(b)
+	decoder := gob.NewDecoder(buf)
+
+	elems := map[ScoreMapKey][]blob.Score{}
+	if err = decoder.Decode(&elems); err != nil {
+		err = fmt.Errorf("Decoding map: %v", err)
+		return
+	}
+
+	// Overwrite our map.
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	s.elems = elems
+
+	return
+}
+
+func (s *scoreMap) GobEncode() (b []byte, err error) {
+	// Encode our map.
+	buf := new(bytes.Buffer)
+	encoder := gob.NewEncoder(buf)
+
+	s.mutex.RLock()
+	defer s.mutex.RUnlock()
+
+	if err = encoder.Encode(s.elems); err != nil {
+		err = fmt.Errorf("Encoding map: %v", err)
+		return
+	}
+
+	b = buf.Bytes()
+	return
 }
