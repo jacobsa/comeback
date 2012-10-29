@@ -189,7 +189,6 @@ func (t *StatTest) UnknownGroupId() {
 
 func (t *StatTest) RegularFile() {
 	var err error
-	var entry *fs.DirectoryEntry
 
 	// File
 	t.path = path.Join(t.baseDir, "burrito.txt")
@@ -214,12 +213,12 @@ func (t *StatTest) RegularFile() {
 	ExpectEq(0, t.entry.DeviceNumber)
 	ExpectEq(0714|os.ModeSetgid, t.entry.Permissions)
 	ExpectEq(t.myUid, t.entry.Uid)
-	ExpectThat(entry.Username, Pointee(Equals(t.myUsername)))
+	ExpectThat(t.entry.Username, Pointee(Equals(t.myUsername)))
 	ExpectEq(t.myGid, t.entry.Gid)
-	ExpectThat(entry.Groupname, Pointee(Equals(t.myGroupname)))
-	ExpectTrue(entry.MTime.Equal(mtime), "%v", t.entry.MTime)
+	ExpectThat(t.entry.Groupname, Pointee(Equals(t.myGroupname)))
+	ExpectTrue(t.entry.MTime.Equal(mtime), "%v", t.entry.MTime)
 	ExpectEq(len("queso"), t.entry.Size)
-	ExpectThat(entry.Scores, ElementsAre())
+	ExpectThat(t.entry.Scores, ElementsAre())
 
 	AssertNe(0, t.entry.Inode)
 	ExpectEq(t.baseDirContainingDevice, t.entry.ContainingDevice)
@@ -228,7 +227,6 @@ func (t *StatTest) RegularFile() {
 
 func (t *StatTest) Directory() {
 	var err error
-	var entry *fs.DirectoryEntry
 
 	// Dir
 	t.path = path.Join(t.baseDir, "burrito")
@@ -253,16 +251,15 @@ func (t *StatTest) Directory() {
 	ExpectEq(0, t.entry.DeviceNumber)
 	ExpectEq(0751|os.ModeSetgid, t.entry.Permissions)
 	ExpectEq(t.myUid, t.entry.Uid)
-	ExpectThat(entry.Username, Pointee(Equals(t.myUsername)))
+	ExpectThat(t.entry.Username, Pointee(Equals(t.myUsername)))
 	ExpectEq(t.myGid, t.entry.Gid)
-	ExpectThat(entry.Groupname, Pointee(Equals(t.myGroupname)))
-	ExpectTrue(entry.MTime.Equal(mtime), "%v", t.entry.MTime)
-	ExpectThat(entry.Scores, ElementsAre())
+	ExpectThat(t.entry.Groupname, Pointee(Equals(t.myGroupname)))
+	ExpectTrue(t.entry.MTime.Equal(mtime), "%v", t.entry.MTime)
+	ExpectThat(t.entry.Scores, ElementsAre())
 }
 
 func (t *StatTest) Symlinks() {
 	var err error
-	var entry *fs.DirectoryEntry
 
 	// Link
 	t.path = path.Join(t.baseDir, "burrito")
@@ -287,11 +284,11 @@ func (t *StatTest) Symlinks() {
 	ExpectEq(0, t.entry.DeviceNumber)
 	ExpectEq(0714|os.ModeSetgid, t.entry.Permissions)
 	ExpectEq(t.myUid, t.entry.Uid)
-	ExpectThat(entry.Username, Pointee(Equals(t.myUsername)))
+	ExpectThat(t.entry.Username, Pointee(Equals(t.myUsername)))
 	ExpectEq(t.myGid, t.entry.Gid)
-	ExpectThat(entry.Groupname, Pointee(Equals(t.myGroupname)))
-	ExpectTrue(entry.MTime.Equal(mtime), "%v", t.entry.MTime)
-	ExpectThat(entry.Scores, ElementsAre())
+	ExpectThat(t.entry.Groupname, Pointee(Equals(t.myGroupname)))
+	ExpectTrue(t.entry.MTime.Equal(mtime), "%v", t.entry.MTime)
+	ExpectThat(t.entry.Scores, ElementsAre())
 }
 
 func (t *StatTest) CharDevices() {
@@ -302,7 +299,6 @@ func (t *StatTest) CharDevices() {
 
 	AssertEq(nil, t.err)
 
-	AssertNe(nil, t.entry)
 	ExpectEq(fs.TypeCharDevice, t.entry.Type)
 	ExpectEq("urandom", t.entry.Name)
 	ExpectEq("", t.entry.Target)
@@ -323,7 +319,6 @@ func (t *StatTest) BlockDevices() {
 
 	AssertEq(nil, t.err)
 
-	AssertNe(nil, t.entry)
 	ExpectEq(fs.TypeBlockDevice, t.entry.Type)
 	ExpectEq("disk0", t.entry.Name)
 	ExpectEq("", t.entry.Target)
