@@ -17,7 +17,9 @@ package state_test
 
 import (
 	"bytes"
+	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/state"
+	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
 	"testing"
 )
@@ -44,6 +46,11 @@ func (t *StateTest) RoundTrip() {
 	t.s.ExistingScores.Add("burrito")
 	t.s.ExistingScoresVersion = 17
 
+	t.s.ScoresForFiles = state.NewScoreMap()
+	key := state.ScoreMapKey{Path: "queso"}
+	scores := []blob.Score{blob.ComputeScore([]byte("foo"))}
+	t.s.ScoresForFiles.Set(key, scores)
+
 	// Save
 	buf := new(bytes.Buffer)
 	AssertEq(nil, state.SaveState(buf, t.s))
@@ -56,4 +63,6 @@ func (t *StateTest) RoundTrip() {
 	ExpectTrue(loaded.ExistingScores.Contains("burrito"))
 	ExpectFalse(loaded.ExistingScores.Contains("enchilada"))
 	ExpectEq(17, loaded.ExistingScoresVersion)
+
+	ExpectThat(loaded.ScoresForFiles.Get(key), DeepEquals(scores))
 }

@@ -33,6 +33,10 @@ type State struct {
 	// one. This protects us from drifting out of date if another process is
 	// concurrently adding scores to the blob store.
 	ExistingScoresVersion uint64
+
+	// A map from file system info to the scores that were seen for a given file
+	// last time.
+	ScoresForFiles ScoreMap
 }
 
 func LoadState(r io.Reader) (state State, err error) {
