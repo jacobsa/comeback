@@ -135,5 +135,32 @@ func (t *ScoreMapTest) GobRoundTrip() {
 }
 
 func (t *ScoreMapTest) DecodingOverwritesContents() {
-	ExpectEq("TODO", "")
+	key0 := state.ScoreMapKey{Path: "taco"}
+	key1 := state.ScoreMapKey{Path: "burrito"}
+	key2 := state.ScoreMapKey{Path: "enchilada"}
+
+	// Source contents
+	scores0 := []blob.Score{blob.ComputeScore([]byte("foo"))}
+	scores1 := []blob.Score{blob.ComputeScore([]byte("bar"))}
+
+	t.m.Set(key0, scores0)
+	t.m.Set(key1, scores1)
+
+	// Encode
+	buf := new(bytes.Buffer)
+	encoder := gob.NewEncoder(buf)
+	AssertEq(nil, encoder.Encode(&t.m))
+
+	// Destination
+	decoded := state.NewScoreMap()
+	decoded.Set(key0, scores1)
+	decoded.Set(key2, scores0)
+
+	// Decode
+	decoder := gob.NewDecoder(buf)
+	AssertEq(nil, decoder.Decode(&decoded))
+
+	ExpectThat(decoded.Get(key0), DeepEquals(scores0))
+	ExpectThat(decoded.Get(key1), DeepEquals(scores1))
+	ExpectEq(nil, decoded.Get(key2))
 }

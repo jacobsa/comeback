@@ -26,6 +26,8 @@ import (
 // file's contents at the time the stat info was collected. (This of course is
 // not atomic, so it's more like "around the time that the stat info was
 // collected".)
+//
+// All methods are safe for concurrent calling.
 type ScoreMap interface {
 	// Set a list of scores for a particular key.
 	Set(key ScoreMapKey, scores []blob.Score)
