@@ -60,29 +60,8 @@ func (t *StatTest) NonExistentPath() {
 
 	t.call()
 
+	ExpectThat(t.err, Error(HasSubstr("lstat")))
 	ExpectThat(t.err, Error(HasSubstr("no such")))
-}
-
-func (t *StatTest) NotADirectory() {
-	dirpath := path.Join(t.baseDir, "foo.txt")
-	err := ioutil.WriteFile(dirpath, []byte("foo"), 0400)
-	AssertEq(nil, err)
-
-	t.call()
-
-	ExpectThat(t.err, Error(HasSubstr("readdirent")))
-	ExpectThat(t.err, Error(HasSubstr("invalid argument")))
-}
-
-func (t *StatTest) NoReadPermissions() {
-	dirpath := path.Join(t.baseDir, "foo")
-	err := os.Mkdir(dirpath, 0100)
-	AssertEq(nil, err)
-
-	t.call()
-
-	ExpectThat(t.err, Error(HasSubstr("permission")))
-	ExpectThat(t.err, Error(HasSubstr("denied")))
 }
 
 func (t *StatTest) ErrorLookingUpOwnerId() {
@@ -119,8 +98,8 @@ func (t *StatTest) ErrorLookingUpGroupId() {
 	t.setUpFileSystem()
 
 	// Create a file.
-	path0 := path.Join(t.baseDir, "burrito.txt")
-	err = ioutil.WriteFile(path0, []byte(""), 0600)
+	t.path = path.Join(t.baseDir, "burrito.txt")
+	err = ioutil.WriteFile(t.path, []byte(""), 0600)
 	AssertEq(nil, err)
 
 	// Registry
@@ -144,8 +123,8 @@ func (t *StatTest) UnknownOwnerId() {
 	t.setUpFileSystem()
 
 	// Create a file.
-	path0 := path.Join(t.baseDir, "burrito.txt")
-	err = ioutil.WriteFile(path0, []byte(""), 0600)
+	t.path = path.Join(t.baseDir, "burrito.txt")
+	err = ioutil.WriteFile(t.path, []byte(""), 0600)
 	AssertEq(nil, err)
 
 	// Registry
@@ -170,8 +149,8 @@ func (t *StatTest) UnknownGroupId() {
 	t.setUpFileSystem()
 
 	// Create a file.
-	path0 := path.Join(t.baseDir, "burrito.txt")
-	err = ioutil.WriteFile(path0, []byte(""), 0600)
+	t.path = path.Join(t.baseDir, "burrito.txt")
+	err = ioutil.WriteFile(t.path, []byte(""), 0600)
 	AssertEq(nil, err)
 
 	// Registry

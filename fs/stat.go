@@ -101,7 +101,6 @@ func (fs *fileSystem) convertFileInfo(fi os.FileInfo) (entry *DirectoryEntry, er
 func (fs *fileSystem) Stat(path string) (entry DirectoryEntry, err error) {
 	var fi os.FileInfo
 	if fi, err = os.Lstat(path); err != nil {
-		err = fmt.Errorf("Lstat: %v", err)
 		return
 	}
 
