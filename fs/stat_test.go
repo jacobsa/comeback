@@ -56,7 +56,7 @@ func (t *StatTest) call() {
 ////////////////////////////////////////////////////////////////////////
 
 func (t *StatTest) NonExistentPath() {
-	dirpath := path.Join(t.baseDir, "foobar")
+	t.path = path.Join(t.baseDir, "foobar")
 
 	t.call()
 
@@ -306,7 +306,6 @@ func (t *StatTest) CharDevices() {
 	ExpectEq(fs.TypeCharDevice, t.entry.Type)
 	ExpectEq("urandom", t.entry.Name)
 	ExpectEq("", t.entry.Target)
-	urandomDevNumber := t.entry.DeviceNumber
 	ExpectEq(os.FileMode(0666), t.entry.Permissions)
 	ExpectEq(0, t.entry.Uid)
 	ExpectThat(t.entry.Username, Pointee(Equals("root")))
@@ -328,7 +327,6 @@ func (t *StatTest) BlockDevices() {
 	ExpectEq(fs.TypeBlockDevice, t.entry.Type)
 	ExpectEq("disk0", t.entry.Name)
 	ExpectEq("", t.entry.Target)
-	disk0DevNumber := t.entry.DeviceNumber
 	ExpectEq(os.FileMode(0640), t.entry.Permissions)
 	ExpectEq(0, t.entry.Uid)
 	ExpectThat(t.entry.Username, Pointee(Equals("root")))
@@ -365,33 +363,4 @@ func (t *StatTest) NamedPipes() {
 	ExpectThat(t.entry.Groupname, Pointee(Equals(t.myGroupname)))
 	ExpectTrue(t.entry.MTime.Equal(mtime), "%v", t.entry.MTime)
 	ExpectThat(t.entry.Scores, ElementsAre())
-}
-
-func (t *StatTest) SortsByName() {
-	var err error
-
-	// File 0
-	path0 := path.Join(t.baseDir, "enchilada")
-	err = ioutil.WriteFile(path0, []byte(""), 0600)
-	AssertEq(nil, err)
-
-	// File 1
-	path1 := path.Join(t.baseDir, "burrito")
-	err = ioutil.WriteFile(path1, []byte(""), 0600)
-	AssertEq(nil, err)
-
-	// File 2
-	path2 := path.Join(t.baseDir, "taco")
-	err = ioutil.WriteFile(path2, []byte(""), 0600)
-	AssertEq(nil, err)
-
-	// Call
-	t.call()
-
-	AssertEq(nil, t.err)
-	AssertThat(entries, ElementsAre(Any(), Any(), Any()))
-
-	ExpectEq("burrito", entries[0].Name)
-	ExpectEq("enchilada", entries[1].Name)
-	ExpectEq("taco", entries[2].Name)
 }
