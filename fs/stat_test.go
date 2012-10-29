@@ -58,8 +58,9 @@ func (t *StatTest) call() {
 func (t *StatTest) NonExistentPath() {
 	dirpath := path.Join(t.baseDir, "foobar")
 
-	_, err := t.fileSystem.Stat(dirpath)
-	ExpectThat(err, Error(HasSubstr("no such")))
+	t.call()
+
+	ExpectThat(t.err, Error(HasSubstr("no such")))
 }
 
 func (t *StatTest) NotADirectory() {
@@ -67,9 +68,10 @@ func (t *StatTest) NotADirectory() {
 	err := ioutil.WriteFile(dirpath, []byte("foo"), 0400)
 	AssertEq(nil, err)
 
-	_, err = t.fileSystem.Stat(dirpath)
-	ExpectThat(err, Error(HasSubstr("readdirent")))
-	ExpectThat(err, Error(HasSubstr("invalid argument")))
+	t.call()
+
+	ExpectThat(t.err, Error(HasSubstr("readdirent")))
+	ExpectThat(t.err, Error(HasSubstr("invalid argument")))
 }
 
 func (t *StatTest) NoReadPermissions() {
@@ -77,9 +79,10 @@ func (t *StatTest) NoReadPermissions() {
 	err := os.Mkdir(dirpath, 0100)
 	AssertEq(nil, err)
 
-	_, err = t.fileSystem.Stat(dirpath)
-	ExpectThat(err, Error(HasSubstr("permission")))
-	ExpectThat(err, Error(HasSubstr("denied")))
+	t.call()
+
+	ExpectThat(t.err, Error(HasSubstr("permission")))
+	ExpectThat(t.err, Error(HasSubstr("denied")))
 }
 
 func (t *StatTest) ErrorLookingUpOwnerId() {
@@ -100,10 +103,11 @@ func (t *StatTest) ErrorLookingUpOwnerId() {
 		WillOnce(oglemock.Return("", errors.New("taco")))
 
 	// Call
-	_, err = t.fileSystem.Stat(t.baseDir)
-	ExpectThat(err, Error(HasSubstr("Looking up")))
-	ExpectThat(err, Error(HasSubstr("user")))
-	ExpectThat(err, Error(HasSubstr("taco")))
+	t.call()
+
+	ExpectThat(t.err, Error(HasSubstr("Looking up")))
+	ExpectThat(t.err, Error(HasSubstr("user")))
+	ExpectThat(t.err, Error(HasSubstr("taco")))
 }
 
 func (t *StatTest) ErrorLookingUpGroupId() {
@@ -124,10 +128,11 @@ func (t *StatTest) ErrorLookingUpGroupId() {
 		WillOnce(oglemock.Return("", errors.New("taco")))
 
 	// Call
-	_, err = t.fileSystem.Stat(t.baseDir)
-	ExpectThat(err, Error(HasSubstr("Looking up")))
-	ExpectThat(err, Error(HasSubstr("group")))
-	ExpectThat(err, Error(HasSubstr("taco")))
+	t.call()
+
+	ExpectThat(t.err, Error(HasSubstr("Looking up")))
+	ExpectThat(t.err, Error(HasSubstr("group")))
+	ExpectThat(t.err, Error(HasSubstr("taco")))
 }
 
 func (t *StatTest) UnknownOwnerId() {
@@ -148,8 +153,9 @@ func (t *StatTest) UnknownOwnerId() {
 		WillOnce(oglemock.Return("", sys.NotFoundError("taco")))
 
 	// Call
-	entries, err := t.fileSystem.Stat(t.baseDir)
-	AssertEq(nil, err)
+	t.call()
+
+	AssertEq(nil, t.err)
 	AssertThat(entries, ElementsAre(Any()))
 
 	ExpectEq(t.myUid, entries[0].Uid)
@@ -174,8 +180,9 @@ func (t *StatTest) UnknownGroupId() {
 		WillOnce(oglemock.Return("", sys.NotFoundError("taco")))
 
 	// Call
-	entries, err := t.fileSystem.Stat(t.baseDir)
-	AssertEq(nil, err)
+	t.call()
+
+	AssertEq(nil, t.err)
 	AssertThat(entries, ElementsAre(Any()))
 
 	ExpectEq(t.myGid, entries[0].Gid)
@@ -211,8 +218,9 @@ func (t *StatTest) RegularFiles() {
 	AssertEq(nil, err)
 
 	// Call
-	entries, err := t.fileSystem.Stat(t.baseDir)
-	AssertEq(nil, err)
+	t.call()
+
+	AssertEq(nil, t.err)
 	AssertThat(entries, ElementsAre(Any(), Any()))
 
 	// Entry 0
@@ -283,8 +291,9 @@ func (t *StatTest) Directories() {
 	AssertEq(nil, err)
 
 	// Call
-	entries, err := t.fileSystem.Stat(t.baseDir)
-	AssertEq(nil, err)
+	t.call()
+
+	AssertEq(nil, t.err)
 	AssertThat(entries, ElementsAre(Any(), Any()))
 
 	entry = entries[0]
@@ -343,8 +352,9 @@ func (t *StatTest) Symlinks() {
 	AssertEq(nil, err)
 
 	// Call
-	entries, err := t.fileSystem.Stat(t.baseDir)
-	AssertEq(nil, err)
+	t.call()
+
+	AssertEq(nil, t.err)
 	AssertThat(entries, ElementsAre(Any(), Any()))
 
 	entry = entries[0]
@@ -378,7 +388,8 @@ func (t *StatTest) CharDevices() {
 	var err error
 
 	// Call
-	entries, err := t.fileSystem.Stat("/dev")
+	t.call()
+
 	AssertEq(nil, err)
 
 	entry := findEntry(entries, "urandom")
@@ -406,7 +417,8 @@ func (t *StatTest) BlockDevices() {
 	var err error
 
 	// Call
-	entries, err := t.fileSystem.Stat("/dev")
+	t.call()
+
 	AssertEq(nil, err)
 
 	entry := findEntry(entries, "disk0")
@@ -453,8 +465,9 @@ func (t *StatTest) NamedPipes() {
 	AssertEq(nil, err)
 
 	// Call
-	entries, err := t.fileSystem.Stat(t.baseDir)
-	AssertEq(nil, err)
+	t.call()
+
+	AssertEq(nil, t.err)
 	AssertThat(entries, ElementsAre(Any(), Any()))
 
 	entry = entries[0]
@@ -501,8 +514,9 @@ func (t *StatTest) SortsByName() {
 	AssertEq(nil, err)
 
 	// Call
-	entries, err := t.fileSystem.Stat(t.baseDir)
-	AssertEq(nil, err)
+	t.call()
+
+	AssertEq(nil, t.err)
 	AssertThat(entries, ElementsAre(Any(), Any(), Any()))
 
 	ExpectEq("burrito", entries[0].Name)
