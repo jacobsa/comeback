@@ -226,64 +226,37 @@ func (t *StatTest) RegularFile() {
 	ExpectNe(t.baseDirInode, t.entry.Inode)
 }
 
-func (t *StatTest) Directories() {
+func (t *StatTest) Directory() {
 	var err error
 	var entry *fs.DirectoryEntry
 
-	// Dir 0
-	path0 := path.Join(t.baseDir, "burrito")
-	err = os.Mkdir(path0, 0700)
+	// Dir
+	path := path.Join(t.baseDir, "burrito")
+	err = os.Mkdir(path, 0700)
 	AssertEq(nil, err)
 
-	err = setPermissions(path0, 0751|syscall.S_ISGID)
+	err = setPermissions(path, 0751|syscall.S_ISGID)
 	AssertEq(nil, err)
 
-	mtime0 := time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)
-	err = setModTime(path0, mtime0)
-	AssertEq(nil, err)
-
-	// Dir 1
-	path1 := path.Join(t.baseDir, "enchilada")
-	err = os.Mkdir(path1, 0700)
-	AssertEq(nil, err)
-
-	err = setPermissions(path1, 0711|syscall.S_ISVTX|syscall.S_ISUID)
-	AssertEq(nil, err)
-
-	mtime1 := time.Date(1985, time.March, 18, 15, 33, 0, 0, time.Local)
-	err = setModTime(path1, mtime1)
+	mtime := time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)
+	err = setModTime(path, mtime)
 	AssertEq(nil, err)
 
 	// Call
 	t.call()
 
 	AssertEq(nil, t.err)
-	AssertThat(entries, ElementsAre(Any(), Any()))
 
-	entry = entries[0]
-	ExpectEq(fs.TypeDirectory, entry.Type)
-	ExpectEq("burrito", entry.Name)
-	ExpectEq("", entry.Target)
-	ExpectEq(0, entry.DeviceNumber)
-	ExpectEq(0751|os.ModeSetgid, entry.Permissions)
-	ExpectEq(t.myUid, entry.Uid)
+	ExpectEq(fs.TypeDirectory, t.entry.Type)
+	ExpectEq("burrito", t.entry.Name)
+	ExpectEq("", t.entry.Target)
+	ExpectEq(0, t.entry.DeviceNumber)
+	ExpectEq(0751|os.ModeSetgid, t.entry.Permissions)
+	ExpectEq(t.myUid, t.entry.Uid)
 	ExpectThat(entry.Username, Pointee(Equals(t.myUsername)))
-	ExpectEq(t.myGid, entry.Gid)
+	ExpectEq(t.myGid, t.entry.Gid)
 	ExpectThat(entry.Groupname, Pointee(Equals(t.myGroupname)))
-	ExpectTrue(entry.MTime.Equal(mtime0), "%v", entry.MTime)
-	ExpectThat(entry.Scores, ElementsAre())
-
-	entry = entries[1]
-	ExpectEq(fs.TypeDirectory, entry.Type)
-	ExpectEq("enchilada", entry.Name)
-	ExpectEq("", entry.Target)
-	ExpectEq(0, entry.DeviceNumber)
-	ExpectEq(0711|os.ModeSticky|os.ModeSetuid, entry.Permissions)
-	ExpectEq(t.myUid, entry.Uid)
-	ExpectThat(entry.Username, Pointee(Equals(t.myUsername)))
-	ExpectEq(t.myGid, entry.Gid)
-	ExpectThat(entry.Groupname, Pointee(Equals(t.myGroupname)))
-	ExpectTrue(entry.MTime.Equal(mtime1), "%v", entry.MTime)
+	ExpectTrue(entry.MTime.Equal(mtime), "%v", t.entry.MTime)
 	ExpectThat(entry.Scores, ElementsAre())
 }
 
