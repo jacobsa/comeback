@@ -94,8 +94,8 @@ func (t *StatTest) ErrorLookingUpOwnerId() {
 	t.setUpFileSystem()
 
 	// Create a file.
-	path0 := path.Join(t.baseDir, "burrito.txt")
-	err = ioutil.WriteFile(path0, []byte(""), 0600)
+	t.path = path.Join(t.baseDir, "burrito.txt")
+	err = ioutil.WriteFile(t.path, []byte(""), 0600)
 	AssertEq(nil, err)
 
 	// Registry
@@ -231,15 +231,15 @@ func (t *StatTest) Directory() {
 	var entry *fs.DirectoryEntry
 
 	// Dir
-	path := path.Join(t.baseDir, "burrito")
-	err = os.Mkdir(path, 0700)
+	t.path = path.Join(t.baseDir, "burrito")
+	err = os.Mkdir(t.path, 0700)
 	AssertEq(nil, err)
 
-	err = setPermissions(path, 0751|syscall.S_ISGID)
+	err = setPermissions(t.path, 0751|syscall.S_ISGID)
 	AssertEq(nil, err)
 
 	mtime := time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)
-	err = setModTime(path, mtime)
+	err = setModTime(t.path, mtime)
 	AssertEq(nil, err)
 
 	// Call
@@ -290,7 +290,7 @@ func (t *StatTest) Symlinks() {
 	ExpectThat(entry.Username, Pointee(Equals(t.myUsername)))
 	ExpectEq(t.myGid, t.entry.Gid)
 	ExpectThat(entry.Groupname, Pointee(Equals(t.myGroupname)))
-	ExpectTrue(entry.MTime.Equal(mtime0), "%v", t.entry.MTime)
+	ExpectTrue(entry.MTime.Equal(mtime), "%v", t.entry.MTime)
 	ExpectThat(entry.Scores, ElementsAre())
 }
 
@@ -300,20 +300,20 @@ func (t *StatTest) CharDevices() {
 	// Call
 	t.call()
 
-	AssertEq(nil, err)
+	AssertEq(nil, t.err)
 
 	AssertNe(nil, t.entry)
 	ExpectEq(fs.TypeCharDevice, t.entry.Type)
 	ExpectEq("urandom", t.entry.Name)
 	ExpectEq("", t.entry.Target)
-	urandomDevNumber := entry.DeviceNumber
+	urandomDevNumber := t.entry.DeviceNumber
 	ExpectEq(os.FileMode(0666), t.entry.Permissions)
 	ExpectEq(0, t.entry.Uid)
-	ExpectThat(entry.Username, Pointee(Equals("root")))
+	ExpectThat(t.entry.Username, Pointee(Equals("root")))
 	ExpectEq(0, t.entry.Gid)
-	ExpectThat(entry.Groupname, Pointee(Equals("wheel")))
-	ExpectGe(time.Since(entry.MTime), 0)
-	ExpectLt(time.Since(entry.MTime), 365*24*time.Hour)
+	ExpectThat(t.entry.Groupname, Pointee(Equals("wheel")))
+	ExpectGe(time.Since(t.entry.MTime), 0)
+	ExpectLt(time.Since(t.entry.MTime), 365*24*time.Hour)
 }
 
 func (t *StatTest) BlockDevices() {
@@ -322,30 +322,32 @@ func (t *StatTest) BlockDevices() {
 	// Call
 	t.call()
 
-	AssertEq(nil, err)
+	AssertEq(nil, t.err)
 
 	AssertNe(nil, t.entry)
 	ExpectEq(fs.TypeBlockDevice, t.entry.Type)
 	ExpectEq("disk0", t.entry.Name)
 	ExpectEq("", t.entry.Target)
-	disk0DevNumber := entry.DeviceNumber
+	disk0DevNumber := t.entry.DeviceNumber
 	ExpectEq(os.FileMode(0640), t.entry.Permissions)
 	ExpectEq(0, t.entry.Uid)
-	ExpectThat(entry.Username, Pointee(Equals("root")))
+	ExpectThat(t.entry.Username, Pointee(Equals("root")))
 	ExpectEq(5, t.entry.Gid)
-	ExpectThat(entry.Groupname, Pointee(Equals("operator")))
-	ExpectGe(time.Since(entry.MTime), 0)
-	ExpectLt(time.Since(entry.MTime), 365*24*time.Hour)
+	ExpectThat(t.entry.Groupname, Pointee(Equals("operator")))
+	ExpectGe(time.Since(t.entry.MTime), 0)
+	ExpectLt(time.Since(t.entry.MTime), 365*24*time.Hour)
 }
 
 func (t *StatTest) NamedPipes() {
+	var err error
+
 	// Pipe
 	t.path = path.Join(t.baseDir, "burrito")
-	err = makeNamedPipe(path, 0714|syscall.S_ISGID)
+	err = makeNamedPipe(t.path, 0714|syscall.S_ISGID)
 	AssertEq(nil, err)
 
 	mtime := time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)
-	err = setModTime(path, mtime)
+	err = setModTime(t.path, mtime)
 	AssertEq(nil, err)
 
 	// Call
@@ -358,11 +360,11 @@ func (t *StatTest) NamedPipes() {
 	ExpectEq("", t.entry.Target)
 	ExpectEq(0714|os.ModeSetgid, t.entry.Permissions)
 	ExpectEq(t.myUid, t.entry.Uid)
-	ExpectThat(entry.Username, Pointee(Equals(t.myUsername)))
+	ExpectThat(t.entry.Username, Pointee(Equals(t.myUsername)))
 	ExpectEq(t.myGid, t.entry.Gid)
-	ExpectThat(entry.Groupname, Pointee(Equals(t.myGroupname)))
-	ExpectTrue(entry.MTime.Equal(mtime0), "%v", t.entry.MTime)
-	ExpectThat(entry.Scores, ElementsAre())
+	ExpectThat(t.entry.Groupname, Pointee(Equals(t.myGroupname)))
+	ExpectTrue(t.entry.MTime.Equal(mtime), "%v", t.entry.MTime)
+	ExpectThat(t.entry.Scores, ElementsAre())
 }
 
 func (t *StatTest) SortsByName() {
