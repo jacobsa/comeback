@@ -33,6 +33,9 @@ type FileSystem interface {
 	// Open the file named by the supplied path for reading.
 	OpenForReading(path string) (r io.ReadCloser, err error)
 
+	// Stat the named file, not following symlinks.
+	Stat(path string) (entry DirectoryEntry, err error)
+
 	// Create a file at the supplied path with the supplied permissions, opening
 	// it for writing. It is an error if the file already exists.
 	CreateFile(path string, permissions os.FileMode) (w io.WriteCloser, err error)

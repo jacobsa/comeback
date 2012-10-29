@@ -97,3 +97,8 @@ func (fs *fileSystem) convertFileInfo(fi os.FileInfo) (entry *DirectoryEntry, er
 
 	return entry, nil
 }
+
+func (fs *fileSystem) Stat(path string) (entry DirectoryEntry, err error) {
+	err = fmt.Errorf("TODO")
+	return
+}
