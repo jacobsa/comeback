@@ -32,12 +32,12 @@ func TestMapReadingSaver(t *testing.T) { RunTests(t) }
 ////////////////////////////////////////////////////////////////////////
 
 type MapReadingSaverTest struct {
-	scoreMap state.ScoreMap
-	fileSystem      mock_fs.MockFileSystem
-	wrapped      mock_backup.MockFileSaver
-	saver        backup.FileSaver
+	scoreMap   state.ScoreMap
+	fileSystem mock_fs.MockFileSystem
+	wrapped    mock_backup.MockFileSaver
+	saver      backup.FileSaver
 
-	path string
+	path   string
 	scores []blob.Score
 }
 
