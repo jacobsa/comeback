@@ -22,6 +22,7 @@ import (
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/blob/mock"
 	"github.com/jacobsa/comeback/concurrent"
+	"github.com/jacobsa/comeback/fs/mock"
 	. "github.com/jacobsa/oglematchers"
 	"github.com/jacobsa/oglemock"
 	. "github.com/jacobsa/ogletest"
@@ -53,12 +54,33 @@ func returnStoreError(err string) oglemock.Action {
 	return oglemock.Invoke(f)
 }
 
-type FileSaverTest struct {
-	blobStore mock_blob.MockStore
-	executor  concurrent.Executor
-	reader    io.Reader
-	fileSaver backup.FileSaver
+type readCloser struct {
+	reader io.Reader
+	closed bool
+}
 
+func (r *readCloser) Read(b []byte) (int, error) {
+	return r.reader.Read(b)
+}
+
+func (r *readCloser) Close() error {
+	if r.closed {
+		panic("Close called twice.")
+	}
+
+	r.closed = true
+	return nil
+}
+
+type FileSaverTest struct {
+	blobStore  mock_blob.MockStore
+	fileSystem mock_fs.MockFileSystem
+	executor   concurrent.Executor
+	fileSaver  backup.FileSaver
+
+	file readCloser
+
+	path   string
 	scores []blob.Score
 	err    error
 }
@@ -66,13 +88,30 @@ type FileSaverTest struct {
 func init() { RegisterTestSuite(&FileSaverTest{}) }
 
 func (t *FileSaverTest) SetUp(i *TestInfo) {
+	var err error
+
+	// Dependencies
 	t.blobStore = mock_blob.NewMockStore(i.MockController, "blobStore")
+	t.fileSystem = mock_fs.NewMockFileSystem(i.MockController, "fileSystem")
 	t.executor = concurrent.NewExecutor(numFileSaverWorkers)
-	t.fileSaver, _ = backup.NewFileSaver(t.blobStore, chunkSize, t.executor)
+
+	// Saver
+	t.fileSaver, err = backup.NewFileSaver(
+		t.blobStore,
+		chunkSize,
+		t.fileSystem,
+		t.executor,
+	)
+
+	AssertEq(nil, err)
+
+	// By default, return the configured reader.
+	ExpectCall(t.fileSystem, "OpenForReading")(Any()).
+		WillRepeatedly(oglemock.Return(&t.file, nil))
 }
 
 func (t *FileSaverTest) callSaver() {
-	t.scores, t.err = t.fileSaver.Save(t.reader)
+	t.scores, t.err = t.fileSaver.Save(t.path)
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -80,14 +119,37 @@ func (t *FileSaverTest) callSaver() {
 ////////////////////////////////////////////////////////////////////////
 
 func (t *FileSaverTest) ZeroChunkSize() {
-	_, err := backup.NewFileSaver(t.blobStore, 0, t.executor)
+	_, err := backup.NewFileSaver(t.blobStore, 0, t.fileSystem, t.executor)
 	ExpectThat(err, Error(HasSubstr("size")))
 	ExpectThat(err, Error(HasSubstr("positive")))
 }
 
+func (t *FileSaverTest) CallsOpenForReading() {
+	t.path = "taco"
+
+	// File system
+	ExpectCall(t.fileSystem, "OpenForReading")("taco").
+		WillOnce(oglemock.Return(nil, errors.New("")))
+
+	// Call
+	t.callSaver()
+}
+
+func (t *FileSaverTest) OpenForReadingReturnsError() {
+	// File system
+	ExpectCall(t.fileSystem, "OpenForReading")(Any()).
+		WillOnce(oglemock.Return(nil, errors.New("taco")))
+
+	// Call
+	t.callSaver()
+
+	ExpectThat(t.err, Error(HasSubstr("OpenForReading")))
+	ExpectThat(t.err, Error(HasSubstr("taco")))
+}
+
 func (t *FileSaverTest) NoDataInReader() {
 	// Reader
-	t.reader = new(bytes.Buffer)
+	t.file.reader = new(bytes.Buffer)
 
 	// Call
 	t.callSaver()
@@ -103,7 +165,7 @@ func (t *FileSaverTest) ReadErrorInFirstChunk() {
 	chunk2 := makeChunk('c')
 
 	// Reader
-	t.reader = io.MultiReader(
+	t.file.reader = io.MultiReader(
 		iotest.TimeoutReader(bytes.NewReader(chunk0)),
 		bytes.NewReader(chunk1),
 		bytes.NewReader(chunk2),
@@ -127,7 +189,7 @@ func (t *FileSaverTest) ReadErrorInMiddleChunk() {
 	chunk2 := makeChunk('b')
 
 	// Reader
-	t.reader = io.MultiReader(
+	t.file.reader = io.MultiReader(
 		bytes.NewReader(chunk0),
 		iotest.TimeoutReader(bytes.NewReader(chunk1)),
 		bytes.NewReader(chunk2),
@@ -149,7 +211,7 @@ func (t *FileSaverTest) CopesWithShortReadsWithinFullSizeChunks() {
 	chunk0 := makeChunk('a')
 
 	// Reader
-	t.reader = io.MultiReader(
+	t.file.reader = io.MultiReader(
 		iotest.OneByteReader(bytes.NewReader(chunk0)),
 	)
 
@@ -166,7 +228,7 @@ func (t *FileSaverTest) CopesWithEofAndNonZeroData() {
 	chunk0 := makeChunk('a')
 
 	// Reader
-	t.reader = io.MultiReader(
+	t.file.reader = io.MultiReader(
 		iotest.DataErrReader(bytes.NewReader(chunk0)),
 	)
 
@@ -184,7 +246,7 @@ func (t *FileSaverTest) OneSmallerSizedChunk() {
 	chunk0 = chunk0[0 : len(chunk0)-10]
 
 	// Reader
-	t.reader = io.MultiReader(
+	t.file.reader = io.MultiReader(
 		bytes.NewReader(chunk0),
 	)
 
@@ -203,7 +265,7 @@ func (t *FileSaverTest) OneFullSizedChunk() {
 	chunk0 := makeChunk('a')
 
 	// Reader
-	t.reader = io.MultiReader(
+	t.file.reader = io.MultiReader(
 		bytes.NewReader(chunk0),
 	)
 
@@ -223,7 +285,7 @@ func (t *FileSaverTest) OneFullSizedChunkPlusOneByte() {
 	chunk1 := []byte{0xde}
 
 	// Reader
-	t.reader = io.MultiReader(
+	t.file.reader = io.MultiReader(
 		bytes.NewReader(chunk0),
 		bytes.NewReader(chunk1),
 	)
@@ -249,7 +311,7 @@ func (t *FileSaverTest) MultipleChunksWithNoRemainder() {
 	chunk2 := makeChunk('c')
 
 	// Reader
-	t.reader = io.MultiReader(
+	t.file.reader = io.MultiReader(
 		bytes.NewReader(chunk0),
 		bytes.NewReader(chunk1),
 		bytes.NewReader(chunk2),
@@ -280,7 +342,7 @@ func (t *FileSaverTest) MultipleChunksWithSmallRemainder() {
 	chunk2 := []byte{0xde, 0xad}
 
 	// Reader
-	t.reader = io.MultiReader(
+	t.file.reader = io.MultiReader(
 		bytes.NewReader(chunk0),
 		bytes.NewReader(chunk1),
 		bytes.NewReader(chunk2),
@@ -312,7 +374,7 @@ func (t *FileSaverTest) MultipleChunksWithLargeRemainder() {
 	chunk2 = chunk2[0 : len(chunk2)-1]
 
 	// Reader
-	t.reader = io.MultiReader(
+	t.file.reader = io.MultiReader(
 		bytes.NewReader(chunk0),
 		bytes.NewReader(chunk1),
 		bytes.NewReader(chunk2),
@@ -343,7 +405,7 @@ func (t *FileSaverTest) ErrorStoringOneChunk() {
 	chunk2 := makeChunk('c')
 
 	// Reader
-	t.reader = io.MultiReader(
+	t.file.reader = io.MultiReader(
 		bytes.NewReader(chunk0),
 		bytes.NewReader(chunk1),
 		bytes.NewReader(chunk2),
@@ -368,7 +430,7 @@ func (t *FileSaverTest) ErrorStoringOneChunk() {
 
 func (t *FileSaverTest) ResultForEmptyReader() {
 	// Reader
-	t.reader = io.MultiReader()
+	t.file.reader = io.MultiReader()
 
 	// Call
 	t.callSaver()
@@ -384,7 +446,7 @@ func (t *FileSaverTest) AllStoresSuccessful() {
 	chunk2 := makeChunk('c')
 
 	// Reader
-	t.reader = io.MultiReader(
+	t.file.reader = io.MultiReader(
 		bytes.NewReader(chunk0),
 		bytes.NewReader(chunk1),
 		bytes.NewReader(chunk2),
@@ -427,7 +489,7 @@ func (t *FileSaverTest) StoresFinishOutOfOrder() {
 	chunk2 := makeChunk('c')
 
 	// Reader
-	t.reader = io.MultiReader(
+	t.file.reader = io.MultiReader(
 		bytes.NewReader(chunk0),
 		bytes.NewReader(chunk1),
 		bytes.NewReader(chunk2),
@@ -466,4 +528,26 @@ func (t *FileSaverTest) StoresFinishOutOfOrder() {
 			DeepEquals(score2),
 		),
 	)
+}
+
+func (t *FileSaverTest) ClosesFile() {
+	// Chunks
+	chunk0 := makeChunk('a')
+
+	// Reader
+	t.file.reader = io.MultiReader(
+		bytes.NewReader(chunk0),
+	)
+
+	// Blob store
+	score0 := blob.ComputeScore([]byte("taco"))
+
+	ExpectCall(t.blobStore, "Store")(Any()).
+		WillOnce(oglemock.Return(score0, nil))
+
+	// Call
+	t.callSaver()
+
+	AssertEq(nil, t.err)
+	ExpectTrue(t.file.closed)
 }

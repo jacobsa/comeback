@@ -19,16 +19,17 @@ import (
 	"fmt"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/concurrent"
+	"github.com/jacobsa/comeback/fs"
 	"io"
 	"io/ioutil"
 )
 
 // An object that knows how to save files to some underlying storage.
 type FileSaver interface {
-	// Save the contents of the supplied reader to underlying storage, returning
-	// a list of scores of blobs that should be concatenated in order to recover
+	// Save the contents of the given path to underlying storage, returning a
+	// list of scores of blobs that should be concatenated in order to recover
 	// its contents.
-	Save(r io.Reader) (scores []blob.Score, err error)
+	Save(path string) (scores []blob.Score, err error)
 }
 
 // Create a file saver that uses the supplied blob store, splitting files into
@@ -38,6 +39,7 @@ type FileSaver interface {
 func NewFileSaver(
 	store blob.Store,
 	chunkSize uint32,
+	fileSystem fs.FileSystem,
 	executor concurrent.Executor,
 ) (s FileSaver, err error) {
 	if chunkSize == 0 {
@@ -47,6 +49,7 @@ func NewFileSaver(
 	s = &fileSaver{
 		store,
 		chunkSize,
+		fileSystem,
 		executor,
 	}
 
@@ -54,9 +57,10 @@ func NewFileSaver(
 }
 
 type fileSaver struct {
-	blobStore blob.Store
-	chunkSize uint32
-	executor  concurrent.Executor
+	blobStore  blob.Store
+	chunkSize  uint32
+	fileSystem fs.FileSystem
+	executor   concurrent.Executor
 }
 
 // Read 16 MiB from the supplied reader, returning less iff the reader returns
@@ -66,13 +70,23 @@ func getChunk(r io.Reader, chunkSize uint32) ([]byte, error) {
 	return ioutil.ReadAll(r)
 }
 
-func (s *fileSaver) Save(r io.Reader) (scores []blob.Score, err error) {
+func (s *fileSaver) Save(path string) (scores []blob.Score, err error) {
+	var file io.ReadCloser
+
+	// Open the file.
+	if file, err = s.fileSystem.OpenForReading(path); err != nil {
+		err = fmt.Errorf("OpenForReading: %v", err)
+		return
+	}
+
+	defer file.Close()
+
+	// Turn the file into chunks, giving them to the blob store in parallel.
 	type result struct {
 		score blob.Score
 		err   error
 	}
 
-	// Turn the file into chunks, giving them to the blob store in parallel.
 	resultChans := make([]<-chan result, 0)
 
 	// Make sure we drain results before returning, even if we return early. This
@@ -86,7 +100,7 @@ func (s *fileSaver) Save(r io.Reader) (scores []blob.Score, err error) {
 	for {
 		// Read the chunk.
 		var chunk []byte
-		chunk, err = getChunk(r, s.chunkSize)
+		chunk, err = getChunk(file, s.chunkSize)
 		if err != nil {
 			err = fmt.Errorf("Reading chunk: %v", err)
 			return
