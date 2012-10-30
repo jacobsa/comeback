@@ -59,6 +59,14 @@ func (t *MapReadingSaverTest) call() {
 // Tests
 ////////////////////////////////////////////////////////////////////////
 
+func (t *MapReadingSaverTest) CallsStat() {
+	ExpectEq("TODO", "")
+}
+
+func (t *MapReadingSaverTest) StatReturnsError() {
+	ExpectEq("TODO", "")
+}
+
 func (t *MapReadingSaverTest) ScoreMapContainsEntry() {
 	ExpectEq("TODO", "")
 }
