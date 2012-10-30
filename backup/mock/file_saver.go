@@ -71,3 +71,32 @@ func (m *mockFileSaver) Save(p0 io.Reader) (o0 []blob.Score, o1 error) {
 
 	return
 }
+
+func (m *mockFileSaver) SavePath(p0 string) (o0 []blob.Score, o1 error) {
+	// Get a file name and line number for the caller.
+	_, file, line, _ := runtime.Caller(1)
+
+	// Hand the call off to the controller, which does most of the work.
+	retVals := m.controller.HandleMethodCall(
+		m,
+		"SavePath",
+		file,
+		line,
+		[]interface{}{p0})
+
+	if len(retVals) != 2 {
+		panic(fmt.Sprintf("mockFileSaver.SavePath: invalid return values: %v", retVals))
+	}
+
+	// o0 []blob.Score
+	if retVals[0] != nil {
+		o0 = retVals[0].([]blob.Score)
+	}
+
+	// o1 error
+	if retVals[1] != nil {
+		o1 = retVals[1].(error)
+	}
+
+	return
+}

@@ -25,10 +25,11 @@ import (
 
 // An object that knows how to save files to some underlying storage.
 type FileSaver interface {
-	// Save the contents of the supplied reader to underlying storage, returning
-	// a list of scores of blobs that should be concatenated in order to recover
+	// Save the contents of the given path to underlying storage, returning a
+	// list of scores of blobs that should be concatenated in order to recover
 	// its contents.
 	Save(r io.Reader) (scores []blob.Score, err error)
+	SavePath(path string) (scores []blob.Score, err error)
 }
 
 // Create a file saver that uses the supplied blob store, splitting files into
@@ -128,5 +129,10 @@ func (s *fileSaver) Save(r io.Reader) (scores []blob.Score, err error) {
 		scores[i] = result.score
 	}
 
+	return
+}
+
+func (s *fileSaver) SavePath(path string) (scores []blob.Score, err error) {
+	err = fmt.Errorf("TODO")
 	return
 }
