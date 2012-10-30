@@ -16,11 +16,15 @@
 package state_test
 
 import (
+	"errors"
 	"github.com/jacobsa/comeback/backup"
 	"github.com/jacobsa/comeback/backup/mock"
 	"github.com/jacobsa/comeback/blob"
+	"github.com/jacobsa/comeback/fs"
 	"github.com/jacobsa/comeback/fs/mock"
 	"github.com/jacobsa/comeback/state"
+	. "github.com/jacobsa/oglematchers"
+	"github.com/jacobsa/oglemock"
 	. "github.com/jacobsa/ogletest"
 	"testing"
 )
@@ -60,11 +64,26 @@ func (t *MapReadingSaverTest) call() {
 ////////////////////////////////////////////////////////////////////////
 
 func (t *MapReadingSaverTest) CallsStat() {
-	ExpectEq("TODO", "")
+	t.path = "taco"
+
+	// File system
+	ExpectCall(t.fileSystem, "Stat")("taco").
+		WillOnce(oglemock.Return(fs.DirectoryEntry{}, errors.New("")))
+
+	// Call
+	t.call()
 }
 
 func (t *MapReadingSaverTest) StatReturnsError() {
-	ExpectEq("TODO", "")
+	// File system
+	ExpectCall(t.fileSystem, "Stat")(Any()).
+		WillOnce(oglemock.Return(fs.DirectoryEntry{}, errors.New("taco")))
+
+	// Call
+	t.call()
+
+	ExpectThat(t.err, Error(HasSubstr("Stat")))
+	ExpectThat(t.err, Error(HasSubstr("taco")))
 }
 
 func (t *MapReadingSaverTest) ScoreMapContainsEntry() {
