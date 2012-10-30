@@ -45,7 +45,7 @@ func NewScoreMapFileSaver(
 ////////////////////////////////////////////////////////////////////////
 
 type scoreMapFileSaver struct {
-	sourceMap   ScoreMap
+	sourceMap  ScoreMap
 	fileSystem fs.FileSystem
 	wrapped    backup.FileSaver
 }

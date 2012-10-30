@@ -37,8 +37,8 @@ func TestScoreMapSaver(t *testing.T) { RunTests(t) }
 ////////////////////////////////////////////////////////////////////////
 
 type ScoreMapSaverTest struct {
-	sourceMap   state.ScoreMap
-	sinkMap   state.ScoreMap
+	sourceMap  state.ScoreMap
+	sinkMap    state.ScoreMap
 	fileSystem mock_fs.MockFileSystem
 	wrapped    mock_backup.MockFileSaver
 	saver      backup.FileSaver
