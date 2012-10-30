@@ -27,6 +27,12 @@ var cmdSave = &Command{
 
 var g_jobName = cmdSave.Flags.String("job", "", "Job name within the config file.")
 
+var g_discardScoreCache = cmdSave.Flags.Bool(
+	"discard_score_cache",
+	false,
+	"If set, always recompute file hashes; don't rely on stat info.",
+)
+
 func init() {
 	cmdSave.Run = runSave // Break flag-related dependency loop.
 }
