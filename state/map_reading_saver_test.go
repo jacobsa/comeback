@@ -27,6 +27,7 @@ import (
 	"github.com/jacobsa/oglemock"
 	. "github.com/jacobsa/ogletest"
 	"testing"
+	"time"
 )
 
 func TestMapReadingSaver(t *testing.T) { RunTests(t) }
@@ -87,7 +88,44 @@ func (t *MapReadingSaverTest) StatReturnsError() {
 }
 
 func (t *MapReadingSaverTest) ScoreMapContainsEntry() {
-	ExpectEq("TODO", "")
+	t.path = "taco"
+
+	// Score map
+	expectedKey := state.ScoreMapKey{
+		Path: "taco",
+		Permissions: 0644,
+		Uid: 17,
+		Gid: 19,
+		MTime: time.Now(),
+		Inode: 23,
+		Size: 29,
+	}
+
+	expectedScores := []blob.Score{
+		blob.ComputeScore([]byte("foo")),
+		blob.ComputeScore([]byte("bar")),
+	}
+
+	t.scoreMap.Set(expectedKey, expectedScores)
+
+	// File system
+	entry := fs.DirectoryEntry{
+		Permissions: 0644,
+		Uid: 17,
+		Gid: 19,
+		MTime: time.Now(),
+		Inode: 23,
+		Size: 29,
+	}
+
+	ExpectCall(t.fileSystem, "Stat")(Any()).
+		WillOnce(oglemock.Return(entry, nil))
+
+	// Call
+	t.call()
+
+	AssertEq(nil, t.err)
+	ExpectThat(t.scores, DeepEquals(expectedScores))
 }
 
 func (t *MapReadingSaverTest) CallsWrapped() {
