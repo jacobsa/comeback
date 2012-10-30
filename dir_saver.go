@@ -65,6 +65,7 @@ func initDirSaver() {
 	fileSaver, err := backup.NewFileSaver(
 		blobStore,
 		chunkSize,
+		fileSystem,
 		concurrent.NewExecutor(numFileSaverWorkers),
 	)
 

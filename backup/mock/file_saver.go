@@ -11,7 +11,6 @@ import (
 	backup "github.com/jacobsa/comeback/backup"
 	blob "github.com/jacobsa/comeback/blob"
 	oglemock "github.com/jacobsa/oglemock"
-	io "io"
 	runtime "runtime"
 	unsafe "unsafe"
 )
@@ -43,7 +42,7 @@ func (m *mockFileSaver) Oglemock_Description() string {
 	return m.description
 }
 
-func (m *mockFileSaver) Save(p0 io.Reader) (o0 []blob.Score, o1 error) {
+func (m *mockFileSaver) Save(p0 string) (o0 []blob.Score, o1 error) {
 	// Get a file name and line number for the caller.
 	_, file, line, _ := runtime.Caller(1)
 
