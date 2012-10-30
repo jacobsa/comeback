@@ -35,6 +35,7 @@ func NewScoreMapFileSaver(
 ) (s backup.FileSaver) {
 	return &scoreMapFileSaver{
 		sourceMap,
+		sinkMap,
 		fileSystem,
 		wrapped,
 	}
@@ -46,6 +47,7 @@ func NewScoreMapFileSaver(
 
 type scoreMapFileSaver struct {
 	sourceMap  ScoreMap
+	sinkMap    ScoreMap
 	fileSystem fs.FileSystem
 	wrapped    backup.FileSaver
 }
@@ -58,7 +60,8 @@ func (s *scoreMapFileSaver) Save(path string) (scores []blob.Score, err error) {
 		return
 	}
 
-	// Do we have anything interesting in the map?
+	// Whatever we do, make sure that we insert any result we find into the sink
+	// map.
 	mapKey := ScoreMapKey{
 		Path:        path,
 		Permissions: entry.Permissions,
@@ -69,6 +72,13 @@ func (s *scoreMapFileSaver) Save(path string) (scores []blob.Score, err error) {
 		Size:        entry.Size,
 	}
 
+	defer func() {
+		if err == nil {
+			s.sinkMap.Set(mapKey, scores)
+		}
+	}()
+
+	// Do we have anything interesting in the map?
 	if scores = s.sourceMap.Get(mapKey); scores != nil {
 		return
 	}
