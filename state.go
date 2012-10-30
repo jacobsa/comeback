@@ -69,6 +69,16 @@ func initState() {
 		g_state.ExistingScores = nil
 		g_state.ExistingScoresVersion = currentVersion
 	}
+
+	// Throw out the existing score cache if requested.
+	if *g_discardScoreCache {
+		g_state.ScoresForFiles = state.NewScoreMap()
+	}
+
+	// Make sure there are no nil interface values.
+	if g_state.ScoresForFiles == nil {
+		g_state.ScoresForFiles = state.NewScoreMap()
+	}
 }
 
 func getState() *state.State {

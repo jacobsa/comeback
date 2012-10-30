@@ -244,7 +244,7 @@ func (t *ReadDirTest) RegularFiles() {
 
 	// File 0
 	path0 := path.Join(t.baseDir, "burrito.txt")
-	err = ioutil.WriteFile(path0, []byte(""), 0600)
+	err = ioutil.WriteFile(path0, []byte("queso"), 0600)
 	AssertEq(nil, err)
 
 	err = setPermissions(path0, 0714|syscall.S_ISGID)
@@ -256,7 +256,7 @@ func (t *ReadDirTest) RegularFiles() {
 
 	// File 1
 	path1 := path.Join(t.baseDir, "enchilada.txt")
-	err = ioutil.WriteFile(path1, []byte(""), 0600)
+	err = ioutil.WriteFile(path1, []byte("carnitas"), 0600)
 	AssertEq(nil, err)
 
 	err = setPermissions(path1, 0454|syscall.S_ISVTX|syscall.S_ISUID)
@@ -283,6 +283,7 @@ func (t *ReadDirTest) RegularFiles() {
 	ExpectEq(t.myGid, entry.Gid)
 	ExpectThat(entry.Groupname, Pointee(Equals(t.myGroupname)))
 	ExpectTrue(entry.MTime.Equal(mtime0), "%v", entry.MTime)
+	ExpectEq(len("queso"), entry.Size)
 	ExpectThat(entry.Scores, ElementsAre())
 
 	AssertNe(0, entry.Inode)
@@ -301,6 +302,7 @@ func (t *ReadDirTest) RegularFiles() {
 	ExpectEq(t.myGid, entry.Gid)
 	ExpectThat(entry.Groupname, Pointee(Equals(t.myGroupname)))
 	ExpectTrue(entry.MTime.Equal(mtime1), "%v", entry.MTime)
+	ExpectEq(len("carnitas"), entry.Size)
 	ExpectThat(entry.Scores, ElementsAre())
 
 	AssertNe(0, entry.Inode)

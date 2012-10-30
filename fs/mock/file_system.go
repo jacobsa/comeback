@@ -347,6 +347,35 @@ func (m *mockFileSystem) SetPermissions(p0 string, p1 os.FileMode) (o0 error) {
 	return
 }
 
+func (m *mockFileSystem) Stat(p0 string) (o0 fs.DirectoryEntry, o1 error) {
+	// Get a file name and line number for the caller.
+	_, file, line, _ := runtime.Caller(1)
+
+	// Hand the call off to the controller, which does most of the work.
+	retVals := m.controller.HandleMethodCall(
+		m,
+		"Stat",
+		file,
+		line,
+		[]interface{}{p0})
+
+	if len(retVals) != 2 {
+		panic(fmt.Sprintf("mockFileSystem.Stat: invalid return values: %v", retVals))
+	}
+
+	// o0 fs.DirectoryEntry
+	if retVals[0] != nil {
+		o0 = retVals[0].(fs.DirectoryEntry)
+	}
+
+	// o1 error
+	if retVals[1] != nil {
+		o1 = retVals[1].(error)
+	}
+
+	return
+}
+
 func (m *mockFileSystem) WriteFile(p0 string, p1 []uint8, p2 os.FileMode) (o0 error) {
 	// Get a file name and line number for the caller.
 	_, file, line, _ := runtime.Caller(1)

@@ -13,39 +13,39 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package fs
+package main
 
 import (
-	"io/ioutil"
-	"os"
-	"path"
+	"github.com/jacobsa/comeback/fs"
+	"github.com/jacobsa/comeback/sys"
+	"log"
+	"sync"
 )
 
-func (fs *fileSystem) ReadDir(dirpath string) (entries []*DirectoryEntry, err error) {
-	// Call ioutil.
-	fileInfos, err := ioutil.ReadDir(dirpath)
+var g_fileSystemOnce sync.Once
+var g_fileSystem fs.FileSystem
+
+func initFileSystem() {
+	// Create a user registry.
+	userRegistry, err := sys.NewUserRegistry()
 	if err != nil {
-		return nil, err
+		log.Fatalln("Creating user registry:", err)
 	}
 
-	// Convert each entry.
-	entries = []*DirectoryEntry{}
-	for _, fileInfo := range fileInfos {
-		entry, err := fs.convertFileInfo(fileInfo)
-		if err != nil {
-			return nil, err
-		}
-
-		// Handle symlinks.
-		if entry.Type == TypeSymlink {
-			linkPath := path.Join(dirpath, entry.Name)
-			if entry.Target, err = os.Readlink(linkPath); err != nil {
-				return nil, err
-			}
-		}
-
-		entries = append(entries, entry)
+	// Create a group registry.
+	groupRegistry, err := sys.NewGroupRegistry()
+	if err != nil {
+		log.Fatalln("Creating group registry:", err)
 	}
 
-	return entries, nil
+	// Create the file system.
+	g_fileSystem, err = fs.NewFileSystem(userRegistry, groupRegistry)
+	if err != nil {
+		log.Fatalln("Creating file system:", err)
+	}
+}
+
+func getFileSystem() fs.FileSystem {
+	g_fileSystemOnce.Do(initFileSystem)
+	return g_fileSystem
 }

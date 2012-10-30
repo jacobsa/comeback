@@ -13,19 +13,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package kv
+package state
 
 import (
-	"github.com/jacobsa/comeback/state"
+	"github.com/jacobsa/comeback/kv"
 )
 
 // Return a key/value store that reads keys from the supplied string set to
 // serve Contains requests, and updates the sets upon successful calls to the
 // wrapped store's Set method.
 func NewExistingKeysStore(
-	existingKeys state.StringSet,
-	wrapped Store,
-) (store Store) {
+	existingKeys StringSet,
+	wrapped kv.Store,
+) (store kv.Store) {
 	return &existingKeysStore{existingKeys, wrapped}
 }
 
@@ -34,8 +34,8 @@ func NewExistingKeysStore(
 ////////////////////////////////////////////////////////////////////////
 
 type existingKeysStore struct {
-	keys    state.StringSet
-	wrapped Store
+	keys    StringSet
+	wrapped kv.Store
 }
 
 func (s *existingKeysStore) Set(key []byte, val []byte) (err error) {

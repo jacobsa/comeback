@@ -17,11 +17,7 @@ package main
 
 import (
 	"github.com/jacobsa/comeback/backup"
-	"github.com/jacobsa/comeback/concurrent"
-	"github.com/jacobsa/comeback/fs"
-	"github.com/jacobsa/comeback/sys"
 	"log"
-	"runtime"
 	"sync"
 )
 
@@ -29,49 +25,10 @@ var g_dirSaverOnce sync.Once
 var g_dirSaver backup.DirectorySaver
 
 func initDirSaver() {
+	var err error
 	blobStore := getBlobStore()
-
-	// Create a user registry.
-	userRegistry, err := sys.NewUserRegistry()
-	if err != nil {
-		log.Fatalln("Creating user registry:", err)
-	}
-
-	// Create a group registry.
-	groupRegistry, err := sys.NewGroupRegistry()
-	if err != nil {
-		log.Fatalln("Creating group registry:", err)
-	}
-
-	// Create a file system.
-	fileSystem, err := fs.NewFileSystem(userRegistry, groupRegistry)
-	if err != nil {
-		log.Fatalln("Creating file system:", err)
-	}
-
-	// Set up parallelism. Leave one CPU alone, if possible.
-	numCPUs := runtime.NumCPU()
-
-	numFileSaverWorkers := numCPUs
-	if numCPUs > 1 {
-		numFileSaverWorkers--
-	}
-
-	runtime.GOMAXPROCS(numFileSaverWorkers)
-
-	// Create the file saver.
-	const chunkSize = 1 << 24 // 16 MiB
-
-	fileSaver, err := backup.NewFileSaver(
-		blobStore,
-		chunkSize,
-		fileSystem,
-		concurrent.NewExecutor(numFileSaverWorkers),
-	)
-
-	if err != nil {
-		log.Fatalln("Creating file saver:", err)
-	}
+	fileSystem := getFileSystem()
+	fileSaver := getFileSaver()
 
 	// Create the directory saver.
 	g_dirSaver, err = backup.NewDirectorySaver(
