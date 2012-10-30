@@ -74,6 +74,11 @@ func initState() {
 	if *g_discardScoreCache {
 		g_state.ScoresForFiles = state.NewScoreMap()
 	}
+
+	// Make sure there are no nil interface values.
+	if g_state.ScoresForFiles == nil {
+		g_state.ScoresForFiles = state.NewScoreMap()
+	}
 }
 
 func getState() *state.State {
