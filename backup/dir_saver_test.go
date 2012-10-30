@@ -46,23 +46,6 @@ func saveBlob(res *[]byte) oglemock.Action {
 	return oglemock.Invoke(f)
 }
 
-type todoDeleteMe struct {
-	closed bool
-}
-
-func (r *todoDeleteMe) Read(b []byte) (int, error) {
-	panic("Shouldn't be called.")
-}
-
-func (r *todoDeleteMe) Close() error {
-	if r.closed {
-		panic("Close called twice.")
-	}
-
-	r.closed = true
-	return nil
-}
-
 func makeEntry(name string, t fs.EntryType) *fs.DirectoryEntry {
 	return &fs.DirectoryEntry{
 		Type: t,
@@ -193,7 +176,7 @@ func (t *DirectorySaverTest) AllEntriesExcluded() {
 	ExpectThat(entries, ElementsAre())
 }
 
-func (t *DirectorySaverTest) CallsLinkResolverFileSystemAndFileSaverForFiles() {
+func (t *DirectorySaverTest) CallsLinkResolverAndFileSaverForFiles() {
 	t.basePath = "/tortilla"
 	t.relPath = "taco/queso"
 
@@ -226,60 +209,15 @@ func (t *DirectorySaverTest) CallsLinkResolverFileSystemAndFileSaverForFiles() {
 	ExpectCall(t.linkResolver, "Register")(23, 29, "taco/queso/enchilada").
 		WillOnce(oglemock.Return(nil))
 
-	// OpenForReading
-	file0 := &todoDeleteMe{}
-	file1 := &todoDeleteMe{}
-
-	ExpectCall(t.fileSystem, "OpenForReading")("/tortilla/taco/queso/burrito").
-		WillOnce(oglemock.Return(file0, nil))
-
-	ExpectCall(t.fileSystem, "OpenForReading")("/tortilla/taco/queso/enchilada").
-		WillOnce(oglemock.Return(file1, nil))
-
 	// File saver
-	ExpectCall(t.fileSaver, "Save")(file0).
+	ExpectCall(t.fileSaver, "SavePath")("/tortilla/taco/queso/burrito").
 		WillOnce(oglemock.Return([]blob.Score{}, nil))
 
-	ExpectCall(t.fileSaver, "Save")(file1).
+	ExpectCall(t.fileSaver, "SavePath")("/tortilla/taco/queso/enchilada").
 		WillOnce(oglemock.Return(nil, errors.New("")))
 
 	// Call
 	t.callSaver()
-}
-
-func (t *DirectorySaverTest) FileSystemReturnsErrorForOneFile() {
-	// ReadDir
-	entries := []*fs.DirectoryEntry{
-		makeEntry("", fs.TypeFile),
-		makeEntry("", fs.TypeFile),
-		makeEntry("", fs.TypeFile),
-	}
-
-	ExpectCall(t.fileSystem, "ReadDir")(Any()).
-		WillOnce(oglemock.Return(entries, nil))
-
-	// Link resolver
-	ExpectCall(t.linkResolver, "Register")(Any(), Any(), Any()).
-		WillRepeatedly(oglemock.Return(nil))
-
-	// OpenForReading
-	file0 := &todoDeleteMe{}
-
-	ExpectCall(t.fileSystem, "OpenForReading")(Any()).
-		WillOnce(oglemock.Return(file0, nil)).
-		WillOnce(oglemock.Return(nil, errors.New("taco")))
-
-	// File saver
-	ExpectCall(t.fileSaver, "Save")(Any()).
-		WillOnce(oglemock.Return([]blob.Score{}, nil))
-
-	// Call
-	t.callSaver()
-
-	ExpectThat(t.err, Error(HasSubstr("Opening")))
-	ExpectThat(t.err, Error(HasSubstr("taco")))
-
-	ExpectTrue(file0.closed)
 }
 
 func (t *DirectorySaverTest) FileSaverReturnsErrorForOneFile() {
@@ -297,16 +235,8 @@ func (t *DirectorySaverTest) FileSaverReturnsErrorForOneFile() {
 	ExpectCall(t.linkResolver, "Register")(Any(), Any(), Any()).
 		WillRepeatedly(oglemock.Return(nil))
 
-	// OpenForReading
-	file0 := &todoDeleteMe{}
-	file1 := &todoDeleteMe{}
-
-	ExpectCall(t.fileSystem, "OpenForReading")(Any()).
-		WillOnce(oglemock.Return(file0, nil)).
-		WillOnce(oglemock.Return(file1, nil))
-
 	// File saver
-	ExpectCall(t.fileSaver, "Save")(Any()).
+	ExpectCall(t.fileSaver, "SavePath")(Any()).
 		WillOnce(oglemock.Return([]blob.Score{}, nil)).
 		WillOnce(oglemock.Return(nil, errors.New("taco")))
 
@@ -314,9 +244,6 @@ func (t *DirectorySaverTest) FileSaverReturnsErrorForOneFile() {
 	t.callSaver()
 
 	ExpectThat(t.err, Error(HasSubstr("taco")))
-
-	ExpectTrue(file0.closed)
-	ExpectTrue(file1.closed)
 }
 
 func (t *DirectorySaverTest) CallsDirSaverForDirs() {
@@ -432,17 +359,11 @@ func (t *DirectorySaverTest) CallsBlobStore() {
 	ExpectCall(t.linkResolver, "Register")(Any(), Any(), Any()).
 		WillRepeatedly(oglemock.Return(nil))
 
-	// OpenForReading
-	file0 := &todoDeleteMe{}
-
-	ExpectCall(t.fileSystem, "OpenForReading")(Any()).
-		WillOnce(oglemock.Return(file0, nil))
-
 	// File saver
 	score0 := blob.ComputeScore([]byte("nachos"))
 	score1 := blob.ComputeScore([]byte("carnitas"))
 
-	ExpectCall(t.fileSaver, "Save")(Any()).
+	ExpectCall(t.fileSaver, "SavePath")(Any()).
 		WillOnce(oglemock.Return([]blob.Score{score0, score1}, nil))
 
 	// Wrapped directory saver
