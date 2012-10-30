@@ -16,12 +16,11 @@
 package state_test
 
 import (
-	"errors"
-	"github.com/jacobsa/comeback/kv"
-	"github.com/jacobsa/comeback/kv/mock"
+	"github.com/jacobsa/comeback/backup"
+	"github.com/jacobsa/comeback/backup/mock"
+	"github.com/jacobsa/comeback/blob"
+	"github.com/jacobsa/comeback/fs/mock"
 	"github.com/jacobsa/comeback/state"
-	. "github.com/jacobsa/oglematchers"
-	"github.com/jacobsa/oglemock"
 	. "github.com/jacobsa/ogletest"
 	"testing"
 )
@@ -48,7 +47,7 @@ func (t *MapReadingSaverTest) SetUp(i *TestInfo) {
 	t.scoreMap = state.NewScoreMap()
 	t.fileSystem = mock_fs.NewMockFileSystem(i.MockController, "fileSystem")
 	t.wrapped = mock_backup.NewMockFileSaver(i.MockController, "wrapped")
-	t.saver = state.NewMapReadingFileSaver(t.scores, t.fileSystem, t.wrapped)
+	t.saver = state.NewMapReadingFileSaver(t.scoreMap, t.fileSystem, t.wrapped)
 }
 
 func (t *MapReadingSaverTest) call()

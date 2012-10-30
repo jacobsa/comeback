@@ -16,7 +16,6 @@
 package state
 
 import (
-	"fmt"
 	"github.com/jacobsa/comeback/backup"
 	"github.com/jacobsa/comeback/fs"
 )
@@ -26,5 +25,5 @@ import (
 func NewMapReadingFileSaver(
 	scoreMap ScoreMap,
 	fileSystem fs.FileSystem,
-	backup.FileSaver wrapped,
-) (s FileSaver)
+	wrapped backup.FileSaver,
+) (s backup.FileSaver)
