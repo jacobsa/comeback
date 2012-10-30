@@ -150,3 +150,11 @@ func (t *ScoreMapSaverTest) CallsWrapped() {
 	// Call
 	t.call()
 }
+
+func (t *ScoreMapSaverTest) WrappedReturnsError() {
+	ExpectEq("TODO", "")
+}
+
+func (t *ScoreMapSaverTest) WrappedReturnsScores() {
+	ExpectEq("TODO", "")
+}
