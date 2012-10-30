@@ -17,31 +17,46 @@ package main
 
 import (
 	"github.com/jacobsa/comeback/backup"
+	"github.com/jacobsa/comeback/concurrent"
 	"log"
+	"runtime"
 	"sync"
 )
 
-var g_dirSaverOnce sync.Once
-var g_dirSaver backup.DirectorySaver
+var g_fileSaverOnce sync.Once
+var g_fileSaver backup.FileSaver
 
-func initDirSaver() {
+func initFileSaver() {
 	var err error
 	blobStore := getBlobStore()
 	fileSystem := getFileSystem()
-	fileSaver := getFileSaver()
 
-	// Create the directory saver.
-	g_dirSaver, err = backup.NewDirectorySaver(
+	// Set up parallelism. Leave one CPU alone, if possible.
+	numCPUs := runtime.NumCPU()
+
+	numFileSaverWorkers := numCPUs
+	if numCPUs > 1 {
+		numFileSaverWorkers--
+	}
+
+	runtime.GOMAXPROCS(numFileSaverWorkers)
+
+	// Create the file saver.
+	const chunkSize = 1 << 24 // 16 MiB
+
+	g_fileSaver, err = backup.NewFileSaver(
 		blobStore,
+		chunkSize,
 		fileSystem,
-		fileSaver)
+		concurrent.NewExecutor(numFileSaverWorkers),
+	)
 
 	if err != nil {
-		log.Fatalln("Creating directory saver:", err)
+		log.Fatalln("Creating file saver:", err)
 	}
 }
 
-func getDirSaver() backup.DirectorySaver {
-	g_dirSaverOnce.Do(initDirSaver)
-	return g_dirSaver
+func getFileSaver() backup.FileSaver {
+	g_fileSaverOnce.Do(initFileSaver)
+	return g_fileSaver
 }
