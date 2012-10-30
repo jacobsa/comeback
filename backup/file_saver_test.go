@@ -111,7 +111,7 @@ func (t *FileSaverTest) SetUp(i *TestInfo) {
 }
 
 func (t *FileSaverTest) callSaver() {
-	t.scores, t.err = t.fileSaver.Save(t.reader)
+	t.scores, t.err = t.fileSaver.SavePath(t.path)
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -134,7 +134,7 @@ func (t *FileSaverTest) OpenForReadingReturnsError() {
 
 func (t *FileSaverTest) NoDataInReader() {
 	// Reader
-	t.reader = new(bytes.Buffer)
+	t.file.reader = new(bytes.Buffer)
 
 	// Call
 	t.callSaver()
@@ -150,7 +150,7 @@ func (t *FileSaverTest) ReadErrorInFirstChunk() {
 	chunk2 := makeChunk('c')
 
 	// Reader
-	t.reader = io.MultiReader(
+	t.file.reader = io.MultiReader(
 		iotest.TimeoutReader(bytes.NewReader(chunk0)),
 		bytes.NewReader(chunk1),
 		bytes.NewReader(chunk2),
@@ -174,7 +174,7 @@ func (t *FileSaverTest) ReadErrorInMiddleChunk() {
 	chunk2 := makeChunk('b')
 
 	// Reader
-	t.reader = io.MultiReader(
+	t.file.reader = io.MultiReader(
 		bytes.NewReader(chunk0),
 		iotest.TimeoutReader(bytes.NewReader(chunk1)),
 		bytes.NewReader(chunk2),
@@ -196,7 +196,7 @@ func (t *FileSaverTest) CopesWithShortReadsWithinFullSizeChunks() {
 	chunk0 := makeChunk('a')
 
 	// Reader
-	t.reader = io.MultiReader(
+	t.file.reader = io.MultiReader(
 		iotest.OneByteReader(bytes.NewReader(chunk0)),
 	)
 
@@ -213,7 +213,7 @@ func (t *FileSaverTest) CopesWithEofAndNonZeroData() {
 	chunk0 := makeChunk('a')
 
 	// Reader
-	t.reader = io.MultiReader(
+	t.file.reader = io.MultiReader(
 		iotest.DataErrReader(bytes.NewReader(chunk0)),
 	)
 
@@ -231,7 +231,7 @@ func (t *FileSaverTest) OneSmallerSizedChunk() {
 	chunk0 = chunk0[0 : len(chunk0)-10]
 
 	// Reader
-	t.reader = io.MultiReader(
+	t.file.reader = io.MultiReader(
 		bytes.NewReader(chunk0),
 	)
 
@@ -250,7 +250,7 @@ func (t *FileSaverTest) OneFullSizedChunk() {
 	chunk0 := makeChunk('a')
 
 	// Reader
-	t.reader = io.MultiReader(
+	t.file.reader = io.MultiReader(
 		bytes.NewReader(chunk0),
 	)
 
@@ -270,7 +270,7 @@ func (t *FileSaverTest) OneFullSizedChunkPlusOneByte() {
 	chunk1 := []byte{0xde}
 
 	// Reader
-	t.reader = io.MultiReader(
+	t.file.reader = io.MultiReader(
 		bytes.NewReader(chunk0),
 		bytes.NewReader(chunk1),
 	)
@@ -296,7 +296,7 @@ func (t *FileSaverTest) MultipleChunksWithNoRemainder() {
 	chunk2 := makeChunk('c')
 
 	// Reader
-	t.reader = io.MultiReader(
+	t.file.reader = io.MultiReader(
 		bytes.NewReader(chunk0),
 		bytes.NewReader(chunk1),
 		bytes.NewReader(chunk2),
@@ -327,7 +327,7 @@ func (t *FileSaverTest) MultipleChunksWithSmallRemainder() {
 	chunk2 := []byte{0xde, 0xad}
 
 	// Reader
-	t.reader = io.MultiReader(
+	t.file.reader = io.MultiReader(
 		bytes.NewReader(chunk0),
 		bytes.NewReader(chunk1),
 		bytes.NewReader(chunk2),
@@ -359,7 +359,7 @@ func (t *FileSaverTest) MultipleChunksWithLargeRemainder() {
 	chunk2 = chunk2[0 : len(chunk2)-1]
 
 	// Reader
-	t.reader = io.MultiReader(
+	t.file.reader = io.MultiReader(
 		bytes.NewReader(chunk0),
 		bytes.NewReader(chunk1),
 		bytes.NewReader(chunk2),
@@ -390,7 +390,7 @@ func (t *FileSaverTest) ErrorStoringOneChunk() {
 	chunk2 := makeChunk('c')
 
 	// Reader
-	t.reader = io.MultiReader(
+	t.file.reader = io.MultiReader(
 		bytes.NewReader(chunk0),
 		bytes.NewReader(chunk1),
 		bytes.NewReader(chunk2),
@@ -415,7 +415,7 @@ func (t *FileSaverTest) ErrorStoringOneChunk() {
 
 func (t *FileSaverTest) ResultForEmptyReader() {
 	// Reader
-	t.reader = io.MultiReader()
+	t.file.reader = io.MultiReader()
 
 	// Call
 	t.callSaver()
@@ -431,7 +431,7 @@ func (t *FileSaverTest) AllStoresSuccessful() {
 	chunk2 := makeChunk('c')
 
 	// Reader
-	t.reader = io.MultiReader(
+	t.file.reader = io.MultiReader(
 		bytes.NewReader(chunk0),
 		bytes.NewReader(chunk1),
 		bytes.NewReader(chunk2),
@@ -474,7 +474,7 @@ func (t *FileSaverTest) StoresFinishOutOfOrder() {
 	chunk2 := makeChunk('c')
 
 	// Reader
-	t.reader = io.MultiReader(
+	t.file.reader = io.MultiReader(
 		bytes.NewReader(chunk0),
 		bytes.NewReader(chunk1),
 		bytes.NewReader(chunk2),
