@@ -98,6 +98,14 @@ func (t *FileSaverTest) ZeroChunkSize() {
 	ExpectThat(err, Error(HasSubstr("positive")))
 }
 
+func (t *FileSaverTest) CallsOpenForReading() {
+	ExpectEq("TODO", "")
+}
+
+func (t *FileSaverTest) OpenForReadingReturnsError() {
+	ExpectEq("TODO", "")
+}
+
 func (t *FileSaverTest) NoDataInReader() {
 	// Reader
 	t.reader = new(bytes.Buffer)
