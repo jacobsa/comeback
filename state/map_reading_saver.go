@@ -41,9 +41,9 @@ func NewMapReadingFileSaver(
 ////////////////////////////////////////////////////////////////////////
 
 type mapReadingFileSaver struct {
-	scoreMap ScoreMap
+	scoreMap   ScoreMap
 	fileSystem fs.FileSystem
-	wrapped backup.FileSaver
+	wrapped    backup.FileSaver
 }
 
 func (s *mapReadingFileSaver) Save(path string) (scores []blob.Score, err error) {
@@ -56,13 +56,13 @@ func (s *mapReadingFileSaver) Save(path string) (scores []blob.Score, err error)
 
 	// Do we have anything interesting in the map?
 	mapKey := ScoreMapKey{
-		Path: path,
+		Path:        path,
 		Permissions: entry.Permissions,
-		Uid: entry.Uid,
-		Gid: entry.Gid,
-		MTime: entry.MTime,
-		Inode: entry.Inode,
-		Size: entry.Size,
+		Uid:         entry.Uid,
+		Gid:         entry.Gid,
+		MTime:       entry.MTime,
+		Inode:       entry.Inode,
+		Size:        entry.Size,
 	}
 
 	if scores = s.scoreMap.Get(mapKey); scores != nil {

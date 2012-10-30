@@ -92,13 +92,13 @@ func (t *MapReadingSaverTest) ScoreMapContainsEntry() {
 
 	// Score map
 	expectedKey := state.ScoreMapKey{
-		Path: "taco",
+		Path:        "taco",
 		Permissions: 0644,
-		Uid: 17,
-		Gid: 19,
-		MTime: time.Now(),
-		Inode: 23,
-		Size: 29,
+		Uid:         17,
+		Gid:         19,
+		MTime:       time.Now(),
+		Inode:       23,
+		Size:        29,
 	}
 
 	expectedScores := []blob.Score{
@@ -111,11 +111,11 @@ func (t *MapReadingSaverTest) ScoreMapContainsEntry() {
 	// File system
 	entry := fs.DirectoryEntry{
 		Permissions: 0644,
-		Uid: 17,
-		Gid: 19,
-		MTime: expectedKey.MTime,
-		Inode: 23,
-		Size: 29,
+		Uid:         17,
+		Gid:         19,
+		MTime:       expectedKey.MTime,
+		Inode:       23,
+		Size:        29,
 	}
 
 	ExpectCall(t.fileSystem, "Stat")(Any()).
