@@ -113,7 +113,7 @@ func (t *MapReadingSaverTest) ScoreMapContainsEntry() {
 		Permissions: 0644,
 		Uid: 17,
 		Gid: 19,
-		MTime: time.Now(),
+		MTime: expectedKey.MTime,
 		Inode: 23,
 		Size: 29,
 	}
