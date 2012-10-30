@@ -24,12 +24,12 @@ import (
 
 // Create a file saver that first attempts to read scores from the supplied
 // map, only calling the wrapped saver when the map doesn't have an answer.
-func NewMapReadingFileSaver(
+func NewScoreMapFileSaver(
 	scoreMap ScoreMap,
 	fileSystem fs.FileSystem,
 	wrapped backup.FileSaver,
 ) (s backup.FileSaver) {
-	return &mapReadingFileSaver{
+	return &scoreMapFileSaver{
 		scoreMap,
 		fileSystem,
 		wrapped,
@@ -40,13 +40,13 @@ func NewMapReadingFileSaver(
 // Implementation
 ////////////////////////////////////////////////////////////////////////
 
-type mapReadingFileSaver struct {
+type scoreMapFileSaver struct {
 	scoreMap   ScoreMap
 	fileSystem fs.FileSystem
 	wrapped    backup.FileSaver
 }
 
-func (s *mapReadingFileSaver) Save(path string) (scores []blob.Score, err error) {
+func (s *scoreMapFileSaver) Save(path string) (scores []blob.Score, err error) {
 	// Stat the file.
 	entry, err := s.fileSystem.Stat(path)
 	if err != nil {

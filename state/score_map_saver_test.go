@@ -30,13 +30,13 @@ import (
 	"time"
 )
 
-func TestMapReadingSaver(t *testing.T) { RunTests(t) }
+func TestScoreMapSaver(t *testing.T) { RunTests(t) }
 
 ////////////////////////////////////////////////////////////////////////
 // Helpers
 ////////////////////////////////////////////////////////////////////////
 
-type MapReadingSaverTest struct {
+type ScoreMapSaverTest struct {
 	scoreMap   state.ScoreMap
 	fileSystem mock_fs.MockFileSystem
 	wrapped    mock_backup.MockFileSaver
@@ -47,16 +47,16 @@ type MapReadingSaverTest struct {
 	err    error
 }
 
-func init() { RegisterTestSuite(&MapReadingSaverTest{}) }
+func init() { RegisterTestSuite(&ScoreMapSaverTest{}) }
 
-func (t *MapReadingSaverTest) SetUp(i *TestInfo) {
+func (t *ScoreMapSaverTest) SetUp(i *TestInfo) {
 	t.scoreMap = state.NewScoreMap()
 	t.fileSystem = mock_fs.NewMockFileSystem(i.MockController, "fileSystem")
 	t.wrapped = mock_backup.NewMockFileSaver(i.MockController, "wrapped")
-	t.saver = state.NewMapReadingFileSaver(t.scoreMap, t.fileSystem, t.wrapped)
+	t.saver = state.NewScoreMapFileSaver(t.scoreMap, t.fileSystem, t.wrapped)
 }
 
-func (t *MapReadingSaverTest) call() {
+func (t *ScoreMapSaverTest) call() {
 	t.scores, t.err = t.saver.Save(t.path)
 }
 
@@ -64,7 +64,7 @@ func (t *MapReadingSaverTest) call() {
 // Tests
 ////////////////////////////////////////////////////////////////////////
 
-func (t *MapReadingSaverTest) CallsStat() {
+func (t *ScoreMapSaverTest) CallsStat() {
 	t.path = "taco"
 
 	// File system
@@ -75,7 +75,7 @@ func (t *MapReadingSaverTest) CallsStat() {
 	t.call()
 }
 
-func (t *MapReadingSaverTest) StatReturnsError() {
+func (t *ScoreMapSaverTest) StatReturnsError() {
 	// File system
 	ExpectCall(t.fileSystem, "Stat")(Any()).
 		WillOnce(oglemock.Return(fs.DirectoryEntry{}, errors.New("taco")))
@@ -87,7 +87,7 @@ func (t *MapReadingSaverTest) StatReturnsError() {
 	ExpectThat(t.err, Error(HasSubstr("taco")))
 }
 
-func (t *MapReadingSaverTest) ScoreMapContainsEntry() {
+func (t *ScoreMapSaverTest) ScoreMapContainsEntry() {
 	t.path = "taco"
 
 	// Score map
@@ -128,7 +128,7 @@ func (t *MapReadingSaverTest) ScoreMapContainsEntry() {
 	ExpectThat(t.scores, DeepEquals(expectedScores))
 }
 
-func (t *MapReadingSaverTest) CallsWrapped() {
+func (t *ScoreMapSaverTest) CallsWrapped() {
 	t.path = "taco"
 
 	// File system
