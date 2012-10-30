@@ -107,7 +107,7 @@ func (t *FileSaverTest) SetUp(i *TestInfo) {
 
 	// By default, return the configured reader.
 	ExpectCall(t.fileSystem, "OpenForReading")(Any()).
-		WillRepeatedly(oglemock.Return(&t.file))
+		WillRepeatedly(oglemock.Return(&t.file, nil))
 }
 
 func (t *FileSaverTest) callSaver() {
