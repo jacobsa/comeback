@@ -18,8 +18,6 @@ package main
 import (
 	"github.com/jacobsa/comeback/backup"
 	"github.com/jacobsa/comeback/concurrent"
-	"github.com/jacobsa/comeback/fs"
-	"github.com/jacobsa/comeback/sys"
 	"log"
 	"runtime"
 	"sync"
@@ -30,24 +28,7 @@ var g_dirSaver backup.DirectorySaver
 
 func initDirSaver() {
 	blobStore := getBlobStore()
-
-	// Create a user registry.
-	userRegistry, err := sys.NewUserRegistry()
-	if err != nil {
-		log.Fatalln("Creating user registry:", err)
-	}
-
-	// Create a group registry.
-	groupRegistry, err := sys.NewGroupRegistry()
-	if err != nil {
-		log.Fatalln("Creating group registry:", err)
-	}
-
-	// Create a file system.
-	fileSystem, err := fs.NewFileSystem(userRegistry, groupRegistry)
-	if err != nil {
-		log.Fatalln("Creating file system:", err)
-	}
+	fileSystem := getFileSystem()
 
 	// Set up parallelism. Leave one CPU alone, if possible.
 	numCPUs := runtime.NumCPU()
