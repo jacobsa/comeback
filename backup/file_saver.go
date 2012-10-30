@@ -50,6 +50,7 @@ func NewFileSaver(
 	s = &fileSaver{
 		store,
 		chunkSize,
+		fileSystem,
 		executor,
 	}
 
@@ -59,6 +60,7 @@ func NewFileSaver(
 type fileSaver struct {
 	blobStore blob.Store
 	chunkSize uint32
+	fileSystem fs.FileSystem
 	executor  concurrent.Executor
 }
 
@@ -135,6 +137,15 @@ func (s *fileSaver) Save(r io.Reader) (scores []blob.Score, err error) {
 }
 
 func (s *fileSaver) SavePath(path string) (scores []blob.Score, err error) {
-	err = fmt.Errorf("TODO")
-	return
+	var file io.ReadCloser
+
+	// Open the file.
+	if file, err = s.fileSystem.OpenForReading(path); err != nil {
+		err = fmt.Errorf("OpenForReading: %v", err)
+		return
+	}
+
+	defer file.Close()
+
+	return s.Save(file)
 }

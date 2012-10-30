@@ -155,7 +155,6 @@ func (t *FileSaverTest) NoDataInReader() {
 	t.callSaver()
 
 	AssertEq(nil, t.err)
-	AssertTrue(t.file.closed)
 	ExpectThat(t.scores, ElementsAre())
 }
 
