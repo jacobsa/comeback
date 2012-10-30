@@ -23,14 +23,18 @@ import (
 )
 
 // Create a file saver that first attempts to read scores from the supplied
-// map, only calling the wrapped saver when the map doesn't have an answer.
+// source map, only calling the wrapped saver when the map doesn't have an
+// answer.
+//
+// Any scores seen, regardless of their source, are written to the sink map.
 func NewScoreMapFileSaver(
-	scoreMap ScoreMap,
+	sourceMap ScoreMap,
+	sinkMap ScoreMap,
 	fileSystem fs.FileSystem,
 	wrapped backup.FileSaver,
 ) (s backup.FileSaver) {
 	return &scoreMapFileSaver{
-		scoreMap,
+		sourceMap,
 		fileSystem,
 		wrapped,
 	}
@@ -41,7 +45,7 @@ func NewScoreMapFileSaver(
 ////////////////////////////////////////////////////////////////////////
 
 type scoreMapFileSaver struct {
-	scoreMap   ScoreMap
+	sourceMap   ScoreMap
 	fileSystem fs.FileSystem
 	wrapped    backup.FileSaver
 }
@@ -65,7 +69,7 @@ func (s *scoreMapFileSaver) Save(path string) (scores []blob.Score, err error) {
 		Size:        entry.Size,
 	}
 
-	if scores = s.scoreMap.Get(mapKey); scores != nil {
+	if scores = s.sourceMap.Get(mapKey); scores != nil {
 		return
 	}
 

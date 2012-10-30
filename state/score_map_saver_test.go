@@ -37,7 +37,8 @@ func TestScoreMapSaver(t *testing.T) { RunTests(t) }
 ////////////////////////////////////////////////////////////////////////
 
 type ScoreMapSaverTest struct {
-	scoreMap   state.ScoreMap
+	sourceMap   state.ScoreMap
+	sinkMap   state.ScoreMap
 	fileSystem mock_fs.MockFileSystem
 	wrapped    mock_backup.MockFileSaver
 	saver      backup.FileSaver
@@ -50,10 +51,17 @@ type ScoreMapSaverTest struct {
 func init() { RegisterTestSuite(&ScoreMapSaverTest{}) }
 
 func (t *ScoreMapSaverTest) SetUp(i *TestInfo) {
-	t.scoreMap = state.NewScoreMap()
+	t.sourceMap = state.NewScoreMap()
+	t.sinkMap = state.NewScoreMap()
 	t.fileSystem = mock_fs.NewMockFileSystem(i.MockController, "fileSystem")
 	t.wrapped = mock_backup.NewMockFileSaver(i.MockController, "wrapped")
-	t.saver = state.NewScoreMapFileSaver(t.scoreMap, t.fileSystem, t.wrapped)
+
+	t.saver = state.NewScoreMapFileSaver(
+		t.sourceMap,
+		t.sinkMap,
+		t.fileSystem,
+		t.wrapped,
+	)
 }
 
 func (t *ScoreMapSaverTest) call() {
@@ -106,7 +114,7 @@ func (t *ScoreMapSaverTest) ScoreMapContainsEntry() {
 		blob.ComputeScore([]byte("bar")),
 	}
 
-	t.scoreMap.Set(expectedKey, expectedScores)
+	t.sourceMap.Set(expectedKey, expectedScores)
 
 	// File system
 	entry := fs.DirectoryEntry{
