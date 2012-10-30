@@ -47,6 +47,28 @@ type mapReadingFileSaver struct {
 }
 
 func (s *mapReadingFileSaver) Save(path string) (scores []blob.Score, err error) {
-	err = fmt.Errorf("TODO")
-	return
+	// Stat the file.
+	entry, err := s.fileSystem.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Stat: %v", err)
+		return
+	}
+
+	// Do we have anything interesting in the map?
+	mapKey := ScoreMapKey{
+		Path: path,
+		Permissions: entry.Permissions,
+		Uid: entry.Uid,
+		Gid: entry.Gid,
+		MTime: entry.MTime,
+		Inode: entry.Inode,
+		Size: entry.Size,
+	}
+
+	if scores = s.scoreMap.Get(mapKey); scores != nil {
+		return
+	}
+
+	// Pass on the request.
+	return s.wrapped.Save(path)
 }
