@@ -140,6 +140,7 @@ func (t *FileSaverTest) NoDataInReader() {
 	t.callSaver()
 
 	AssertEq(nil, t.err)
+	AssertTrue(t.file.closed)
 	ExpectThat(t.scores, ElementsAre())
 }
 
@@ -513,4 +514,26 @@ func (t *FileSaverTest) StoresFinishOutOfOrder() {
 			DeepEquals(score2),
 		),
 	)
+}
+
+func (t *FileSaverTest) ClosesFile() {
+	// Chunks
+	chunk0 := makeChunk('a')
+
+	// Reader
+	t.file.reader = io.MultiReader(
+		bytes.NewReader(chunk0),
+	)
+
+	// Blob store
+	score0 := blob.ComputeScore([]byte("taco"))
+
+	ExpectCall(t.blobStore, "Store")(Any()).
+		WillOnce(oglemock.Return(score0, nil))
+
+	// Call
+	t.callSaver()
+
+	AssertEq(nil, t.err)
+	ExpectTrue(t.file.closed)
 }
