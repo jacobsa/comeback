@@ -39,6 +39,7 @@ type MapReadingSaverTest struct {
 
 	path   string
 	scores []blob.Score
+	err    error
 }
 
 func init() { RegisterTestSuite(&MapReadingSaverTest{}) }
@@ -50,7 +51,9 @@ func (t *MapReadingSaverTest) SetUp(i *TestInfo) {
 	t.saver = state.NewMapReadingFileSaver(t.scoreMap, t.fileSystem, t.wrapped)
 }
 
-func (t *MapReadingSaverTest) call()
+func (t *MapReadingSaverTest) call() {
+	t.scores, t.err = t.saver.Save(t.path)
+}
 
 ////////////////////////////////////////////////////////////////////////
 // Tests

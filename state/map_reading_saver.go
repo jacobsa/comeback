@@ -16,7 +16,9 @@
 package state
 
 import (
+	"fmt"
 	"github.com/jacobsa/comeback/backup"
+	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/fs"
 )
 
@@ -26,4 +28,25 @@ func NewMapReadingFileSaver(
 	scoreMap ScoreMap,
 	fileSystem fs.FileSystem,
 	wrapped backup.FileSaver,
-) (s backup.FileSaver)
+) (s backup.FileSaver) {
+	return &mapReadingFileSaver{
+		scoreMap,
+		fileSystem,
+		wrapped,
+	}
+}
+
+////////////////////////////////////////////////////////////////////////
+// Implementation
+////////////////////////////////////////////////////////////////////////
+
+type mapReadingFileSaver struct {
+	scoreMap ScoreMap
+	fileSystem fs.FileSystem
+	wrapped backup.FileSaver
+}
+
+func (s *mapReadingFileSaver) Save(path string) (scores []blob.Score, err error) {
+	err = fmt.Errorf("TODO")
+	return
+}
