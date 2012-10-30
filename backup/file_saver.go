@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/concurrent"
+	"github.com/jacobsa/comeback/fs"
 	"io"
 	"io/ioutil"
 )
@@ -39,6 +40,7 @@ type FileSaver interface {
 func NewFileSaver(
 	store blob.Store,
 	chunkSize uint32,
+	fileSystem fs.FileSystem,
 	executor concurrent.Executor,
 ) (s FileSaver, err error) {
 	if chunkSize == 0 {

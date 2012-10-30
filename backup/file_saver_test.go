@@ -22,6 +22,7 @@ import (
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/blob/mock"
 	"github.com/jacobsa/comeback/concurrent"
+	"github.com/jacobsa/comeback/fs/mock"
 	. "github.com/jacobsa/oglematchers"
 	"github.com/jacobsa/oglemock"
 	. "github.com/jacobsa/ogletest"
@@ -55,6 +56,7 @@ func returnStoreError(err string) oglemock.Action {
 
 type FileSaverTest struct {
 	blobStore mock_blob.MockStore
+	fileSystem mock_fs.MockFileSystem
 	executor  concurrent.Executor
 	reader    io.Reader
 	fileSaver backup.FileSaver
@@ -66,9 +68,20 @@ type FileSaverTest struct {
 func init() { RegisterTestSuite(&FileSaverTest{}) }
 
 func (t *FileSaverTest) SetUp(i *TestInfo) {
+	var err error
+
 	t.blobStore = mock_blob.NewMockStore(i.MockController, "blobStore")
+	t.fileSystem = mock_fs.NewMockFileSystem(i.MockController, "fileSystem")
 	t.executor = concurrent.NewExecutor(numFileSaverWorkers)
-	t.fileSaver, _ = backup.NewFileSaver(t.blobStore, chunkSize, t.executor)
+
+	t.fileSaver, err = backup.NewFileSaver(
+		t.blobStore,
+		chunkSize,
+		t.fileSystem,
+		t.executor,
+	)
+
+	AssertEq(nil, err)
 }
 
 func (t *FileSaverTest) callSaver() {
@@ -80,7 +93,7 @@ func (t *FileSaverTest) callSaver() {
 ////////////////////////////////////////////////////////////////////////
 
 func (t *FileSaverTest) ZeroChunkSize() {
-	_, err := backup.NewFileSaver(t.blobStore, 0, t.executor)
+	_, err := backup.NewFileSaver(t.blobStore, 0, t.fileSystem, t.executor)
 	ExpectThat(err, Error(HasSubstr("size")))
 	ExpectThat(err, Error(HasSubstr("positive")))
 }
