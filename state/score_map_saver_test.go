@@ -134,6 +134,7 @@ func (t *ScoreMapSaverTest) ScoreMapContainsEntry() {
 
 	AssertEq(nil, t.err)
 	ExpectThat(t.scores, DeepEquals(expectedScores))
+	ExpectThat(t.sinkMap.Get(expectedKey), DeepEquals(expectedScores))
 }
 
 func (t *ScoreMapSaverTest) CallsWrapped() {
@@ -223,6 +224,5 @@ func (t *ScoreMapSaverTest) WrappedReturnsScores() {
 	t.call()
 
 	AssertEq(nil, t.err)
-
 	ExpectThat(t.sinkMap.Get(expectedKey), DeepEquals(expectedScores))
 }
