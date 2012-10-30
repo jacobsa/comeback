@@ -11,7 +11,6 @@ import (
 	backup "github.com/jacobsa/comeback/backup"
 	blob "github.com/jacobsa/comeback/blob"
 	oglemock "github.com/jacobsa/oglemock"
-	io "io"
 	runtime "runtime"
 	unsafe "unsafe"
 )
@@ -41,35 +40,6 @@ func (m *mockFileSaver) Oglemock_Id() uintptr {
 
 func (m *mockFileSaver) Oglemock_Description() string {
 	return m.description
-}
-
-func (m *mockFileSaver) Save(p0 io.Reader) (o0 []blob.Score, o1 error) {
-	// Get a file name and line number for the caller.
-	_, file, line, _ := runtime.Caller(1)
-
-	// Hand the call off to the controller, which does most of the work.
-	retVals := m.controller.HandleMethodCall(
-		m,
-		"Save",
-		file,
-		line,
-		[]interface{}{p0})
-
-	if len(retVals) != 2 {
-		panic(fmt.Sprintf("mockFileSaver.Save: invalid return values: %v", retVals))
-	}
-
-	// o0 []blob.Score
-	if retVals[0] != nil {
-		o0 = retVals[0].([]blob.Score)
-	}
-
-	// o1 error
-	if retVals[1] != nil {
-		o1 = retVals[1].(error)
-	}
-
-	return
 }
 
 func (m *mockFileSaver) SavePath(p0 string) (o0 []blob.Score, o1 error) {
