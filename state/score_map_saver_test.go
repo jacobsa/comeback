@@ -187,5 +187,42 @@ func (t *ScoreMapSaverTest) WrappedReturnsError() {
 }
 
 func (t *ScoreMapSaverTest) WrappedReturnsScores() {
-	ExpectEq("TODO", "")
+	expectedKey := state.ScoreMapKey{
+		Path:        "taco",
+		Permissions: 0644,
+		Uid:         17,
+		Gid:         19,
+		MTime:       time.Now(),
+		Inode:       23,
+		Size:        29,
+	}
+
+	// File system
+	entry := fs.DirectoryEntry{
+		Permissions: 0644,
+		Uid:         17,
+		Gid:         19,
+		MTime:       expectedKey.MTime,
+		Inode:       23,
+		Size:        29,
+	}
+
+	ExpectCall(t.fileSystem, "Stat")(Any()).
+		WillOnce(oglemock.Return(entry, nil))
+
+	// Wrapped
+	expectedScores := []blob.Score{
+		blob.ComputeScore([]byte("foo")),
+		blob.ComputeScore([]byte("bar")),
+	}
+
+	ExpectCall(t.wrapped, "Save")(Any()).
+		WillOnce(oglemock.Return(expectedScores, nil))
+
+	// Call
+	t.call()
+
+	AssertEq(nil, t.err)
+
+	ExpectThat(t.sinkMap.Get(expectedKey), DeepEquals(expectedScores))
 }
