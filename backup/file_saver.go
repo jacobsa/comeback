@@ -58,10 +58,10 @@ func NewFileSaver(
 }
 
 type fileSaver struct {
-	blobStore blob.Store
-	chunkSize uint32
+	blobStore  blob.Store
+	chunkSize  uint32
 	fileSystem fs.FileSystem
-	executor  concurrent.Executor
+	executor   concurrent.Executor
 }
 
 // Read 16 MiB from the supplied reader, returning less iff the reader returns

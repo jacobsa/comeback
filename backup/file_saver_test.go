@@ -73,14 +73,14 @@ func (r *readCloser) Close() error {
 }
 
 type FileSaverTest struct {
-	blobStore mock_blob.MockStore
+	blobStore  mock_blob.MockStore
 	fileSystem mock_fs.MockFileSystem
-	executor  concurrent.Executor
-	fileSaver backup.FileSaver
+	executor   concurrent.Executor
+	fileSaver  backup.FileSaver
 
 	file readCloser
 
-	path string
+	path   string
 	scores []blob.Score
 	err    error
 }
