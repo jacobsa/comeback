@@ -46,15 +46,15 @@ func saveBlob(res *[]byte) oglemock.Action {
 	return oglemock.Invoke(f)
 }
 
-type readCloser struct {
+type todoDeleteMe struct {
 	closed bool
 }
 
-func (r *readCloser) Read(b []byte) (int, error) {
+func (r *todoDeleteMe) Read(b []byte) (int, error) {
 	panic("Shouldn't be called.")
 }
 
-func (r *readCloser) Close() error {
+func (r *todoDeleteMe) Close() error {
 	if r.closed {
 		panic("Close called twice.")
 	}
@@ -227,8 +227,8 @@ func (t *DirectorySaverTest) CallsLinkResolverFileSystemAndFileSaverForFiles() {
 		WillOnce(oglemock.Return(nil))
 
 	// OpenForReading
-	file0 := &readCloser{}
-	file1 := &readCloser{}
+	file0 := &todoDeleteMe{}
+	file1 := &todoDeleteMe{}
 
 	ExpectCall(t.fileSystem, "OpenForReading")("/tortilla/taco/queso/burrito").
 		WillOnce(oglemock.Return(file0, nil))
@@ -263,7 +263,7 @@ func (t *DirectorySaverTest) FileSystemReturnsErrorForOneFile() {
 		WillRepeatedly(oglemock.Return(nil))
 
 	// OpenForReading
-	file0 := &readCloser{}
+	file0 := &todoDeleteMe{}
 
 	ExpectCall(t.fileSystem, "OpenForReading")(Any()).
 		WillOnce(oglemock.Return(file0, nil)).
@@ -298,8 +298,8 @@ func (t *DirectorySaverTest) FileSaverReturnsErrorForOneFile() {
 		WillRepeatedly(oglemock.Return(nil))
 
 	// OpenForReading
-	file0 := &readCloser{}
-	file1 := &readCloser{}
+	file0 := &todoDeleteMe{}
+	file1 := &todoDeleteMe{}
 
 	ExpectCall(t.fileSystem, "OpenForReading")(Any()).
 		WillOnce(oglemock.Return(file0, nil)).
@@ -433,7 +433,7 @@ func (t *DirectorySaverTest) CallsBlobStore() {
 		WillRepeatedly(oglemock.Return(nil))
 
 	// OpenForReading
-	file0 := &readCloser{}
+	file0 := &todoDeleteMe{}
 
 	ExpectCall(t.fileSystem, "OpenForReading")(Any()).
 		WillOnce(oglemock.Return(file0, nil))

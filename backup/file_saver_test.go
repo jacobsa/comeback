@@ -54,13 +54,33 @@ func returnStoreError(err string) oglemock.Action {
 	return oglemock.Invoke(f)
 }
 
+type readCloser struct {
+	reader io.Reader
+	closed bool
+}
+
+func (r *readCloser) Read(b []byte) (int, error) {
+	return r.reader.Read(b)
+}
+
+func (r *readCloser) Close() error {
+	if r.closed {
+		panic("Close called twice.")
+	}
+
+	r.closed = true
+	return nil
+}
+
 type FileSaverTest struct {
 	blobStore mock_blob.MockStore
 	fileSystem mock_fs.MockFileSystem
 	executor  concurrent.Executor
-	reader    io.Reader
 	fileSaver backup.FileSaver
 
+	file readCloser
+
+	path string
 	scores []blob.Score
 	err    error
 }
@@ -70,10 +90,12 @@ func init() { RegisterTestSuite(&FileSaverTest{}) }
 func (t *FileSaverTest) SetUp(i *TestInfo) {
 	var err error
 
+	// Dependencies
 	t.blobStore = mock_blob.NewMockStore(i.MockController, "blobStore")
 	t.fileSystem = mock_fs.NewMockFileSystem(i.MockController, "fileSystem")
 	t.executor = concurrent.NewExecutor(numFileSaverWorkers)
 
+	// Saver
 	t.fileSaver, err = backup.NewFileSaver(
 		t.blobStore,
 		chunkSize,
@@ -82,6 +104,10 @@ func (t *FileSaverTest) SetUp(i *TestInfo) {
 	)
 
 	AssertEq(nil, err)
+
+	// By default, return the configured reader.
+	ExpectCall(t.fileSystem, "OpenForReading")(Any()).
+		WillRepeatedly(oglemock.Return(&t.file))
 }
 
 func (t *FileSaverTest) callSaver() {
