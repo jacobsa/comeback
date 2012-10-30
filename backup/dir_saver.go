@@ -126,15 +126,8 @@ func (s *dirSaver) saveDir(
 }
 
 func (s *dirSaver) saveFile(parent string, entry *fs.DirectoryEntry) ([]blob.Score, error) {
-	// Open the file.
-	f, err := s.fileSystem.OpenForReading(path.Join(parent, entry.Name))
-	if err != nil {
-		return nil, fmt.Errorf("Opening file: %v", err)
-	}
-	defer f.Close()
-
 	// Defer to the file saver.
-	return s.fileSaver.Save(f)
+	return s.fileSaver.SavePath(path.Join(parent, entry.Name))
 }
 
 func shouldExclude(exclusions []*regexp.Regexp, relPath string) bool {
