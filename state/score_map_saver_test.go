@@ -188,6 +188,7 @@ func (t *ScoreMapSaverTest) WrappedReturnsError() {
 }
 
 func (t *ScoreMapSaverTest) WrappedReturnsScores() {
+	t.path = "taco"
 	expectedKey := state.ScoreMapKey{
 		Path:        "taco",
 		Permissions: 0644,
