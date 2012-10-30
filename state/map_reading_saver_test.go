@@ -56,6 +56,18 @@ func (t *MapReadingSaverTest) call()
 // Tests
 ////////////////////////////////////////////////////////////////////////
 
-func (t *MapReadingSaverTest) DoesFoo() {
+func (t *MapReadingSaverTest) ScoreMapContainsEntry() {
+	ExpectEq("TODO", "")
+}
+
+func (t *MapReadingSaverTest) CallsWrapped() {
+	ExpectEq("TODO", "")
+}
+
+func (t *MapReadingSaverTest) WrappedReturnsError() {
+	ExpectEq("TODO", "")
+}
+
+func (t *MapReadingSaverTest) WrappedSucceeds() {
 	ExpectEq("TODO", "")
 }
