@@ -129,13 +129,16 @@ func (t *MapReadingSaverTest) ScoreMapContainsEntry() {
 }
 
 func (t *MapReadingSaverTest) CallsWrapped() {
-	ExpectEq("TODO", "")
-}
+	t.path = "taco"
 
-func (t *MapReadingSaverTest) WrappedReturnsError() {
-	ExpectEq("TODO", "")
-}
+	// File system
+	ExpectCall(t.fileSystem, "Stat")(Any()).
+		WillOnce(oglemock.Return(fs.DirectoryEntry{}, nil))
 
-func (t *MapReadingSaverTest) WrappedSucceeds() {
-	ExpectEq("TODO", "")
+	// Wrapped
+	ExpectCall(t.wrapped, "Save")("taco").
+		WillOnce(oglemock.Return(nil, errors.New("")))
+
+	// Call
+	t.call()
 }
