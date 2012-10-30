@@ -18,6 +18,7 @@ package main
 import (
 	"github.com/jacobsa/comeback/backup"
 	"github.com/jacobsa/comeback/concurrent"
+	"github.com/jacobsa/comeback/state"
 	"log"
 	"runtime"
 	"sync"
@@ -28,8 +29,10 @@ var g_fileSaver backup.FileSaver
 
 func initFileSaver() {
 	var err error
+
 	blobStore := getBlobStore()
 	fileSystem := getFileSystem()
+	stateStruct := getState()
 
 	// Set up parallelism. Leave one CPU alone, if possible.
 	numCPUs := runtime.NumCPU()
@@ -41,7 +44,7 @@ func initFileSaver() {
 
 	runtime.GOMAXPROCS(numFileSaverWorkers)
 
-	// Create the file saver.
+	// Write chunks to the blob store in parallel.
 	const chunkSize = 1 << 24 // 16 MiB
 
 	g_fileSaver, err = backup.NewFileSaver(
@@ -54,6 +57,18 @@ func initFileSaver() {
 	if err != nil {
 		log.Fatalln("Creating file saver:", err)
 	}
+
+	// Avoid computing scores when unnecessary. Save all returned scores to a new
+	// map in the state object.
+	sourceMap := stateStruct.ScoresForFiles
+	sinkMap := state.NewScoreMap()
+	stateStruct.ScoresForFiles = sinkMap
+
+	g_fileSaver = state.NewScoreMapFileSaver(
+		sourceMap,
+		sinkMap,
+		fileSystem,
+		g_fileSaver)
 }
 
 func getFileSaver() backup.FileSaver {
