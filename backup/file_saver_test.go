@@ -125,11 +125,26 @@ func (t *FileSaverTest) ZeroChunkSize() {
 }
 
 func (t *FileSaverTest) CallsOpenForReading() {
-	ExpectEq("TODO", "")
+	t.path = "taco"
+
+	// File system
+	ExpectCall(t.fileSystem, "OpenForReading")("taco").
+		WillOnce(oglemock.Return(nil, errors.New("")))
+
+	// Call
+	t.callSaver()
 }
 
 func (t *FileSaverTest) OpenForReadingReturnsError() {
-	ExpectEq("TODO", "")
+	// File system
+	ExpectCall(t.fileSystem, "OpenForReading")(Any()).
+		WillOnce(oglemock.Return(nil, errors.New("taco")))
+
+	// Call
+	t.callSaver()
+
+	ExpectThat(t.err, Error(HasSubstr("OpenForReading")))
+	ExpectThat(t.err, Error(HasSubstr("taco")))
 }
 
 func (t *FileSaverTest) NoDataInReader() {
