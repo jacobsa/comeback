@@ -42,20 +42,20 @@ func (m *mockFileSaver) Oglemock_Description() string {
 	return m.description
 }
 
-func (m *mockFileSaver) SavePath(p0 string) (o0 []blob.Score, o1 error) {
+func (m *mockFileSaver) Save(p0 string) (o0 []blob.Score, o1 error) {
 	// Get a file name and line number for the caller.
 	_, file, line, _ := runtime.Caller(1)
 
 	// Hand the call off to the controller, which does most of the work.
 	retVals := m.controller.HandleMethodCall(
 		m,
-		"SavePath",
+		"Save",
 		file,
 		line,
 		[]interface{}{p0})
 
 	if len(retVals) != 2 {
-		panic(fmt.Sprintf("mockFileSaver.SavePath: invalid return values: %v", retVals))
+		panic(fmt.Sprintf("mockFileSaver.Save: invalid return values: %v", retVals))
 	}
 
 	// o0 []blob.Score

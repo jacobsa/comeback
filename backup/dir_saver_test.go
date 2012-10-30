@@ -210,10 +210,10 @@ func (t *DirectorySaverTest) CallsLinkResolverAndFileSaverForFiles() {
 		WillOnce(oglemock.Return(nil))
 
 	// File saver
-	ExpectCall(t.fileSaver, "SavePath")("/tortilla/taco/queso/burrito").
+	ExpectCall(t.fileSaver, "Save")("/tortilla/taco/queso/burrito").
 		WillOnce(oglemock.Return([]blob.Score{}, nil))
 
-	ExpectCall(t.fileSaver, "SavePath")("/tortilla/taco/queso/enchilada").
+	ExpectCall(t.fileSaver, "Save")("/tortilla/taco/queso/enchilada").
 		WillOnce(oglemock.Return(nil, errors.New("")))
 
 	// Call
@@ -236,7 +236,7 @@ func (t *DirectorySaverTest) FileSaverReturnsErrorForOneFile() {
 		WillRepeatedly(oglemock.Return(nil))
 
 	// File saver
-	ExpectCall(t.fileSaver, "SavePath")(Any()).
+	ExpectCall(t.fileSaver, "Save")(Any()).
 		WillOnce(oglemock.Return([]blob.Score{}, nil)).
 		WillOnce(oglemock.Return(nil, errors.New("taco")))
 
@@ -363,7 +363,7 @@ func (t *DirectorySaverTest) CallsBlobStore() {
 	score0 := blob.ComputeScore([]byte("nachos"))
 	score1 := blob.ComputeScore([]byte("carnitas"))
 
-	ExpectCall(t.fileSaver, "SavePath")(Any()).
+	ExpectCall(t.fileSaver, "Save")(Any()).
 		WillOnce(oglemock.Return([]blob.Score{score0, score1}, nil))
 
 	// Wrapped directory saver

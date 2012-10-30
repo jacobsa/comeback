@@ -111,7 +111,7 @@ func (t *FileSaverTest) SetUp(i *TestInfo) {
 }
 
 func (t *FileSaverTest) callSaver() {
-	t.scores, t.err = t.fileSaver.SavePath(t.path)
+	t.scores, t.err = t.fileSaver.Save(t.path)
 }
 
 ////////////////////////////////////////////////////////////////////////

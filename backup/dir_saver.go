@@ -127,7 +127,7 @@ func (s *dirSaver) saveDir(
 
 func (s *dirSaver) saveFile(parent string, entry *fs.DirectoryEntry) ([]blob.Score, error) {
 	// Defer to the file saver.
-	return s.fileSaver.SavePath(path.Join(parent, entry.Name))
+	return s.fileSaver.Save(path.Join(parent, entry.Name))
 }
 
 func shouldExclude(exclusions []*regexp.Regexp, relPath string) bool {

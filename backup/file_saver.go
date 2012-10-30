@@ -29,7 +29,7 @@ type FileSaver interface {
 	// Save the contents of the given path to underlying storage, returning a
 	// list of scores of blobs that should be concatenated in order to recover
 	// its contents.
-	SavePath(path string) (scores []blob.Score, err error)
+	Save(path string) (scores []blob.Score, err error)
 }
 
 // Create a file saver that uses the supplied blob store, splitting files into
@@ -70,7 +70,7 @@ func getChunk(r io.Reader, chunkSize uint32) ([]byte, error) {
 	return ioutil.ReadAll(r)
 }
 
-func (s *fileSaver) SavePath(path string) (scores []blob.Score, err error) {
+func (s *fileSaver) Save(path string) (scores []blob.Score, err error) {
 	var file io.ReadCloser
 
 	// Open the file.
