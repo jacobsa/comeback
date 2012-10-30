@@ -98,7 +98,6 @@ func (t *ScoreMapSaverTest) StatReturnsError() {
 func (t *ScoreMapSaverTest) ScoreMapContainsEntry() {
 	t.path = "taco"
 
-	// Score map
 	expectedKey := state.ScoreMapKey{
 		Path:        "taco",
 		Permissions: 0644,
@@ -109,6 +108,7 @@ func (t *ScoreMapSaverTest) ScoreMapContainsEntry() {
 		Size:        29,
 	}
 
+	// Source map
 	expectedScores := []blob.Score{
 		blob.ComputeScore([]byte("foo")),
 		blob.ComputeScore([]byte("bar")),
@@ -152,7 +152,38 @@ func (t *ScoreMapSaverTest) CallsWrapped() {
 }
 
 func (t *ScoreMapSaverTest) WrappedReturnsError() {
-	ExpectEq("TODO", "")
+	expectedKey := state.ScoreMapKey{
+		Path:        "taco",
+		Permissions: 0644,
+		Uid:         17,
+		Gid:         19,
+		MTime:       time.Now(),
+		Inode:       23,
+		Size:        29,
+	}
+
+	// File system
+	entry := fs.DirectoryEntry{
+		Permissions: 0644,
+		Uid:         17,
+		Gid:         19,
+		MTime:       expectedKey.MTime,
+		Inode:       23,
+		Size:        29,
+	}
+
+	ExpectCall(t.fileSystem, "Stat")(Any()).
+		WillOnce(oglemock.Return(entry, nil))
+
+	// Wrapped
+	ExpectCall(t.wrapped, "Save")(Any()).
+		WillOnce(oglemock.Return(nil, errors.New("taco")))
+
+	// Call
+	t.call()
+
+	AssertThat(t.err, Error(Equals("taco")))
+	ExpectEq(nil, t.sinkMap.Get(expectedKey))
 }
 
 func (t *ScoreMapSaverTest) WrappedReturnsScores() {
