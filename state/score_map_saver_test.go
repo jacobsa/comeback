@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package state_test
+package state
 
 import (
 	"errors"
@@ -22,7 +22,6 @@ import (
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/fs"
 	"github.com/jacobsa/comeback/fs/mock"
-	"github.com/jacobsa/comeback/state"
 	. "github.com/jacobsa/oglematchers"
 	"github.com/jacobsa/oglemock"
 	. "github.com/jacobsa/ogletest"
@@ -37,8 +36,8 @@ func TestScoreMapSaver(t *testing.T) { RunTests(t) }
 ////////////////////////////////////////////////////////////////////////
 
 type ScoreMapSaverTest struct {
-	sourceMap  state.ScoreMap
-	sinkMap    state.ScoreMap
+	sourceMap  ScoreMap
+	sinkMap    ScoreMap
 	fileSystem mock_fs.MockFileSystem
 	wrapped    mock_backup.MockFileSaver
 	saver      backup.FileSaver
@@ -51,12 +50,12 @@ type ScoreMapSaverTest struct {
 func init() { RegisterTestSuite(&ScoreMapSaverTest{}) }
 
 func (t *ScoreMapSaverTest) SetUp(i *TestInfo) {
-	t.sourceMap = state.NewScoreMap()
-	t.sinkMap = state.NewScoreMap()
+	t.sourceMap = NewScoreMap()
+	t.sinkMap = NewScoreMap()
 	t.fileSystem = mock_fs.NewMockFileSystem(i.MockController, "fileSystem")
 	t.wrapped = mock_backup.NewMockFileSaver(i.MockController, "wrapped")
 
-	t.saver = state.NewScoreMapFileSaver(
+	t.saver = NewScoreMapFileSaver(
 		t.sourceMap,
 		t.sinkMap,
 		t.fileSystem,
@@ -98,7 +97,7 @@ func (t *ScoreMapSaverTest) StatReturnsError() {
 func (t *ScoreMapSaverTest) ScoreMapContainsEntry() {
 	t.path = "taco"
 
-	expectedKey := state.ScoreMapKey{
+	expectedKey := ScoreMapKey{
 		Path:        "taco",
 		Permissions: 0644,
 		Uid:         17,
@@ -153,7 +152,7 @@ func (t *ScoreMapSaverTest) CallsWrapped() {
 }
 
 func (t *ScoreMapSaverTest) WrappedReturnsError() {
-	expectedKey := state.ScoreMapKey{
+	expectedKey := ScoreMapKey{
 		Path:        "taco",
 		Permissions: 0644,
 		Uid:         17,
@@ -189,7 +188,7 @@ func (t *ScoreMapSaverTest) WrappedReturnsError() {
 
 func (t *ScoreMapSaverTest) WrappedReturnsScores() {
 	t.path = "taco"
-	expectedKey := state.ScoreMapKey{
+	expectedKey := ScoreMapKey{
 		Path:        "taco",
 		Permissions: 0644,
 		Uid:         17,
