@@ -57,6 +57,7 @@ func (t *ScoreMapSaverTest) SetUp(i *TestInfo) {
 	t.sinkMap = NewScoreMap()
 	t.fileSystem = mock_fs.NewMockFileSystem(i.MockController, "fileSystem")
 	t.wrapped = mock_backup.NewMockFileSaver(i.MockController, "wrapped")
+	t.now = time.Date(2012, time.August, 15, 22, 56, 00, 00, time.Local)
 	t.nowFunc = func () time.Time { return t.now }
 
 	t.saver = newScoreMapFileSaver(
@@ -115,7 +116,7 @@ func (t *ScoreMapSaverTest) ScoreMapContainsEntry() {
 		Permissions: 0644,
 		Uid:         17,
 		Gid:         19,
-		MTime:       time.Now(),
+		MTime:       t.now.Add(-15 * time.Minute),
 		Inode:       23,
 		Size:        29,
 	}
@@ -170,7 +171,7 @@ func (t *ScoreMapSaverTest) WrappedReturnsError() {
 		Permissions: 0644,
 		Uid:         17,
 		Gid:         19,
-		MTime:       time.Now(),
+		MTime:       t.now.Add(-15 * time.Minute),
 		Inode:       23,
 		Size:        29,
 	}
@@ -206,7 +207,7 @@ func (t *ScoreMapSaverTest) WrappedReturnsScores() {
 		Permissions: 0644,
 		Uid:         17,
 		Gid:         19,
-		MTime:       time.Now(),
+		MTime:       t.now.Add(-15 * time.Minute),
 		Inode:       23,
 		Size:        29,
 	}
