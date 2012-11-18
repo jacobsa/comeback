@@ -99,6 +99,14 @@ func (t *ScoreMapSaverTest) StatReturnsError() {
 	ExpectThat(t.err, Error(HasSubstr("taco")))
 }
 
+func (t *ScoreMapSaverTest) MTimeInFuture() {
+	ExpectEq("TODO", "")
+}
+
+func (t *ScoreMapSaverTest) MTimeInRecentPast() {
+	ExpectEq("TODO", "")
+}
+
 func (t *ScoreMapSaverTest) ScoreMapContainsEntry() {
 	t.path = "taco"
 
