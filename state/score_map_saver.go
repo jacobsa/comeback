@@ -20,6 +20,7 @@ import (
 	"github.com/jacobsa/comeback/backup"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/fs"
+	"time"
 )
 
 // Create a file saver that first attempts to read scores from the supplied
@@ -44,6 +45,22 @@ func NewScoreMapFileSaver(
 ////////////////////////////////////////////////////////////////////////
 // Implementation
 ////////////////////////////////////////////////////////////////////////
+
+// Like NewScoreMapFileSaver, but allows injecting a time.Now()-like function.
+func newScoreMapFileSaver(
+	sourceMap ScoreMap,
+	sinkMap ScoreMap,
+	fileSystem fs.FileSystem,
+	wrapped backup.FileSaver,
+	now func () time.Time,
+) (s backup.FileSaver) {
+	return &scoreMapFileSaver{
+		sourceMap,
+		sinkMap,
+		fileSystem,
+		wrapped,
+	}
+}
 
 type scoreMapFileSaver struct {
 	sourceMap  ScoreMap
