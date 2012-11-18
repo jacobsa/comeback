@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package state_test
+package state
 
 import (
 	"errors"
@@ -22,7 +22,6 @@ import (
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/fs"
 	"github.com/jacobsa/comeback/fs/mock"
-	"github.com/jacobsa/comeback/state"
 	. "github.com/jacobsa/oglematchers"
 	"github.com/jacobsa/oglemock"
 	. "github.com/jacobsa/ogletest"
@@ -37,11 +36,14 @@ func TestScoreMapSaver(t *testing.T) { RunTests(t) }
 ////////////////////////////////////////////////////////////////////////
 
 type ScoreMapSaverTest struct {
-	sourceMap  state.ScoreMap
-	sinkMap    state.ScoreMap
+	sourceMap  ScoreMap
+	sinkMap    ScoreMap
 	fileSystem mock_fs.MockFileSystem
 	wrapped    mock_backup.MockFileSaver
-	saver      backup.FileSaver
+	now        time.Time
+	nowFunc    func() time.Time
+
+	saver backup.FileSaver
 
 	path   string
 	scores []blob.Score
@@ -51,16 +53,19 @@ type ScoreMapSaverTest struct {
 func init() { RegisterTestSuite(&ScoreMapSaverTest{}) }
 
 func (t *ScoreMapSaverTest) SetUp(i *TestInfo) {
-	t.sourceMap = state.NewScoreMap()
-	t.sinkMap = state.NewScoreMap()
+	t.sourceMap = NewScoreMap()
+	t.sinkMap = NewScoreMap()
 	t.fileSystem = mock_fs.NewMockFileSystem(i.MockController, "fileSystem")
 	t.wrapped = mock_backup.NewMockFileSaver(i.MockController, "wrapped")
+	t.now = time.Date(2012, time.August, 15, 22, 56, 00, 00, time.Local)
+	t.nowFunc = func() time.Time { return t.now }
 
-	t.saver = state.NewScoreMapFileSaver(
+	t.saver = newScoreMapFileSaver(
 		t.sourceMap,
 		t.sinkMap,
 		t.fileSystem,
 		t.wrapped,
+		t.nowFunc,
 	)
 }
 
@@ -98,12 +103,12 @@ func (t *ScoreMapSaverTest) StatReturnsError() {
 func (t *ScoreMapSaverTest) ScoreMapContainsEntry() {
 	t.path = "taco"
 
-	expectedKey := state.ScoreMapKey{
+	expectedKey := ScoreMapKey{
 		Path:        "taco",
 		Permissions: 0644,
 		Uid:         17,
 		Gid:         19,
-		MTime:       time.Now(),
+		MTime:       t.now.Add(-15 * time.Minute),
 		Inode:       23,
 		Size:        29,
 	}
@@ -153,12 +158,12 @@ func (t *ScoreMapSaverTest) CallsWrapped() {
 }
 
 func (t *ScoreMapSaverTest) WrappedReturnsError() {
-	expectedKey := state.ScoreMapKey{
+	expectedKey := ScoreMapKey{
 		Path:        "taco",
 		Permissions: 0644,
 		Uid:         17,
 		Gid:         19,
-		MTime:       time.Now(),
+		MTime:       t.now.Add(-15 * time.Minute),
 		Inode:       23,
 		Size:        29,
 	}
@@ -189,12 +194,12 @@ func (t *ScoreMapSaverTest) WrappedReturnsError() {
 
 func (t *ScoreMapSaverTest) WrappedReturnsScores() {
 	t.path = "taco"
-	expectedKey := state.ScoreMapKey{
+	expectedKey := ScoreMapKey{
 		Path:        "taco",
 		Permissions: 0644,
 		Uid:         17,
 		Gid:         19,
-		MTime:       time.Now(),
+		MTime:       t.now.Add(-15 * time.Minute),
 		Inode:       23,
 		Size:        29,
 	}
@@ -226,4 +231,84 @@ func (t *ScoreMapSaverTest) WrappedReturnsScores() {
 
 	AssertEq(nil, t.err)
 	ExpectThat(t.sinkMap.Get(expectedKey), DeepEquals(expectedScores))
+}
+
+func (t *ScoreMapSaverTest) MTimeInFuture() {
+	t.path = "taco"
+	mapKey := ScoreMapKey{
+		Path:        "taco",
+		Permissions: 0644,
+		Uid:         17,
+		Gid:         19,
+		MTime:       t.now.Add(time.Minute),
+		Inode:       23,
+		Size:        29,
+	}
+
+	// File system
+	entry := fs.DirectoryEntry{
+		Permissions: 0644,
+		Uid:         17,
+		Gid:         19,
+		MTime:       mapKey.MTime,
+		Inode:       23,
+		Size:        29,
+	}
+
+	ExpectCall(t.fileSystem, "Stat")(Any()).
+		WillOnce(oglemock.Return(entry, nil))
+
+	// Wrapped
+	scores := []blob.Score{
+		blob.ComputeScore([]byte("foo")),
+	}
+
+	ExpectCall(t.wrapped, "Save")(Any()).
+		WillOnce(oglemock.Return(scores, nil))
+
+	// Call
+	t.call()
+
+	AssertEq(nil, t.err)
+	ExpectEq(nil, t.sinkMap.Get(mapKey))
+}
+
+func (t *ScoreMapSaverTest) MTimeInRecentPast() {
+	t.path = "taco"
+	mapKey := ScoreMapKey{
+		Path:        "taco",
+		Permissions: 0644,
+		Uid:         17,
+		Gid:         19,
+		MTime:       t.now.Add(-30 * time.Second),
+		Inode:       23,
+		Size:        29,
+	}
+
+	// File system
+	entry := fs.DirectoryEntry{
+		Permissions: 0644,
+		Uid:         17,
+		Gid:         19,
+		MTime:       mapKey.MTime,
+		Inode:       23,
+		Size:        29,
+	}
+
+	ExpectCall(t.fileSystem, "Stat")(Any()).
+		WillOnce(oglemock.Return(entry, nil))
+
+	// Wrapped
+	scores := []blob.Score{
+		blob.ComputeScore([]byte("foo")),
+	}
+
+	ExpectCall(t.wrapped, "Save")(Any()).
+		WillOnce(oglemock.Return(scores, nil))
+
+	// Call
+	t.call()
+
+	AssertEq(nil, t.err)
+	ExpectEq(nil, t.sinkMap.Get(mapKey))
 }
