@@ -40,6 +40,9 @@ type ScoreMapSaverTest struct {
 	sinkMap    ScoreMap
 	fileSystem mock_fs.MockFileSystem
 	wrapped    mock_backup.MockFileSaver
+	now        time.Time
+	nowFunc    func () time.Time
+
 	saver      backup.FileSaver
 
 	path   string
@@ -54,12 +57,14 @@ func (t *ScoreMapSaverTest) SetUp(i *TestInfo) {
 	t.sinkMap = NewScoreMap()
 	t.fileSystem = mock_fs.NewMockFileSystem(i.MockController, "fileSystem")
 	t.wrapped = mock_backup.NewMockFileSaver(i.MockController, "wrapped")
+	t.nowFunc = func () time.Time { return t.now }
 
-	t.saver = NewScoreMapFileSaver(
+	t.saver = newScoreMapFileSaver(
 		t.sourceMap,
 		t.sinkMap,
 		t.fileSystem,
 		t.wrapped,
+		t.nowFunc,
 	)
 }
 
