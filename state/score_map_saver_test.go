@@ -100,14 +100,6 @@ func (t *ScoreMapSaverTest) StatReturnsError() {
 	ExpectThat(t.err, Error(HasSubstr("taco")))
 }
 
-func (t *ScoreMapSaverTest) MTimeInFuture() {
-	ExpectEq("TODO", "")
-}
-
-func (t *ScoreMapSaverTest) MTimeInRecentPast() {
-	ExpectEq("TODO", "")
-}
-
 func (t *ScoreMapSaverTest) ScoreMapContainsEntry() {
 	t.path = "taco"
 
@@ -239,4 +231,48 @@ func (t *ScoreMapSaverTest) WrappedReturnsScores() {
 
 	AssertEq(nil, t.err)
 	ExpectThat(t.sinkMap.Get(expectedKey), DeepEquals(expectedScores))
+}
+
+func (t *ScoreMapSaverTest) MTimeInFuture() {
+	t.path = "taco"
+	mapKey := ScoreMapKey{
+		Path:        "taco",
+		Permissions: 0644,
+		Uid:         17,
+		Gid:         19,
+		MTime:       t.now.Add(time.Minute),
+		Inode:       23,
+		Size:        29,
+	}
+
+	// File system
+	entry := fs.DirectoryEntry{
+		Permissions: 0644,
+		Uid:         17,
+		Gid:         19,
+		MTime:       mapKey.MTime,
+		Inode:       23,
+		Size:        29,
+	}
+
+	ExpectCall(t.fileSystem, "Stat")(Any()).
+		WillOnce(oglemock.Return(entry, nil))
+
+	// Wrapped
+	scores := []blob.Score{
+		blob.ComputeScore([]byte("foo")),
+	}
+
+	ExpectCall(t.wrapped, "Save")(Any()).
+		WillOnce(oglemock.Return(scores, nil))
+
+	// Call
+	t.call()
+
+	AssertEq(nil, t.err)
+	ExpectEq(nil, t.sinkMap.Get(mapKey))
+}
+
+func (t *ScoreMapSaverTest) MTimeInRecentPast() {
+	ExpectEq("TODO", "")
 }
