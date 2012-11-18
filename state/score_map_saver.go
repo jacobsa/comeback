@@ -53,7 +53,7 @@ func newScoreMapFileSaver(
 	sinkMap ScoreMap,
 	fileSystem fs.FileSystem,
 	wrapped backup.FileSaver,
-	now func () time.Time,
+	now func() time.Time,
 ) (s backup.FileSaver) {
 	return &scoreMapFileSaver{
 		sourceMap,
@@ -69,7 +69,7 @@ type scoreMapFileSaver struct {
 	sinkMap    ScoreMap
 	fileSystem fs.FileSystem
 	wrapped    backup.FileSaver
-	now        func () time.Time
+	now        func() time.Time
 }
 
 func (s *scoreMapFileSaver) Save(path string) (scores []blob.Score, err error) {

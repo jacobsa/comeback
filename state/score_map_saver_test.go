@@ -41,9 +41,9 @@ type ScoreMapSaverTest struct {
 	fileSystem mock_fs.MockFileSystem
 	wrapped    mock_backup.MockFileSaver
 	now        time.Time
-	nowFunc    func () time.Time
+	nowFunc    func() time.Time
 
-	saver      backup.FileSaver
+	saver backup.FileSaver
 
 	path   string
 	scores []blob.Score
@@ -58,7 +58,7 @@ func (t *ScoreMapSaverTest) SetUp(i *TestInfo) {
 	t.fileSystem = mock_fs.NewMockFileSystem(i.MockController, "fileSystem")
 	t.wrapped = mock_backup.NewMockFileSaver(i.MockController, "wrapped")
 	t.now = time.Date(2012, time.August, 15, 22, 56, 00, 00, time.Local)
-	t.nowFunc = func () time.Time { return t.now }
+	t.nowFunc = func() time.Time { return t.now }
 
 	t.saver = newScoreMapFileSaver(
 		t.sourceMap,
