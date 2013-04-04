@@ -18,6 +18,7 @@ package main
 import (
 	"flag"
 	"log"
+	"os"
 )
 
 // The set of commands supported by the tool.
@@ -36,7 +37,12 @@ func main() {
 	// We get the command name.
 	args := flag.Args()
 	if len(args) < 1 {
-		log.Fatalln("Missing command name.")
+		log.Println("Missing command name. Choices are:")
+		for _, cmd := range commands {
+			log.Printf("  %s\n", cmd.Name)
+		}
+
+		os.Exit(1)
 	}
 
 	cmdName := args[0]
