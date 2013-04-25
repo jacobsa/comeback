@@ -28,17 +28,15 @@ var cmdVerifyBlobs = &Command{
 	Name: "verify_blobs",
 }
 
-var g_keyLowerBound =
-	cmdVerifyBlobs.Flags.String(
-		"key_lb",
-		"",
-		"The exclusive lower bound for the bucket keys to process.")
+var g_keyLowerBound = cmdVerifyBlobs.Flags.String(
+	"key_lb",
+	"",
+	"The exclusive lower bound for the bucket keys to process.")
 
-var g_keyUpperBound =
-	cmdVerifyBlobs.Flags.String(
-		"key_ub",
-		"",
-		"The exclusive upper bound for the bucket keys to process, or the empty " +
+var g_keyUpperBound = cmdVerifyBlobs.Flags.String(
+	"key_ub",
+	"",
+	"The exclusive upper bound for the bucket keys to process, or the empty "+
 		"string if no limit.")
 
 func init() {
@@ -95,6 +93,6 @@ func runVerifyBlobs(args []string) {
 		}
 
 		// Move on to the next batch the next time around.
-		prevKey = keyBatch[len(keyBatch) - 1]
+		prevKey = keyBatch[len(keyBatch)-1]
 	}
 }
