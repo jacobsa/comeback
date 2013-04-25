@@ -24,8 +24,9 @@ import (
 // The set of commands supported by the tool.
 var commands = []*Command{
 	cmdList,
-	cmdSave,
 	cmdRestore,
+	cmdSave,
+	cmdVerifyBlobs,
 }
 
 func main() {
