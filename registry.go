@@ -20,6 +20,7 @@ import (
 	"github.com/jacobsa/aws/sdb"
 	"github.com/jacobsa/comeback/crypto"
 	"github.com/jacobsa/comeback/registry"
+	"github.com/jacobsa/util/password"
 	"log"
 	"sync"
 )
@@ -45,7 +46,7 @@ func initRegistryAndCrypter() {
 	}
 
 	// Read in the crypto password.
-	cryptoPassword := readPassword("Entry crypto password: ")
+	cryptoPassword := password.ReadPassword("Entry crypto password: ")
 	if len(cryptoPassword) == 0 {
 		log.Fatalln("You must enter a password.")
 	}

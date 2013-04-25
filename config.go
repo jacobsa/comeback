@@ -19,6 +19,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/jacobsa/comeback/config"
+	"github.com/jacobsa/util/password"
 	"io/ioutil"
 	"log"
 	"sync"
@@ -53,7 +54,7 @@ func initConfig() {
 		g_config.AccessKey.Id,
 	)
 
-	g_config.AccessKey.Secret = readPassword(prompt)
+	g_config.AccessKey.Secret = password.ReadPassword(prompt)
 	if len(g_config.AccessKey.Secret) == 0 {
 		log.Fatalln("You must enter an access key secret.")
 	}
