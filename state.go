@@ -17,6 +17,7 @@ package main
 
 import (
 	"github.com/jacobsa/comeback/state"
+	"io/ioutil"
 	"log"
 	"os"
 	"sync"
@@ -104,17 +105,24 @@ func saveState() {
 		log.Fatalln("UpdateScoreSetVersion:", err)
 	}
 
-	// Write out the state.
-	f, err := os.Create(cfg.StateFile)
+	// Write out the state to a temporary file.
+	f, err := ioutil.TempFile("", "comeback_state")
 	if err != nil {
-		log.Fatalln("Creating state file:", err)
+		log.Fatalln("Creating temporary state file:", err)
 	}
 
-	if err = f.Close(); err != nil {
-		log.Fatalln("Closing state file:", err)
-	}
+	tempFilePath := f.Name()
 
 	if err = state.SaveState(f, *stateStruct); err != nil {
 		log.Fatalln("SaveState:", err)
+	}
+
+	if err = f.Close(); err != nil {
+		log.Fatalln("Closing temporary state file:", err)
+	}
+
+	// Atomicaly rename it into the new location.
+	if err = os.Rename(tempFilePath, cfg.StateFile); err != nil {
+		log.Fatalln("Renaming temporary state file:", err)
 	}
 }
