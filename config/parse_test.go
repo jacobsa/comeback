@@ -52,14 +52,6 @@ func (t *ParseTest) TotalJunk() {
 	ExpectThat(t.err, Error(HasSubstr("invalid")))
 }
 
-func (t *ParseTest) Null() {
-	t.data = `null`
-	t.parse()
-
-	ExpectThat(t.err, Error(HasSubstr("JSON")))
-	ExpectThat(t.err, Error(HasSubstr("null")))
-}
-
 func (t *ParseTest) Array() {
 	t.data = `[17, 19]`
 	t.parse()
@@ -95,23 +87,6 @@ func (t *ParseTest) BasePathIsNumber() {
 
 	ExpectThat(t.err, Error(HasSubstr("JSON")))
 	ExpectThat(t.err, Error(HasSubstr("number")))
-}
-
-func (t *ParseTest) BasePathIsNull() {
-	t.data = `
-	{
-		"jobs": {
-			"taco": {
-				"base_path": null
-			}
-		}
-	}
-	`
-
-	t.parse()
-
-	ExpectThat(t.err, Error(HasSubstr("JSON")))
-	ExpectThat(t.err, Error(HasSubstr("null")))
 }
 
 func (t *ParseTest) BasePathIsObject() {
