@@ -32,6 +32,8 @@ type State struct {
 	// backup registry, making sure that the old version was still the current
 	// one. This protects us from drifting out of date if another process is
 	// concurrently adding scores to the blob store.
+	//
+	// TODO(jacobsa): Do we really need this silliness? See issue #15.
 	ExistingScoresVersion uint64
 
 	// A map from file system info to the scores that were seen for a given file
