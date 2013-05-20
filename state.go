@@ -110,7 +110,9 @@ func saveState() {
 		log.Fatalln("Creating state file:", err)
 	}
 
-	defer f.Close()
+	if err = f.Close(); err != nil {
+		log.Fatalln("Closing state file:", err)
+	}
 
 	if err = state.SaveState(f, *stateStruct); err != nil {
 		log.Fatalln("SaveState:", err)
