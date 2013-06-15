@@ -50,7 +50,10 @@ func (t *LruCacheTest) Empty() {
 }
 
 func (t *LruCacheTest) InsertNilValue() {
-	AssertEq("TODO", "")
+	ExpectThat(
+		func() { t.c.Insert("taco", nil) },
+		Panics(HasSubstr("nil value")),
+	)
 }
 
 func (t *LruCacheTest) LookUpUnknownKey() {
