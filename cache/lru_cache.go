@@ -83,6 +83,7 @@ func (c *lruCache) LookUp(key string) interface{} {
 	defer c.mutex.Unlock()
 
 	if elem, ok := c.index[key]; ok {
+		c.elems.MoveToFront(elem)
 		return elem.Value.(*lruCacheElement).value
 	}
 
