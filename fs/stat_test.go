@@ -24,6 +24,7 @@ import (
 	"github.com/jacobsa/oglemock"
 	. "github.com/jacobsa/ogletest"
 	"io/ioutil"
+	"net"
 	"os"
 	"path"
 	"syscall"
@@ -336,5 +337,30 @@ func (t *StatTest) NamedPipes() {
 	ExpectEq(t.myGid, t.entry.Gid)
 	ExpectThat(t.entry.Groupname, Pointee(Equals(t.myGroupname)))
 	ExpectTrue(t.entry.MTime.Equal(mtime), "%v", t.entry.MTime)
+	ExpectThat(t.entry.Scores, ElementsAre())
+}
+
+func (t *StatTest) Sockets() {
+	var err error
+
+	// Create
+	t.path = path.Join(t.baseDir, "burrito")
+	listener, err := net.Listen("unix", t.path)
+	AssertEq(nil, err)
+	defer listener.Close()
+
+	// Call
+	t.call()
+
+	AssertEq(nil, t.err)
+
+	ExpectEq(fs.TypeSocket, t.entry.Type)
+	ExpectEq("burrito", t.entry.Name)
+	ExpectEq("", t.entry.Target)
+	ExpectEq(0714|os.ModeSetgid, t.entry.Permissions)
+	ExpectEq(t.myUid, t.entry.Uid)
+	ExpectThat(t.entry.Username, Pointee(Equals(t.myUsername)))
+	ExpectEq(t.myGid, t.entry.Gid)
+	ExpectThat(t.entry.Groupname, Pointee(Equals(t.myGroupname)))
 	ExpectThat(t.entry.Scores, ElementsAre())
 }
