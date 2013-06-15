@@ -116,8 +116,8 @@ func (t *LruCacheTest) Overwrite() {
 }
 
 func (t *LruCacheTest) SafeForConcurrentAccess() {
-	const numWorkers = 10
-	runtime.GOMAXPROCS(numWorkers)
+	const numWorkers = 8
+	runtime.GOMAXPROCS(4)
 
 	// Start a few workers writing to and reading from the cache.
 	wg := sync.WaitGroup{}
@@ -125,7 +125,7 @@ func (t *LruCacheTest) SafeForConcurrentAccess() {
 	for i := 0; i < numWorkers; i++ {
 		wg.Add(1)
 		go func() {
-			const numIters = 1000
+			const numIters = 1e4
 			for i := 0; i < numIters; i++ {
 				key := fmt.Sprintf("%d", i)
 				t.c.Insert(key, i)
