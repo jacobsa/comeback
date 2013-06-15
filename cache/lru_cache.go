@@ -23,7 +23,7 @@ import (
 // Create a cache that holds the given number of items, evicting the least
 // recently used item when more space is needed.
 func NewLruCache(capacity uint) Cache {
-	return nil
+	return &lruCache{capacity: capacity, index: make(map[string]*list.Element)}
 }
 
 type lruCache struct {
