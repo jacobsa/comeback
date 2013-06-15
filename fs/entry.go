@@ -31,6 +31,7 @@ const (
 	TypeBlockDevice
 	TypeCharDevice
 	TypeNamedPipe
+	TypeSocket
 )
 
 // DirectoryEntry gives enough information to reconstruct a single entry within
