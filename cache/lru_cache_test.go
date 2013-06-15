@@ -77,7 +77,21 @@ func (t *LruCacheTest) FillUpToCapacity() {
 }
 
 func (t *LruCacheTest) ExpiresLeastRecentlyUsed() {
-	AssertEq("TODO", "")
+	AssertEq(3, cacheCapacity)
+
+	t.c.Insert("burrito", 17)
+	t.c.Insert("taco", 19)  // Least recent
+	t.c.Insert("enchilada", 23)  // Second most recent
+	AssertEq(17, t.c.LookUp("burrito"))  // Most recent
+
+	// Insert another.
+	t.c.Insert("queso", 29)
+
+	// See what's left.
+	ExpectEq(nil, t.c.LookUp("taco"))
+	ExpectEq(17, t.c.LookUp("burrito"))
+	ExpectEq(23, t.c.LookUp("enchilada"))
+	ExpectEq(29, t.c.LookUp("queso"))
 }
 
 func (t *LruCacheTest) Overwrite() {
