@@ -16,9 +16,11 @@
 package cache_test
 
 import (
+	"fmt"
 	"github.com/jacobsa/comeback/cache"
 	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
+	"sync"
 	"testing"
 )
 
@@ -113,7 +115,26 @@ func (t *LruCacheTest) Overwrite() {
 }
 
 func (t *LruCacheTest) SafeForConcurrentAccess() {
-	AssertEq("TODO", "")
+	// Start a few workers writing to and reading from the cache.
+	const numWorkers = 10
+	wg := sync.WaitGroup{}
+
+	for i := 0; i < numWorkers; i++ {
+		wg.Add(1)
+		go func() {
+			const numIters = 1000
+			for i := 0; i < numIters; i++ {
+				key := fmt.Sprintf("%d", i)
+				t.c.Insert(key, i)
+				val := t.c.LookUp(key)
+				if val != nil && val.(int) != i {
+					panic(fmt.Sprintf("Unexpected value: %v", val))
+				}
+			}
+		}()
+	}
+
+	wg.Wait()
 }
 
 func (t *LruCacheTest) EncodeAndDecode() {
