@@ -17,6 +17,7 @@ package cache
 
 import (
 	"container/list"
+	"fmt"
 	"sync"
 )
 
@@ -48,7 +49,7 @@ type lruCache struct {
 
 func (c *lruCache) Insert(key string, value interface{}) {
 	c.mutex.Lock()
-	defer c.mutex.Unlock()
+	defer c.checkInvariantsAndUnlock()
 
 	// If we allowed inserting nil values, LookUp's semantics wouldn't make sense.
 	if value == nil {
@@ -78,9 +79,29 @@ func (c *lruCache) erase_Locked(key string) {
 	c.elems.Remove(elem)
 }
 
+func (c *lruCache) checkInvariantsAndUnlock() {
+	if uint(len(c.index)) > c.capacity {
+		panic(
+			fmt.Sprintf(
+				"Index length greater than capacity: %d vs. %d",
+				len(c.index),
+				c.capacity))
+	}
+
+	if len(c.index) != c.elems.Len() {
+		panic(
+			fmt.Sprintf(
+				"Index length doesn't match list length: %d vs. %d",
+				len(c.index),
+				c.elems.Len()))
+	}
+
+	c.mutex.Unlock()
+}
+
 func (c *lruCache) LookUp(key string) interface{} {
 	c.mutex.Lock()
-	defer c.mutex.Unlock()
+	defer c.checkInvariantsAndUnlock()
 
 	if elem, ok := c.index[key]; ok {
 		c.elems.MoveToFront(elem)
