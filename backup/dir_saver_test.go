@@ -146,7 +146,7 @@ func (t *DirectorySaverTest) AllEntriesExcluded() {
 	t.exclusions = []*regexp.Regexp{
 		regexp.MustCompile(`taco/q`),
 		regexp.MustCompile(`taco/b`),
-		regexp.MustCompile(`taco/[t-w]`),
+		regexp.MustCompile(`taco/[t-x]`),
 	}
 
 	// ReadDir
@@ -157,6 +157,7 @@ func (t *DirectorySaverTest) AllEntriesExcluded() {
 		makeEntry("uuuuuu", fs.TypeBlockDevice),
 		makeEntry("vvvvvv", fs.TypeCharDevice),
 		makeEntry("wwwwww", fs.TypeNamedPipe),
+		makeEntry("xxxxxx", fs.TypeSocket),
 	}
 
 	ExpectCall(t.fileSystem, "ReadDir")(Any()).
