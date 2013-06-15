@@ -44,7 +44,8 @@ func (t *LruCacheTest) SetUp(i *TestInfo) {
 ////////////////////////////////////////////////////////////////////////
 
 func (t *LruCacheTest) Empty() {
-	AssertEq("TODO", "")
+	ExpectEq(nil, t.c.LookUp(""))
+	ExpectEq(nil, t.c.LookUp("taco"))
 }
 
 func (t *LruCacheTest) LookUpUnknownKey() {
