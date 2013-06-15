@@ -16,6 +16,8 @@
 package cache_test
 
 import (
+	"bytes"
+	"encoding/gob"
 	"fmt"
 	"github.com/jacobsa/comeback/cache"
 	. "github.com/jacobsa/oglematchers"
@@ -143,7 +145,18 @@ func (t *LruCacheTest) SafeForConcurrentAccess() {
 }
 
 func (t *LruCacheTest) Encode_EmptyCache() {
-	AssertEq("TODO", "")
+	// Encode
+	buf := new(bytes.Buffer)
+	encoder := gob.NewEncoder(buf)
+	AssertEq(nil, encoder.Encode(&t.c))
+
+	// Decode
+	decoder := gob.NewDecoder(buf)
+	var decoded cache.Cache
+	AssertEq(nil, decoder.Decode(&decoded))
+
+	ExpectEq(nil, decoded.LookUp(""))
+	ExpectEq(nil, decoded.LookUp("taco"))
 }
 
 func (t *LruCacheTest) Encode_PreservesLruOrder() {
