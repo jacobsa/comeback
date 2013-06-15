@@ -37,6 +37,13 @@ func init() {
 	cmdSave.Run = runSave // Break flag-related dependency loop.
 }
 
+func saveStatePeriodically(c <-chan time.Time) {
+	for _ = range c {
+		log.Println("Writing out state file.")
+		saveState()
+	}
+}
+
 func runSave(args []string) {
 	cfg := getConfig()
 
@@ -53,8 +60,16 @@ func runSave(args []string) {
 	// Grab dependencies. Make sure to get the registry first, because otherwise
 	// the user will have to wait for bucket keys to be listed before being
 	// prompted for a crypto password.
+	//
+	// Make sure to do this before setting up state saving below, because these
+	// calls may modify the state struct.
 	reg := getRegistry()
 	dirSaver := getDirSaver()
+
+	// Periodically save state.
+	const saveStatePeriod = 15 * time.Second
+	saveStateTicker := time.NewTicker(saveStatePeriod)
+	go saveStatePeriodically(saveStateTicker.C)
 
 	// Choose a start time for the job.
 	startTime := time.Now()
@@ -81,6 +96,7 @@ func runSave(args []string) {
 	log.Printf("Successfully backed up. ID: %16x\n", completedJob.Id)
 
 	// Store state for next time.
-	log.Println("Writing out state file...")
+  saveStateTicker.Stop()
+	log.Println("Writing out final state file...")
 	saveState()
 }
