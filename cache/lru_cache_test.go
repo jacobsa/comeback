@@ -49,7 +49,11 @@ func (t *LruCacheTest) Empty() {
 }
 
 func (t *LruCacheTest) LookUpUnknownKey() {
-	AssertEq("TODO", "")
+	t.c.Insert("burrito", 17)
+	t.c.Insert("taco", 19)
+
+	ExpectEq(nil, t.c.LookUp(""))
+	ExpectEq(nil, t.c.LookUp("enchilada"))
 }
 
 func (t *LruCacheTest) FillUpToCapacity() {
