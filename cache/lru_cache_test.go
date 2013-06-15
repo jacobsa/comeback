@@ -20,6 +20,7 @@ import (
 	"github.com/jacobsa/comeback/cache"
 	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
+	"runtime"
 	"sync"
 	"testing"
 )
@@ -115,8 +116,10 @@ func (t *LruCacheTest) Overwrite() {
 }
 
 func (t *LruCacheTest) SafeForConcurrentAccess() {
-	// Start a few workers writing to and reading from the cache.
 	const numWorkers = 10
+	runtime.GOMAXPROCS(numWorkers)
+
+	// Start a few workers writing to and reading from the cache.
 	wg := sync.WaitGroup{}
 
 	for i := 0; i < numWorkers; i++ {
