@@ -21,8 +21,12 @@ import (
 )
 
 // Create a cache that holds the given number of items, evicting the least
-// recently used item when more space is needed.
+// recently used item when more space is needed. The capacity must be non-zero.
 func NewLruCache(capacity uint) Cache {
+	if capacity == 0 {
+		panic("Capacity must be non-zero.")
+	}
+
 	return &lruCache{capacity: capacity, index: make(map[string]*list.Element)}
 }
 

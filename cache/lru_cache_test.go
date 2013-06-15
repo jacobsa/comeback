@@ -95,7 +95,21 @@ func (t *LruCacheTest) ExpiresLeastRecentlyUsed() {
 }
 
 func (t *LruCacheTest) Overwrite() {
-	AssertEq("TODO", "")
+	t.c.Insert("taco", 17)
+	t.c.Insert("taco", 19)
+	t.c.Insert("taco", 23)
+
+	ExpectEq(23, t.c.LookUp("taco"))
+
+	// The overwritten entries shouldn't count toward capacity.
+	AssertEq(3, cacheCapacity)
+
+	t.c.Insert("burrito", 29)
+	t.c.Insert("enchilada", 31)
+
+	ExpectEq(23, t.c.LookUp("taco"))
+	ExpectEq(29, t.c.LookUp("burrito"))
+	ExpectEq(31, t.c.LookUp("enchilada"))
 }
 
 func (t *LruCacheTest) SafeForConcurrentAccess() {
