@@ -27,7 +27,7 @@ import (
 */
 import "C"
 
-// Current returns the current group. 
+// Current returns the current group.
 func Current() (*Group, error) {
 	return lookup(syscall.Getgid(), "", false)
 }

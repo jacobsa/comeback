@@ -15,8 +15,7 @@
 
 package cache
 
-import (
-)
+import ()
 
 // A cache mapping from string keys to arbitrary values. Safe for concurrent
 // access, and supports gob encoding.

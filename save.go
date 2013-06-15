@@ -96,7 +96,7 @@ func runSave(args []string) {
 	log.Printf("Successfully backed up. ID: %16x\n", completedJob.Id)
 
 	// Store state for next time.
-  saveStateTicker.Stop()
+	saveStateTicker.Stop()
 	log.Println("Writing out final state file...")
 	saveState()
 }

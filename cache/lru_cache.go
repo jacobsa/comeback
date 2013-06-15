@@ -25,7 +25,7 @@ import (
 func NewLruCache(capacity uint) Cache
 
 type lruCache struct {
-	mutex sync.RWMutex
+	mutex    sync.RWMutex
 	capacity uint
 
 	// List of elements, with least recently used at the tail.
