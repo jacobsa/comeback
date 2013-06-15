@@ -26,6 +26,8 @@ import (
 var g_stateOnce sync.Once
 var g_state state.State
 
+var g_saveStateMutex sync.Mutex
+
 func initState() {
 	cfg := getConfig()
 	var err error
@@ -88,6 +90,10 @@ func getState() *state.State {
 }
 
 func saveState() {
+	// Make sure only one run can happen at a time.
+	g_saveStateMutex.Lock()
+	defer g_saveStateMutex.Unlock()
+
 	var err error
 
 	cfg := getConfig()
