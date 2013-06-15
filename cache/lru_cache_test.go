@@ -43,6 +43,26 @@ func (t *LruCacheTest) SetUp(i *TestInfo) {
 // Tests
 ////////////////////////////////////////////////////////////////////////
 
-func (t *LruCacheTest) DoesFoo() {
+func (t *LruCacheTest) Empty() {
+	AssertEq("TODO", "")
+}
+
+func (t *LruCacheTest) LookUpUnknownKey() {
+	AssertEq("TODO", "")
+}
+
+func (t *LruCacheTest) FillUpToCapacity() {
+	AssertEq("TODO", "")
+}
+
+func (t *LruCacheTest) ExpiresLeastRecentlyUsed() {
+	AssertEq("TODO", "")
+}
+
+func (t *LruCacheTest) SafeForConcurrentAccess() {
+	AssertEq("TODO", "")
+}
+
+func (t *LruCacheTest) EncodeAndDecode() {
 	AssertEq("TODO", "")
 }
