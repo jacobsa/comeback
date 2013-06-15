@@ -21,13 +21,18 @@ import (
 )
 
 // Create a cache that holds the given number of items, evicting the least
-// recently used item when more space is needed. The capacity must be non-zero.
+// recently used item when more space is needed. The capacity
 func NewLruCache(capacity uint) Cache {
 	if capacity == 0 {
 		panic("Capacity must be non-zero.")
 	}
 
 	return &lruCache{capacity: capacity, index: make(map[string]*list.Element)}
+}
+
+type lruCacheElement struct {
+	key string
+	value interface{}
 }
 
 type lruCache struct {
@@ -54,7 +59,7 @@ func (c *lruCache) Insert(key string, value interface{}) {
 	c.erase_Locked(key)
 
 	// Add a list element and index it.
-	elem := c.elems.PushFront(value)
+	elem := c.elems.PushFront(&lruCacheElement{key, value})
 	c.index[key] = elem
 }
 
@@ -73,7 +78,7 @@ func (c *lruCache) LookUp(key string) interface{} {
 	defer c.mutex.Unlock()
 
 	if elem, ok := c.index[key]; ok {
-		return elem.Value
+		return elem.Value.(*lruCacheElement).value
 	}
 
 	return nil
