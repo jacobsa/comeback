@@ -160,7 +160,32 @@ func (t *LruCacheTest) Encode_EmptyCache() {
 }
 
 func (t *LruCacheTest) Encode_PreservesLruOrder() {
-	AssertEq("TODO", "")
+	// Contents
+	AssertEq(3, cacheCapacity)
+
+	t.c.Insert("burrito", 17)
+	t.c.Insert("taco", 19)  // Least recent
+	t.c.Insert("enchilada", 23)  // Second most recent
+	AssertEq(17, t.c.LookUp("burrito"))  // Most recent
+
+	// Encode
+	buf := new(bytes.Buffer)
+	encoder := gob.NewEncoder(buf)
+	AssertEq(nil, encoder.Encode(&t.c))
+
+	// Decode
+	decoder := gob.NewDecoder(buf)
+	var decoded cache.Cache
+	AssertEq(nil, decoder.Decode(&decoded))
+
+	// Insert another.
+	decoded.Insert("queso", 29)
+
+	// See what's left.
+	ExpectEq(nil, decoded.LookUp("taco"))
+	ExpectEq(17, decoded.LookUp("burrito"))
+	ExpectEq(23, decoded.LookUp("enchilada"))
+	ExpectEq(29, decoded.LookUp("queso"))
 }
 
 func (t *LruCacheTest) Encode_ConcurrentAccess() {
