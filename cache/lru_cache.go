@@ -36,3 +36,17 @@ type lruCache struct {
 	// Index int `elems` for lookup by key.
 	index map[string]*list.Element
 }
+
+func (c *lruCache) Insert(key string, value interface{}) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	// If the key is already present, erase it first.
+	if _, ok := c.index[key]; ok {
+		c.erase_Locked(key)
+	}
+
+	// Add a list element and index it.
+	elem := c.elems.PushFront(value)
+	index[key] = elem
+}

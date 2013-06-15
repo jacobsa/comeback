@@ -49,6 +49,10 @@ func (t *LruCacheTest) Empty() {
 	ExpectEq(nil, t.c.LookUp("taco"))
 }
 
+func (t *LruCacheTest) InsertNilValue() {
+	AssertEq("TODO", "")
+}
+
 func (t *LruCacheTest) LookUpUnknownKey() {
 	t.c.Insert("burrito", 17)
 	t.c.Insert("taco", 19)
@@ -70,6 +74,10 @@ func (t *LruCacheTest) FillUpToCapacity() {
 }
 
 func (t *LruCacheTest) ExpiresLeastRecentlyUsed() {
+	AssertEq("TODO", "")
+}
+
+func (t *LruCacheTest) Overwrite() {
 	AssertEq("TODO", "")
 }
 
