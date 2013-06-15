@@ -357,7 +357,6 @@ func (t *StatTest) Sockets() {
 	ExpectEq(fs.TypeSocket, t.entry.Type)
 	ExpectEq("burrito", t.entry.Name)
 	ExpectEq("", t.entry.Target)
-	ExpectEq(0714|os.ModeSetgid, t.entry.Permissions)
 	ExpectEq(t.myUid, t.entry.Uid)
 	ExpectThat(t.entry.Username, Pointee(Equals(t.myUsername)))
 	ExpectEq(t.myGid, t.entry.Gid)

@@ -91,6 +91,8 @@ func (fs *fileSystem) convertFileInfo(fi os.FileInfo) (entry *DirectoryEntry, er
 		entry.DeviceNumber = statT.Rdev
 	case os.ModeNamedPipe:
 		entry.Type = TypeNamedPipe
+	case os.ModeSocket:
+		entry.Type = TypeSocket
 	default:
 		return entry, fmt.Errorf("Unhandled mode: %v %u", fi.Mode(), fi.Mode())
 	}
