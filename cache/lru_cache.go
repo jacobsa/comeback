@@ -61,6 +61,11 @@ func (c *lruCache) Insert(key string, value interface{}) {
 	// Add a list element and index it.
 	elem := c.elems.PushFront(&lruCacheElement{key, value})
 	c.index[key] = elem
+
+	// Expire the least recently used element if necessary.
+	if uint(len(c.index)) > c.capacity {
+		c.erase_Locked(c.elems.Back().Value.(*lruCacheElement).key)
+	}
 }
 
 func (c *lruCache) erase_Locked(key string) {
