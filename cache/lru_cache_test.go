@@ -142,6 +142,14 @@ func (t *LruCacheTest) SafeForConcurrentAccess() {
 	wg.Wait()
 }
 
-func (t *LruCacheTest) EncodeAndDecode() {
+func (t *LruCacheTest) Encode_EmptyCache() {
+	AssertEq("TODO", "")
+}
+
+func (t *LruCacheTest) Encode_PreservesLruOrder() {
+	AssertEq("TODO", "")
+}
+
+func (t *LruCacheTest) Encode_ConcurrentAccess() {
 	AssertEq("TODO", "")
 }
