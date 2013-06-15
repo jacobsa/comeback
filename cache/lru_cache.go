@@ -58,3 +58,14 @@ func (c *lruCache) erase_Locked(key string) {
 	delete(c.index, key)
 	c.elems.Remove(elem)
 }
+
+func (c *lruCache) LookUp(key string) interface{} {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	if elem, ok := c.index[key]; ok {
+		return elem.Value
+	}
+
+	return nil
+}
