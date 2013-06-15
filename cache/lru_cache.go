@@ -41,14 +41,20 @@ func (c *lruCache) Insert(key string, value interface{}) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
-	// If the key is already present, erase it first.
-	if _, ok := c.index[key]; ok {
-		c.erase_Locked(key)
-	}
+	// Make sure the key isn't already present.
+	c.erase_Locked(key)
 
 	// Add a list element and index it.
 	elem := c.elems.PushFront(value)
 	c.index[key] = elem
 }
 
-func (c *lruCache) erase_Locked(key string)
+func (c *lruCache) erase_Locked(key string) {
+	elem, ok := c.index[key]
+	if !ok {
+		return
+	}
+
+	delete(c.index, key)
+	c.elems.Remove(elem)
+}
