@@ -17,6 +17,7 @@ package cache_test
 
 import (
 	"github.com/jacobsa/comeback/cache"
+	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
 	"testing"
 )
@@ -57,7 +58,15 @@ func (t *LruCacheTest) LookUpUnknownKey() {
 }
 
 func (t *LruCacheTest) FillUpToCapacity() {
-	AssertEq("TODO", "")
+	AssertEq(3, cacheCapacity)
+
+	t.c.Insert("burrito", 17)
+	t.c.Insert("taco", 19)
+	t.c.Insert("enchilada", []byte{0x23, 0x29})
+
+	ExpectEq(17, t.c.LookUp("burrito"))
+	ExpectEq(19, t.c.LookUp("taco"))
+	ExpectThat(t.c.LookUp("enchilada"), DeepEquals([]byte{0x23, 0x29}))
 }
 
 func (t *LruCacheTest) ExpiresLeastRecentlyUsed() {
