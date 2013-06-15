@@ -48,5 +48,7 @@ func (c *lruCache) Insert(key string, value interface{}) {
 
 	// Add a list element and index it.
 	elem := c.elems.PushFront(value)
-	index[key] = elem
+	c.index[key] = elem
 }
+
+func (c *lruCache) erase_Locked(key string)
