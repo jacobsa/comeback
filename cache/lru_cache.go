@@ -16,8 +16,21 @@
 package cache
 
 import (
+	"container/list"
+	"sync"
 )
 
 // Create a cache that holds the given number of items, evicting the least
 // recently used item when more space is needed.
 func NewLruCache(capacity uint) Cache
+
+type lruCache struct {
+	mutex sync.RWMutex
+	capacity uint
+
+	// List of elements, with least recently used at the tail.
+	elems list.List
+
+	// Index int `elems` for lookup by key.
+	index map[string]*list.Element
+}
