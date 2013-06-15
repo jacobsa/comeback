@@ -131,6 +131,8 @@ func (t *LruCacheTest) SafeForConcurrentAccess() {
 					panic(fmt.Sprintf("Unexpected value: %v", val))
 				}
 			}
+
+			wg.Done()
 		}()
 	}
 
