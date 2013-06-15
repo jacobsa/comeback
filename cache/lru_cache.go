@@ -41,6 +41,11 @@ func (c *lruCache) Insert(key string, value interface{}) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
+	// If we allowed inserting nil values, LookUp's semantics wouldn't make sense.
+	if value == nil {
+		panic("Cannot insert nil value.")
+	}
+
 	// Make sure the key isn't already present.
 	c.erase_Locked(key)
 
