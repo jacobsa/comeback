@@ -22,7 +22,9 @@ import (
 
 // Create a cache that holds the given number of items, evicting the least
 // recently used item when more space is needed.
-func NewLruCache(capacity uint) Cache
+func NewLruCache(capacity uint) Cache {
+	return nil
+}
 
 type lruCache struct {
 	mutex    sync.RWMutex
