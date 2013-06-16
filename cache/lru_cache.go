@@ -159,7 +159,8 @@ func (c *lruCache) GobDecode(b []byte) (err error) {
 	}
 
 	// Decode the elements.
-	if err = decoder.Decode(&c.elems); err != nil {
+	var elemsSlice []*lruCacheElement
+	if err = decoder.Decode(&elemsSlice); err != nil {
 		err = fmt.Errorf("Decoding elems: %v", err)
 		return
 	}
