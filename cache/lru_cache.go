@@ -188,7 +188,7 @@ func (c *lruCache) GobDecode(b []byte) (err error) {
 
 	// Set up the receiver's elements.
 	for _, elem := range elemsSlice {
-		e := c.elems.PushFront(elem)
+		e := c.elems.PushBack(elem)
 		c.index[elem.Key] = e
 	}
 
