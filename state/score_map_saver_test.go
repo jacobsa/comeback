@@ -36,8 +36,7 @@ func TestScoreMapSaver(t *testing.T) { RunTests(t) }
 ////////////////////////////////////////////////////////////////////////
 
 type ScoreMapSaverTest struct {
-	sourceMap  ScoreMap
-	sinkMap    ScoreMap
+	scoreMap   ScoreMap
 	fileSystem mock_fs.MockFileSystem
 	wrapped    mock_backup.MockFileSaver
 	now        time.Time
@@ -53,16 +52,14 @@ type ScoreMapSaverTest struct {
 func init() { RegisterTestSuite(&ScoreMapSaverTest{}) }
 
 func (t *ScoreMapSaverTest) SetUp(i *TestInfo) {
-	t.sourceMap = NewScoreMap()
-	t.sinkMap = NewScoreMap()
+	t.scoreMap = NewScoreMap()
 	t.fileSystem = mock_fs.NewMockFileSystem(i.MockController, "fileSystem")
 	t.wrapped = mock_backup.NewMockFileSaver(i.MockController, "wrapped")
 	t.now = time.Date(2012, time.August, 15, 22, 56, 00, 00, time.Local)
 	t.nowFunc = func() time.Time { return t.now }
 
 	t.saver = newScoreMapFileSaver(
-		t.sourceMap,
-		t.sinkMap,
+		t.scoreMap,
 		t.fileSystem,
 		t.wrapped,
 		t.nowFunc,
@@ -113,13 +110,13 @@ func (t *ScoreMapSaverTest) ScoreMapContainsEntry() {
 		Size:        29,
 	}
 
-	// Source map
+	// Map
 	expectedScores := []blob.Score{
 		blob.ComputeScore([]byte("foo")),
 		blob.ComputeScore([]byte("bar")),
 	}
 
-	t.sourceMap.Set(expectedKey, expectedScores)
+	t.scoreMap.Set(expectedKey, expectedScores)
 
 	// File system
 	entry := fs.DirectoryEntry{
@@ -139,7 +136,6 @@ func (t *ScoreMapSaverTest) ScoreMapContainsEntry() {
 
 	AssertEq(nil, t.err)
 	ExpectThat(t.scores, DeepEquals(expectedScores))
-	ExpectThat(t.sinkMap.Get(expectedKey), DeepEquals(expectedScores))
 }
 
 func (t *ScoreMapSaverTest) CallsWrapped() {
@@ -189,7 +185,7 @@ func (t *ScoreMapSaverTest) WrappedReturnsError() {
 	t.call()
 
 	AssertThat(t.err, Error(Equals("taco")))
-	ExpectEq(nil, t.sinkMap.Get(expectedKey))
+	ExpectEq(nil, t.scoreMap.Get(expectedKey))
 }
 
 func (t *ScoreMapSaverTest) WrappedReturnsScores() {
@@ -230,7 +226,7 @@ func (t *ScoreMapSaverTest) WrappedReturnsScores() {
 	t.call()
 
 	AssertEq(nil, t.err)
-	ExpectThat(t.sinkMap.Get(expectedKey), DeepEquals(expectedScores))
+	ExpectThat(t.scoreMap.Get(expectedKey), DeepEquals(expectedScores))
 }
 
 func (t *ScoreMapSaverTest) MTimeInFuture() {
@@ -270,7 +266,7 @@ func (t *ScoreMapSaverTest) MTimeInFuture() {
 	t.call()
 
 	AssertEq(nil, t.err)
-	ExpectEq(nil, t.sinkMap.Get(mapKey))
+	ExpectEq(nil, t.scoreMap.Get(mapKey))
 }
 
 func (t *ScoreMapSaverTest) MTimeInRecentPast() {
@@ -310,5 +306,5 @@ func (t *ScoreMapSaverTest) MTimeInRecentPast() {
 	t.call()
 
 	AssertEq(nil, t.err)
-	ExpectEq(nil, t.sinkMap.Get(mapKey))
+	ExpectEq(nil, t.scoreMap.Get(mapKey))
 }

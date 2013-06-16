@@ -58,15 +58,9 @@ func initFileSaver() {
 		log.Fatalln("Creating file saver:", err)
 	}
 
-	// Avoid computing scores when unnecessary. Save all returned scores to a new
-	// map in the state object.
-	sourceMap := stateStruct.ScoresForFiles
-	sinkMap := state.NewScoreMap()
-	stateStruct.ScoresForFiles = sinkMap
-
+	// Avoid computing scores when unnecessary.
 	g_fileSaver = state.NewScoreMapFileSaver(
-		sourceMap,
-		sinkMap,
+		stateStruct.ScoresForFiles,
 		fileSystem,
 		g_fileSaver)
 }

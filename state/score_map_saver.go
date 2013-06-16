@@ -24,19 +24,15 @@ import (
 )
 
 // Create a file saver that first attempts to read scores from the supplied
-// source map, only calling the wrapped saver when the map doesn't have an
+// score map, only calling the wrapped saver when the map doesn't have an
 // answer.
-//
-// Any scores seen, regardless of their source, are written to the sink map.
 func NewScoreMapFileSaver(
-	sourceMap ScoreMap,
-	sinkMap ScoreMap,
+	scoreMap ScoreMap,
 	fileSystem fs.FileSystem,
 	wrapped backup.FileSaver,
 ) (s backup.FileSaver) {
 	return newScoreMapFileSaver(
-		sourceMap,
-		sinkMap,
+		scoreMap,
 		fileSystem,
 		wrapped,
 		time.Now,
@@ -49,15 +45,13 @@ func NewScoreMapFileSaver(
 
 // Like NewScoreMapFileSaver, but allows injecting a time.Now()-like function.
 func newScoreMapFileSaver(
-	sourceMap ScoreMap,
-	sinkMap ScoreMap,
+	scoreMap ScoreMap,
 	fileSystem fs.FileSystem,
 	wrapped backup.FileSaver,
 	now func() time.Time,
 ) (s backup.FileSaver) {
 	return &scoreMapFileSaver{
-		sourceMap,
-		sinkMap,
+		scoreMap,
 		fileSystem,
 		wrapped,
 		now,
@@ -65,8 +59,7 @@ func newScoreMapFileSaver(
 }
 
 type scoreMapFileSaver struct {
-	sourceMap  ScoreMap
-	sinkMap    ScoreMap
+	scoreMap   ScoreMap
 	fileSystem fs.FileSystem
 	wrapped    backup.FileSaver
 	now        func() time.Time
@@ -87,8 +80,7 @@ func (s *scoreMapFileSaver) Save(path string) (scores []blob.Score, err error) {
 		return s.wrapped.Save(path)
 	}
 
-	// Whatever we do, make sure that we insert any result we find into the sink
-	// map.
+	// Do we have anything interesting in the map?
 	mapKey := ScoreMapKey{
 		Path:        path,
 		Permissions: entry.Permissions,
@@ -99,16 +91,16 @@ func (s *scoreMapFileSaver) Save(path string) (scores []blob.Score, err error) {
 		Size:        entry.Size,
 	}
 
-	defer func() {
-		if err == nil {
-			s.sinkMap.Set(mapKey, scores)
-		}
-	}()
-
-	// Do we have anything interesting in the map?
-	if scores = s.sourceMap.Get(mapKey); scores != nil {
+	if scores = s.scoreMap.Get(mapKey); scores != nil {
 		return
 	}
+
+	// Make sure that we insert any result we find into the map.
+	defer func() {
+		if err == nil {
+			s.scoreMap.Set(mapKey, scores)
+		}
+	}()
 
 	// Pass on the request.
 	return s.wrapped.Save(path)
