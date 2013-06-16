@@ -187,7 +187,3 @@ func (t *LruCacheTest) Encode_PreservesLruOrderAndCapacity() {
 	ExpectEq(23, decoded.LookUp("enchilada"))
 	ExpectEq(29, decoded.LookUp("queso"))
 }
-
-func (t *LruCacheTest) Encode_ConcurrentAccess() {
-	AssertEq("TODO", "")
-}

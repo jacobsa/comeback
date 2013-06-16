@@ -144,6 +144,9 @@ func (c *lruCache) GobEncode() (b []byte, err error) {
 	buf := new(bytes.Buffer)
 	encoder := gob.NewEncoder(buf)
 
+	c.mutex.RLock()
+	defer c.mutex.RUnlock()
+
 	// Encode the capacity.
 	if err = encoder.Encode(c.capacity); err != nil {
 		err = fmt.Errorf("Encoding capacity: %v", err)
