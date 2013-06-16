@@ -82,6 +82,11 @@ func (c *lruCache) erase_Locked(key string) {
 }
 
 func (c *lruCache) checkInvariantsAndUnlock() {
+	// Don't mask other panics.
+	if r := recover(); r != nil {
+		panic(r)
+	}
+
 	if uint(len(c.index)) > c.capacity {
 		panic(
 			fmt.Sprintf(
