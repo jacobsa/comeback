@@ -26,11 +26,9 @@ import (
 // Create a cache that holds the given number of items, evicting the least
 // recently used item when more space is needed. The capacity
 func NewLruCache(capacity uint) Cache {
-	if capacity == 0 {
-		panic("Capacity must be non-zero.")
-	}
-
-	return &lruCache{capacity: capacity, index: make(map[string]*list.Element)}
+	result := &lruCache{}
+	result.init(capacity)
+	return result
 }
 
 type lruCacheElement struct {
@@ -42,11 +40,25 @@ type lruCache struct {
 	mutex    sync.RWMutex
 	capacity uint
 
-	// List of elements, with least recently used at the tail.
+	// List of elements, with least recently used at the tail. The type of list
+	// values is lruCacheElement.
 	elems list.List
 
-	// Index int `elems` for lookup by key.
+	// Index into `elems` for lookup by key.
 	index map[string]*list.Element
+}
+
+func (c *lruCache) init(capacity uint) {
+	if c.index != nil {
+		panic("lruCache.init called twice?")
+	}
+
+	if capacity == 0 {
+		panic("Capacity must be non-zero.")
+	}
+
+	c.capacity = capacity
+	c.index = make(map[string]*list.Element)
 }
 
 func (c *lruCache) Insert(key string, value interface{}) {
@@ -158,10 +170,14 @@ func (c *lruCache) GobDecode(b []byte) (err error) {
 	decoder := gob.NewDecoder(buf)
 
 	// Decode the capacity.
-	if err = decoder.Decode(&c.capacity); err != nil {
+	var capacity uint
+	if err = decoder.Decode(&capacity); err != nil {
 		err = fmt.Errorf("Decoding capacity: %v", err)
 		return
 	}
+
+	// Initialize the receiver.
+	c.init(capacity)
 
 	// Decode the elements.
 	var elemsSlice []*lruCacheElement
