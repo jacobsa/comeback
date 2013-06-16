@@ -20,9 +20,9 @@ import (
 	"encoding/gob"
 	"fmt"
 	"github.com/jacobsa/comeback/blob"
+	"github.com/jacobsa/comeback/cache"
 	"github.com/jacobsa/comeback/sys"
 	"os"
-	"sync"
 	"time"
 )
 
@@ -44,7 +44,7 @@ type ScoreMap interface {
 // Create an empty map.
 func NewScoreMap() ScoreMap {
 	return &scoreMap{
-		elems: make(map[ScoreMapKey][]blob.Score),
+		ScoreCache: cache.NewLruCache(1e6),
 	}
 }
 
@@ -63,68 +63,41 @@ type ScoreMapKey struct {
 // Implementation
 ////////////////////////////////////////////////////////////////////////
 
-type scoreMap struct {
-	mutex sync.RWMutex
-	elems map[ScoreMapKey][]blob.Score // Protected by mutex
-}
-
-func (s *scoreMap) Set(key ScoreMapKey, scores []blob.Score) {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-
-	s.elems[key] = scores
-}
-
-func (s *scoreMap) Get(key ScoreMapKey) (scores []blob.Score) {
-	s.mutex.RLock()
-	defer s.mutex.RUnlock()
-
-	scores, _ = s.elems[key]
-	return
-}
-
-////////////////////////////////////////////////////////////////////////
-// Gob encoding
-////////////////////////////////////////////////////////////////////////
-
 func init() {
-	// Make sure that scoreMaps can be encoded where ScoreMap interface variables
-	// are expected.
+	// Make sure that scoreMap pointers can be encoded where ScoreMap interface
+	// variables are expected.
 	gob.Register(&scoreMap{})
+
+	// Ditto with []blob.Score. It itself is not an interface, but it is stored
+	// in the cache as one.
+	gob.Register([]blob.Score{})
 }
 
-func (s *scoreMap) GobDecode(b []byte) (err error) {
-	// Decode the map of elements.
-	buf := bytes.NewBuffer(b)
-	decoder := gob.NewDecoder(buf)
-
-	elems := map[ScoreMapKey][]blob.Score{}
-	if err = decoder.Decode(&elems); err != nil {
-		err = fmt.Errorf("Decoding map: %v", err)
-		return
-	}
-
-	// Overwrite our map.
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-	s.elems = elems
-
-	return
+type scoreMap struct {
+	ScoreCache cache.Cache
 }
 
-func (s *scoreMap) GobEncode() (b []byte, err error) {
-	// Encode our map.
+func toCacheKey(k ScoreMapKey) string {
 	buf := new(bytes.Buffer)
 	encoder := gob.NewEncoder(buf)
 
-	s.mutex.RLock()
-	defer s.mutex.RUnlock()
+	if err := encoder.Encode(k); err != nil {
+		panic(fmt.Sprintf("Error encoding ScoreMapKey: %v", err))
+	}
 
-	if err = encoder.Encode(s.elems); err != nil {
-		err = fmt.Errorf("Encoding map: %v", err)
+	return buf.String()
+}
+
+func (s *scoreMap) Set(key ScoreMapKey, scores []blob.Score) {
+	s.ScoreCache.Insert(toCacheKey(key), scores)
+}
+
+func (s *scoreMap) Get(key ScoreMapKey) (scores []blob.Score) {
+	v := s.ScoreCache.LookUp(toCacheKey(key))
+	if v == nil {
 		return
 	}
 
-	b = buf.Bytes()
+	scores = v.([]blob.Score)
 	return
 }
