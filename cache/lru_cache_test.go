@@ -165,9 +165,9 @@ func (t *LruCacheTest) Encode_PreservesLruOrderAndCapacity() {
 	AssertEq(3, cacheCapacity)
 
 	t.c.Insert("burrito", 17)
-	t.c.Insert("taco", 19)              // Least recent
-	t.c.Insert("enchilada", 23)         // Second most recent
-	AssertEq(17, t.c.LookUp("burrito")) // Most recent
+	t.c.Insert("taco", 19)                      // Least recent
+	t.c.Insert("enchilada", []byte{0x23, 0x29}) // Second most recent
+	AssertEq(17, t.c.LookUp("burrito"))         // Most recent
 
 	// Encode
 	buf := new(bytes.Buffer)
@@ -185,7 +185,7 @@ func (t *LruCacheTest) Encode_PreservesLruOrderAndCapacity() {
 	// See what's left.
 	ExpectEq(nil, decoded.LookUp("taco"))
 	ExpectEq(17, decoded.LookUp("burrito"))
-	ExpectEq(23, decoded.LookUp("enchilada"))
+	ExpectThat(t.c.LookUp("enchilada"), DeepEquals([]byte{0x23, 0x29}))
 	ExpectEq(29, decoded.LookUp("queso"))
 }
 
