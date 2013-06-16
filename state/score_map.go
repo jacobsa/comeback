@@ -67,6 +67,10 @@ func init() {
 	// Make sure that scoreMaps can be encoded where ScoreMap interface variables
 	// are expected.
 	gob.Register(&scoreMap{})
+
+	// Ditto with []blob.Score. It itself is not an interface, but it is stored
+	// in the cache as one.
+	gob.Register(&[]blob.Score{})
 }
 
 type scoreMap struct {
