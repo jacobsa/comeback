@@ -25,6 +25,7 @@ import (
 	"runtime"
 	"sync"
 	"testing"
+	"time"
 )
 
 const cacheCapacity = 3
@@ -186,4 +187,42 @@ func (t *LruCacheTest) Encode_PreservesLruOrderAndCapacity() {
 	ExpectEq(17, decoded.LookUp("burrito"))
 	ExpectEq(23, decoded.LookUp("enchilada"))
 	ExpectEq(29, decoded.LookUp("queso"))
+}
+
+func (t *LruCacheTest) Encode_ConcurrentAccess() {
+	// This test is intended for use with `go test -race`.
+	runtime.GOMAXPROCS(4)
+
+	wg := sync.WaitGroup{}
+	stopWorkers := make(chan bool)
+
+	// Start a goroutine that continually adds to the cache until told to stop.
+	wg.Add(1)
+	go func() {
+		for i := 0; ; i++ {
+			select {
+			case <-stopWorkers:
+				wg.Done()
+				return
+			case <-time.After(time.Microsecond):
+				t.c.Insert(fmt.Sprintf("%d", i), i)
+			}
+		}
+	}()
+
+	// Make sure the goroutine has a moment to start up.
+	<-time.After(1 * time.Millisecond)
+
+	// Encode
+	buf := new(bytes.Buffer)
+	encoder := gob.NewEncoder(buf)
+	AssertEq(nil, encoder.Encode(&t.c))
+
+	// Decode. Nothing bad should happen.
+	decoder := gob.NewDecoder(buf)
+	var decoded cache.Cache
+	AssertEq(nil, decoder.Decode(&decoded))
+
+	close(stopWorkers)
+	wg.Wait()
 }
