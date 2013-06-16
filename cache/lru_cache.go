@@ -32,7 +32,7 @@ func NewLruCache(capacity uint) Cache {
 }
 
 type lruCacheElement struct {
-	Key string
+	Key   string
 	Value interface{}
 }
 

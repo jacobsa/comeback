@@ -86,9 +86,9 @@ func (t *LruCacheTest) ExpiresLeastRecentlyUsed() {
 	AssertEq(3, cacheCapacity)
 
 	t.c.Insert("burrito", 17)
-	t.c.Insert("taco", 19)  // Least recent
-	t.c.Insert("enchilada", 23)  // Second most recent
-	AssertEq(17, t.c.LookUp("burrito"))  // Most recent
+	t.c.Insert("taco", 19)              // Least recent
+	t.c.Insert("enchilada", 23)         // Second most recent
+	AssertEq(17, t.c.LookUp("burrito")) // Most recent
 
 	// Insert another.
 	t.c.Insert("queso", 29)
@@ -165,9 +165,9 @@ func (t *LruCacheTest) Encode_PreservesLruOrderAndCapacity() {
 	AssertEq(3, cacheCapacity)
 
 	t.c.Insert("burrito", 17)
-	t.c.Insert("taco", 19)  // Least recent
-	t.c.Insert("enchilada", 23)  // Second most recent
-	AssertEq(17, t.c.LookUp("burrito"))  // Most recent
+	t.c.Insert("taco", 19)              // Least recent
+	t.c.Insert("enchilada", 23)         // Second most recent
+	AssertEq(17, t.c.LookUp("burrito")) // Most recent
 
 	// Encode
 	buf := new(bytes.Buffer)
