@@ -16,7 +16,9 @@
 package cache
 
 import (
+	"bytes"
 	"container/list"
+	"encoding/gob"
 	"fmt"
 	"sync"
 )
@@ -109,4 +111,53 @@ func (c *lruCache) LookUp(key string) interface{} {
 	}
 
 	return nil
+}
+
+////////////////////////////////////////////////////////////////////////
+// Gob encoding
+////////////////////////////////////////////////////////////////////////
+
+func init() {
+	// Make sure that lruCaches can be encoded where Cache interface variables
+	// are expected.
+	gob.Register(&lruCache{})
+}
+
+func (c *lruCache) GobEncode() (b []byte, err error) {
+	buf := new(bytes.Buffer)
+	encoder := gob.NewEncoder(buf)
+
+	// Encode the capacity.
+	if err = encoder.Encode(c.capacity); err != nil {
+		err = fmt.Errorf("Encoding capacity: %v", err)
+		return
+	}
+
+	// Encode the cached elements.
+	if err = encoder.Encode(c.elems); err != nil {
+		err = fmt.Errorf("Encoding elems: %v", err)
+		return
+	}
+
+	b = buf.Bytes()
+	return
+}
+
+func (c *lruCache) GobDecode(b []byte) (err error) {
+	buf := bytes.NewBuffer(b)
+	decoder := gob.NewDecoder(buf)
+
+	// Decode the capacity.
+	if err = decoder.Decode(&c.capacity); err != nil {
+		err = fmt.Errorf("Decoding capacity: %v", err)
+		return
+	}
+
+	// Decode the elements.
+	if err = decoder.Decode(&c.elems); err != nil {
+		err = fmt.Errorf("Decoding elems: %v", err)
+		return
+	}
+
+	return
 }

@@ -159,7 +159,7 @@ func (t *LruCacheTest) Encode_EmptyCache() {
 	ExpectEq(nil, decoded.LookUp("taco"))
 }
 
-func (t *LruCacheTest) Encode_PreservesLruOrder() {
+func (t *LruCacheTest) Encode_PreservesLruOrderAndCapacity() {
 	// Contents
 	AssertEq(3, cacheCapacity)
 
