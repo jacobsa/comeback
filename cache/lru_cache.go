@@ -34,8 +34,8 @@ func NewLruCache(capacity uint) Cache {
 }
 
 type lruCacheElement struct {
-	key string
-	value interface{}
+	Key string
+	Value interface{}
 }
 
 type lruCache struct {
@@ -67,7 +67,7 @@ func (c *lruCache) Insert(key string, value interface{}) {
 
 	// Expire the least recently used element if necessary.
 	if uint(len(c.index)) > c.capacity {
-		c.erase_Locked(c.elems.Back().Value.(*lruCacheElement).key)
+		c.erase_Locked(c.elems.Back().Value.(*lruCacheElement).Key)
 	}
 }
 
@@ -107,7 +107,7 @@ func (c *lruCache) LookUp(key string) interface{} {
 
 	if elem, ok := c.index[key]; ok {
 		c.elems.MoveToFront(elem)
-		return elem.Value.(*lruCacheElement).value
+		return elem.Value.(*lruCacheElement).Value
 	}
 
 	return nil
@@ -134,7 +134,12 @@ func (c *lruCache) GobEncode() (b []byte, err error) {
 	}
 
 	// Encode the cached elements.
-	if err = encoder.Encode(c.elems); err != nil {
+	elemsSlice := make([]*lruCacheElement, 0, c.elems.Len())
+	for e := c.elems.Front(); e != nil; e = e.Next() {
+		elemsSlice = append(elemsSlice, e.Value.(*lruCacheElement))
+	}
+
+	if err = encoder.Encode(elemsSlice); err != nil {
 		err = fmt.Errorf("Encoding elems: %v", err)
 		return
 	}
