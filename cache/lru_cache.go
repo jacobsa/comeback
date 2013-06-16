@@ -186,5 +186,14 @@ func (c *lruCache) GobDecode(b []byte) (err error) {
 		return
 	}
 
+	// Set up the receiver's elements.
+	for _, elem := range elemsSlice {
+		e := c.elems.PushFront(elem)
+		c.index[elem.Key] = e
+	}
+
+	c.mutex.Lock()
+	c.checkInvariantsAndUnlock()
+
 	return
 }
