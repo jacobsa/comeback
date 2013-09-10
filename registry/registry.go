@@ -428,20 +428,31 @@ func (r *registry) UpdateScoreSetVersion(
 		return
 	}
 
-	// Call the domain.
-	updates := []sdb.PutUpdate{
-		sdb.PutUpdate{Name: "score_set_version", Value: formatVersion(newVersion)},
-	}
+	for delay := time.Millisecond; ; delay *= 2 {
+		// Build a request.
+		updates := []sdb.PutUpdate{
+			sdb.PutUpdate{Name: "score_set_version", Value: formatVersion(newVersion)},
+		}
 
-	precond := &sdb.Precondition{Name: "score_set_version"}
-	if lastVersion != 0 {
-		formatted := formatVersion(lastVersion)
-		precond.Value = &formatted
-	}
+		precond := &sdb.Precondition{Name: "score_set_version"}
+		if lastVersion != 0 {
+			formatted := formatVersion(lastVersion)
+			precond.Value = &formatted
+		}
 
-	if err = r.domain.PutAttributes(markerItemName, updates, precond); err != nil {
-		err = fmt.Errorf("PutAttributes: %v", err)
-		return
+		// Call the domain.
+		if err = r.domain.PutAttributes(markerItemName, updates, precond); err == nil {
+			break
+		}
+
+		// Sleep and try again.
+		fmt.Printf(
+			"Error from PutAttributes (retrying in %v): %v",
+			delay,
+			err,
+		)
+
+		time.Sleep(delay)
 	}
 
 	return
