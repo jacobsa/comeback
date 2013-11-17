@@ -74,12 +74,38 @@ func NewRegistry(
 	cryptoPassword string,
 	deriver crypto.KeyDeriver,
 ) (r Registry, crypter crypto.Crypter, err error) {
+	// Set up a retry function that uses time.Sleep.
+	var runInRetryLoop retryFunction =
+	    func(name string, f func() error) (err error) {
+				for delay := time.Millisecond; ; delay *= 2 {
+					// Break out on success.
+					if err = f(); err == nil {
+						break
+					}
+
+					// Delay and try again.
+					fmt.Printf(
+						"Error from %s (retrying in %v): %v",
+						name,
+						delay,
+						err,
+					)
+
+					time.Sleep(delay)
+				}
+
+				return
+			}
+
+	// Create the registry.
 	return newRegistry(
 		domain,
 		cryptoPassword,
 		deriver,
 		crypto.NewCrypter,
-		crypto_rand.Reader)
+		crypto_rand.Reader,
+		runInRetryLoop,
+	)
 }
 
 func verifyCompatibleAndSetUpCrypter(
@@ -144,6 +170,11 @@ func verifyCompatibleAndSetUpCrypter(
 	return
 }
 
+// A function that runs the wrapped function in a retry loop with exponential
+// backoff until it succeeds or some threshold is passed. The name argument is
+// used in error messages.
+type retryFunction func(name string, f func() error) error
+
 // A version split out for testability.
 func newRegistry(
 	domain sdb.Domain,
@@ -151,6 +182,7 @@ func newRegistry(
 	deriver crypto.KeyDeriver,
 	createCrypter func(key []byte) (crypto.Crypter, error),
 	cryptoRandSrc io.Reader,
+	runInRetryLoop retryFunction,
 ) (r Registry, crypter crypto.Crypter, err error) {
 	// Ask for the previously-written encrypted marker and password salt, if any.
 	attrs, err := domain.GetAttributes(
@@ -178,7 +210,13 @@ func newRegistry(
 		}
 
 		// All is good.
-		r = &registry{crypter, domain.Db(), domain}
+		r = &registry{
+			crypter,
+			domain.Db(),
+			domain,
+			runInRetryLoop,
+		}
+
 		return
 	}
 
@@ -235,7 +273,12 @@ func newRegistry(
 	}
 
 	// All is good.
-	r = &registry{crypter, domain.Db(), domain}
+	r = &registry{
+		crypter,
+		domain.Db(),
+		domain,
+		runInRetryLoop,
+	}
 
 	return
 }
@@ -260,6 +303,7 @@ type registry struct {
 	crypter crypto.Crypter
 	db      sdb.SimpleDB
 	domain  sdb.Domain
+	runInRetryLoop retryFunction
 }
 
 func (r *registry) RecordBackup(job CompletedJob) (err error) {
@@ -428,32 +472,25 @@ func (r *registry) UpdateScoreSetVersion(
 		return
 	}
 
-	for delay := time.Millisecond; ; delay *= 2 {
-		// Build a request.
-		updates := []sdb.PutUpdate{
-			sdb.PutUpdate{Name: "score_set_version", Value: formatVersion(newVersion)},
-		}
+	// Run in a retry loop.
+	err = r.runInRetryLoop(
+		"PutAttributes",
+		func() error {
+			// Build a request.
+			updates := []sdb.PutUpdate{
+				sdb.PutUpdate{Name: "score_set_version", Value: formatVersion(newVersion)},
+			}
 
-		precond := &sdb.Precondition{Name: "score_set_version"}
-		if lastVersion != 0 {
-			formatted := formatVersion(lastVersion)
-			precond.Value = &formatted
-		}
+			precond := &sdb.Precondition{Name: "score_set_version"}
+			if lastVersion != 0 {
+				formatted := formatVersion(lastVersion)
+				precond.Value = &formatted
+			}
 
-		// Call the domain.
-		if err = r.domain.PutAttributes(markerItemName, updates, precond); err == nil {
-			break
-		}
-
-		// Sleep and try again.
-		fmt.Printf(
-			"Error from PutAttributes (retrying in %v): %v",
-			delay,
-			err,
-		)
-
-		time.Sleep(delay)
-	}
+			// Call the domain.
+			return r.domain.PutAttributes(markerItemName, updates, precond)
+		},
+	)
 
 	return
 }

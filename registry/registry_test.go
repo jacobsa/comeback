@@ -48,6 +48,11 @@ func makeStrPtr(s string) *string {
 	return &s
 }
 
+// A retry function that simply runs the supplied function once.
+func runOnce(name string, f func() error) error {
+	return f()
+}
+
 type registryTest struct {
 	db      mock_sdb.MockSimpleDB
 	domain  mock_sdb.MockDomain
@@ -115,6 +120,7 @@ func (t *extentRegistryTest) SetUp(i *TestInfo) {
 		t.deriver,
 		createCrypter,
 		t.randBytes,
+		runOnce,
 	)
 
 	AssertEq(nil, err)
@@ -156,6 +162,7 @@ func (t *NewRegistryTest) callConstructor() {
 		t.deriver,
 		t.createCrypter,
 		t.randBytes,
+		runOnce,
 	)
 }
 
@@ -1446,7 +1453,6 @@ func (t *UpdateScoreSetVersionTest) PutAttributesReturnsError() {
 	// Call
 	t.callRegistry()
 
-	ExpectThat(t.err, Error(HasSubstr("PutAttributes")))
 	ExpectThat(t.err, Error(HasSubstr("taco")))
 }
 
