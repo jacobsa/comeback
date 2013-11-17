@@ -473,7 +473,7 @@ func (r *registry) UpdateScoreSetVersion(
 	}
 
 	// Run in a retry loop.
-	r.runInRetryLoop(
+	err = r.runInRetryLoop(
 		"PutAttributes",
 		func() error {
 			// Build a request.
