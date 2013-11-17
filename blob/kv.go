@@ -20,9 +20,16 @@ import (
 	"github.com/jacobsa/comeback/kv"
 )
 
-// Return a blob store that stores blobs in the supplied key/value store. It
-// trusts that it has full ownership of the store's key space -- if a score key
-// exists, then it points to the correct data.
+const kBlobKeyPrefix = "blob:"
+
+// Return a blob store that stores blobs in the supplied key/value store. Keys look like:
+//
+//     blob:<score>
+//
+// where <score> is the result of calling Score.Hex.
+//
+// The blob store trusts that it has full ownership of the store's key space --
+// if a score key exists, then it points to the correct data.
 func NewKvBasedBlobStore(kvStore kv.Store) Store {
 	return &kvBasedBlobStore{kvStore}
 }
@@ -35,7 +42,7 @@ func (s *kvBasedBlobStore) Store(blob []byte) (score Score, err error) {
 	score = ComputeScore(blob)
 
 	// Choose a key for this blob based on its score.
-	key := []byte(score.Hex())
+	key := []byte(kBlobKeyPrefix + score.Hex())
 
 	// Don't bother storing the same blob twice.
 	alreadyExists, err := s.kvStore.Contains(key)
@@ -59,7 +66,7 @@ func (s *kvBasedBlobStore) Store(blob []byte) (score Score, err error) {
 
 func (s *kvBasedBlobStore) Load(score Score) (blob []byte, err error) {
 	// Choose the appropriate key.
-	key := []byte(score.Hex())
+	key := []byte(kBlobKeyPrefix + score.Hex())
 
 	// Call the key/value store.
 	if blob, err = s.kvStore.Get(key); err != nil {

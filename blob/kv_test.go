@@ -61,7 +61,7 @@ func (t *KvBasedStore_StoreTest) callStore() {
 
 func (t *KvBasedStore_StoreTest) CallsContains() {
 	t.data = []byte("hello")
-	expectedKey := []byte("aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d")
+	expectedKey := []byte("blob:aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d")
 
 	// Contains
 	ExpectCall(t.kvBasedStore, "Contains")(DeepEquals(expectedKey)).
@@ -99,7 +99,7 @@ func (t *KvBasedStore_StoreTest) ContainsSaysYes() {
 
 func (t *KvBasedStore_StoreTest) CallsSet() {
 	t.data = []byte("hello")
-	expectedKey := []byte("aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d")
+	expectedKey := []byte("blob:aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d")
 
 	// Contains
 	ExpectCall(t.kvBasedStore, "Contains")(Any()).
@@ -167,7 +167,7 @@ func (t *KvBasedStore_LoadTest) callStore() {
 
 func (t *KvBasedStore_LoadTest) CallsGet() {
 	t.score = blob.ComputeScore([]byte("hello"))
-	expectedKey := []byte("aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d")
+	expectedKey := []byte("blob:aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d")
 
 	// Get
 	ExpectCall(t.kvBasedStore, "Get")(DeepEquals(expectedKey)).
