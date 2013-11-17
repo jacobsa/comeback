@@ -74,12 +74,29 @@ func NewRegistry(
 	cryptoPassword string,
 	deriver crypto.KeyDeriver,
 ) (r Registry, crypter crypto.Crypter, err error) {
+	// Set up a retry function that uses time.Sleep.
+	var runInRetryLoop retryFunction =
+	    func(name string, f func() error) {
+				for delay := time.Millisecond; ; delay *= 2 {
+					// Break out on success.
+					if err = f(); err == nil {
+						break
+					}
+
+					// Delay and try again.
+					time.Sleep(delay)
+				}
+			}
+
+	// Create the registry.
 	return newRegistry(
 		domain,
 		cryptoPassword,
 		deriver,
 		crypto.NewCrypter,
-		crypto_rand.Reader)
+		crypto_rand.Reader,
+		runInRetryLoop,
+	)
 }
 
 func verifyCompatibleAndSetUpCrypter(
@@ -144,6 +161,10 @@ func verifyCompatibleAndSetUpCrypter(
 	return
 }
 
+// A function that runs the wrapped function in a retry loop with exponential
+// backoff until it succeeds. The name argument is used in error messages.
+type retryFunction func(name string, f func() error)
+
 // A version split out for testability.
 func newRegistry(
 	domain sdb.Domain,
@@ -151,6 +172,7 @@ func newRegistry(
 	deriver crypto.KeyDeriver,
 	createCrypter func(key []byte) (crypto.Crypter, error),
 	cryptoRandSrc io.Reader,
+	runInRetryLoop retryFunction,
 ) (r Registry, crypter crypto.Crypter, err error) {
 	// Ask for the previously-written encrypted marker and password salt, if any.
 	attrs, err := domain.GetAttributes(
