@@ -49,8 +49,8 @@ func makeStrPtr(s string) *string {
 }
 
 // A retry function that simply runs the supplied function once.
-func runOnce(name string, f func() error) {
-	f()
+func runOnce(name string, f func() error) error {
+	return f()
 }
 
 type registryTest struct {

@@ -76,7 +76,7 @@ func NewRegistry(
 ) (r Registry, crypter crypto.Crypter, err error) {
 	// Set up a retry function that uses time.Sleep.
 	var runInRetryLoop retryFunction =
-	    func(name string, f func() error) {
+	    func(name string, f func() error) (err error) {
 				for delay := time.Millisecond; ; delay *= 2 {
 					// Break out on success.
 					if err = f(); err == nil {
@@ -84,8 +84,17 @@ func NewRegistry(
 					}
 
 					// Delay and try again.
+					fmt.Printf(
+						"Error from %s (retrying in %v): %v",
+						name,
+						delay,
+						err,
+					)
+
 					time.Sleep(delay)
 				}
+
+				return
 			}
 
 	// Create the registry.
@@ -162,8 +171,9 @@ func verifyCompatibleAndSetUpCrypter(
 }
 
 // A function that runs the wrapped function in a retry loop with exponential
-// backoff until it succeeds. The name argument is used in error messages.
-type retryFunction func(name string, f func() error)
+// backoff until it succeeds or some threshold is passed. The name argument is
+// used in error messages.
+type retryFunction func(name string, f func() error) error
 
 // A version split out for testability.
 func newRegistry(
