@@ -75,27 +75,26 @@ func NewRegistry(
 	deriver crypto.KeyDeriver,
 ) (r Registry, crypter crypto.Crypter, err error) {
 	// Set up a retry function that uses time.Sleep.
-	var runInRetryLoop retryFunction =
-	    func(name string, f func() error) (err error) {
-				for delay := time.Millisecond; ; delay *= 2 {
-					// Break out on success.
-					if err = f(); err == nil {
-						break
-					}
-
-					// Delay and try again.
-					fmt.Printf(
-						"Error from %s (retrying in %v): %v",
-						name,
-						delay,
-						err,
-					)
-
-					time.Sleep(delay)
-				}
-
-				return
+	var runInRetryLoop retryFunction = func(name string, f func() error) (err error) {
+		for delay := time.Millisecond; ; delay *= 2 {
+			// Break out on success.
+			if err = f(); err == nil {
+				break
 			}
+
+			// Delay and try again.
+			fmt.Printf(
+				"Error from %s (retrying in %v): %v",
+				name,
+				delay,
+				err,
+			)
+
+			time.Sleep(delay)
+		}
+
+		return
+	}
 
 	// Create the registry.
 	return newRegistry(
@@ -300,9 +299,9 @@ func get8RandBytes(src *rand.Rand) []byte {
 }
 
 type registry struct {
-	crypter crypto.Crypter
-	db      sdb.SimpleDB
-	domain  sdb.Domain
+	crypter        crypto.Crypter
+	db             sdb.SimpleDB
+	domain         sdb.Domain
 	runInRetryLoop retryFunction
 }
 
