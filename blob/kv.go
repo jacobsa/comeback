@@ -20,9 +20,14 @@ import (
 	"github.com/jacobsa/comeback/kv"
 )
 
-// Return a blob store that stores blobs in the supplied key/value store. It
-// trusts that it has full ownership of the store's key space -- if a score key
-// exists, then it points to the correct data.
+// Return a blob store that stores blobs in the supplied key/value store. Keys look like:
+//
+//     blob:<score>
+//
+// where <score> is the result of calling Score.Hex.
+//
+// The blob store trusts that it has full ownership of the store's key space --
+// if a score key exists, then it points to the correct data.
 func NewKvBasedBlobStore(kvStore kv.Store) Store {
 	return &kvBasedBlobStore{kvStore}
 }
