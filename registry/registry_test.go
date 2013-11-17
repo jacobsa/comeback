@@ -1453,7 +1453,6 @@ func (t *UpdateScoreSetVersionTest) PutAttributesReturnsError() {
 	// Call
 	t.callRegistry()
 
-	ExpectThat(t.err, Error(HasSubstr("PutAttributes")))
 	ExpectThat(t.err, Error(HasSubstr("taco")))
 }
 
