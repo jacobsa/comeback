@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"github.com/jacobsa/aws/s3"
 	"github.com/jacobsa/comeback/kv"
+	"log"
 )
 
 // Create a key/value store that stores data in the supplied S3 bucket. Keys
@@ -39,13 +40,22 @@ type kvStore struct {
 	bucket s3.Bucket
 }
 
-func (s *kvStore) Set(key []byte, val []byte) error {
-	// Call the bucket.
-	if err := s.bucket.StoreObject(string(key), val); err != nil {
-		return fmt.Errorf("StoreObject: %v", err)
+func (s *kvStore) Set(key []byte, val []byte) (err error) {
+	// Call the bucket up to three times. S3 has a tendency to fail with EOF and
+	// "broken" pipe errors, and this operation is idempotent.
+	//
+	// TODO(jacobsa): If this works out, update tests and remove s3/retry.go from
+	// the aws repo.
+	const maxTries = 3
+	for i := 0; i < maxTries; i++ {
+		if err = s.bucket.StoreObject(string(key), val); err == nil {
+			break
+		}
+
+		log.Printf("Error while storing key %s; retrying: %v", string(key), err)
 	}
 
-	return nil
+	return
 }
 
 func (s *kvStore) Get(key []byte) (val []byte, err error) {

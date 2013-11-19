@@ -71,33 +71,48 @@ func (t *SetTest) callStore() {
 	t.err = t.store.Set([]byte(t.key), t.val)
 }
 
-func (t *SetTest) CallsBucket() {
+func (t *SetTest) CallsBucketThreeTimes() {
 	t.key = "taco"
 	t.val = []byte{0xbe, 0xef}
 
 	// StoreObject
 	ExpectCall(t.bucket, "StoreObject")("taco", DeepEquals(t.val)).
+		WillOnce(oglemock.Return(errors.New(""))).
+		WillOnce(oglemock.Return(errors.New(""))).
 		WillOnce(oglemock.Return(errors.New("")))
 
 	// Call
 	t.callStore()
 }
 
-func (t *SetTest) BucketReturnsError() {
+func (t *SetTest) BucketReturnsThreeErrors() {
 	t.key = "taco"
 
 	// StoreObject
 	ExpectCall(t.bucket, "StoreObject")(Any(), Any()).
+		WillOnce(oglemock.Return(errors.New(""))).
+		WillOnce(oglemock.Return(errors.New(""))).
 		WillOnce(oglemock.Return(errors.New("")))
 
 	// Call
 	t.callStore()
 
-	// Contains
-	exists, err := t.store.Contains([]byte(t.key))
+	ExpectNe(nil, t.err)
+}
 
-	AssertEq(nil, err)
-	ExpectFalse(exists)
+func (t *SetTest) BucketReturnsTwoErrorsThenSucceeds() {
+	t.key = "taco"
+
+	// StoreObject
+	ExpectCall(t.bucket, "StoreObject")(Any(), Any()).
+		WillOnce(oglemock.Return(errors.New(""))).
+		WillOnce(oglemock.Return(errors.New(""))).
+		WillOnce(oglemock.Return(nil))
+
+	// Call
+	t.callStore()
+
+	ExpectEq(nil, t.err)
 }
 
 func (t *SetTest) BucketSucceeds() {
@@ -109,6 +124,8 @@ func (t *SetTest) BucketSucceeds() {
 
 	// Call
 	t.callStore()
+
+	ExpectEq(nil, t.err)
 }
 
 ////////////////////////////////////////////////////////////////////////
