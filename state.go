@@ -102,14 +102,8 @@ func saveState() {
 	reg := getRegistry()
 
 	// Assign a new random version for the existing scores.
-	lastVersion := g_state.ExistingScoresVersion
-	g_state.ExistingScoresVersion = randUint64(randSrc)
-
-	// Update the registry.
-	err = reg.UpdateScoreSetVersion(g_state.ExistingScoresVersion, lastVersion)
-	if err != nil {
-		log.Fatalln("UpdateScoreSetVersion:", err)
-	}
+	lastVersion := stateStruct.ExistingScoresVersion
+	stateStruct.ExistingScoresVersion = randUint64(randSrc)
 
 	// Write out the state to a temporary file.
 	f, err := ioutil.TempFile("", "comeback_state")
@@ -127,7 +121,13 @@ func saveState() {
 		log.Fatalln("Closing temporary state file:", err)
 	}
 
-	// Atomicaly rename it into the new location.
+	// Update the registry.
+	err = reg.UpdateScoreSetVersion(stateStruct.ExistingScoresVersion, lastVersion)
+	if err != nil {
+		log.Fatalln("UpdateScoreSetVersion:", err)
+	}
+
+	// Rename the file into the new location.
 	if err = os.Rename(tempFilePath, cfg.StateFile); err != nil {
 		log.Fatalln("Renaming temporary state file:", err)
 	}
