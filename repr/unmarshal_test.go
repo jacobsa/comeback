@@ -32,6 +32,11 @@ func TestUnmarshalTest(t *testing.T) { RunTests(t) }
 // Helpers
 ////////////////////////////////////////////////////////////////////////
 
+func computeScoreSlice(b []byte) (score []byte) {
+	s := blob.ComputeScore(b)
+	return s[:]
+}
+
 func makeLegalEntryProto() *repr_proto.DirectoryEntryProto {
 	return &repr_proto.DirectoryEntryProto{}
 }
@@ -112,9 +117,9 @@ func (t *UnmarshalTest) HashIsTooShort() {
 	}
 
 	listingProto.Entry[1].Blob = []*repr_proto.BlobInfoProto{
-		&repr_proto.BlobInfoProto{Hash: blob.ComputeScore([]byte{})},
-		&repr_proto.BlobInfoProto{Hash: blob.ComputeScore([]byte{})},
-		&repr_proto.BlobInfoProto{Hash: blob.ComputeScore([]byte{})},
+		&repr_proto.BlobInfoProto{Hash: computeScoreSlice([]byte{})},
+		&repr_proto.BlobInfoProto{Hash: computeScoreSlice([]byte{})},
+		&repr_proto.BlobInfoProto{Hash: computeScoreSlice([]byte{})},
 	}
 
 	blob := listingProto.Entry[1].Blob[1]
@@ -141,9 +146,9 @@ func (t *UnmarshalTest) HashIsTooLong() {
 	}
 
 	listingProto.Entry[1].Blob = []*repr_proto.BlobInfoProto{
-		&repr_proto.BlobInfoProto{Hash: blob.ComputeScore([]byte{})},
-		&repr_proto.BlobInfoProto{Hash: blob.ComputeScore([]byte{})},
-		&repr_proto.BlobInfoProto{Hash: blob.ComputeScore([]byte{})},
+		&repr_proto.BlobInfoProto{Hash: computeScoreSlice([]byte{})},
+		&repr_proto.BlobInfoProto{Hash: computeScoreSlice([]byte{})},
+		&repr_proto.BlobInfoProto{Hash: computeScoreSlice([]byte{})},
 	}
 
 	blob := listingProto.Entry[1].Blob[1]

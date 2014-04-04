@@ -32,7 +32,7 @@ func NewLruCache(capacity uint) Cache {
 }
 
 type lruCacheElement struct {
-	Key   string
+	Key   Key
 	Value interface{}
 }
 
@@ -45,7 +45,7 @@ type lruCache struct {
 	elems list.List
 
 	// Index into `elems` for lookup by key.
-	index map[string]*list.Element
+	index map[Key]*list.Element
 }
 
 func (c *lruCache) init(capacity uint) {
@@ -58,10 +58,10 @@ func (c *lruCache) init(capacity uint) {
 	}
 
 	c.capacity = capacity
-	c.index = make(map[string]*list.Element)
+	c.index = make(map[Key]*list.Element)
 }
 
-func (c *lruCache) Insert(key string, value interface{}) {
+func (c *lruCache) Insert(key Key, value interface{}) {
 	c.mutex.Lock()
 	defer c.checkInvariantsAndUnlock()
 
@@ -83,7 +83,7 @@ func (c *lruCache) Insert(key string, value interface{}) {
 	}
 }
 
-func (c *lruCache) erase_Locked(key string) {
+func (c *lruCache) erase_Locked(key Key) {
 	elem, ok := c.index[key]
 	if !ok {
 		return
@@ -118,7 +118,7 @@ func (c *lruCache) checkInvariantsAndUnlock() {
 	c.mutex.Unlock()
 }
 
-func (c *lruCache) LookUp(key string) interface{} {
+func (c *lruCache) LookUp(key Key) interface{} {
 	c.mutex.Lock()
 	defer c.checkInvariantsAndUnlock()
 

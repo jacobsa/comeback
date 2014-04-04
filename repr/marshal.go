@@ -18,6 +18,7 @@ package repr
 import (
 	"code.google.com/p/goprotobuf/proto"
 	"fmt"
+	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/fs"
 	"github.com/jacobsa/comeback/repr/proto"
 )
@@ -43,8 +44,12 @@ func convertType(t fs.EntryType) (repr_proto.DirectoryEntryProto_Type, error) {
 
 func makeEntryProto(entry *fs.DirectoryEntry) (*repr_proto.DirectoryEntryProto, error) {
 	blobs := []*repr_proto.BlobInfoProto{}
-	for _, score := range entry.Scores {
-		proto := &repr_proto.BlobInfoProto{Hash: score}
+	for i, _ := range entry.Scores {
+		// Make a copy of the score (a value type, not a reference type), for
+		// slicing below.
+		var score blob.Score = entry.Scores[i]
+
+		proto := &repr_proto.BlobInfoProto{Hash: score[:]}
 		blobs = append(blobs, proto)
 	}
 

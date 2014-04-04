@@ -17,15 +17,19 @@ package cache
 
 import ()
 
+const KeyLength = 16
+
+type Key [KeyLength]byte
+
 // A cache mapping from string keys to arbitrary values. Safe for concurrent
 // access, and supports gob encoding.
 type Cache interface {
 	// Insert the given value into the cache. The value must not be the nil
 	// interface, and its type must have been previously registered using
 	// gob.Register.
-	Insert(key string, value interface{})
+	Insert(key Key, value interface{})
 
 	// Look up a previously-inserted value fo the given key. Return nil if no
 	// value is present.
-	LookUp(key string) interface{}
+	LookUp(key Key) interface{}
 }

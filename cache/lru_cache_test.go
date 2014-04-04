@@ -36,6 +36,19 @@ func TestLruCache(t *testing.T) { RunTests(t) }
 // Helpers
 ////////////////////////////////////////////////////////////////////////
 
+func makeKey(s string) (k cache.Key) {
+	if len(s) > cache.KeyLength {
+		panic(
+			fmt.Sprintf(
+				"Key length of %d is longer than %d",
+				len(s),
+				cache.KeyLength))
+	}
+
+	copy(k[:], s)
+	return
+}
+
 type LruCacheTest struct {
 	c cache.Cache
 }
@@ -51,71 +64,71 @@ func (t *LruCacheTest) SetUp(i *TestInfo) {
 ////////////////////////////////////////////////////////////////////////
 
 func (t *LruCacheTest) Empty() {
-	ExpectEq(nil, t.c.LookUp(""))
-	ExpectEq(nil, t.c.LookUp("taco"))
+	ExpectEq(nil, t.c.LookUp(makeKey("")))
+	ExpectEq(nil, t.c.LookUp(makeKey("taco")))
 }
 
 func (t *LruCacheTest) InsertNilValue() {
 	ExpectThat(
-		func() { t.c.Insert("taco", nil) },
+		func() { t.c.Insert(makeKey("taco"), nil) },
 		Panics(HasSubstr("nil value")),
 	)
 }
 
 func (t *LruCacheTest) LookUpUnknownKey() {
-	t.c.Insert("burrito", 17)
-	t.c.Insert("taco", 19)
+	t.c.Insert(makeKey("burrito"), 17)
+	t.c.Insert(makeKey("taco"), 19)
 
-	ExpectEq(nil, t.c.LookUp(""))
-	ExpectEq(nil, t.c.LookUp("enchilada"))
+	ExpectEq(nil, t.c.LookUp(makeKey("")))
+	ExpectEq(nil, t.c.LookUp(makeKey("enchilada")))
 }
 
 func (t *LruCacheTest) FillUpToCapacity() {
 	AssertEq(3, cacheCapacity)
 
-	t.c.Insert("burrito", 17)
-	t.c.Insert("taco", 19)
-	t.c.Insert("enchilada", []byte{0x23, 0x29})
+	t.c.Insert(makeKey("burrito"), 17)
+	t.c.Insert(makeKey("taco"), 19)
+	t.c.Insert(makeKey("enchilada"), []byte{0x23, 0x29})
 
-	ExpectEq(17, t.c.LookUp("burrito"))
-	ExpectEq(19, t.c.LookUp("taco"))
-	ExpectThat(t.c.LookUp("enchilada"), DeepEquals([]byte{0x23, 0x29}))
+	ExpectEq(17, t.c.LookUp(makeKey("burrito")))
+	ExpectEq(19, t.c.LookUp(makeKey("taco")))
+	ExpectThat(t.c.LookUp(makeKey("enchilada")), DeepEquals([]byte{0x23, 0x29}))
 }
 
 func (t *LruCacheTest) ExpiresLeastRecentlyUsed() {
 	AssertEq(3, cacheCapacity)
 
-	t.c.Insert("burrito", 17)
-	t.c.Insert("taco", 19)              // Least recent
-	t.c.Insert("enchilada", 23)         // Second most recent
-	AssertEq(17, t.c.LookUp("burrito")) // Most recent
+	t.c.Insert(makeKey("burrito"), 17)
+	t.c.Insert(makeKey("taco"), 19)              // Least recent
+	t.c.Insert(makeKey("enchilada"), 23)         // Second most recent
+	AssertEq(17, t.c.LookUp(makeKey("burrito"))) // Most recent
 
 	// Insert another.
-	t.c.Insert("queso", 29)
+	t.c.Insert(makeKey("queso"), 29)
 
 	// See what's left.
-	ExpectEq(nil, t.c.LookUp("taco"))
-	ExpectEq(17, t.c.LookUp("burrito"))
-	ExpectEq(23, t.c.LookUp("enchilada"))
-	ExpectEq(29, t.c.LookUp("queso"))
+	ExpectEq(nil, t.c.LookUp(makeKey("taco")))
+	ExpectEq(17, t.c.LookUp(makeKey("burrito")))
+	ExpectEq(23, t.c.LookUp(makeKey("enchilada")))
+	ExpectEq(29, t.c.LookUp(makeKey("queso")))
 }
 
 func (t *LruCacheTest) Overwrite() {
-	t.c.Insert("taco", 17)
-	t.c.Insert("taco", 19)
-	t.c.Insert("taco", 23)
+	t.c.Insert(makeKey("taco"), 17)
+	t.c.Insert(makeKey("taco"), 19)
+	t.c.Insert(makeKey("taco"), 23)
 
-	ExpectEq(23, t.c.LookUp("taco"))
+	ExpectEq(23, t.c.LookUp(makeKey("taco")))
 
 	// The overwritten entries shouldn't count toward capacity.
 	AssertEq(3, cacheCapacity)
 
-	t.c.Insert("burrito", 29)
-	t.c.Insert("enchilada", 31)
+	t.c.Insert(makeKey("burrito"), 29)
+	t.c.Insert(makeKey("enchilada"), 31)
 
-	ExpectEq(23, t.c.LookUp("taco"))
-	ExpectEq(29, t.c.LookUp("burrito"))
-	ExpectEq(31, t.c.LookUp("enchilada"))
+	ExpectEq(23, t.c.LookUp(makeKey("taco")))
+	ExpectEq(29, t.c.LookUp(makeKey("burrito")))
+	ExpectEq(31, t.c.LookUp(makeKey("enchilada")))
 }
 
 func (t *LruCacheTest) SafeForConcurrentAccess() {
@@ -130,7 +143,7 @@ func (t *LruCacheTest) SafeForConcurrentAccess() {
 		go func() {
 			const numIters = 1e4
 			for i := 0; i < numIters; i++ {
-				key := fmt.Sprintf("%d", i)
+				key := makeKey(fmt.Sprintf("%d", i))
 				t.c.Insert(key, i)
 				val := t.c.LookUp(key)
 				if val != nil && val.(int) != i {
@@ -156,18 +169,18 @@ func (t *LruCacheTest) Encode_EmptyCache() {
 	var decoded cache.Cache
 	AssertEq(nil, decoder.Decode(&decoded))
 
-	ExpectEq(nil, decoded.LookUp(""))
-	ExpectEq(nil, decoded.LookUp("taco"))
+	ExpectEq(nil, decoded.LookUp(makeKey("")))
+	ExpectEq(nil, decoded.LookUp(makeKey("taco")))
 }
 
 func (t *LruCacheTest) Encode_PreservesLruOrderAndCapacity() {
 	// Contents
 	AssertEq(3, cacheCapacity)
 
-	t.c.Insert("burrito", 17)
-	t.c.Insert("taco", 19)                      // Least recent
-	t.c.Insert("enchilada", []byte{0x23, 0x29}) // Second most recent
-	AssertEq(17, t.c.LookUp("burrito"))         // Most recent
+	t.c.Insert(makeKey("burrito"), 17)
+	t.c.Insert(makeKey("taco"), 19)                      // Least recent
+	t.c.Insert(makeKey("enchilada"), []byte{0x23, 0x29}) // Second most recent
+	AssertEq(17, t.c.LookUp(makeKey("burrito")))         // Most recent
 
 	// Encode
 	buf := new(bytes.Buffer)
@@ -180,13 +193,13 @@ func (t *LruCacheTest) Encode_PreservesLruOrderAndCapacity() {
 	AssertEq(nil, decoder.Decode(&decoded))
 
 	// Insert another.
-	decoded.Insert("queso", 29)
+	decoded.Insert(makeKey("queso"), 29)
 
 	// See what's left.
-	ExpectEq(nil, decoded.LookUp("taco"))
-	ExpectEq(17, decoded.LookUp("burrito"))
-	ExpectThat(t.c.LookUp("enchilada"), DeepEquals([]byte{0x23, 0x29}))
-	ExpectEq(29, decoded.LookUp("queso"))
+	ExpectEq(nil, decoded.LookUp(makeKey("taco")))
+	ExpectEq(17, decoded.LookUp(makeKey("burrito")))
+	ExpectThat(t.c.LookUp(makeKey("enchilada")), DeepEquals([]byte{0x23, 0x29}))
+	ExpectEq(29, decoded.LookUp(makeKey("queso")))
 }
 
 func (t *LruCacheTest) Encode_ConcurrentAccess() {
@@ -205,7 +218,7 @@ func (t *LruCacheTest) Encode_ConcurrentAccess() {
 				wg.Done()
 				return
 			case <-time.After(time.Microsecond):
-				t.c.Insert(fmt.Sprintf("%d", i), i)
+				t.c.Insert(makeKey(fmt.Sprintf("%d", i)), i)
 			}
 		}
 	}()

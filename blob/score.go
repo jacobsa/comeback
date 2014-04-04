@@ -24,15 +24,27 @@ import (
 // consists of a 20-byte SHA-1 hash of the blob's contents, so that with high
 // probability two blobs have the same contents if and only if they have the
 // same score.
-type Score []byte
+const ScoreLength = 20
+type Score [ScoreLength]byte
 
 // Compute the score for the supplied blob. This is primarily intended for use
 // by blob store implementations; most users should obtain scores through calls
 // to a blob store's Store method.
-func ComputeScore(b []byte) Score {
+func ComputeScore(b []byte) (s Score) {
 	h := sha1.New()
 	h.Write(b)
-	return Score(h.Sum(nil))
+
+	slice := h.Sum(nil)
+	if len(slice) != ScoreLength {
+		panic(
+			fmt.Sprintf(
+				"Expected %d bytes for SHA-1; got %d",
+				ScoreLength,
+				len(slice)))
+	}
+
+	copy(s[:], slice)
+	return
 }
 
 // Return a fixed-width hex version of the score's hash, suitable for using

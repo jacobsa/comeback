@@ -50,7 +50,7 @@ func makeChunk(char int) []byte {
 }
 
 func returnStoreError(err string) oglemock.Action {
-	f := func(b []byte) (blob.Score, error) { return nil, errors.New(err) }
+	f := func(b []byte) (blob.Score, error) { return blob.Score{}, errors.New(err) }
 	return oglemock.Invoke(f)
 }
 

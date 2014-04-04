@@ -16,7 +16,7 @@
 package state
 
 import (
-	"bytes"
+	"crypto/md5"
 	"encoding/gob"
 	"fmt"
 	"github.com/jacobsa/comeback/blob"
@@ -77,15 +77,25 @@ type scoreMap struct {
 	ScoreCache cache.Cache
 }
 
-func toCacheKey(k ScoreMapKey) string {
-	buf := new(bytes.Buffer)
-	encoder := gob.NewEncoder(buf)
+func toCacheKey(k ScoreMapKey) (cacheKey cache.Key) {
+	h := md5.New()
+	encoder := gob.NewEncoder(h)
 
 	if err := encoder.Encode(k); err != nil {
 		panic(fmt.Sprintf("Error encoding ScoreMapKey: %v", err))
 	}
 
-	return buf.String()
+	var slice []byte = h.Sum(nil)
+	if len(slice) != cache.KeyLength {
+		panic(
+			fmt.Sprintf(
+				"Expected hash of length %d, got %d",
+				cache.KeyLength,
+				len(slice)))
+	}
+
+	copy(cacheKey[:], slice)
+	return
 }
 
 func (s *scoreMap) Set(key ScoreMapKey, scores []blob.Score) {

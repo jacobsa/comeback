@@ -102,7 +102,7 @@ func (t *DirectoryRestorerTest) call() {
 ////////////////////////////////////////////////////////////////////////
 
 func (t *DirectoryRestorerTest) CallsBlobStore() {
-	t.score = []byte("taco")
+	t.score = blob.ComputeScore([]byte("taco"))
 
 	// Blob store
 	ExpectCall(t.blobStore, "Load")(DeepEquals(t.score)).

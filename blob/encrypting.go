@@ -36,7 +36,7 @@ func (s *encryptingStore) Store(blob []byte) (Score, error) {
 	// Encrypt the plaintext blob.
 	ciphertext, err := s.crypter.Encrypt(blob)
 	if err != nil {
-		return nil, fmt.Errorf("Encrypt: %v", err)
+		return Score{}, fmt.Errorf("Encrypt: %v", err)
 	}
 
 	// Pass on the encrypted blob.

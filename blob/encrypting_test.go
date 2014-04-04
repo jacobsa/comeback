@@ -86,7 +86,7 @@ func (t *EncryptingStore_StoreTest) CallsWrapped() {
 
 	// Wrapped
 	ExpectCall(t.wrapped, "Store")(DeepEquals(encryptedBlob)).
-		WillOnce(oglemock.Return(nil, errors.New("")))
+		WillOnce(oglemock.Return(blob.Score{}, errors.New("")))
 
 	// Call
 	t.store.Store([]byte{})
@@ -99,7 +99,7 @@ func (t *EncryptingStore_StoreTest) WrappedReturnsError() {
 
 	// Wrapped
 	ExpectCall(t.wrapped, "Store")(Any()).
-		WillOnce(oglemock.Return(nil, errors.New("taco")))
+		WillOnce(oglemock.Return(blob.Score{}, errors.New("taco")))
 
 	// Call
 	_, err := t.store.Store([]byte{})

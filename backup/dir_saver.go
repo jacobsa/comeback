@@ -151,7 +151,8 @@ func (s *dirSaver) Save(
 	// Grab a listing for the directory.
 	entries, err := s.fileSystem.ReadDir(dirpath)
 	if err != nil {
-		return nil, fmt.Errorf("Listing directory: %v", err)
+		err = fmt.Errorf("Listing directory: %v", err)
+		return
 	}
 
 	// Filter the entries according to the list of exclusions.
@@ -192,20 +193,22 @@ func (s *dirSaver) Save(
 		}
 
 		if err != nil {
-			return nil, err
+			return
 		}
 	}
 
 	// Create a serialized version of this information.
 	data, err := repr.Marshal(entries)
 	if err != nil {
-		return nil, fmt.Errorf("Marshaling: %v", err)
+		err = fmt.Errorf("Marshaling: %v", err)
+		return
 	}
 
 	// Store that serialized version.
 	score, err = s.blobStore.Store(data)
 	if err != nil {
 		err = errors.New("Storing dir blob: " + err.Error())
+		return
 	}
 
 	return

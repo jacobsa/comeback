@@ -40,7 +40,7 @@ func TestRegisterDirsTest(t *testing.T) { RunTests(t) }
 func saveBlob(res *[]byte) oglemock.Action {
 	f := func(b []byte) (blob.Score, error) {
 		*res = b
-		return nil, errors.New("foo")
+		return blob.Score{}, errors.New("foo")
 	}
 
 	return oglemock.Invoke(f)
@@ -280,7 +280,7 @@ func (t *DirectorySaverTest) CallsDirSaverForDirs() {
 		"/taco",
 		"queso/tortilla/enchilada",
 		DeepEquals(t.exclusions)).
-		WillOnce(oglemock.Return(nil, errors.New("")))
+		WillOnce(oglemock.Return(blob.Score{}, errors.New("")))
 
 	// Call
 	t.callSaver()
@@ -302,7 +302,7 @@ func (t *DirectorySaverTest) DirSaverReturnsErrorForOneDir() {
 
 	ExpectCall(t.wrapped, "Save")(Any(), Any(), Any()).
 		WillOnce(oglemock.Return(score0, nil)).
-		WillOnce(oglemock.Return(nil, errors.New("taco")))
+		WillOnce(oglemock.Return(blob.Score{}, errors.New("taco")))
 
 	// Call
 	t.callSaver()
@@ -480,7 +480,7 @@ func (t *DirectorySaverTest) BlobStoreReturnsError() {
 
 	// Blob store
 	ExpectCall(t.blobStore, "Store")(Any()).
-		WillOnce(oglemock.Return(nil, errors.New("taco")))
+		WillOnce(oglemock.Return(blob.Score{}, errors.New("taco")))
 
 	// Call
 	t.callSaver()

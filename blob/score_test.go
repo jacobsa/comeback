@@ -29,13 +29,16 @@ func TestRegister(t *testing.T) { RunTests(t) }
 // Helpers
 ////////////////////////////////////////////////////////////////////////
 
-func fromHex(h string) Score {
+func fromHex(h string) (s Score) {
 	b, err := hex.DecodeString(h)
 	if err != nil {
 		panic(fmt.Sprintf("Invalid hex string: %s", h))
 	}
 
-	return Score(b)
+	AssertEq(ScoreLength, len(b))
+	copy(s[:], b)
+
+	return
 }
 
 type ScoreTest struct{}

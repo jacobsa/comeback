@@ -16,7 +16,6 @@
 package blob
 
 import (
-	"bytes"
 	"fmt"
 )
 
@@ -39,11 +38,13 @@ func (s *checkingStore) Store(blob []byte) (score Score, err error) {
 
 	// Check its result.
 	expected := ComputeScore(blob)
-	if !bytes.Equal(score, expected) {
-		return nil, fmt.Errorf(
+	if score != expected {
+		err = fmt.Errorf(
 			"Incorrect score returned for blob; %s vs %s.",
 			score.Hex(),
 			expected.Hex())
+
+		return
 	}
 
 	return
@@ -57,7 +58,7 @@ func (s *checkingStore) Load(score Score) (blob []byte, err error) {
 
 	// Check its result.
 	actual := ComputeScore(blob)
-	if !bytes.Equal(score, actual) {
+	if actual != score {
 		return nil, fmt.Errorf(
 			"Incorrect data returned for blob; requested score is %s actual is %s.",
 			score.Hex(),

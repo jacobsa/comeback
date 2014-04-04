@@ -338,6 +338,7 @@ func (r *registry) RecordBackup(job CompletedJob) (err error) {
 }
 
 func convertAttributes(attrs []sdb.Attribute) (j CompletedJob, err error) {
+	foundScore := false
 	for _, attr := range attrs {
 		switch attr.Name {
 		case "job_name":
@@ -352,12 +353,13 @@ func convertAttributes(attrs []sdb.Attribute) (j CompletedJob, err error) {
 		case "score":
 			var decoded []byte
 			decoded, err = hex.DecodeString(attr.Value)
-			if err != nil || len(decoded) != 20 {
+			if err != nil || len(decoded) != blob.ScoreLength {
 				err = fmt.Errorf("Invalid score: %s", attr.Value)
 				return
 			}
 
-			j.Score = blob.Score(decoded)
+			copy(j.Score[:], decoded)
+			foundScore = true
 		}
 	}
 
@@ -372,7 +374,7 @@ func convertAttributes(attrs []sdb.Attribute) (j CompletedJob, err error) {
 		return
 	}
 
-	if j.Score == nil {
+	if !foundScore {
 		err = fmt.Errorf("Missing score attribute.")
 		return
 	}
