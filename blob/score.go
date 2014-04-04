@@ -25,6 +25,7 @@ import (
 // probability two blobs have the same contents if and only if they have the
 // same score.
 const ScoreLength = 20
+
 type Score [ScoreLength]byte
 
 // Compute the score for the supplied blob. This is primarily intended for use
