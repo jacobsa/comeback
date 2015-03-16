@@ -16,8 +16,9 @@
 package crypto
 
 import (
-	"code.google.com/p/go.crypto/pbkdf2"
 	"hash"
+
+	"golang.org/x/crypto/pbkdf2"
 )
 
 // An object that knows how to derive a crypto key, given a user password and a

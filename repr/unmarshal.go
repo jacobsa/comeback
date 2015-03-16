@@ -16,15 +16,16 @@
 package repr
 
 import (
-	"code.google.com/p/goprotobuf/proto"
 	"errors"
 	"fmt"
+	"os"
+	"time"
+
+	"github.com/golang/protobuf/proto"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/fs"
 	"github.com/jacobsa/comeback/repr/proto"
 	"github.com/jacobsa/comeback/sys"
-	"os"
-	"time"
 )
 
 func convertProtoType(t repr_proto.DirectoryEntryProto_Type) (fs.EntryType, error) {
