@@ -16,7 +16,7 @@
 package registry
 
 import (
-	"errors"
+	"fmt"
 	"time"
 
 	"github.com/jacobsa/comeback/crypto"
@@ -32,7 +32,7 @@ func NewGCSRegistry(
 	cryptoPassword string,
 	deriver crypto.KeyDeriver,
 ) (r Registry, crypter crypto.Crypter, err error) {
-	err = errors.New("NewGCSRegistry is not implemented.")
+	err = fmt.Errorf("NewGCSRegistry is not implemented.")
 	return
 }
 
@@ -56,17 +56,17 @@ type gcsRegistry struct {
 }
 
 func (r *gcsRegistry) RecordBackup(j CompletedJob) (err error) {
-	err = errors.New("gcsRegistry.RecordBackup is not implemented.")
+	err = fmt.Errorf("gcsRegistry.RecordBackup is not implemented.")
 	return
 }
 
 func (r *gcsRegistry) ListRecentBackups() (jobs []CompletedJob, err error) {
-	err = errors.New("gcsRegistry.ListRecentBackups is not implemented.")
+	err = fmt.Errorf("gcsRegistry.ListRecentBackups is not implemented.")
 	return
 }
 
 func (r *gcsRegistry) FindBackup(
 	startTime time.Time) (job CompletedJob, err error) {
-	err = errors.New("gcsRegistry.FindBackup is not implemented.")
+	err = fmt.Errorf("gcsRegistry.FindBackup is not implemented.")
 	return
 }
