@@ -20,12 +20,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jacobsa/aws/s3"
-	"github.com/jacobsa/aws/s3/s3util"
 	"github.com/jacobsa/comeback/kv"
-	s3_kv "github.com/jacobsa/comeback/kv/s3"
 	"github.com/jacobsa/comeback/state"
 )
+
+func makeBasicKeyStore() kv.Store
 
 var g_kvStoreOnce sync.Once
 var g_kvStore kv.Store
@@ -34,25 +33,22 @@ func initKvStore() {
 	cfg := getConfig()
 	var err error
 
-	// Open a connection to S3.
-	bucket, err := s3.OpenBucket(cfg.S3Bucket, cfg.S3Region, cfg.AccessKey)
-	if err != nil {
-		log.Fatalln("Creating S3 bucket:", err)
-	}
+	// Create the underlying key store.
+	g_kvStore = makeBasicKeyStore()
 
-	// If we don't know the set of keys in S3, or the set is too old, list from
-	// S3.
+	// If we don't know the set of keys in the store, or the set of keys is
+	// stale, re-list.
 	stateStruct := getState()
 	age := time.Now().Sub(stateStruct.RelistTime)
 	const maxAge = 30 * 24 * time.Hour
 
 	if stateStruct.ExistingKeys == nil || age > maxAge {
-		log.Println("Listing keys in S3 bucket...")
+		log.Println("Listing existing keys...")
 
 		stateStruct.RelistTime = time.Now()
-		allKeys, err := s3util.ListAllKeys(bucket)
+		allKeys, err := g_kvStore.List("")
 		if err != nil {
-			log.Fatalln("Creating S3 bucket:", err)
+			log.Fatalln("g_kvStore.List:", err)
 		}
 
 		log.Println("Listed", len(allKeys), "keys.")
@@ -61,12 +57,6 @@ func initKvStore() {
 		for _, key := range allKeys {
 			stateStruct.ExistingKeys.Add(key)
 		}
-	}
-
-	// Store keys and values in S3.
-	g_kvStore, err = s3_kv.NewS3KvStore(bucket)
-	if err != nil {
-		log.Fatalln("Creating S3 kv store:", err)
 	}
 
 	// Respond efficiently to Contains requests.
