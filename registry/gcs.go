@@ -16,6 +16,9 @@
 package registry
 
 import (
+	"errors"
+	"time"
+
 	"github.com/jacobsa/comeback/crypto"
 	"github.com/jacobsa/gcloud/gcs"
 )
@@ -28,9 +31,13 @@ func NewGCSRegistry(
 	bucket gcs.Bucket,
 	cryptoPassword string,
 	deriver crypto.KeyDeriver,
-) (r Registry, crypter crypto.Crypter, err error)
+) (r Registry, crypter crypto.Crypter, err error) {
+	err = errors.New("NewGCSRegistry is not implemented.")
+	return
+}
 
 const (
+	gcsJobKeyPrefix      = "jobs/"
 	gcsMetadataKey_Name  = "job_name"
 	gcsMetadataKey_Score = "hex_score"
 )
@@ -38,11 +45,28 @@ const (
 // A registry that stores job records in a GCS bucket. Object names are of the
 // form
 //
-//     <gcsKeyPrefix><time>
+//     <gcsJobKeyPrefix><time>
 //
 // where <time> is a time.Time with UTC location formatted according to
 // time.RFC3339Nano. Additional information is stored as object metadata fields
 // keyed by the constants above. Metadata fields are used in preference to
 // object content so that they are accessible on a ListObjects request.
 type gcsRegistry struct {
+	bucket gcs.Bucket
+}
+
+func (r *gcsRegistry) RecordBackup(j CompletedJob) (err error) {
+	err = errors.New("gcsRegistry.RecordBackup is not implemented.")
+	return
+}
+
+func (r *gcsRegistry) ListRecentBackups() (jobs []CompletedJob, err error) {
+	err = errors.New("gcsRegistry.ListRecentBackups is not implemented.")
+	return
+}
+
+func (r *gcsRegistry) FindBackup(
+	startTime time.Time) (job CompletedJob, err error) {
+	err = errors.New("gcsRegistry.FindBackup is not implemented.")
+	return
 }
