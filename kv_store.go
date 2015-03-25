@@ -16,13 +16,15 @@
 package main
 
 import (
+	"log"
+	"sync"
+	"time"
+
 	"github.com/jacobsa/aws/s3"
 	"github.com/jacobsa/aws/s3/s3util"
 	"github.com/jacobsa/comeback/kv"
 	s3_kv "github.com/jacobsa/comeback/kv/s3"
 	"github.com/jacobsa/comeback/state"
-	"log"
-	"sync"
 )
 
 var g_kvStoreOnce sync.Once
@@ -38,10 +40,16 @@ func initKvStore() {
 		log.Fatalln("Creating S3 bucket:", err)
 	}
 
-	// If we don't know the set of keys in S3, find out.
+	// If we don't know the set of keys in S3, or the set is too old, list from
+	// S3.
 	stateStruct := getState()
-	if stateStruct.ExistingScores == nil {
+	age := time.Now().Sub(stateStruct.RelistTime)
+	const maxAge = 30 * 24 * time.Hour
+
+	if stateStruct.ExistingKeys == nil || age > maxAge {
 		log.Println("Listing keys in S3 bucket...")
+
+		stateStruct.RelistTime = time.Now()
 		allKeys, err := s3util.ListAllKeys(bucket)
 		if err != nil {
 			log.Fatalln("Creating S3 bucket:", err)
@@ -49,9 +57,9 @@ func initKvStore() {
 
 		log.Println("Listed", len(allKeys), "keys.")
 
-		stateStruct.ExistingScores = state.NewStringSet()
+		stateStruct.ExistingKeys = state.NewStringSet()
 		for _, key := range allKeys {
-			stateStruct.ExistingScores.Add(key)
+			stateStruct.ExistingKeys.Add(key)
 		}
 	}
 
@@ -62,7 +70,7 @@ func initKvStore() {
 	}
 
 	// Respond efficiently to Contains requests.
-	g_kvStore = state.NewExistingKeysStore(stateStruct.ExistingScores, g_kvStore)
+	g_kvStore = state.NewExistingKeysStore(stateStruct.ExistingKeys, g_kvStore)
 }
 
 func getKvStore() kv.Store {

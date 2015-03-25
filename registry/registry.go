@@ -20,15 +20,16 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
-	"github.com/jacobsa/aws/sdb"
-	"github.com/jacobsa/comeback/blob"
-	"github.com/jacobsa/comeback/crypto"
 	"io"
 	"math/rand"
 	"regexp"
 	"strconv"
 	"time"
 	"unicode/utf8"
+
+	"github.com/jacobsa/aws/sdb"
+	"github.com/jacobsa/comeback/blob"
+	"github.com/jacobsa/comeback/crypto"
 )
 
 const (
@@ -55,14 +56,6 @@ type Registry interface {
 
 	// Find a particular completed job by ID.
 	FindBackup(jobId uint64) (job CompletedJob, err error)
-
-	// Take note of the version of the score set we're writing out as the latest,
-	// ensuring that it still is the latest. A version of zero means there was no
-	// previous version.
-	UpdateScoreSetVersion(newVersion, lastVersion uint64) (err error)
-
-	// Return the latest score set version number, or zero if there is none.
-	GetCurrentScoreSetVersion() (version uint64, err error)
 }
 
 // Create a registry that stores data in the supplied SimpleDB domain, deriving
