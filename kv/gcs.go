@@ -14,7 +14,7 @@
 // limitations under the License.
 
 // Package gcskv implements a key/value store in a Google Cloud Storage bucket.
-package gcskv
+package kv
 
 import (
 	"bytes"
@@ -32,7 +32,7 @@ import (
 // no keys in the bucket are ever removed.
 //
 // This function blocks while listing keys in the bucket.
-func New(bucket gcs.Bucket) (kv.Store, error) {
+func NewGCSStore(bucket gcs.Bucket) (kv.Store, error) {
 	store := &kvStore{
 		bucket: bucket,
 	}
