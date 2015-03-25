@@ -17,12 +17,11 @@ package main
 
 import (
 	"flag"
-	"fmt"
-	"github.com/jacobsa/comeback/config"
-	"github.com/jacobsa/util/password"
 	"io/ioutil"
 	"log"
 	"sync"
+
+	"github.com/jacobsa/comeback/config"
 )
 
 var g_configFile = flag.String("config", "", "Path to config file.")
@@ -46,17 +45,6 @@ func initConfig() {
 	g_config, err = config.Parse(configData)
 	if err != nil {
 		log.Fatalln("Parsing config file:", err)
-	}
-
-	// Read in the AWS access key secret.
-	prompt := fmt.Sprintf(
-		"Enter secret for AWS access key %s: ",
-		g_config.AccessKey.Id,
-	)
-
-	g_config.AccessKey.Secret = password.ReadPassword(prompt)
-	if len(g_config.AccessKey.Secret) == 0 {
-		log.Fatalln("You must enter an access key secret.")
 	}
 
 	// Validate.
