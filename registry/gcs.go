@@ -208,16 +208,33 @@ func verifyCompatibleAndSetUpCrypter(
 	createCrypter func(key []byte) (crypto.Crypter, error)) (
 	crypter crypto.Crypter,
 	err error) {
-	// Base64-decode.
-	ciphertext, err := base64.StdEncoding.DecodeString(ciphertextBase64)
-	if err != nil {
-		err = fmt.Errorf("Decoding ciphertext: %v", err)
+	o := markerObject
+
+	// Find the metadata keys.
+	var passwordSaltBase64 string
+	var ciphertextBase64 string
+	var ok bool
+
+	if passwordSaltBase64, ok = o.Metadata[markerObjectMetadata_Salt]; !ok {
+		err = fmt.Errorf("Missing salt metadata key.")
 		return
 	}
 
+	if ciphertextBase64, ok = o.Metadata[markerObjectMetadata_Ciphertext]; !ok {
+		err = fmt.Errorf("Missing ciphertext metadata key.")
+		return
+	}
+
+	// Base64-decode.
 	passwordSalt, err := base64.StdEncoding.DecodeString(passwordSaltBase64)
 	if err != nil {
 		err = fmt.Errorf("Decoding password salt: %v", err)
+		return
+	}
+
+	ciphertext, err := base64.StdEncoding.DecodeString(ciphertextBase64)
+	if err != nil {
+		err = fmt.Errorf("Decoding ciphertext: %v", err)
 		return
 	}
 
