@@ -16,16 +16,54 @@
 package main
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/jacobsa/gcloud/gcs"
+	"github.com/jacobsa/gcloud/oauthutil"
+	"google.golang.org/cloud/storage"
 )
 
 var g_bucketOnce sync.Once
 var g_bucket gcs.Bucket
 
+func makeBucket() (bucket gcs.Bucket, err error) {
+	cfg := getConfig()
+
+	// Create an authenticated HTTP client.
+	httpClient, err := oauthutil.NewJWTHttpClient(
+		cfg.KeyFile,
+		[]string{storage.ScopeFullControl})
+
+	if err != nil {
+		err = fmt.Errorf("NewJWTHttpClient: %v", err)
+		return
+	}
+
+	// Turn that into a connection. Note that a project ID isn't needed because
+	// we don't list or create buckets (the bucket name itself implies its
+	// project ID).
+	const projID = "fake_comeback_project"
+
+	conn, err := gcs.NewConn(projID, httpClient)
+	if err != nil {
+		err = fmt.Errorf("NewConn: %v", err)
+		return
+	}
+
+	// Grab the bucket.
+	bucket = conn.GetBucket(cfg.BucketName)
+
+	return
+}
+
 func initBucket() {
-	panic("TODO")
+	var err error
+
+	g_bucket, err = makeBucket()
+	if err != nil {
+		panic(err)
+	}
 }
 
 func getBucket() gcs.Bucket {
