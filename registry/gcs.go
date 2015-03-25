@@ -1,4 +1,4 @@
-// Copyright 2012 Aaron Jacobs. All Rights Reserved.
+// Copyright 2015 Aaron Jacobs. All Rights Reserved.
 // Author: aaronjjacobs@gmail.com (Aaron Jacobs)
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,13 +15,17 @@
 
 package registry
 
-type Registry interface {
-	// Record that the named backup job has completed.
-	RecordBackup(j CompletedJob) (err error)
+import (
+	"github.com/jacobsa/comeback/crypto"
+	"github.com/jacobsa/gcloud/gcs"
+)
 
-	// Return a list of the most recent completed backups.
-	ListRecentBackups() (jobs []CompletedJob, err error)
-
-	// Find a particular completed job by ID.
-	FindBackup(jobId uint64) (job CompletedJob, err error)
-}
+// Create a registry that stores data in the supplied GCS bucket, deriving a
+// crypto key from the supplied password and ensuring that the bucket may not
+// in the future be used with any other key and has not in the past, either.
+// Return a crypter configured to use the key.
+func NewGCSRegistry(
+	bucket gcs.Bucket,
+	cryptoPassword string,
+	deriver crypto.KeyDeriver,
+) (r Registry, crypter crypto.Crypter, err error)
