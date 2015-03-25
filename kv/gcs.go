@@ -97,6 +97,33 @@ func (s *gcsStore) Contains(key string) (res bool, err error) {
 }
 
 func (s *gcsStore) ListKeys(prefix string) (keys []string, err error) {
-	err = fmt.Errorf("TODO: gcsStore.ListKeys")
+	q := &storage.Query{
+		Prefix: prefix,
+	}
+
+	for q != nil {
+		// Grab one set of results.
+		var listing *storage.Objects
+
+		listing, err = s.bucket.ListObjects(context.Background(), q)
+		if err != nil {
+			return
+		}
+
+		// Sanity check.
+		if len(listing.Prefixes) != 0 {
+			err = fmt.Errorf("Unexpected prefixes in listing.")
+			return
+		}
+
+		// Accumulate the results.
+		for _, o := range listing.Results {
+			keys = append(keys, o.Name)
+		}
+
+		// Move on to the next query, if necessary.
+		q = listing.Next
+	}
+
 	return
 }
