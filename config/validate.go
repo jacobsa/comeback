@@ -50,31 +50,14 @@ func Validate(c *Config) error {
 		}
 	}
 
-	// Validate AWS key.
-	if c.AccessKey.Id == "" {
-		return fmt.Errorf("You must specify an AWS access key ID.")
+	// Validate KeyFile.
+	if c.KeyFile == "" {
+		return fmt.Errorf("You must specify a JSON key file.")
 	}
 
-	if c.AccessKey.Secret == "" {
-		return fmt.Errorf("You must specify an AWS access key secret.")
-	}
-
-	// Validate S3 configuration.
-	if c.S3Bucket == "" {
-		return fmt.Errorf("You must specify an S3 bucket.")
-	}
-
-	if c.S3Region == "" {
-		return fmt.Errorf("You must specify an S3 region.")
-	}
-
-	// Validate SimpleDB configuration.
-	if c.SdbDomain == "" {
-		return fmt.Errorf("You must specify a SimpleDB domain.")
-	}
-
-	if c.SdbRegion == "" {
-		return fmt.Errorf("You must specify a SimpleDB region.")
+	// Validate GCS configuration.
+	if c.BucketName == "" {
+		return fmt.Errorf("You must specify a GCS bucket.")
 	}
 
 	// Validate state file.

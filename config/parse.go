@@ -18,9 +18,6 @@ package config
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/jacobsa/aws"
-	"github.com/jacobsa/aws/s3"
-	"github.com/jacobsa/aws/sdb"
 	"regexp"
 )
 
@@ -30,13 +27,10 @@ type jsonJob struct {
 }
 
 type jsonConfig struct {
-	Jobs        map[string]*jsonJob `json:"jobs"`
-	AccessKeyId string              `json:"access_key_id"`
-	S3Bucket    string              `json:"s3_bucket"`
-	S3Region    s3.Region           `json:"s3_region"`
-	SdbDomain   string              `json:"simpledb_domain"`
-	SdbRegion   sdb.Region          `json:"simpledb_region"`
-	StateFile   string              `json:"state_file"`
+	Jobs       map[string]*jsonJob `json:"jobs"`
+	KeyFile    string              `json:"key_file"`
+	BucketName string              `json:"bucket"`
+	StateFile  string              `json:"state_file"`
 }
 
 // Parse the supplied JSON configuration data.
@@ -49,13 +43,10 @@ func Parse(data []byte) (*Config, error) {
 
 	// Convert to our public representation.
 	cfg := &Config{
-		Jobs:      make(map[string]*Job),
-		S3Bucket:  jCfg.S3Bucket,
-		S3Region:  jCfg.S3Region,
-		SdbDomain: jCfg.SdbDomain,
-		SdbRegion: jCfg.SdbRegion,
-		StateFile: jCfg.StateFile,
-		AccessKey: aws.AccessKey{Id: jCfg.AccessKeyId},
+		Jobs:       make(map[string]*Job),
+		KeyFile:    jCfg.KeyFile,
+		BucketName: jCfg.BucketName,
+		StateFile:  jCfg.StateFile,
 	}
 
 	for name, jJob := range jCfg.Jobs {
