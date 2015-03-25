@@ -28,8 +28,8 @@ type Registry interface {
 	// Return a list of the most recent completed backups.
 	ListRecentBackups() (jobs []CompletedJob, err error)
 
-	// Find a particular completed job by ID.
-	FindBackup(jobId uint64) (job CompletedJob, err error)
+	// Find a particular completed job by start time.
+	FindBackup(startTime time.Time) (job CompletedJob, err error)
 }
 
 // A record in the backup registry describing a successful backup job.
