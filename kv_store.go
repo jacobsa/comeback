@@ -30,9 +30,6 @@ var g_kvStoreOnce sync.Once
 var g_kvStore kv.Store
 
 func initKvStore() {
-	cfg := getConfig()
-	var err error
-
 	// Create the underlying key store.
 	g_kvStore = makeBasicKeyStore()
 

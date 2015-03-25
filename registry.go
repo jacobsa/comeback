@@ -33,9 +33,6 @@ func initRegistryAndCrypter() {
 	var err error
 	bucket := getBucket()
 
-	// Grab config info.
-	cfg := getConfig()
-
 	// Read in the crypto password.
 	cryptoPassword := password.ReadPassword("Entry crypto password: ")
 	if len(cryptoPassword) == 0 {

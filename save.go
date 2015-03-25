@@ -82,7 +82,6 @@ func runSave(args []string) {
 	}
 
 	// Register the successful backup.
-	randSrc := getRandSrc()
 	completedJob := registry.CompletedJob{
 		StartTime: startTime,
 		Name:      *g_jobName,
