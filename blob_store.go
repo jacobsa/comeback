@@ -21,6 +21,10 @@ import (
 	"github.com/jacobsa/comeback/blob"
 )
 
+const (
+	blobKeyPrefix = "blobs/"
+)
+
 var g_blobStoreOnce sync.Once
 var g_blobStore blob.Store
 
@@ -29,7 +33,7 @@ func initBlobStore() {
 	crypter := getCrypter()
 
 	// Store blobs in a key/value store.
-	g_blobStore = blob.NewKvBasedBlobStore(kvStore, "blobs/")
+	g_blobStore = blob.NewKvBasedBlobStore(kvStore, blobKeyPrefix)
 
 	// Make sure the values returned by the key/value store aren't corrupted.
 	g_blobStore = blob.NewCheckingStore(g_blobStore)
