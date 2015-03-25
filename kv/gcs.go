@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/jacobsa/comeback/kv"
 	"github.com/jacobsa/gcloud/gcs"
 	"golang.org/x/net/context"
 	"google.golang.org/cloud/storage"
@@ -32,19 +31,19 @@ import (
 // no keys in the bucket are ever removed.
 //
 // This function blocks while listing keys in the bucket.
-func NewGCSStore(bucket gcs.Bucket) (kv.Store, error) {
-	store := &kvStore{
+func NewGCSStore(bucket gcs.Bucket) (Store, error) {
+	store := &gcsStore{
 		bucket: bucket,
 	}
 
 	return store, nil
 }
 
-type kvStore struct {
+type gcsStore struct {
 	bucket gcs.Bucket
 }
 
-func (s *kvStore) Set(key []byte, val []byte) (err error) {
+func (s *gcsStore) Set(key []byte, val []byte) (err error) {
 	req := &gcs.CreateObjectRequest{
 		Attrs: storage.ObjectAttrs{
 			Name: string(key),
@@ -61,7 +60,7 @@ func (s *kvStore) Set(key []byte, val []byte) (err error) {
 	return
 }
 
-func (s *kvStore) Get(key []byte) (val []byte, err error) {
+func (s *gcsStore) Get(key []byte) (val []byte, err error) {
 	// Create a ReadCloser.
 	req := &gcs.ReadObjectRequest{
 		Name: string(key),
@@ -91,7 +90,7 @@ func (s *kvStore) Get(key []byte) (val []byte, err error) {
 	return
 }
 
-func (s *kvStore) Contains(key []byte) (res bool, err error) {
+func (s *gcsStore) Contains(key []byte) (res bool, err error) {
 	// Unsupported.
 	res = false
 	return
