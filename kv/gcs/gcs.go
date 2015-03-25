@@ -27,8 +27,6 @@ import (
 	"google.golang.org/cloud/storage"
 )
 
-const objectNamePrefix = "comeback/blobs/"
-
 // Create a key/value store that stores data in the supplied GCS bucket. Keys
 // supplied to its methods must be valid GCS object names. It is assumed that
 // no keys in the bucket are ever removed.
@@ -46,14 +44,10 @@ type kvStore struct {
 	bucket gcs.Bucket
 }
 
-func makeObjectName(key []byte) string {
-	return objectNamePrefix + string(key)
-}
-
 func (s *kvStore) Set(key []byte, val []byte) (err error) {
 	req := &gcs.CreateObjectRequest{
 		Attrs: storage.ObjectAttrs{
-			Name: makeObjectName(key),
+			Name: string(key),
 		},
 		Contents: bytes.NewReader(val),
 	}
@@ -70,7 +64,7 @@ func (s *kvStore) Set(key []byte, val []byte) (err error) {
 func (s *kvStore) Get(key []byte) (val []byte, err error) {
 	// Create a ReadCloser.
 	req := &gcs.ReadObjectRequest{
-		Name: makeObjectName(key),
+		Name: string(key),
 	}
 
 	rc, err := s.bucket.NewReader(context.Background(), req)
