@@ -22,6 +22,7 @@ import (
 	"io"
 	"time"
 
+	"github.com/jacobsa/aws/sdb"
 	"github.com/jacobsa/comeback/crypto"
 	"github.com/jacobsa/gcloud/gcs"
 )
@@ -68,14 +69,6 @@ type gcsRegistry struct {
 	bucket gcs.Bucket
 }
 
-// Like NewGCSRegistry, but with more injected.
-func newGCSRegistry(
-	bucket gcs.Bucket,
-	cryptoPassword string,
-	deriver crypto.KeyDeriver,
-	createCrypter func(key []byte) (crypto.Crypter, error),
-	cryptoRandSrc io.Reader) (r Registry, crypter crypto.Crypter, err error)
-
 func (r *gcsRegistry) RecordBackup(j CompletedJob) (err error) {
 	err = fmt.Errorf("gcsRegistry.RecordBackup is not implemented.")
 	return
@@ -89,6 +82,112 @@ func (r *gcsRegistry) ListRecentBackups() (jobs []CompletedJob, err error) {
 func (r *gcsRegistry) FindBackup(
 	startTime time.Time) (job CompletedJob, err error) {
 	err = fmt.Errorf("gcsRegistry.FindBackup is not implemented.")
+	return
+}
+
+// Like NewGCSRegistry, but with more injected.
+func newGCSRegistry(
+	bucket gcs.Bucket,
+	cryptoPassword string,
+	deriver crypto.KeyDeriver,
+	createCrypter func(key []byte) (crypto.Crypter, error),
+	cryptoRandSrc io.Reader) (r Registry, crypter crypto.Crypter, err error) {
+	// Ask for the previously-written encrypted marker and password salt, if any.
+	attrs, err := domain.GetAttributes(
+		markerItemName,
+		false, // No need to ask for a consistent read
+		[]string{encryptedDataMarker, passwordSaltMarker},
+	)
+
+	if err != nil {
+		err = fmt.Errorf("GetAttributes: %v", err)
+		return
+	}
+
+	// If we got back any attributes, we must verify that they are compatible.
+	if len(attrs) > 0 {
+		crypter, err = verifyCompatibleAndSetUpCrypter(
+			attrs,
+			cryptoPassword,
+			deriver,
+			createCrypter,
+		)
+
+		if err != nil {
+			return
+		}
+
+		// All is good.
+		r = &registry{
+			crypter,
+			domain.Db(),
+			domain,
+			runInRetryLoop,
+		}
+
+		return
+	}
+
+	// Otherwise, we want to claim this domain. Encrypt some random data, base64
+	// encode it, then write it out. Make sure to use a precondition to defeat
+	// the race condition where another machine is doing the same simultaneously.
+
+	// Generate a random salt.
+	salt := make([]byte, 8)
+	if _, err = io.ReadAtLeast(cryptoRandSrc, salt, len(salt)); err != nil {
+		err = fmt.Errorf("Reading random bytes for salt: %v", err)
+		return
+	}
+
+	// Derive a crypto key and create the crypter.
+	cryptoKey := deriver.DeriveKey(cryptoPassword, salt)
+	crypter, err = createCrypter(cryptoKey)
+	if err != nil {
+		err = fmt.Errorf("createCrypter: %v", err)
+		return
+	}
+
+	// Create some plaintext.
+	plaintext := make([]byte, 8)
+	if _, err = io.ReadAtLeast(cryptoRandSrc, plaintext, len(plaintext)); err != nil {
+		err = fmt.Errorf("Reading random bytes for plaintext: %v", err)
+		return
+	}
+
+	// Encrypt the plaintext.
+	ciphertext, err := crypter.Encrypt(plaintext)
+	if err != nil {
+		err = fmt.Errorf("Encrypt: %v", err)
+		return
+	}
+
+	// SimpleDB requires only UTF-8 text.
+	encodedEncryptedData := base64.StdEncoding.EncodeToString(ciphertext)
+	encodedSalt := base64.StdEncoding.EncodeToString(salt)
+
+	// Write out the two markers.
+	err = domain.PutAttributes(
+		markerItemName,
+		[]sdb.PutUpdate{
+			sdb.PutUpdate{Name: encryptedDataMarker, Value: encodedEncryptedData},
+			sdb.PutUpdate{Name: passwordSaltMarker, Value: encodedSalt},
+		},
+		&sdb.Precondition{Name: encryptedDataMarker, Value: nil},
+	)
+
+	if err != nil {
+		err = fmt.Errorf("PutAttributes: %v", err)
+		return
+	}
+
+	// All is good.
+	r = &registry{
+		crypter,
+		domain.Db(),
+		domain,
+		runInRetryLoop,
+	}
+
 	return
 }
 
