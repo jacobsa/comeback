@@ -20,11 +20,13 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
+	"strings"
 	"time"
 
-	"github.com/jacobsa/aws/sdb"
 	"github.com/jacobsa/comeback/crypto"
 	"github.com/jacobsa/gcloud/gcs"
+	"golang.org/x/net/context"
+	"google.golang.org/cloud/storage"
 )
 
 // Create a registry that stores data in the supplied GCS bucket, deriving a
@@ -49,6 +51,12 @@ const (
 	gcsMetadataKey_Score = "hex_score"
 )
 
+const (
+	markerObjectName                = "marker"
+	markerObjectMetadata_Salt       = "base64_salt"
+	markerObjectMetadata_Ciphertext = "base64_ciphertext"
+)
+
 // A registry that stores job records in a GCS bucket. Object names are of the
 // form
 //
@@ -60,7 +68,7 @@ const (
 // object content so that they are accessible on a ListObjects request.
 //
 // The bucket additionally contains a "marker" object (named by the constant
-// markerItemName) with metadata keys specifying a salt and a ciphertext for
+// markerObjectName) with metadata keys specifying a salt and a ciphertext for
 // some random plaintext, generated ant written the first time the bucket is
 // used. This marker allows us to verify that the user-provided crypto password
 // is correct by deriving a key using the password and the salt and making sure
@@ -92,22 +100,24 @@ func newGCSRegistry(
 	deriver crypto.KeyDeriver,
 	createCrypter func(key []byte) (crypto.Crypter, error),
 	cryptoRandSrc io.Reader) (r Registry, crypter crypto.Crypter, err error) {
-	// Ask for the previously-written encrypted marker and password salt, if any.
-	attrs, err := domain.GetAttributes(
-		markerItemName,
-		false, // No need to ask for a consistent read
-		[]string{encryptedDataMarker, passwordSaltMarker},
-	)
+	// Find the previously-written encrypted marker object, if any.
+	statReq := &gcs.StatObjectRequest{Name: markerObjectName}
+	o, err := bucket.StatObject(context.Background(), statReq)
+
+	if _, ok := err.(*gcs.NotFoundError); ok {
+		err = nil
+		o = nil
+	}
 
 	if err != nil {
-		err = fmt.Errorf("GetAttributes: %v", err)
+		err = fmt.Errorf("StatObject: %v", err)
 		return
 	}
 
-	// If we got back any attributes, we must verify that they are compatible.
-	if len(attrs) > 0 {
+	// If the object was found, we must verify it is compatible.
+	if o != nil {
 		crypter, err = verifyCompatibleAndSetUpCrypter(
-			attrs,
+			o,
 			cryptoPassword,
 			deriver,
 			createCrypter,
@@ -118,17 +128,14 @@ func newGCSRegistry(
 		}
 
 		// All is good.
-		r = &registry{
-			crypter,
-			domain.Db(),
-			domain,
-			runInRetryLoop,
+		r = &gcsRegistry{
+			bucket: bucket,
 		}
 
 		return
 	}
 
-	// Otherwise, we want to claim this domain. Encrypt some random data, base64
+	// Otherwise, we want to claim this bucket. Encrypt some random data, base64
 	// encode it, then write it out. Make sure to use a precondition to defeat
 	// the race condition where another machine is doing the same simultaneously.
 
@@ -149,7 +156,8 @@ func newGCSRegistry(
 
 	// Create some plaintext.
 	plaintext := make([]byte, 8)
-	if _, err = io.ReadAtLeast(cryptoRandSrc, plaintext, len(plaintext)); err != nil {
+	_, err = io.ReadAtLeast(cryptoRandSrc, plaintext, len(plaintext))
+	if err != nil {
 		err = fmt.Errorf("Reading random bytes for plaintext: %v", err)
 		return
 	}
@@ -161,39 +169,40 @@ func newGCSRegistry(
 		return
 	}
 
-	// SimpleDB requires only UTF-8 text.
-	encodedEncryptedData := base64.StdEncoding.EncodeToString(ciphertext)
+	// Base-64 encode.
+	encodedCiphertext := base64.StdEncoding.EncodeToString(ciphertext)
 	encodedSalt := base64.StdEncoding.EncodeToString(salt)
 
-	// Write out the two markers.
-	err = domain.PutAttributes(
-		markerItemName,
-		[]sdb.PutUpdate{
-			sdb.PutUpdate{Name: encryptedDataMarker, Value: encodedEncryptedData},
-			sdb.PutUpdate{Name: passwordSaltMarker, Value: encodedSalt},
+	// Write out the marker object.
+	var precond int64
+	createReq := &gcs.CreateObjectRequest{
+		Attrs: storage.ObjectAttrs{
+			Name: markerObjectName,
+			Metadata: map[string]string{
+				markerObjectMetadata_Salt:       encodedSalt,
+				markerObjectMetadata_Ciphertext: encodedCiphertext,
+			},
 		},
-		&sdb.Precondition{Name: encryptedDataMarker, Value: nil},
-	)
+		Contents:               strings.NewReader(""),
+		GenerationPrecondition: &precond,
+	}
 
+	_, err = bucket.CreateObject(context.Background(), createReq)
 	if err != nil {
-		err = fmt.Errorf("PutAttributes: %v", err)
+		err = fmt.Errorf("CreateObject: %v", err)
 		return
 	}
 
 	// All is good.
-	r = &registry{
-		crypter,
-		domain.Db(),
-		domain,
-		runInRetryLoop,
+	r = &gcsRegistry{
+		bucket: bucket,
 	}
 
 	return
 }
 
 func verifyCompatibleAndSetUpCrypter(
-	ciphertextBase64 string,
-	passwordSaltBase64 string,
+	markerObject *storage.Object,
 	cryptoPassword string,
 	deriver crypto.KeyDeriver,
 	createCrypter func(key []byte) (crypto.Crypter, error)) (
