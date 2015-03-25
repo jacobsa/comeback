@@ -34,14 +34,11 @@ type Registry interface {
 
 // A record in the backup registry describing a successful backup job.
 type CompletedJob struct {
-	// A unique ID for this completed run.
-	Id uint64
+	// The time at which the backup was started.
+	StartTime time.Time
 
 	// The name of the backup job.
 	Name string
-
-	// The time at which the backup was started.
-	StartTime time.Time
 
 	// The score representing the contents of the backup.
 	Score blob.Score

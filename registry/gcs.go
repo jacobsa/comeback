@@ -30,6 +30,11 @@ func NewGCSRegistry(
 	deriver crypto.KeyDeriver,
 ) (r Registry, crypter crypto.Crypter, err error)
 
+const (
+	gcsMetadataKey_Name  = "job_name"
+	gcsMetadataKey_Score = "hex_score"
+)
+
 // A registry that stores job records in a GCS bucket. Object names are of the
 // form
 //
