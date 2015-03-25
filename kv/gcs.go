@@ -95,3 +95,8 @@ func (s *gcsStore) Contains(key string) (res bool, err error) {
 	res = false
 	return
 }
+
+func (s *gcsStore) ListKeys(prefix string) (keys []string, err error) {
+	err = fmt.Errorf("TODO: gcsStore.ListKeys")
+	return
+}
