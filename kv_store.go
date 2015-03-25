@@ -46,7 +46,7 @@ func initKvStore() {
 		log.Println("Listing existing keys...")
 
 		stateStruct.RelistTime = time.Now()
-		allKeys, err := g_kvStore.List("")
+		allKeys, err := g_kvStore.ListKeys("")
 		if err != nil {
 			log.Fatalln("g_kvStore.List:", err)
 		}
