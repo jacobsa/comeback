@@ -17,10 +17,12 @@ package registry
 
 import (
 	"crypto/rand"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"time"
 
+	"github.com/jacobsa/aws/sdb"
 	"github.com/jacobsa/comeback/crypto"
 	"github.com/jacobsa/gcloud/gcs"
 )
@@ -89,5 +91,67 @@ func (r *gcsRegistry) ListRecentBackups() (jobs []CompletedJob, err error) {
 func (r *gcsRegistry) FindBackup(
 	startTime time.Time) (job CompletedJob, err error) {
 	err = fmt.Errorf("gcsRegistry.FindBackup is not implemented.")
+	return
+}
+
+func verifyCompatibleAndSetUpCrypter(
+	markerAttrs []sdb.Attribute,
+	cryptoPassword string,
+	deriver crypto.KeyDeriver,
+	createCrypter func(key []byte) (crypto.Crypter, error),
+) (crypter crypto.Crypter, err error) {
+	// Look through the attributes for what we need.
+	var ciphertext []byte
+	var salt []byte
+
+	for _, attr := range markerAttrs {
+		var dest *[]byte
+		switch attr.Name {
+		case encryptedDataMarker:
+			dest = &ciphertext
+		case passwordSaltMarker:
+			dest = &salt
+		default:
+			continue
+		}
+
+		// The data is base64-encoded.
+		if *dest, err = base64.StdEncoding.DecodeString(attr.Value); err != nil {
+			err = fmt.Errorf("Decoding %s (%s): %v", attr.Name, attr.Value, err)
+			return
+		}
+	}
+
+	// Did we get both ciphertext and salt?
+	if ciphertext == nil {
+		err = fmt.Errorf("Missing encrypted data marker.")
+		return
+	}
+
+	if salt == nil {
+		err = fmt.Errorf("Missing password salt marker.")
+		return
+	}
+
+	// Derive a key and create a crypter.
+	cryptoKey := deriver.DeriveKey(cryptoPassword, salt)
+	if crypter, err = createCrypter(cryptoKey); err != nil {
+		err = fmt.Errorf("createCrypter: %v", err)
+		return
+	}
+
+	// Attempt to decrypt the ciphertext.
+	if _, err = crypter.Decrypt(ciphertext); err != nil {
+		// Special case: Did the crypter signal that the key was wrong?
+		if _, ok := err.(*crypto.NotAuthenticError); ok {
+			err = fmt.Errorf("The supplied password is incorrect.")
+			return
+		}
+
+		// Generic error.
+		err = fmt.Errorf("Decrypt: %v", err)
+		return
+	}
+
 	return
 }
