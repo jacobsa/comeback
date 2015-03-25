@@ -16,7 +16,9 @@
 package registry
 
 import (
+	"crypto/rand"
 	"fmt"
+	"io"
 	"time"
 
 	"github.com/jacobsa/comeback/crypto"
@@ -30,10 +32,22 @@ import (
 func NewGCSRegistry(
 	bucket gcs.Bucket,
 	cryptoPassword string,
+	deriver crypto.KeyDeriver) (r Registry, crypter crypto.Crypter, err error) {
+	return newGCSRegistry(
+		bucket,
+		cryptoPassword,
+		deriver,
+		crypto.NewCrypter,
+		rand.Reader)
+}
+
+// Like NewGCSRegistry, but with more injected.
+func newGCSRegistry(
+	bucket gcs.Bucket,
+	cryptoPassword string,
 	deriver crypto.KeyDeriver,
-) (r Registry, crypter crypto.Crypter, err error) {
-	err = fmt.Errorf("NewGCSRegistry is not implemented.")
-	return
+	createCrypter func(key []byte) (crypto.Crypter, error),
+	cryptoRandSrc io.Reader) (r Registry, crypter crypto.Crypter, err error) {
 }
 
 const (
