@@ -16,6 +16,8 @@
 package state
 
 import (
+	"fmt"
+
 	"github.com/jacobsa/comeback/kv"
 )
 
@@ -38,7 +40,7 @@ type existingKeysStore struct {
 	wrapped kv.Store
 }
 
-func (s *existingKeysStore) Set(key []byte, val []byte) (err error) {
+func (s *existingKeysStore) Set(key string, val []byte) (err error) {
 	err = s.wrapped.Set(key, val)
 
 	// Store the key if the Set call was successful.
@@ -49,11 +51,16 @@ func (s *existingKeysStore) Set(key []byte, val []byte) (err error) {
 	return
 }
 
-func (s *existingKeysStore) Get(key []byte) (val []byte, err error) {
+func (s *existingKeysStore) Get(key string) (val []byte, err error) {
 	return s.wrapped.Get(key)
 }
 
-func (s *existingKeysStore) Contains(key []byte) (res bool, err error) {
+func (s *existingKeysStore) Contains(key string) (res bool, err error) {
 	res = s.keys.Contains(string(key))
+	return
+}
+
+func (s *existingKeysStore) ListKeys(prefix string) (keys []string, err error) {
+	err = fmt.Errorf("existingKeysStore.List not implemented.")
 	return
 }
