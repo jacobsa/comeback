@@ -30,5 +30,5 @@ func initBucket() {
 
 func getBucket() gcs.Bucket {
 	g_bucketOnce.Do(initBucket)
-	return g_bucketOnce
+	return g_bucket
 }
