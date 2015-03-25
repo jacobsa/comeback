@@ -17,6 +17,7 @@ package main
 
 import (
 	"log"
+	"time"
 )
 
 var cmdList = &Command{
@@ -47,7 +48,7 @@ func runList(args []string) {
 	for _, job := range jobs {
 		log.Printf(
 			"  %-33s   %-40s   %s\n",
-			job.StartTime,
+			job.StartTime.Format(time.RFC3339Nano),
 			job.Name,
 			job.Score.Hex(),
 		)

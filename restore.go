@@ -18,14 +18,15 @@ package main
 import (
 	"log"
 	"os"
-	"strconv"
+	"time"
 )
 
 var cmdRestore = &Command{
 	Name: "restore",
 }
 
-var g_jobIdStr = cmdRestore.Flags.String("job_id", "", "The job ID to restore.")
+var g_jobTime = cmdRestore.Flags.String(
+	"job_time", "", "The start time of the job to restore.")
 var g_target = cmdRestore.Flags.String("target", "", "The target directory.")
 
 func init() {
@@ -33,18 +34,16 @@ func init() {
 }
 
 func runRestore(args []string) {
-	// Parse the job ID.
-	if len(*g_jobIdStr) == 0 {
-		log.Fatalln("You must set the -job_id flag.")
+	var err error
+
+	// Parse the job start time.
+	if len(*g_jobTime) == 0 {
+		log.Fatalln("You must set the --job_time flag.")
 	}
 
-	if len(*g_jobIdStr) != 16 {
-		log.Fatalln("Invalid job ID:", *g_jobIdStr)
-	}
-
-	jobId, err := strconv.ParseUint(*g_jobIdStr, 16, 64)
+	startTime, err := time.Parse(time.RFC3339Nano, *g_jobTime)
 	if err != nil {
-		log.Fatalln("Invalid job ID:", *g_jobIdStr)
+		log.Fatalf("Parsing --job_time: %v", err)
 	}
 
 	// Check the target.
@@ -58,7 +57,7 @@ func runRestore(args []string) {
 	dirRestorer := getDirRestorer()
 
 	// Find the requested job.
-	job, err := reg.FindBackup(jobId)
+	job, err := reg.FindBackup(startTime)
 	if err != nil {
 		log.Fatalln("FindBackup:", err)
 	}
