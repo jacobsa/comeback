@@ -24,7 +24,16 @@ import (
 	"github.com/jacobsa/comeback/state"
 )
 
-func makeBasicKeyStore() kv.Store
+func makeBasicKeyStore() (store kv.Store) {
+	var err error
+
+	store, err = kv.NewGCSStore(getBucket())
+	if err != nil {
+		panic(err)
+	}
+
+	return
+}
 
 var g_kvStoreOnce sync.Once
 var g_kvStore kv.Store
