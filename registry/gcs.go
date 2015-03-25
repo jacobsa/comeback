@@ -29,3 +29,15 @@ func NewGCSRegistry(
 	cryptoPassword string,
 	deriver crypto.KeyDeriver,
 ) (r Registry, crypter crypto.Crypter, err error)
+
+// A registry that stores job records in a GCS bucket. Object names are of the
+// form
+//
+//     <gcsKeyPrefix><time>
+//
+// where <time> is a time.Time with UTC location formatted according to
+// time.RFC3339Nano. Additional information is stored as object metadata fields
+// keyed by the constants above. Metadata fields are used in preference to
+// object content so that they are accessible on a ListObjects request.
+type gcsRegistry struct {
+}
