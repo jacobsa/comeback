@@ -15,6 +15,12 @@
 
 package registry
 
+import (
+	"time"
+
+	"github.com/jacobsa/comeback/blob"
+)
+
 type Registry interface {
 	// Record that the named backup job has completed.
 	RecordBackup(j CompletedJob) (err error)
@@ -24,4 +30,19 @@ type Registry interface {
 
 	// Find a particular completed job by ID.
 	FindBackup(jobId uint64) (job CompletedJob, err error)
+}
+
+// A record in the backup registry describing a successful backup job.
+type CompletedJob struct {
+	// A unique ID for this completed run.
+	Id uint64
+
+	// The name of the backup job.
+	Name string
+
+	// The time at which the backup was started.
+	StartTime time.Time
+
+	// The score representing the contents of the backup.
+	Score blob.Score
 }
