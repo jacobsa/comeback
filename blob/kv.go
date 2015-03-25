@@ -44,7 +44,7 @@ func (s *kvBasedBlobStore) Store(blob []byte) (score Score, err error) {
 	score = ComputeScore(blob)
 
 	// Choose a key for this blob based on its score.
-	key := []byte(s.keyPrefix + score.Hex())
+	key := s.keyPrefix + score.Hex()
 
 	// Don't bother storing the same blob twice.
 	alreadyExists, err := s.kvStore.Contains(key)
@@ -68,7 +68,7 @@ func (s *kvBasedBlobStore) Store(blob []byte) (score Score, err error) {
 
 func (s *kvBasedBlobStore) Load(score Score) (blob []byte, err error) {
 	// Choose the appropriate key.
-	key := []byte(s.keyPrefix + score.Hex())
+	key := s.keyPrefix + score.Hex()
 
 	// Call the key/value store.
 	if blob, err = s.kvStore.Get(key); err != nil {
