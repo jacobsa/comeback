@@ -43,10 +43,10 @@ type gcsStore struct {
 	bucket gcs.Bucket
 }
 
-func (s *gcsStore) Set(key []byte, val []byte) (err error) {
+func (s *gcsStore) Set(key string, val []byte) (err error) {
 	req := &gcs.CreateObjectRequest{
 		Attrs: storage.ObjectAttrs{
-			Name: string(key),
+			Name: key,
 		},
 		Contents: bytes.NewReader(val),
 	}
@@ -60,10 +60,10 @@ func (s *gcsStore) Set(key []byte, val []byte) (err error) {
 	return
 }
 
-func (s *gcsStore) Get(key []byte) (val []byte, err error) {
+func (s *gcsStore) Get(key string) (val []byte, err error) {
 	// Create a ReadCloser.
 	req := &gcs.ReadObjectRequest{
-		Name: string(key),
+		Name: key,
 	}
 
 	rc, err := s.bucket.NewReader(context.Background(), req)
@@ -90,7 +90,7 @@ func (s *gcsStore) Get(key []byte) (val []byte, err error) {
 	return
 }
 
-func (s *gcsStore) Contains(key []byte) (res bool, err error) {
+func (s *gcsStore) Contains(key string) (res bool, err error) {
 	// Unsupported.
 	res = false
 	return

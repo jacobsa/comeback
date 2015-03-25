@@ -19,13 +19,13 @@ package kv
 // values is left unspecified.
 type Store interface {
 	// Set the supplied value for the given key, overwriting any existing value.
-	Set(key []byte, val []byte) error
+	Set(key string, val []byte) error
 
 	// Get the most recent value for the supplied key, returning an error if the
 	// key is unknown.
-	Get(key []byte) (val []byte, err error)
+	Get(key string) (val []byte, err error)
 
 	// Return true only if the store contains a value for the supplied key. If it
 	// is unknown whether the key exists, the store is permitted to return false.
-	Contains(key []byte) (res bool, err error)
+	Contains(key string) (res bool, err error)
 }
