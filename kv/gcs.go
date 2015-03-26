@@ -20,11 +20,58 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"math/rand"
+	"time"
 
 	"github.com/jacobsa/gcloud/gcs"
 	"golang.org/x/net/context"
+	"google.golang.org/api/googleapi"
 	"google.golang.org/cloud/storage"
 )
+
+// Exponential backoff for CreateObject, as described in the "Best practices"
+// section of the "Upload Objects" docs:
+//
+//     https://cloud.google.com/storage/docs/json_api/v1/how-tos/upload
+//
+// TODO(jacobsa): Consider promoting this into the official CreateObject method.
+func expBackoff(
+	ctx context.Context,
+	f func() error) (err error) {
+	// Start at 1 ms, double up to 16.384 s. Max time spent sleeping: a bit
+	// more than 30 seconds.
+	const baseDelay = time.Millisecond
+	const maxExponent = 14
+
+	for n := uint(0); ; n++ {
+		// Make an attempt.
+		err = f()
+
+		// If this isn't a 5xx error (including if err is nil), we are done.
+		typed, ok := err.(*googleapi.Error)
+		if !(ok && typed.Code >= 500 && typed.Code < 600) {
+			return
+		}
+
+		// Have we run out of retry budget?
+		if n > maxExponent {
+			return
+		}
+
+		// Sleep for 2^n * baseDelay plus up to a second. Return early if
+		// cancelled.
+		d := (1<<n)*baseDelay + time.Duration(rand.Float64()*float64(time.Second))
+
+		select {
+		case <-ctx.Done():
+			err = ctx.Err()
+			return
+
+		case <-time.After(d):
+			continue
+		}
+	}
+}
 
 // Create a key/value store that stores data in the supplied GCS bucket. Keys
 // supplied to its methods must be valid GCS object names. It is assumed that
@@ -44,19 +91,23 @@ type gcsStore struct {
 }
 
 func (s *gcsStore) Set(key string, val []byte) (err error) {
-	req := &gcs.CreateObjectRequest{
-		Attrs: storage.ObjectAttrs{
-			Name: key,
-		},
-		Contents: bytes.NewReader(val),
-	}
+	ctx := context.Background()
 
-	_, err = s.bucket.CreateObject(context.Background(), req)
-	if err != nil {
-		err = fmt.Errorf("CreateObject: %v", err)
+	// Call multiple times, with retry plus exponential backoff for HTTP 5xx
+	// errors.
+	tryOnce := func() (err error) {
+		req := &gcs.CreateObjectRequest{
+			Attrs: storage.ObjectAttrs{
+				Name: key,
+			},
+			Contents: bytes.NewReader(val),
+		}
+
+		_, err = s.bucket.CreateObject(ctx, req)
 		return
 	}
 
+	err = expBackoff(ctx, tryOnce)
 	return
 }
 
