@@ -33,7 +33,15 @@ func initBlobStore() {
 	crypter := getCrypter()
 
 	// Store blobs in a key/value store.
-	g_blobStore = blob.NewKvBasedBlobStore(kvStore, blobKeyPrefix)
+	const latencySecs = 2
+	const bandwidthBytesPerSec = 20e6
+	const bandwidthHz = 8
+
+	g_blobStore = blob.NewKVStoreBlobStore(
+		kvStore,
+		blobKeyPrefix,
+		3*bandwidthBytesPerSec*latencySecs,
+		3*bandwidthHz*latencySecs)
 
 	// Make sure the values returned by the key/value store aren't corrupted.
 	g_blobStore = blob.NewCheckingStore(g_blobStore)

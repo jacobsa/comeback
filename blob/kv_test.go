@@ -39,7 +39,7 @@ type kvStoreTest struct {
 
 func (t *kvStoreTest) SetUp(i *TestInfo) {
 	t.kvStore = mock_kv.NewMockStore(i.MockController, "kvStore")
-	t.store = blob.NewKvBasedBlobStore(t.kvStore, "blob:")
+	t.store = blob.NewKVStoreBlobStore(t.kvStore, "blob:")
 }
 
 ////////////////////////////////////////////////////////////////////////

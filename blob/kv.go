@@ -43,7 +43,7 @@ import (
 // store, used to avoid hammering it too hard. It should be set to a few times
 // the product of the desired request rate in Hz and the typical latency of a
 // write.
-func NewKvBasedBlobStore(
+func NewKVStoreBlobStore(
 	kvStore kv.Store,
 	prefix string,
 	bufferSize int,
