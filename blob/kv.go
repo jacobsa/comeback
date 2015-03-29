@@ -31,9 +31,14 @@ import (
 // The blob store trusts that it has full ownership of this portion of the
 // store's key space -- if a score key exists, then it points to the correct
 // data.
-func NewKvBasedBlobStore(kvStore kv.Store, prefix string) Store {
-	return &kvBasedBlobStore{kvStore, prefix}
-}
+//
+// bytesInFlight and requestsInFlight control the level of parallelism with
+// which we will call the KV store.
+func NewKvBasedBlobStore(
+	kvStore kv.Store,
+	prefix string,
+	bytesInFlight uint64,
+	requestsInFlight uint64) Store
 
 type kvBasedBlobStore struct {
 	kvStore   kv.Store
