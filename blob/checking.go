@@ -67,3 +67,8 @@ func (s *checkingStore) Load(score Score) (blob []byte, err error) {
 
 	return
 }
+
+func (s *checkingStore) Flush() (err error) {
+	err = s.wrapped.Flush()
+	return
+}

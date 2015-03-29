@@ -17,6 +17,7 @@ package blob
 
 import (
 	"fmt"
+
 	"github.com/jacobsa/comeback/crypto"
 )
 
@@ -57,4 +58,9 @@ func (s *encryptingStore) Load(score Score) ([]byte, error) {
 	}
 
 	return plaintext, nil
+}
+
+func (s *encryptingStore) Flush() (err error) {
+	err = s.wrapped.Flush()
+	return
 }
