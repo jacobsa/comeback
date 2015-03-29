@@ -17,6 +17,7 @@ package blob
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/jacobsa/comeback/kv"
 	"github.com/jacobsa/gcloud/syncutil"
@@ -90,57 +91,47 @@ type kvBasedBlobStore struct {
 	//
 	// GUARDED_BY(mu)
 	bytesBuffered int
+
+	// Signalled when the contents of inFlight change.
+	inFlightChanged sync.Cond
 }
 
 func (s *kvBasedBlobStore) Store(blob []byte) (score Score, err error) {
+	// Compute a score and a key for use under the lock below.
 	score = ComputeScore(blob)
+	key := s.makeKey(score)
 
-	// Wait for permission to process this blob. Ensure that we hand back the
-	// credit below if we don't actually need to store it again.
-	s.bytesInFlight.Acquire(uint64(len(blob)))
-
-	needRelease := true
-	defer func() {
-		if needRelease {
-			s.bytesInFlight.Release(uint64(len(blob)))
-		}
-	}()
-
-	// Do we need to store the blob? If so, register it.
 	s.mu.Lock()
-	proceed := s.registerIfNecessary(score, blob)
-	s.mu.Unlock()
+	defer s.mu.Unlock()
 
-	// Stop if the blob is already in good hands.
-	if !proceed {
+	// Wait until there is room for this request.
+	for !s.hasRoom(len(blob)) {
+		s.inFlightChanged.Wait()
+	}
+
+	// Have we already decided on a final error?
+	if s.writeErr != nil {
+		err = fmt.Errorf("Error from previous write: %v", s.writeErr)
 		return
 	}
 
-	needRelease = false
-
-	// Spawn a goroutine that handles the blob.
-	go s.handleBlob(score, blob)
-	panic("TODO")
-
-	// Choose a key for this blob based on its score.
-	key := s.keyPrefix + score.Hex()
-
-	// Don't bother storing the same blob twice.
-	alreadyExists, err := s.kvStore.Contains(key)
-	if err != nil {
-		err = fmt.Errorf("Contains: %v", err)
+	// If we already have a request for this score in flight, we can avoid
+	// spawning another one. (If the existing one fails, the user will see an
+	// error from Flush.)
+	if _, ok := s.inFlight[score]; ok {
 		return
 	}
 
-	if alreadyExists {
+	// If the KV store already contains the key, we need not do anything further.
+	if s.kvStore.Contains(key) {
 		return
 	}
 
-	// Store the blob.
-	if err = s.kvStore.Set(key, blob); err != nil {
-		err = fmt.Errorf("Set: %v", err)
-		return
-	}
+	// Mark this blob as in flight.
+	s.inFlight[score] = len(blob)
+
+	// Spawn a goroutine that will make the blob durable in the background.
+	go s.makeDurable(score, key, blob)
 
 	return
 }
