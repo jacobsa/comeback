@@ -26,7 +26,6 @@ import (
 	"github.com/jacobsa/comeback/crypto"
 	"github.com/jacobsa/gcloud/gcs"
 	"golang.org/x/net/context"
-	"google.golang.org/cloud/storage"
 )
 
 // Create a registry that stores data in the supplied GCS bucket, deriving a
@@ -176,12 +175,10 @@ func newGCSRegistry(
 	// Write out the marker object.
 	var precond int64
 	createReq := &gcs.CreateObjectRequest{
-		Attrs: storage.ObjectAttrs{
-			Name: markerObjectName,
-			Metadata: map[string]string{
-				markerObjectMetadata_Salt:       encodedSalt,
-				markerObjectMetadata_Ciphertext: encodedCiphertext,
-			},
+		Name: markerObjectName,
+		Metadata: map[string]string{
+			markerObjectMetadata_Salt:       encodedSalt,
+			markerObjectMetadata_Ciphertext: encodedCiphertext,
 		},
 		Contents:               strings.NewReader(""),
 		GenerationPrecondition: &precond,
@@ -202,7 +199,7 @@ func newGCSRegistry(
 }
 
 func verifyCompatibleAndSetUpCrypter(
-	markerObject *storage.Object,
+	markerObject *gcs.Object,
 	cryptoPassword string,
 	deriver crypto.KeyDeriver,
 	createCrypter func(key []byte) (crypto.Crypter, error)) (

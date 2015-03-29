@@ -26,7 +26,6 @@ import (
 	"github.com/jacobsa/gcloud/gcs"
 	"golang.org/x/net/context"
 	"google.golang.org/api/googleapi"
-	"google.golang.org/cloud/storage"
 )
 
 // Exponential backoff for CreateObject, as described in the "Best practices"
@@ -97,9 +96,7 @@ func (s *gcsStore) Set(key string, val []byte) (err error) {
 	// errors.
 	tryOnce := func() (err error) {
 		req := &gcs.CreateObjectRequest{
-			Attrs: storage.ObjectAttrs{
-				Name: key,
-			},
+			Name:     key,
 			Contents: bytes.NewReader(val),
 		}
 
@@ -148,32 +145,36 @@ func (s *gcsStore) Contains(key string) (res bool, err error) {
 }
 
 func (s *gcsStore) ListKeys(prefix string) (keys []string, err error) {
-	q := &storage.Query{
+	req := &gcs.ListObjectsRequest{
 		Prefix: prefix,
 	}
 
-	for q != nil {
+	for {
 		// Grab one set of results.
-		var listing *storage.Objects
+		var listing *gcs.Listing
 
-		listing, err = s.bucket.ListObjects(context.Background(), q)
+		listing, err = s.bucket.ListObjects(context.Background(), req)
 		if err != nil {
 			return
 		}
 
 		// Sanity check.
-		if len(listing.Prefixes) != 0 {
-			err = fmt.Errorf("Unexpected prefixes in listing.")
+		if len(listing.CollapsedRuns) != 0 {
+			err = fmt.Errorf("Unexpected collapsed runs in listing.")
 			return
 		}
 
 		// Accumulate the results.
-		for _, o := range listing.Results {
+		for _, o := range listing.Objects {
 			keys = append(keys, o.Name)
 		}
 
 		// Move on to the next query, if necessary.
-		q = listing.Next
+		if listing.ContinuationToken == "" {
+			break
+		}
+
+		req.ContinuationToken = listing.ContinuationToken
 	}
 
 	return
