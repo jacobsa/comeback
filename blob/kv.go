@@ -17,7 +17,6 @@ package blob
 
 import (
 	"fmt"
-	"sync"
 
 	"github.com/jacobsa/comeback/kv"
 	"github.com/jacobsa/gcloud/syncutil"
@@ -60,32 +59,37 @@ type kvBasedBlobStore struct {
 	// Constant data
 	/////////////////////////
 
-	keyPrefix     string
-	maxKVRequests int
+	keyPrefix           string
+	maxBytesBuffered    int
+	maxRequestsInFlight int
 
 	/////////////////////////
 	// Mutable state
 	/////////////////////////
 
-	// If any background write to the KV store has failed, an error that should
-	// be returned for all future calls to Store or Flush.
-	writeErr     error
-	writeErrOnce sync.Once
-
-	// Semaphore for number of bytes in flight.
-	bytesInFlight syncutil.WeightedSemaphore
-
 	mu syncutil.InvariantMutex
 
-	// Scores that we currently have in our possession and will eventually write
-	// out to the KV store (or writeErr will be set). May include requests that
-	// are waiting for admission by requestsInFlight.
+	// If any background write to the KV store has failed, an error that should
+	// be returned for all future calls to Store or Flush.
 	//
 	// GUARDED_BY(mu)
-	scoresInProgress []Score
+	writeErr error
 
-	// Semaphore for number of requests actually in flight to the KV store.
-	requestsInFlight syncutil.WeightedSemaphore
+	// A map from scores that have been accepted by Store but not yet
+	// successfully written out to the length of the corresponding blobs.
+	//
+	// INVARIANT: len(inFlight) <= maxRequestsInFlight
+	//
+	// GUARDED_BY(mu)
+	inFlight map[Score]int
+
+	// A cached sum of the lengths of in-flight scores.
+	//
+	// INVARIANT: bytesBuffered is the sum of all values of inFlight
+	// INVARIANT: bytesBuffered <= maxBytesBuffered
+	//
+	// GUARDED_BY(mu)
+	bytesBuffered int
 }
 
 func (s *kvBasedBlobStore) Store(blob []byte) (score Score, err error) {
