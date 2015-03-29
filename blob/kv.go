@@ -34,13 +34,20 @@ import (
 // store's key space -- if a score key exists, then it points to the correct
 // data.
 //
-// bytesInFlight and requestsInFlight control the level of parallelism with
-// which we will call the KV store.
+// bufferSize controls the number of bytes that may be buffered by this class,
+// used to avoid hogging RAM. It should be set to a few times the product of
+// the desired bandwidth in bytes and the typical latency of a write to the KV
+// store.
+//
+// maxInFlight controls the maximum parallelism with which we will call the KV
+// store, used to avoid hammering it too hard. It should be set to a few times
+// the product of the desired request rate in Hz and the typical latency of a
+// write.
 func NewKvBasedBlobStore(
 	kvStore kv.Store,
 	prefix string,
-	bytesInFlight uint64,
-	requestsInFlight int) Store
+	bufferSize int,
+	maxInFlight int) Store
 
 type kvBasedBlobStore struct {
 	/////////////////////////
