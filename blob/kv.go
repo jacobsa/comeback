@@ -96,6 +96,19 @@ type kvBasedBlobStore struct {
 	inFlightChanged sync.Cond
 }
 
+////////////////////////////////////////////////////////////////////////
+// Helpers
+////////////////////////////////////////////////////////////////////////
+
+func (s *kvBasedBlobStore) makeKey(score Score) (key string) {
+	key = s.keyPrefix + score.Hex()
+	return
+}
+
+////////////////////////////////////////////////////////////////////////
+// Public interface
+////////////////////////////////////////////////////////////////////////
+
 func (s *kvBasedBlobStore) Store(blob []byte) (score Score, err error) {
 	// Compute a score and a key for use under the lock below.
 	score = ComputeScore(blob)
@@ -138,7 +151,7 @@ func (s *kvBasedBlobStore) Store(blob []byte) (score Score, err error) {
 
 func (s *kvBasedBlobStore) Load(score Score) (blob []byte, err error) {
 	// Choose the appropriate key.
-	key := s.keyPrefix + score.Hex()
+	key := s.makeKey(score)
 
 	// Call the key/value store.
 	if blob, err = s.kvStore.Get(key); err != nil {
