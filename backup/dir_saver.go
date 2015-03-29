@@ -62,6 +62,11 @@ func (s *onDemandDirSaver) Save(
 	return s.createSaver(s).Save(basePath, relPath, exclusions)
 }
 
+func (s *onDemandDirSaver) Flush() (err error) {
+	err = s.createSaver(s).Flush()
+	return
+}
+
 // Return a directory saver that makes use of the supplied dependencies.
 func NewDirectorySaver(
 	blobStore blob.Store,
@@ -110,6 +115,16 @@ type dirSaver struct {
 	fileSaver    FileSaver
 	wrapped      DirectorySaver
 	linkResolver LinkResolver
+}
+
+func (s *dirSaver) Flush() (err error) {
+	err = s.blobStore.Flush()
+	if err != nil {
+		err = fmt.Errorf("blobStore.Flush: %v", err)
+		return
+	}
+
+	return
 }
 
 func (s *dirSaver) saveDir(

@@ -100,8 +100,7 @@ type kvBasedBlobStore struct {
 	// A cached sum of the lengths of in-flight scores.
 	//
 	// INVARIANT: bytesBuffered is the sum of all values of inFlight
-	// INVARIANT: 0 <= bytesBuffered
-	// INVARIANT: bytesBuffered <= maxBytesBuffered
+	// INVARIANT: 0 <= bytesBuffered <= maxBytesBuffered
 	//
 	// GUARDED_BY(mu)
 	bytesBuffered int
@@ -114,7 +113,30 @@ type kvBasedBlobStore struct {
 // Helpers
 ////////////////////////////////////////////////////////////////////////
 
-func (s *kvBasedBlobStore) checkInvariants()
+func (s *kvBasedBlobStore) checkInvariants() {
+	// INVARIANT: len(inFlight) <= maxRequestsInFlight
+	if !(len(s.inFlight) <= s.maxRequestsInFlight) {
+		panic(fmt.Sprintf("Too many in flight: %v", len(s.inFlight)))
+	}
+
+	// INVARIANT: bytesBuffered is the sum of all values of inFlight
+	sum := 0
+	for _, v := range s.inFlight {
+		sum += v
+	}
+
+	if sum != s.bytesBuffered {
+		panic(fmt.Sprintf("Differing sum: %v vs. %v", sum, s.bytesBuffered))
+	}
+
+	// INVARIANT: 0 <= bytesBuffered <= maxBytesBuffered
+	if !(0 <= s.bytesBuffered && s.bytesBuffered <= s.maxBytesBuffered) {
+		panic(fmt.Sprintf(
+			"bytesBuffered of %v not in range [0, %v]",
+			s.bytesBuffered,
+			s.maxBytesBuffered))
+	}
+}
 
 func (s *kvBasedBlobStore) makeKey(score Score) (key string) {
 	key = s.keyPrefix + score.Hex()
@@ -209,6 +231,39 @@ func (s *kvBasedBlobStore) Store(blob []byte) (score Score, err error) {
 
 	// Spawn a goroutine that will make the blob durable in the background.
 	go s.makeDurable(score, key, blob)
+
+	return
+}
+
+func (s *kvBasedBlobStore) Flush() (err error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	// Wait until there are no requests in flight.
+	for len(s.inFlight) != 0 {
+		s.inFlightChanged.Wait()
+	}
+
+	err = s.writeErr
+	return
+}
+
+func (s *kvBasedBlobStore) Contains(score Score) (b bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	// Do we have an in-flight request?
+	if _, ok := s.inFlight[score]; ok {
+		b = true
+		return
+	}
+
+	// Does the key exist in the KV store?
+	key := s.makeKey(score)
+	if s.kvStore.Contains(key) {
+		b = true
+		return
+	}
 
 	return
 }
