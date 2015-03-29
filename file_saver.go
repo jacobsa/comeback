@@ -49,6 +49,7 @@ func initFileSaver() {
 	// Avoid computing scores when unnecessary.
 	g_fileSaver = state.NewScoreMapFileSaver(
 		stateStruct.ScoresForFiles,
+		blobStore,
 		fileSystem,
 		g_fileSaver)
 }
