@@ -47,7 +47,20 @@ func NewKvBasedBlobStore(
 	kvStore kv.Store,
 	prefix string,
 	bufferSize int,
-	maxInFlight int) Store
+	maxInFlight int) Store {
+	s := &kvBasedBlobStore{
+		kvStore:             kvStore,
+		keyPrefix:           prefix,
+		maxBytesBuffered:    bufferSize,
+		maxRequestsInFlight: maxInFlight,
+		inFlight:            make(map[Score]int),
+	}
+
+	s.mu = syncutil.NewInvariantMutex(s.checkInvariants)
+	s.inFlightChanged.L = &s.mu
+
+	return s
+}
 
 type kvBasedBlobStore struct {
 	/////////////////////////
@@ -100,6 +113,8 @@ type kvBasedBlobStore struct {
 ////////////////////////////////////////////////////////////////////////
 // Helpers
 ////////////////////////////////////////////////////////////////////////
+
+func (s *kvBasedBlobStore) checkInvariants()
 
 func (s *kvBasedBlobStore) makeKey(score Score) (key string) {
 	key = s.keyPrefix + score.Hex()
