@@ -37,7 +37,7 @@ import (
 // bufferSize controls the number of bytes that may be buffered by this class,
 // used to avoid hogging RAM. It should be set to a few times the product of
 // the desired bandwidth in bytes and the typical latency of a write to the KV
-// store.
+// store. This must be at least as large as the largest blob written.
 //
 // maxInFlight controls the maximum parallelism with which we will call the KV
 // store, used to avoid hammering it too hard. It should be set to a few times
@@ -105,11 +105,27 @@ func (s *kvBasedBlobStore) makeKey(score Score) (key string) {
 	return
 }
 
+// LOCKS_REQURED(s.mu)
+func (s *kvBasedBlobStore) hasRoom(blobLen int) bool {
+	bytesLeft := s.maxBytesBuffered - s.bytesBuffered
+	return len(s.inFlight) < s.maxRequestsInFlight && blobLen <= bytesLeft
+}
+
 ////////////////////////////////////////////////////////////////////////
 // Public interface
 ////////////////////////////////////////////////////////////////////////
 
 func (s *kvBasedBlobStore) Store(blob []byte) (score Score, err error) {
+	// Will this blob ever fit?
+	if len(blob) > s.maxBytesBuffered {
+		err = fmt.Errorf(
+			"%v-byte blob is larger than buffer size of %v",
+			len(blob),
+			s.maxBytesBuffered)
+
+		return
+	}
+
 	// Compute a score and a key for use under the lock below.
 	score = ComputeScore(blob)
 	key := s.makeKey(score)
@@ -142,6 +158,8 @@ func (s *kvBasedBlobStore) Store(blob []byte) (score Score, err error) {
 
 	// Mark this blob as in flight.
 	s.inFlight[score] = len(blob)
+	s.bytesBuffered += len(blob)
+	s.inFlightChanged.Broadcast()
 
 	// Spawn a goroutine that will make the blob durable in the background.
 	go s.makeDurable(score, key, blob)
