@@ -64,3 +64,8 @@ func (s *encryptingStore) Flush() (err error) {
 	err = s.wrapped.Flush()
 	return
 }
+
+func (s *encryptingStore) Contains(score Score) (b bool) {
+	b = s.wrapped.Contains(score)
+	return
+}

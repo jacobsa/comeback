@@ -25,7 +25,6 @@ import (
 type State struct {
 	// The set of keys that are known to already exist in the KV store. It is
 	// unnecessary to again store any blob whose score maps to one of these keys.
-	// these scores.
 	ExistingKeys StringSet
 
 	// The time at which ExistingScores was last updated from the authoritative
@@ -33,7 +32,8 @@ type State struct {
 	RelistTime time.Time
 
 	// A map from file system info to the scores that were seen for a given file
-	// last time.
+	// last time. These scores may have been written to the blob store, but not
+	// flushed.
 	ScoresForFiles ScoreMap
 }
 

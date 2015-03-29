@@ -26,6 +26,10 @@ type Store interface {
 	// again.
 	Flush() (err error)
 
+	// Return true only if the supplied score is in the blob store and will be
+	// durable by the time of a successful Flush call.
+	Contains(score Score) (b bool)
+
 	// Load a previously-stored blob.
 	Load(s Score) (blob []byte, err error)
 }

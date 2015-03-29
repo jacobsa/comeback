@@ -17,22 +17,26 @@ package state
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/jacobsa/comeback/backup"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/fs"
-	"time"
 )
 
 // Create a file saver that first attempts to read scores from the supplied
 // score map, only calling the wrapped saver when the map doesn't have an
-// answer.
+// answer or can't confirm that the scores are present in the supplied blob
+// store.
 func NewScoreMapFileSaver(
 	scoreMap ScoreMap,
+	blobStore blob.Store,
 	fileSystem fs.FileSystem,
 	wrapped backup.FileSaver,
 ) (s backup.FileSaver) {
 	return newScoreMapFileSaver(
 		scoreMap,
+		blobStore,
 		fileSystem,
 		wrapped,
 		time.Now,
@@ -46,20 +50,23 @@ func NewScoreMapFileSaver(
 // Like NewScoreMapFileSaver, but allows injecting a time.Now()-like function.
 func newScoreMapFileSaver(
 	scoreMap ScoreMap,
+	blobStore blob.Store,
 	fileSystem fs.FileSystem,
 	wrapped backup.FileSaver,
 	now func() time.Time,
 ) (s backup.FileSaver) {
 	return &scoreMapFileSaver{
-		scoreMap,
-		fileSystem,
-		wrapped,
-		now,
+		scoreMap:   scoreMap,
+		blobStore:  blobStore,
+		fileSystem: fileSystem,
+		wrapped:    wrapped,
+		now:        now,
 	}
 }
 
 type scoreMapFileSaver struct {
 	scoreMap   ScoreMap
+	blobStore  blob.Store
 	fileSystem fs.FileSystem
 	wrapped    backup.FileSaver
 	now        func() time.Time
@@ -92,7 +99,23 @@ func (s *scoreMapFileSaver) Save(path string) (scores []blob.Score, err error) {
 	}
 
 	if scores = s.scoreMap.Get(mapKey); scores != nil {
-		return
+		// Confirm that all of the scores will be durable by the time the blob
+		// store is flushed.
+		allDurable := true
+		for _, score := range scores {
+			if !s.blobStore.Contains(score) {
+				allDurable = false
+				break
+			}
+		}
+
+		// If so, we are good.
+		if allDurable {
+			return
+		}
+
+		// Otherwise, we can't use this result.
+		scores = nil
 	}
 
 	// Make sure that we insert any result we find into the map.
@@ -103,5 +126,6 @@ func (s *scoreMapFileSaver) Save(path string) (scores []blob.Score, err error) {
 	}()
 
 	// Pass on the request.
-	return s.wrapped.Save(path)
+	scores, err = s.wrapped.Save(path)
+	return
 }
