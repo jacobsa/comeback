@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/kv"
 	"github.com/jacobsa/gcloud/syncutil"
 )
@@ -76,7 +75,7 @@ type kvBasedBlobStore struct {
 	// are waiting for admission by requestsInFlight.
 	//
 	// GUARDED_BY(mu)
-	scoresInProgress []blob.Score
+	scoresInProgress []Score
 
 	// Semaphore for number of requests actually in flight to the KV store.
 	requestsInFlight syncutil.WeightedSemaphore
