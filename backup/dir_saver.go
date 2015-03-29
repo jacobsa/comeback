@@ -37,7 +37,13 @@ type DirectorySaver interface {
 	// Recursively exclude from backup relative paths that match any of the
 	// supplied exclusion regexps. This is *not* tested against the initial
 	// relative path.
+	//
+	// Note that the backup is not guaranteed to be durable until Flush is
+	// successfully called.
 	Save(basePath, relPath string, exclusions []*regexp.Regexp) (blob.Score, error)
+
+	// Flush previous saves to durable storage. Save must not be called again.
+	Flush() (err error)
 }
 
 // A directory saver that creates a new directory saver for each call to Save.

@@ -16,6 +16,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"time"
 
@@ -79,6 +80,13 @@ func runSave(args []string) {
 	score, err := dirSaver.Save(job.BasePath, "", job.Excludes)
 	if err != nil {
 		log.Fatalln(err)
+	}
+
+	// Ensure the backup is durable.
+	err = dirSaver.Flush()
+	if err != nil {
+		err = fmt.Errorf("dirSaver.Flush: %v", err)
+		return
 	}
 
 	// Register the successful backup.
