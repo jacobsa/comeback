@@ -27,7 +27,7 @@ type Store interface {
 
 	// Return true only if the store contains a value for the supplied key. If it
 	// is unknown whether the key exists, the store is permitted to return false.
-	Contains(key string) (res bool, err error)
+	Contains(key string) (res bool)
 
 	// List all keys with the given prefix.
 	ListKeys(prefix string) (keys []string, err error)
