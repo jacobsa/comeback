@@ -17,8 +17,11 @@ package blob
 
 import (
 	"fmt"
+	"sync"
 
+	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/kv"
+	"github.com/jacobsa/gcloud/syncutil"
 )
 
 // Return a blob store that stores blobs in the supplied key/value store. Keys
@@ -38,11 +41,44 @@ func NewKvBasedBlobStore(
 	kvStore kv.Store,
 	prefix string,
 	bytesInFlight uint64,
-	requestsInFlight uint64) Store
+	requestsInFlight int) Store
 
 type kvBasedBlobStore struct {
-	kvStore   kv.Store
-	keyPrefix string
+	/////////////////////////
+	// Dependencies
+	/////////////////////////
+
+	kvStore kv.Store
+
+	/////////////////////////
+	// Constant data
+	/////////////////////////
+
+	keyPrefix           string
+	maxRequestsInFlight int
+
+	/////////////////////////
+	// Mutable state
+	/////////////////////////
+
+	// If any background write to the KV store has failed, an error that should
+	// be returned for all future calls to Store or Flush.
+	writeErr     error
+	writeErrOnce sync.Once
+
+	// Semaphore for number of bytes in flight.
+	bytesInFlight syncutil.WeightedSemaphore
+
+	mu syncutil.InvariantMutex
+
+	// Scores that we are currently writing out to the KV store. Used to control
+	// limit on requests in flight Must acquire from bytesInFlight before waiting
+	// for admission here.
+	//
+	// INVARIANT: len(scoresInFlight) <= maxRequestsInFlight
+	//
+	// GUARDED_BY(mu)
+	scoresInFlight []blob.Score
 }
 
 func (s *kvBasedBlobStore) Store(blob []byte) (score Score, err error) {
