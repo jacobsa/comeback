@@ -85,6 +85,33 @@ type kvBasedBlobStore struct {
 func (s *kvBasedBlobStore) Store(blob []byte) (score Score, err error) {
 	score = ComputeScore(blob)
 
+	// Wait for permission to process this blob. Ensure that we hand back the
+	// credit below if we don't actually need to store it again.
+	s.bytesInFlight.Acquire(uint64(len(blob)))
+
+	needRelease := true
+	defer func() {
+		if needRelease {
+			s.bytesInFlight.Release(uint64(len(blob)))
+		}
+	}()
+
+	// Do we need to store the blob? If so, register it.
+	s.mu.Lock()
+	proceed := s.registerIfNecessary(score, blob)
+	s.mu.Unlock()
+
+	// Stop if the blob is already in good hands.
+	if !proceed {
+		return
+	}
+
+	needRelease = false
+
+	// Spawn a goroutine that handles the blob.
+	go s.handleBlob(score, blob)
+	panic("TODO")
+
 	// Choose a key for this blob based on its score.
 	key := s.keyPrefix + score.Hex()
 
