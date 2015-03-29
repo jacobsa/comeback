@@ -54,8 +54,8 @@ type kvBasedBlobStore struct {
 	// Constant data
 	/////////////////////////
 
-	keyPrefix           string
-	maxRequestsInFlight int
+	keyPrefix     string
+	maxKVRequests int
 
 	/////////////////////////
 	// Mutable state
@@ -71,14 +71,15 @@ type kvBasedBlobStore struct {
 
 	mu syncutil.InvariantMutex
 
-	// Scores that we are currently writing out to the KV store. Used to control
-	// limit on requests in flight Must acquire from bytesInFlight before waiting
-	// for admission here.
-	//
-	// INVARIANT: len(scoresInFlight) <= maxRequestsInFlight
+	// Scores that we currently have in our possession and will eventually write
+	// out to the KV store (or writeErr will be set). May include requests that
+	// are waiting for admission by requestsInFlight.
 	//
 	// GUARDED_BY(mu)
-	scoresInFlight []blob.Score
+	scoresInProgress []blob.Score
+
+	// Semaphore for number of requests actually in flight to the KV store.
+	requestsInFlight syncutil.WeightedSemaphore
 }
 
 func (s *kvBasedBlobStore) Store(blob []byte) (score Score, err error) {
