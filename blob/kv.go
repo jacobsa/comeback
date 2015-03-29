@@ -87,6 +87,7 @@ type kvBasedBlobStore struct {
 	// A cached sum of the lengths of in-flight scores.
 	//
 	// INVARIANT: bytesBuffered is the sum of all values of inFlight
+	// INVARIANT: 0 <= bytesBuffered
 	// INVARIANT: bytesBuffered <= maxBytesBuffered
 	//
 	// GUARDED_BY(mu)
@@ -109,6 +110,36 @@ func (s *kvBasedBlobStore) makeKey(score Score) (key string) {
 func (s *kvBasedBlobStore) hasRoom(blobLen int) bool {
 	bytesLeft := s.maxBytesBuffered - s.bytesBuffered
 	return len(s.inFlight) < s.maxRequestsInFlight && blobLen <= bytesLeft
+}
+
+// LOCKS_EXCLUDED(s.mu)
+func (s *kvBasedBlobStore) makeDurable(score Score, key string, blob []byte) {
+	var err error
+
+	// When we exit, set a write error (if appropriate) and update the in-flight
+	// map.
+	defer func() {
+		s.mu.Lock()
+		defer s.mu.Unlock()
+
+		// Is this the first write error?
+		if err != nil && s.writeErr == nil {
+			s.writeErr = err
+		}
+
+		delete(s.inFlight, score)
+		s.bytesBuffered -= len(blob)
+		s.inFlightChanged.Broadcast()
+	}()
+
+	// Attempt to write out the blob.
+	err = s.kvStore.Set(key, blob)
+	if err != nil {
+		err = fmt.Errorf("kvStore.Set: %v", err)
+		return
+	}
+
+	return
 }
 
 ////////////////////////////////////////////////////////////////////////
