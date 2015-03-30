@@ -144,7 +144,15 @@ func readBlobs(
 	return
 }
 
-func scoresEqual(a, b blob.Score) bool
+func scoresEqual(a, b blob.Score) bool {
+	for i := 0; i < blob.ScoreLength; i++ {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+
+	return true
+}
 
 // Parse the blob as a directory if appropriate, returning a list of children.
 // If not a directory, return the empty list.
