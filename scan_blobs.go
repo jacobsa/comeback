@@ -77,25 +77,25 @@ func listBlobs(
 		var batch []blob.Score
 		for _, o := range listing.Objects {
 			var score blob.Score
-			score, err = blob.ParseHexScore(strings.TrimPrefix(o.Name))
+			score, err = blob.ParseHexScore(strings.TrimPrefix(o.Name, blobKeyPrefix))
 			if err != nil {
 				err = fmt.Errorf("Parsing object name \"%s\": %v", o.Name, err)
 				return
 			}
 
-			scores = append(scores, score)
+			batch = append(batch, score)
 		}
 
 		listing = nil
 
 		// Feed out each score.
-		for _, score := range scores {
+		for _, score := range batch {
 			select {
 			case scores <- score:
 
 				// Cancelled?
 			case <-ctx.Done():
-				err = ctx.Err
+				err = ctx.Err()
 				return
 			}
 		}
