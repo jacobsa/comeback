@@ -33,6 +33,7 @@ import (
 	"sync"
 
 	"github.com/jacobsa/comeback/blob"
+	"github.com/jacobsa/comeback/repr"
 	"github.com/jacobsa/gcloud/gcs"
 	"github.com/jacobsa/gcloud/syncutil"
 	"golang.org/x/net/context"
@@ -156,7 +157,34 @@ func scoresEqual(a, b blob.Score) bool {
 
 // Parse the blob as a directory if appropriate, returning a list of children.
 // If not a directory, return the empty list.
-func parseChildren(b []byte) (children []blob.Score, err error)
+func unmarshalBlob(b []byte) (children []blob.Score, err error) {
+	// If this is a file, simply make sure it is in a legal format.
+	if !repr.IsDir(b) {
+		_, err = repr.UnmarshalFile(b)
+		if err != nil {
+			err = fmt.Errorf("UnmarshalFile: %v", err)
+			return
+		}
+
+		return
+	}
+
+	// Otherwise, parse it as a directory.
+	entries, err := repr.UnmarshalDir(b)
+	if err != nil {
+		err = fmt.Errorf("UnmarshalDir: %v", err)
+		return
+	}
+
+	// Pull out the child scores.
+	for _, entry := range entries {
+		for _, score := range entry.Scores {
+			children = append(children, score)
+		}
+	}
+
+	return
+}
 
 // Verify the contents of the incoming blobs. Do not close the outgoing
 // channel.
@@ -181,9 +209,9 @@ func verifyScores(
 		}
 
 		// Parse the blob.
-		result.children, err = parseChildren(b.contents)
+		result.children, err = unmarshalBlob(b.contents)
 		if err != nil {
-			err = fmt.Errorf("parseChildren: %v", err)
+			err = fmt.Errorf("unmarshalBlob: %v", err)
 			return
 		}
 
