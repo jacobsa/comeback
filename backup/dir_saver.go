@@ -18,12 +18,13 @@ package backup
 import (
 	"errors"
 	"fmt"
-	"github.com/jacobsa/comeback/blob"
-	"github.com/jacobsa/comeback/fs"
-	"github.com/jacobsa/comeback/repr"
 	"log"
 	"path"
 	"regexp"
+
+	"github.com/jacobsa/comeback/blob"
+	"github.com/jacobsa/comeback/fs"
+	"github.com/jacobsa/comeback/repr"
 )
 
 // An object that knows how to save directories to some underlying storage.
@@ -125,7 +126,9 @@ func (s *dirSaver) saveDir(
 	return []blob.Score{score}, nil
 }
 
-func (s *dirSaver) saveFile(parent string, entry *fs.DirectoryEntry) ([]blob.Score, error) {
+func (s *dirSaver) saveFile(
+	parent string,
+	entry *fs.DirectoryEntry) ([]blob.Score, error) {
 	// Defer to the file saver.
 	return s.fileSaver.Save(path.Join(parent, entry.Name))
 }
