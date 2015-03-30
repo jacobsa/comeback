@@ -18,6 +18,7 @@ package blob
 import (
 	"encoding/hex"
 	"fmt"
+	"strings"
 	"testing"
 
 	. "github.com/jacobsa/oglematchers"
@@ -123,4 +124,36 @@ func (t *ScoreTest) DataContainsNonUtf8() {
 	parsed, err := ParseHexScore(golden)
 	AssertEq(nil, err)
 	ExpectThat(parsed, DeepEquals(score))
+}
+
+func (t *ScoreTest) ParseError_Short() {
+	in := strings.Repeat("0", 39)
+	_, err := ParseHexScore(in)
+
+	ExpectThat(err, Error(HasSubstr(in)))
+	ExpectThat(err, Error(HasSubstr("legal hex score")))
+}
+
+func (t *ScoreTest) ParseError_Long() {
+	in := strings.Repeat("0", 41)
+	_, err := ParseHexScore(in)
+
+	ExpectThat(err, Error(HasSubstr(in)))
+	ExpectThat(err, Error(HasSubstr("legal hex score")))
+}
+
+func (t *ScoreTest) ParseError_CapitalLetter() {
+	in := strings.Repeat("0", 39) + "A"
+	_, err := ParseHexScore(in)
+
+	ExpectThat(err, Error(HasSubstr(in)))
+	ExpectThat(err, Error(HasSubstr("legal hex score")))
+}
+
+func (t *ScoreTest) ParseError_NonHexCharacter() {
+	in := strings.Repeat("0", 39) + "g"
+	_, err := ParseHexScore(in)
+
+	ExpectThat(err, Error(HasSubstr(in)))
+	ExpectThat(err, Error(HasSubstr("legal hex score")))
 }
