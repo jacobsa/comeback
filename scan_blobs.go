@@ -144,12 +144,52 @@ func readBlobs(
 	return
 }
 
+func scoresEqual(a, b blob.Score) bool
+
+// Parse the blob as a directory if appropriate, returning a list of children.
+// If not a directory, return the empty list.
+func parseChildren(b []byte) (children []blob.Score, err error)
+
 // Verify the contents of the incoming blobs. Do not close the outgoing
 // channel.
 func verifyScores(
 	ctx context.Context,
 	blobs <-chan scoreAndContents,
-	results chan<- verifiedScore) (err error)
+	results chan<- verifiedScore) (err error) {
+	for b := range blobs {
+		result := verifiedScore{
+			score: b.score,
+		}
+
+		// Make sure the score matches.
+		computed := blob.ComputeScore(b.contents)
+		if !scoresEqual(b.score, computed) {
+			err = fmt.Errorf(
+				"Score mismatch: %v vs. %v",
+				b.score.Hex(),
+				computed.Hex())
+
+			return
+		}
+
+		// Parse the blob.
+		result.children, err = parseChildren(b.contents)
+		if err != nil {
+			err = fmt.Errorf("parseChildren: %v", err)
+			return
+		}
+
+		// Write out the result.
+		select {
+		case results <- result:
+		case <-ctx.Done():
+			err = ctx.Err()
+			return
+		}
+	}
+
+	return
+}
 
 // Write results to stdout.
 func writeResults(
