@@ -140,4 +140,7 @@ func MarshalFile(contents []byte) (f []byte, err error) {
 // and false if it should be decoded with UnmarshalFile. In either case, the
 // error code should be checked because this function does not check for valid
 // data.
-func IsDir(buf []byte) (dir bool)
+func IsDir(buf []byte) (dir bool) {
+	l := len(buf)
+	dir = l > 0 && buf[l-1] == magicByte_Dir
+}
