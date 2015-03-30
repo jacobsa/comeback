@@ -28,7 +28,6 @@ var commands = []*Command{
 	cmdRestore,
 	cmdSave,
 	cmdScanBlobs,
-	cmdVerifyBlobs,
 }
 
 func main() {
