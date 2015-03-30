@@ -142,4 +142,14 @@ func UnmarshalDir(d []byte) (entries []*fs.DirectoryEntry, err error) {
 }
 
 // UnmarshalFile recovers file contents previously encoded with MarshalFile.
-func UnmarshalFile(f []byte) (contents []byte, err error)
+func UnmarshalFile(f []byte) (contents []byte, err error) {
+	// Verify and strip the magic byte.
+	l := len(f)
+	if l == 0 || f[l-1] != magicByte_File {
+		err = fmt.Errorf("Not a file")
+		return
+	}
+
+	contents = f[:l-1]
+	return
+}

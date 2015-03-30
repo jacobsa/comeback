@@ -143,4 +143,5 @@ func MarshalFile(contents []byte) (f []byte, err error) {
 func IsDir(buf []byte) (dir bool) {
 	l := len(buf)
 	dir = l > 0 && buf[l-1] == magicByte_Dir
+	return
 }
