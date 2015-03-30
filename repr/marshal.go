@@ -43,7 +43,8 @@ func convertType(t fs.EntryType) (repr_proto.DirectoryEntryProto_Type, error) {
 	return 0, fmt.Errorf("Unrecognized EntryType: %v", t)
 }
 
-func makeEntryProto(entry *fs.DirectoryEntry) (*repr_proto.DirectoryEntryProto, error) {
+func makeEntryProto(
+	entry *fs.DirectoryEntry) (*repr_proto.DirectoryEntryProto, error) {
 	blobs := []*repr_proto.BlobInfoProto{}
 	for i, _ := range entry.Scores {
 		// Make a copy of the score (a value type, not a reference type), for
