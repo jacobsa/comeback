@@ -27,6 +27,7 @@ var commands = []*Command{
 	cmdList,
 	cmdRestore,
 	cmdSave,
+	cmdScanBlobs,
 	cmdVerifyBlobs,
 }
 
