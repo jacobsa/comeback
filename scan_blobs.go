@@ -26,8 +26,13 @@
 package main
 
 import (
+	"log"
+	"runtime"
+	"sync"
+
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/gcloud/gcs"
+	"github.com/jacobsa/gcloud/syncutil"
 	"golang.org/x/net/context"
 )
 
@@ -59,15 +64,90 @@ func readBlobs(
 	ctx context.Context,
 	bucket gcs.Bucket,
 	scores <-chan blob.Score,
-	results chan<- scoreAndContents) (err error)
+	blobs chan<- scoreAndContents) (err error)
 
 // Verify the contents of the incoming blobs. Do not close the outgoing
 // channel.
 func verifyScores(
 	ctx context.Context,
 	blobs <-chan scoreAndContents,
+	results chan<- verifiedScore) (err error)
+
+// Write results to stdout.
+func writeResults(
+	ctx context.Context,
 	results <-chan verifiedScore) (err error)
 
 func runScanBlobs(args []string) {
-	panic("TODO")
+	bucket := getBucket()
+
+	var err error
+	b := syncutil.NewBundle(context.Background())
+
+	// Die on error.
+	defer func() {
+		if err != nil {
+			log.Fatalln(err)
+		}
+	}()
+
+	// Allow parallelism.
+	runtime.GOMAXPROCS(runtime.NumCPU())
+
+	// List all of the scores in the bucket.
+	scores := make(chan blob.Score, 100)
+	b.Add(func(ctx context.Context) (err error) {
+		defer close(scores)
+		err = listBlobs(ctx, bucket, scores)
+		return
+	})
+
+	// Read the contents of the corresponding blobs in parallel, bounding how
+	// hard we hammer GCS by bounding the parallelism.
+	const readWorkers = 128
+	var readWaitGroup sync.WaitGroup
+
+	blobs := make(chan scoreAndContents, 10)
+	for i := 0; i < readWorkers; i++ {
+		readWaitGroup.Add(1)
+		b.Add(func(ctx context.Context) (err error) {
+			defer readWaitGroup.Done()
+			err = readBlobs(ctx, bucket, scores, blobs)
+			return
+		})
+	}
+
+	go func() {
+		readWaitGroup.Wait()
+		close(blobs)
+	}()
+
+	// Verify the blob contents and summarize their children. Use one worker per
+	// CPU.
+	var verifyWaitGroup sync.WaitGroup
+
+	results := make(chan verifiedScore, 100)
+	for i := 0; i < runtime.NumCPU(); i++ {
+		verifyWaitGroup.Add(1)
+		b.Add(func(ctx context.Context) (err error) {
+			defer verifyWaitGroup.Done()
+			err = verifyScores(ctx, blobs, results)
+			return
+		})
+	}
+
+	go func() {
+		verifyWaitGroup.Wait()
+		close(results)
+	}()
+
+	// Process results.
+	b.Add(func(ctx context.Context) (err error) {
+		err = writeResults(ctx, results)
+		return
+	})
+
+	// Wait for everything to complete.
+	err = b.Join()
+	return
 }
