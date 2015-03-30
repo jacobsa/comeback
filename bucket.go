@@ -40,12 +40,12 @@ func makeBucket() (bucket gcs.Bucket, err error) {
 		return
 	}
 
-	// Turn that into a connection. Note that a project ID isn't needed because
-	// we don't list or create buckets (the bucket name itself implies its
-	// project ID).
-	const projID = "fake_comeback_project"
+	// Turn that into a connection.
+	connCfg := &gcs.ConnConfig{
+		HTTPClient: httpClient,
+	}
 
-	conn, err := gcs.NewConn(projID, httpClient)
+	conn, err := gcs.NewConn(connCfg)
 	if err != nil {
 		err = fmt.Errorf("NewConn: %v", err)
 		return
