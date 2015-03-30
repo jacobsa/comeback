@@ -26,8 +26,10 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"runtime"
+	"strings"
 	"sync"
 
 	"github.com/jacobsa/comeback/blob"
@@ -56,7 +58,58 @@ type verifiedScore struct {
 func listBlobs(
 	ctx context.Context,
 	bucket gcs.Bucket,
-	scores chan<- blob.Score) (err error)
+	scores chan<- blob.Score) (err error) {
+	req := &gcs.ListObjectsRequest{
+		Prefix: blobKeyPrefix,
+	}
+
+	// List until we run out.
+	for {
+		// Fetch the next batch.
+		var listing *gcs.Listing
+		listing, err = bucket.ListObjects(ctx, req)
+		if err != nil {
+			err = fmt.Errorf("ListObjects: %v", err)
+			return
+		}
+
+		// Transform to scores.
+		var batch []blob.Score
+		for _, o := range listing.Objects {
+			var score blob.Score
+			score, err = blob.ParseHexScore(strings.TrimPrefix(o.Name))
+			if err != nil {
+				err = fmt.Errorf("Parsing object name \"%s\": %v", o.Name, err)
+				return
+			}
+
+			scores = append(scores, score)
+		}
+
+		listing = nil
+
+		// Feed out each score.
+		for _, score := range scores {
+			select {
+			case scores <- score:
+
+				// Cancelled?
+			case <-ctx.Done():
+				err = ctx.Err
+				return
+			}
+		}
+
+		// Are we done?
+		if listing.ContinuationToken == "" {
+			break
+		}
+
+		req.ContinuationToken = listing.ContinuationToken
+	}
+
+	return
+}
 
 // Read the contents of blobs specified on the incoming channel. Do not close
 // the outgoing channel.

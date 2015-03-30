@@ -48,6 +48,9 @@ func ComputeScore(b []byte) (s Score) {
 	return
 }
 
+// Parse the output of Score.Hex.
+func ParseHexScore(hex string) (s Score, err error)
+
 // Return a fixed-width hex version of the score's hash, suitable for using
 // e.g. as a filename.
 func (s Score) Hex() string {
