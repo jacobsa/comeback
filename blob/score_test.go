@@ -18,9 +18,10 @@ package blob
 import (
 	"encoding/hex"
 	"fmt"
+	"testing"
+
 	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
-	"testing"
 )
 
 func TestRegister(t *testing.T) { RunTests(t) }
@@ -58,6 +59,10 @@ func (t *ScoreTest) EmptySlice() {
 
 	ExpectEq(golden, score.Hex())
 	ExpectThat(score, DeepEquals(fromHex(golden)))
+
+	parsed, err := ParseHexScore(golden)
+	AssertEq(nil, err)
+	ExpectThat(parsed, DeepEquals(score))
 }
 
 func (t *ScoreTest) HashStartsWithZero() {
@@ -69,6 +74,10 @@ func (t *ScoreTest) HashStartsWithZero() {
 
 	ExpectEq(golden, score.Hex())
 	ExpectThat(score, DeepEquals(fromHex(golden)))
+
+	parsed, err := ParseHexScore(golden)
+	AssertEq(nil, err)
+	ExpectThat(parsed, DeepEquals(score))
 }
 
 func (t *ScoreTest) HexHashStartsWithNonZeroNumber() {
@@ -80,6 +89,10 @@ func (t *ScoreTest) HexHashStartsWithNonZeroNumber() {
 
 	ExpectEq(golden, score.Hex())
 	ExpectThat(score, DeepEquals(fromHex(golden)))
+
+	parsed, err := ParseHexScore(golden)
+	AssertEq(nil, err)
+	ExpectThat(parsed, DeepEquals(score))
 }
 
 func (t *ScoreTest) HexHashStartsWithLetter() {
@@ -91,6 +104,10 @@ func (t *ScoreTest) HexHashStartsWithLetter() {
 
 	ExpectEq(golden, score.Hex())
 	ExpectThat(score, DeepEquals(fromHex(golden)))
+
+	parsed, err := ParseHexScore(golden)
+	AssertEq(nil, err)
+	ExpectThat(parsed, DeepEquals(score))
 }
 
 func (t *ScoreTest) DataContainsNonUtf8() {
@@ -102,4 +119,8 @@ func (t *ScoreTest) DataContainsNonUtf8() {
 
 	ExpectEq(golden, score.Hex())
 	ExpectThat(score, DeepEquals(fromHex(golden)))
+
+	parsed, err := ParseHexScore(golden)
+	AssertEq(nil, err)
+	ExpectThat(parsed, DeepEquals(score))
 }
