@@ -91,12 +91,18 @@ func makeEntryProto(
 	return entryProto, nil
 }
 
+const (
+	magicByte_Dir  byte = 'd'
+	magicByte_File byte = 'f'
+)
+
 // MarshalDir turns a list of directory entries into bytes that can later be
 // used with IsDir and UnmarshalDir. Note that ContainingDevice and Inode
 // fields are lost.
 //
 // The input array may be modified.
 func MarshalDir(entries []*fs.DirectoryEntry) (d []byte, err error) {
+	// Set entry proto buffers.
 	entryProtos := []*repr_proto.DirectoryEntryProto{}
 	for _, entry := range entries {
 		entryProto, err := makeEntryProto(entry)
@@ -107,8 +113,14 @@ func MarshalDir(entries []*fs.DirectoryEntry) (d []byte, err error) {
 		entryProtos = append(entryProtos, entryProto)
 	}
 
+	// Encapsulate the entries into a listing proto and serialize that.
 	listingProto := &repr_proto.DirectoryListingProto{Entry: entryProtos}
-	return proto.Marshal(listingProto)
+	d = proto.Marshal(listingProto)
+
+	// Append a magic byte so we can recognize this as a directory.
+	d = append(d, magicByte_Dir)
+
+	return
 }
 
 // MarshalFile encodes the supplied file contents into bytes that can later be
