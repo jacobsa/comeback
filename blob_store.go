@@ -28,6 +28,19 @@ const (
 var g_blobStoreOnce sync.Once
 var g_blobStore blob.Store
 
+// A generous lower bound for where the OS starts to tell us to fuck off if we
+// have too many files. This may also cover the case where we get "no such
+// host" errors, apparently because we do too many lookups all at once.
+const osFileLimit = 128
+
+func minInt(a, b int) int {
+	if a < b {
+		return a
+	}
+
+	return b
+}
+
 func initBlobStore() {
 	kvStore := getKvStore()
 	crypter := getCrypter()
@@ -41,7 +54,7 @@ func initBlobStore() {
 		kvStore,
 		blobKeyPrefix,
 		3*bandwidthBytesPerSec*latencySecs,
-		3*bandwidthHz*latencySecs)
+		minInt(osFileLimit, 3*bandwidthHz*latencySecs))
 
 	// Make sure the values returned by the key/value store aren't corrupted.
 	g_blobStore = blob.NewCheckingStore(g_blobStore)
