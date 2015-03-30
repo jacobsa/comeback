@@ -27,6 +27,8 @@ package main
 
 import (
 	"fmt"
+	"io"
+	"io/ioutil"
 	"log"
 	"runtime"
 	"strings"
@@ -87,8 +89,6 @@ func listBlobs(
 			batch = append(batch, score)
 		}
 
-		listing = nil
-
 		// Feed out each score.
 		for _, score := range batch {
 			select {
@@ -112,26 +112,68 @@ func listBlobs(
 	return
 }
 
+func readAndClose(rc io.ReadCloser) (d []byte, err error) {
+	// Read.
+	d, err = ioutil.ReadAll(rc)
+	if err != nil {
+		rc.Close()
+		err = fmt.Errorf("ReadAll: %v", err)
+		return
+	}
+
+	// Close.
+	err = rc.Close()
+	if err != nil {
+		err = fmt.Errorf("Close: %v", err)
+		return
+	}
+
+	return
+}
+
+func readBlob(
+	ctx context.Context,
+	bucket gcs.Bucket,
+	score blob.Score) (blob scoreAndContents, err error) {
+	// Fill in the score.
+	blob.score = score
+
+	// Obtain a reader.
+	req := &gcs.ReadObjectRequest{
+		Name: blobKeyPrefix + score.Hex(),
+	}
+
+	rc, err := bucket.NewReader(ctx, req)
+	if err != nil {
+		err = fmt.Errorf("NewReader: %v", err)
+		return
+	}
+
+	// Consume it.
+	blob.contents, err = readAndClose(rc)
+	if err != nil {
+		err = fmt.Errorf("readAndClose: %v", err)
+		return
+	}
+
+	return
+}
+
 // Read the contents of blobs specified on the incoming channel. Do not close
 // the outgoing channel.
 func readBlobs(
 	ctx context.Context,
-	blobStore blob.Store,
+	bucket gcs.Bucket,
 	scores <-chan blob.Score,
 	blobs chan<- scoreAndContents) (err error) {
 	for score := range scores {
-		// Read the contents for this score.
-		var contents []byte
-		contents, err = blobStore.Load(score)
-		if err != nil {
-			err = fmt.Errorf("blobStore.Load: %v", err)
-			return
-		}
+		var blob scoreAndContents
 
-		// Write out a result.
-		blob := scoreAndContents{
-			score:    score,
-			contents: contents,
+		// Read the contents for this score.
+		blob, err = readBlob(ctx, bucket, score)
+		if err != nil {
+			err = fmt.Errorf("readBlob: %v", err)
+			return
 		}
 
 		select {
@@ -249,7 +291,6 @@ func writeResults(
 
 func runScanBlobs(args []string) {
 	bucket := getBucket()
-	blobStore := getBlobStore()
 
 	var err error
 	b := syncutil.NewBundle(context.Background())
@@ -282,7 +323,7 @@ func runScanBlobs(args []string) {
 		readWaitGroup.Add(1)
 		b.Add(func(ctx context.Context) (err error) {
 			defer readWaitGroup.Done()
-			err = readBlobs(ctx, blobStore, scores, blobs)
+			err = readBlobs(ctx, bucket, scores, blobs)
 			return
 		})
 	}
