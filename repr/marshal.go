@@ -122,7 +122,7 @@ func MarshalDir(entries []*fs.DirectoryEntry) (d []byte, err error) {
 		return
 	}
 
-	// Append a magic byte so we can recognize this as a directory.
+	// Append a magic byte so IsDir can recognize this as a directory.
 	d = append(d, magicByte_Dir)
 
 	return
@@ -130,7 +130,11 @@ func MarshalDir(entries []*fs.DirectoryEntry) (d []byte, err error) {
 
 // MarshalFile encodes the supplied file contents into bytes that can later be
 // used with IsDir and UnmarshalFile. The input array may be modified.
-func MarshalFile(contents []byte) (f []byte, err error)
+func MarshalFile(contents []byte) (f []byte, err error) {
+	// Append a magic byte so IsDir can recognize this as a file.
+	f = append(contents, magicByte_File)
+	return
+}
 
 // IsDir returns true if the supplied data should be decoded with UnmarshalDir,
 // and false if it should be decoded with UnmarshalFile. In either case, the
