@@ -19,7 +19,6 @@ import (
 	"flag"
 	"log"
 	"os"
-	"runtime"
 )
 
 // The set of commands supported by the tool.
@@ -32,10 +31,6 @@ var commands = []*Command{
 
 func main() {
 	flag.Parse()
-
-	// Allow parallelism between e.g. scanning directories and writing out the
-	// state file.
-	runtime.GOMAXPROCS(2)
 
 	// Set up bare logging output.
 	log.SetFlags(0)

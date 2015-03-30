@@ -18,6 +18,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"runtime"
 	"time"
 
 	"github.com/jacobsa/comeback/registry"
@@ -48,6 +49,10 @@ func saveStatePeriodically(c <-chan time.Time) {
 
 func runSave(args []string) {
 	cfg := getConfig()
+
+	// Allow parallelism between e.g. scanning directories and writing out the
+	// state file.
+	runtime.GOMAXPROCS(2)
 
 	// Look for the specified job.
 	if *g_jobName == "" {
