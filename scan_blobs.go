@@ -115,9 +115,34 @@ func listBlobs(
 // the outgoing channel.
 func readBlobs(
 	ctx context.Context,
-	bucket gcs.Bucket,
+	blobStore blob.Store,
 	scores <-chan blob.Score,
-	blobs chan<- scoreAndContents) (err error)
+	blobs chan<- scoreAndContents) (err error) {
+	for score := range scores {
+		// Read the contents for this score.
+		var contents []byte
+		contents, err = blobStore.Load(score)
+		if err != nil {
+			err = fmt.Errorf("blobStore.Load: %v", err)
+			return
+		}
+
+		// Write out a result.
+		blob := scoreAndContents{
+			score:    score,
+			contents: contents,
+		}
+
+		select {
+		case blobs <- blob:
+		case <-ctx.Done():
+			err = ctx.Err()
+			return
+		}
+	}
+
+	return
+}
 
 // Verify the contents of the incoming blobs. Do not close the outgoing
 // channel.
@@ -133,6 +158,7 @@ func writeResults(
 
 func runScanBlobs(args []string) {
 	bucket := getBucket()
+	blobStore := getBlobStore()
 
 	var err error
 	b := syncutil.NewBundle(context.Background())
@@ -165,7 +191,7 @@ func runScanBlobs(args []string) {
 		readWaitGroup.Add(1)
 		b.Add(func(ctx context.Context) (err error) {
 			defer readWaitGroup.Done()
-			err = readBlobs(ctx, bucket, scores, blobs)
+			err = readBlobs(ctx, blobStore, scores, blobs)
 			return
 		})
 	}
