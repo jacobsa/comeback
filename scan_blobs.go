@@ -230,7 +230,22 @@ func verifyScores(
 // Write results to stdout.
 func writeResults(
 	ctx context.Context,
-	results <-chan verifiedScore) (err error)
+	results <-chan verifiedScore) (err error) {
+	for result := range results {
+		// Write the score.
+		fmt.Printf("%s", result.score.Hex())
+
+		// Write its children.
+		for _, child := range result.children {
+			fmt.Printf(" %s", child.Hex())
+		}
+
+		// Add a line separator.
+		fmt.Printf("\n")
+	}
+
+	return
+}
 
 func runScanBlobs(args []string) {
 	bucket := getBucket()
