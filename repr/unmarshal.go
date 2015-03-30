@@ -111,6 +111,15 @@ func convertEntryProto(
 // UnmarshalDir recovers a list of directory entries from bytes previously
 // returned by MarshalDir.
 func UnmarshalDir(d []byte) (entries []*fs.DirectoryEntry, err error) {
+	// Verify and strip the magic byte.
+	l := len(d)
+	if l == 0 || d[l-1] != magicByte_Dir {
+		err = fmt.Errorf("Not a directory")
+		return
+	}
+
+	d = d[:l-1]
+
 	// Parse the protocol buffer.
 	listingProto := new(repr_proto.DirectoryListingProto)
 	err = proto.Unmarshal(d, listingProto)
