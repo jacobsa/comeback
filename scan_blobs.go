@@ -25,10 +25,48 @@
 
 package main
 
+import (
+	"github.com/jacobsa/comeback/blob"
+	"github.com/jacobsa/gcloud/gcs"
+	"golang.org/x/net/context"
+)
+
 var cmdScanBlobs = &Command{
 	Name: "scan_blobs",
 	Run:  runScanBlobs,
 }
+
+type scoreAndContents struct {
+	score    blob.Score
+	contents []byte
+}
+
+type verifiedScore struct {
+	score    blob.Score
+	children []blob.Score
+}
+
+// List all scores in the GCS bucket into the channel. Do not close the
+// channel.
+func listBlobs(
+	ctx context.Context,
+	bucket gcs.Bucket,
+	scores chan<- blob.Score) (err error)
+
+// Read the contents of blobs specified on the incoming channel. Do not close
+// the outgoing channel.
+func readBlobs(
+	ctx context.Context,
+	bucket gcs.Bucket,
+	scores <-chan blob.Score,
+	results chan<- scoreAndContents) (err error)
+
+// Verify the contents of the incoming blobs. Do not close the outgoing
+// channel.
+func verifyScores(
+	ctx context.Context,
+	blobs <-chan scoreAndContents,
+	results <-chan verifiedScore) (err error)
 
 func runScanBlobs(args []string) {
 	panic("TODO")
