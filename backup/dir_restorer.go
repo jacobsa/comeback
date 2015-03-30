@@ -17,11 +17,12 @@ package backup
 
 import (
 	"fmt"
+	"path"
+
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/fs"
 	"github.com/jacobsa/comeback/repr"
 	"github.com/jacobsa/comeback/sys"
-	"path"
 )
 
 ////////////////////////////////////////////////////////////////////////
@@ -134,7 +135,7 @@ func (r *dirRestorer) RestoreDirectory(
 	}
 
 	// Parse its contents.
-	entries, err := repr.Unmarshal(blob)
+	entries, err := repr.UnmarshalDir(blob)
 	if err != nil {
 		err = fmt.Errorf("Invalid data in blob: %v", err)
 		return

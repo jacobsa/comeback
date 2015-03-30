@@ -201,7 +201,7 @@ func (s *dirSaver) Save(
 	}
 
 	// Create a serialized version of this information.
-	data, err := repr.Marshal(entries)
+	data, err := repr.MarshalDir(entries)
 	if err != nil {
 		err = fmt.Errorf("Marshaling: %v", err)
 		return
