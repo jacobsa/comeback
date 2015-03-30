@@ -66,22 +66,10 @@ func (t *KvBasedStore_StoreTest) CallsContains() {
 
 	// Contains
 	ExpectCall(t.kvStore, "Contains")(expectedKey).
-		WillOnce(oglemock.Return(false, errors.New("")))
+		WillOnce(oglemock.Return(true))
 
 	// Call
 	t.callStore()
-}
-
-func (t *KvBasedStore_StoreTest) ContainsReturnsError() {
-	// Contains
-	ExpectCall(t.kvStore, "Contains")(Any()).
-		WillOnce(oglemock.Return(false, errors.New("taco")))
-
-	// Call
-	t.callStore()
-
-	ExpectThat(t.err, Error(HasSubstr("Contains")))
-	ExpectThat(t.err, Error(HasSubstr("taco")))
 }
 
 func (t *KvBasedStore_StoreTest) ContainsSaysYes() {
@@ -89,7 +77,7 @@ func (t *KvBasedStore_StoreTest) ContainsSaysYes() {
 
 	// Contains
 	ExpectCall(t.kvStore, "Contains")(Any()).
-		WillOnce(oglemock.Return(true, nil))
+		WillOnce(oglemock.Return(true))
 
 	// Call
 	t.callStore()
@@ -104,7 +92,7 @@ func (t *KvBasedStore_StoreTest) CallsSet() {
 
 	// Contains
 	ExpectCall(t.kvStore, "Contains")(Any()).
-		WillOnce(oglemock.Return(false, nil))
+		WillOnce(oglemock.Return(false))
 
 	// Set
 	ExpectCall(t.kvStore, "Set")(expectedKey, DeepEquals(t.data)).
@@ -117,7 +105,7 @@ func (t *KvBasedStore_StoreTest) CallsSet() {
 func (t *KvBasedStore_StoreTest) SetReturnsError() {
 	// Contains
 	ExpectCall(t.kvStore, "Contains")(Any()).
-		WillOnce(oglemock.Return(false, nil))
+		WillOnce(oglemock.Return(false))
 
 	// Set
 	ExpectCall(t.kvStore, "Set")(Any(), Any()).
@@ -135,7 +123,7 @@ func (t *KvBasedStore_StoreTest) SetSaysOkay() {
 
 	// Contains
 	ExpectCall(t.kvStore, "Contains")(Any()).
-		WillOnce(oglemock.Return(false, nil))
+		WillOnce(oglemock.Return(false))
 
 	// Set
 	ExpectCall(t.kvStore, "Set")(Any(), Any()).
