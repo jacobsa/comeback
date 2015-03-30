@@ -34,8 +34,8 @@ func initBlobStore() {
 
 	// Store blobs in a key/value store.
 	const latencySecs = 2
-	const bandwidthBytesPerSec = 20e6
-	const bandwidthHz = 8
+	const bandwidthBytesPerSec = 50e6
+	const bandwidthHz = 512
 
 	g_blobStore = blob.NewKVStoreBlobStore(
 		kvStore,
