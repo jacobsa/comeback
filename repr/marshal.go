@@ -115,7 +115,12 @@ func MarshalDir(entries []*fs.DirectoryEntry) (d []byte, err error) {
 
 	// Encapsulate the entries into a listing proto and serialize that.
 	listingProto := &repr_proto.DirectoryListingProto{Entry: entryProtos}
-	d = proto.Marshal(listingProto)
+
+	d, err = proto.Marshal(listingProto)
+	if err != nil {
+		err = fmt.Errorf("proto.Marshal: %v", err)
+		return
+	}
 
 	// Append a magic byte so we can recognize this as a directory.
 	d = append(d, magicByte_Dir)
