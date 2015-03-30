@@ -17,9 +17,11 @@ package backup
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/fs"
-	"os"
+	"github.com/jacobsa/comeback/repr"
 )
 
 ////////////////////////////////////////////////////////////////////////
@@ -81,8 +83,16 @@ func (r *fileRestorer) RestoreFile(
 			return
 		}
 
-		// Write it to the file.
-		if _, err = file.Write(blob); err != nil {
+		// Unmarshal it.
+		var chunk []byte
+		chunk, err = repr.UnmarshalFile(blob)
+		if err != nil {
+			err = fmt.Errorf("UnmarshalFile: %v", err)
+			return
+		}
+
+		// Write the contents to the file.
+		if _, err = file.Write(chunk); err != nil {
 			err = fmt.Errorf("Write: %v", err)
 			return
 		}
