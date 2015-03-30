@@ -91,9 +91,12 @@ func makeEntryProto(
 	return entryProto, nil
 }
 
-// Marshal turns a list of directory entries into bytes that can later be used
-// with Unmarshal. Note that ContainingDevice and Inode fields are lost.
-func Marshal(entries []*fs.DirectoryEntry) (d []byte, err error) {
+// MarshalDir turns a list of directory entries into bytes that can later be
+// used with IsDir and UnmarshalDir. Note that ContainingDevice and Inode
+// fields are lost.
+//
+// The input array may be modified.
+func MarshalDir(entries []*fs.DirectoryEntry) (d []byte, err error) {
 	entryProtos := []*repr_proto.DirectoryEntryProto{}
 	for _, entry := range entries {
 		entryProto, err := makeEntryProto(entry)
@@ -107,3 +110,13 @@ func Marshal(entries []*fs.DirectoryEntry) (d []byte, err error) {
 	listingProto := &repr_proto.DirectoryListingProto{Entry: entryProtos}
 	return proto.Marshal(listingProto)
 }
+
+// MarshalFile encodes the supplied file contents into bytes that can later be
+// used with IsDir and UnmarshalFile. The input array may be modified.
+func MarshalFile(contents []byte) (f []byte, err error)
+
+// IsDir returns true if the supplied data should be decoded with UnmarshalDir,
+// and false if it should be decoded with UnmarshalFile. In either case, the
+// error code should be checked because this function does not check for valid
+// data.
+func IsDir(buf []byte) (dir bool)

@@ -108,9 +108,9 @@ func convertEntryProto(
 	return entry, nil
 }
 
-// Unmarshal recovers a list of directory entries from bytes previously
-// returned by Marshal.
-func Unmarshal(d []byte) (entries []*fs.DirectoryEntry, err error) {
+// UnmarshalDir recovers a list of directory entries from bytes previously
+// returned by MarshalDir.
+func UnmarshalDir(d []byte) (entries []*fs.DirectoryEntry, err error) {
 	// Parse the protocol buffer.
 	listingProto := new(repr_proto.DirectoryListingProto)
 	err = proto.Unmarshal(d, listingProto)
@@ -131,3 +131,6 @@ func Unmarshal(d []byte) (entries []*fs.DirectoryEntry, err error) {
 
 	return
 }
+
+// UnmarshalFile recovers file contents previously encoded with MarshalFile.
+func UnmarshalFile(f []byte) (contents []byte, err error)
