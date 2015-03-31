@@ -17,7 +17,9 @@ package blob
 
 import (
 	"crypto/sha1"
+	"encoding/hex"
 	"fmt"
+	"regexp"
 )
 
 // A Score is the identifier for a blob previously stored by a blob store. It
@@ -45,6 +47,27 @@ func ComputeScore(b []byte) (s Score) {
 	}
 
 	copy(s[:], slice)
+	return
+}
+
+var hexScoreRegexp = regexp.MustCompile(
+	fmt.Sprintf("^[0-9a-f]{%d}$", hex.EncodedLen(ScoreLength)))
+
+// Parse the output of Score.Hex.
+func ParseHexScore(hexScore string) (s Score, err error) {
+	// Is this a legal hex score?
+	if !hexScoreRegexp.MatchString(hexScore) {
+		err = fmt.Errorf("Not a legal hex score: %s", hexScore)
+		return
+	}
+
+	// Decode.
+	n, err := hex.Decode(s[:], []byte(hexScore))
+	if n != ScoreLength || err != nil {
+		err = fmt.Errorf("Unexpected hex.Decode output: %v %v", n, err)
+		return
+	}
+
 	return
 }
 

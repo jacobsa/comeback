@@ -57,7 +57,10 @@ func initKvStore() {
 			log.Fatalln("g_kvStore.List:", err)
 		}
 
-		log.Println("Listed", len(allKeys), "keys.")
+		log.Printf(
+			"Listed %d keys in %v.",
+			len(allKeys),
+			time.Since(stateStruct.RelistTime))
 
 		stateStruct.ExistingKeys = state.NewStringSet()
 		for _, key := range allKeys {

@@ -18,9 +18,11 @@ package blob
 import (
 	"encoding/hex"
 	"fmt"
+	"strings"
+	"testing"
+
 	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
-	"testing"
 )
 
 func TestRegister(t *testing.T) { RunTests(t) }
@@ -58,6 +60,10 @@ func (t *ScoreTest) EmptySlice() {
 
 	ExpectEq(golden, score.Hex())
 	ExpectThat(score, DeepEquals(fromHex(golden)))
+
+	parsed, err := ParseHexScore(golden)
+	AssertEq(nil, err)
+	ExpectThat(parsed, DeepEquals(score))
 }
 
 func (t *ScoreTest) HashStartsWithZero() {
@@ -69,6 +75,10 @@ func (t *ScoreTest) HashStartsWithZero() {
 
 	ExpectEq(golden, score.Hex())
 	ExpectThat(score, DeepEquals(fromHex(golden)))
+
+	parsed, err := ParseHexScore(golden)
+	AssertEq(nil, err)
+	ExpectThat(parsed, DeepEquals(score))
 }
 
 func (t *ScoreTest) HexHashStartsWithNonZeroNumber() {
@@ -80,6 +90,10 @@ func (t *ScoreTest) HexHashStartsWithNonZeroNumber() {
 
 	ExpectEq(golden, score.Hex())
 	ExpectThat(score, DeepEquals(fromHex(golden)))
+
+	parsed, err := ParseHexScore(golden)
+	AssertEq(nil, err)
+	ExpectThat(parsed, DeepEquals(score))
 }
 
 func (t *ScoreTest) HexHashStartsWithLetter() {
@@ -91,6 +105,10 @@ func (t *ScoreTest) HexHashStartsWithLetter() {
 
 	ExpectEq(golden, score.Hex())
 	ExpectThat(score, DeepEquals(fromHex(golden)))
+
+	parsed, err := ParseHexScore(golden)
+	AssertEq(nil, err)
+	ExpectThat(parsed, DeepEquals(score))
 }
 
 func (t *ScoreTest) DataContainsNonUtf8() {
@@ -102,4 +120,40 @@ func (t *ScoreTest) DataContainsNonUtf8() {
 
 	ExpectEq(golden, score.Hex())
 	ExpectThat(score, DeepEquals(fromHex(golden)))
+
+	parsed, err := ParseHexScore(golden)
+	AssertEq(nil, err)
+	ExpectThat(parsed, DeepEquals(score))
+}
+
+func (t *ScoreTest) ParseError_Short() {
+	in := strings.Repeat("0", 39)
+	_, err := ParseHexScore(in)
+
+	ExpectThat(err, Error(HasSubstr(in)))
+	ExpectThat(err, Error(HasSubstr("legal hex score")))
+}
+
+func (t *ScoreTest) ParseError_Long() {
+	in := strings.Repeat("0", 41)
+	_, err := ParseHexScore(in)
+
+	ExpectThat(err, Error(HasSubstr(in)))
+	ExpectThat(err, Error(HasSubstr("legal hex score")))
+}
+
+func (t *ScoreTest) ParseError_CapitalLetter() {
+	in := strings.Repeat("0", 39) + "A"
+	_, err := ParseHexScore(in)
+
+	ExpectThat(err, Error(HasSubstr(in)))
+	ExpectThat(err, Error(HasSubstr("legal hex score")))
+}
+
+func (t *ScoreTest) ParseError_NonHexCharacter() {
+	in := strings.Repeat("0", 39) + "g"
+	_, err := ParseHexScore(in)
+
+	ExpectThat(err, Error(HasSubstr(in)))
+	ExpectThat(err, Error(HasSubstr("legal hex score")))
 }
