@@ -30,6 +30,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"os"
 	"runtime"
 	"strings"
 	"sync"
@@ -44,7 +45,13 @@ import (
 
 var cmdScanBlobs = &Command{
 	Name: "scan_blobs",
-	Run:  runScanBlobs,
+}
+
+var fOutputFile = cmdScanBlobs.Flags.String(
+	"output_file", "", "Path to scan_blobs output file. Will be truncated.")
+
+func init() {
+	cmdScanBlobs.Run = runScanBlobs // Break flag-related dependency loop.
 }
 
 type scoreAndContents struct {
@@ -283,18 +290,32 @@ func verifyScores(
 // Write results to stdout.
 func writeResults(
 	ctx context.Context,
+	output io.Writer,
 	results <-chan verifiedScore) (err error) {
+	// Log also to stdout.
+	output = io.MultiWriter(output, os.Stdout)
+
+	// Process each result.
 	for result := range results {
 		// Write the score.
-		fmt.Printf("%s", result.score.Hex())
+		_, err = fmt.Fprintf(output, "%s", result.score.Hex())
+		if err != nil {
+			return
+		}
 
 		// Write its children.
 		for _, child := range result.children {
-			fmt.Printf(" %s", child.Hex())
+			_, err = fmt.Fprintf(output, " %s", child.Hex())
+			if err != nil {
+				return
+			}
 		}
 
 		// Add a line separator.
-		fmt.Printf("\n")
+		_, err = fmt.Fprintf(output, "\n")
+		if err != nil {
+			return
+		}
 	}
 
 	return
@@ -308,6 +329,24 @@ func runScanBlobs(args []string) {
 			log.Fatalln(err)
 		}
 	}()
+
+	// Open the output file.
+	if *fOutputFile == "" {
+		err = fmt.Errorf("You must set --output_file.")
+		return
+	}
+
+	output, err := os.OpenFile(
+		*fOutputFile,
+		os.O_WRONLY|os.O_TRUNC|os.O_CREATE,
+		0666)
+
+	if err != nil {
+		err = fmt.Errorf("OpenFile: %v", err)
+		return
+	}
+
+	defer output.Close()
 
 	// Grab dependencies.
 	bucket := getBucket()
@@ -367,7 +406,7 @@ func runScanBlobs(args []string) {
 
 	// Process results.
 	b.Add(func(ctx context.Context) (err error) {
-		err = writeResults(ctx, results)
+		err = writeResults(ctx, output, results)
 		return
 	})
 
