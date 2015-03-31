@@ -17,6 +17,7 @@ package main
 
 import (
 	"log"
+	"time"
 )
 
 var cmdList = &Command{
@@ -38,19 +39,17 @@ func runList(args []string) {
 	log.Println("Recent backups:")
 	log.Println("")
 	log.Printf(
-		"  %-16s   %-40s   %-33s   %s\n",
-		"ID",
-		"JOB NAME",
+		"  %-33s   %-40s   %s\n",
 		"START TIME",
+		"JOB NAME",
 		"SCORE",
 	)
 
 	for _, job := range jobs {
 		log.Printf(
-			"  %16x   %-40s   %-33s   %s\n",
-			job.Id,
+			"  %-33s   %-40s   %s\n",
+			job.StartTime.Format(time.RFC3339Nano),
 			job.Name,
-			job.StartTime.Local(),
 			job.Score.Hex(),
 		)
 	}

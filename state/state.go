@@ -18,23 +18,19 @@ package state
 import (
 	"encoding/gob"
 	"io"
+	"time"
 )
 
 // State that should be saved between runs of the program.
 type State struct {
-	// The set of scores that are known to already exist in the blob store,
-	// represented in hex. It is unnecessary to again store any blob with one of
+	// The set of keys that are known to already exist in the KV store. It is
+	// unnecessary to again store any blob whose score maps to one of these keys.
 	// these scores.
-	ExistingScores StringSet
+	ExistingKeys StringSet
 
-	// A version number for the above set of scores. Any time state is saved,
-	// this version should first be updated to a random number and saved to the
-	// backup registry, making sure that the old version was still the current
-	// one. This protects us from drifting out of date if another process is
-	// concurrently adding scores to the blob store.
-	//
-	// TODO(jacobsa): Do we really need this silliness? See issue #15.
-	ExistingScoresVersion uint64
+	// The time at which ExistingScores was last updated from the authoritative
+	// source.
+	RelistTime time.Time
 
 	// A map from file system info to the scores that were seen for a given file
 	// last time.

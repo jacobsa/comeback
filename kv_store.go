@@ -16,53 +16,57 @@
 package main
 
 import (
-	"github.com/jacobsa/aws/s3"
-	"github.com/jacobsa/aws/s3/s3util"
-	"github.com/jacobsa/comeback/kv"
-	s3_kv "github.com/jacobsa/comeback/kv/s3"
-	"github.com/jacobsa/comeback/state"
 	"log"
 	"sync"
+	"time"
+
+	"github.com/jacobsa/comeback/kv"
+	"github.com/jacobsa/comeback/state"
 )
+
+func makeBasicKeyStore() (store kv.Store) {
+	var err error
+
+	store, err = kv.NewGCSStore(getBucket())
+	if err != nil {
+		panic(err)
+	}
+
+	return
+}
 
 var g_kvStoreOnce sync.Once
 var g_kvStore kv.Store
 
 func initKvStore() {
-	cfg := getConfig()
-	var err error
+	// Create the underlying key store.
+	g_kvStore = makeBasicKeyStore()
 
-	// Open a connection to S3.
-	bucket, err := s3.OpenBucket(cfg.S3Bucket, cfg.S3Region, cfg.AccessKey)
-	if err != nil {
-		log.Fatalln("Creating S3 bucket:", err)
-	}
-
-	// If we don't know the set of keys in S3, find out.
+	// If we don't know the set of keys in the store, or the set of keys is
+	// stale, re-list.
 	stateStruct := getState()
-	if stateStruct.ExistingScores == nil {
-		log.Println("Listing keys in S3 bucket...")
-		allKeys, err := s3util.ListAllKeys(bucket)
+	age := time.Now().Sub(stateStruct.RelistTime)
+	const maxAge = 30 * 24 * time.Hour
+
+	if stateStruct.ExistingKeys == nil || age > maxAge {
+		log.Println("Listing existing keys...")
+
+		stateStruct.RelistTime = time.Now()
+		allKeys, err := g_kvStore.ListKeys("")
 		if err != nil {
-			log.Fatalln("Creating S3 bucket:", err)
+			log.Fatalln("g_kvStore.List:", err)
 		}
 
 		log.Println("Listed", len(allKeys), "keys.")
 
-		stateStruct.ExistingScores = state.NewStringSet()
+		stateStruct.ExistingKeys = state.NewStringSet()
 		for _, key := range allKeys {
-			stateStruct.ExistingScores.Add(key)
+			stateStruct.ExistingKeys.Add(key)
 		}
 	}
 
-	// Store keys and values in S3.
-	g_kvStore, err = s3_kv.NewS3KvStore(bucket)
-	if err != nil {
-		log.Fatalln("Creating S3 kv store:", err)
-	}
-
 	// Respond efficiently to Contains requests.
-	g_kvStore = state.NewExistingKeysStore(stateStruct.ExistingScores, g_kvStore)
+	g_kvStore = state.NewExistingKeysStore(stateStruct.ExistingKeys, g_kvStore)
 }
 
 func getKvStore() kv.Store {

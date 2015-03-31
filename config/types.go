@@ -15,12 +15,7 @@
 
 package config
 
-import (
-	"github.com/jacobsa/aws"
-	"github.com/jacobsa/aws/s3"
-	"github.com/jacobsa/aws/sdb"
-	"regexp"
-)
+import "regexp"
 
 type Job struct {
 	// The path on the file system that should be backed up.
@@ -37,18 +32,12 @@ type Config struct {
 	// A set of named jobs. The names must be valid UTF-8.
 	Jobs map[string]*Job
 
-	// The key to be used for signing requests to S3 and SimpleDB.
-	AccessKey aws.AccessKey
+	// Path to the key file to be used for signing requests to GCS.
+	KeyFile string
 
-	// The name of the S3 bucket in which to store blobs, and its associated
-	// region.
-	S3Bucket string
-	S3Region s3.Region
-
-	// The name of the SimpleDB domain in which to store backup history, and its
-	// associated region.
-	SdbDomain string
-	SdbRegion sdb.Region
+	// The name of the GCS bucket to use for storing blobs and registry
+	// information.
+	BucketName string
 
 	// A file on the local machine where state can be saved between runs.
 	StateFile string

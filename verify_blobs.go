@@ -18,12 +18,6 @@
 
 package main
 
-import (
-	"github.com/jacobsa/aws/s3"
-	"github.com/jacobsa/comeback/blob"
-	"log"
-)
-
 var cmdVerifyBlobs = &Command{
 	Name: "verify_blobs",
 }
@@ -48,51 +42,5 @@ func reachedUpperBound(key string, upperBound string) bool {
 }
 
 func runVerifyBlobs(args []string) {
-	cfg := getConfig()
-	var err error
-
-	// Open a connection to S3.
-	bucket, err := s3.OpenBucket(cfg.S3Bucket, cfg.S3Region, cfg.AccessKey)
-	if err != nil {
-		log.Fatalln("Creating S3 bucket:", err)
-	}
-
-	// Loop over the keys in the bucket.
-	for prevKey := *g_keyLowerBound; !reachedUpperBound(prevKey, *g_keyUpperBound); {
-		// Grab the next batch of keys.
-		keyBatch, err := bucket.ListKeys(prevKey)
-		if err != nil {
-			log.Fatalln("ListKeys:", err)
-		}
-
-		// Are we out of keys?
-		if len(keyBatch) == 0 {
-			break
-		}
-
-		// Process each key.
-		for _, key := range keyBatch {
-			// Have we gone too far?
-			if reachedUpperBound(key, *g_keyUpperBound) {
-				break
-			}
-
-			// Grab the object.
-			data, err := bucket.GetObject(key)
-			if err != nil {
-				log.Fatalln("GetObject:", err)
-			}
-
-			// Check its score.
-			hexScore := blob.ComputeScore(data).Hex()
-			if hexScore == key {
-				log.Printf("OK: %s (%8d bytes)\n", key, len(data))
-			} else {
-				log.Fatalf("Wrong score for key %s: %s\n", key, hexScore)
-			}
-		}
-
-		// Move on to the next batch the next time around.
-		prevKey = keyBatch[len(keyBatch)-1]
-	}
+	panic("Not implemented for GCS.")
 }

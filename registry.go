@@ -17,12 +17,12 @@ package main
 
 import (
 	"crypto/sha256"
-	"github.com/jacobsa/aws/sdb"
+	"log"
+	"sync"
+
 	"github.com/jacobsa/comeback/crypto"
 	"github.com/jacobsa/comeback/registry"
 	"github.com/jacobsa/util/password"
-	"log"
-	"sync"
 )
 
 var g_registryAndCrypterOnce sync.Once
@@ -30,20 +30,8 @@ var g_registry registry.Registry
 var g_crypter crypto.Crypter
 
 func initRegistryAndCrypter() {
-	// Grab config info.
-	cfg := getConfig()
-
-	// Open a connection to SimpleDB.
-	db, err := sdb.NewSimpleDB(cfg.SdbRegion, cfg.AccessKey)
-	if err != nil {
-		log.Fatalln("Creating SimpleDB:", err)
-	}
-
-	// Open the appropriate domain.
-	domain, err := db.OpenDomain(cfg.SdbDomain)
-	if err != nil {
-		log.Fatalln("OpenDomain:", err)
-	}
+	var err error
+	bucket := getBucket()
 
 	// Read in the crypto password.
 	cryptoPassword := password.ReadPassword("Entry crypto password: ")
@@ -60,8 +48,8 @@ func initRegistryAndCrypter() {
 	keyDeriver := crypto.NewPbkdf2KeyDeriver(pbkdf2Iters, keyLen, sha256.New)
 
 	// Create the registry and crypter.
-	g_registry, g_crypter, err = registry.NewRegistry(
-		domain,
+	g_registry, g_crypter, err = registry.NewGCSRegistry(
+		bucket,
 		cryptoPassword,
 		keyDeriver)
 

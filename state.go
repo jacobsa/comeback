@@ -16,11 +16,12 @@
 package main
 
 import (
-	"github.com/jacobsa/comeback/state"
 	"io/ioutil"
 	"log"
 	"os"
 	"sync"
+
+	"github.com/jacobsa/comeback/state"
 )
 
 var g_stateOnce sync.Once
@@ -35,14 +36,10 @@ func initState() {
 	// Open the specified file.
 	f, err := os.Open(cfg.StateFile)
 
-	// Special case: if the error is that the file doesn't exist, initialize a
-	// new one.
+	// Special case: if the error is that the file doesn't exist, ignore it.
 	if err != nil && os.IsNotExist(err) {
+		err = nil
 		log.Println("No state file found. Using fresh state.")
-		g_state = state.State{
-			ExistingScores:        nil,
-			ExistingScoresVersion: 0,
-		}
 	} else {
 		// Handle other Open errors.
 		if err != nil {
@@ -58,19 +55,6 @@ func initState() {
 		if err != nil {
 			log.Fatalln("LoadState:", err)
 		}
-	}
-
-	// Throw out the existing scores set if it's out of date.
-	reg := getRegistry()
-	currentVersion, err := reg.GetCurrentScoreSetVersion()
-	if err != nil {
-		log.Fatalln("GetCurrentScoreSetVersion:", err)
-	}
-
-	if g_state.ExistingScoresVersion != currentVersion {
-		log.Println("Scores in state file are stale. Throwing out.")
-		g_state.ExistingScores = nil
-		g_state.ExistingScoresVersion = currentVersion
 	}
 
 	// Throw out the existing score cache if requested.
@@ -98,12 +82,6 @@ func saveState() {
 
 	cfg := getConfig()
 	stateStruct := getState()
-	randSrc := getRandSrc()
-	reg := getRegistry()
-
-	// Assign a new random version for the existing scores.
-	lastVersion := stateStruct.ExistingScoresVersion
-	stateStruct.ExistingScoresVersion = randUint64(randSrc)
 
 	// Write out the state to a temporary file.
 	f, err := ioutil.TempFile("", "comeback_state")
@@ -119,12 +97,6 @@ func saveState() {
 
 	if err = f.Close(); err != nil {
 		log.Fatalln("Closing temporary state file:", err)
-	}
-
-	// Update the registry.
-	err = reg.UpdateScoreSetVersion(stateStruct.ExistingScoresVersion, lastVersion)
-	if err != nil {
-		log.Fatalln("UpdateScoreSetVersion:", err)
 	}
 
 	// Rename the file into the new location.

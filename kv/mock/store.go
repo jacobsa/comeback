@@ -41,7 +41,7 @@ func (m *mockStore) Oglemock_Description() string {
 	return m.description
 }
 
-func (m *mockStore) Contains(p0 []uint8) (o0 bool, o1 error) {
+func (m *mockStore) Contains(p0 string) (o0 bool, o1 error) {
 	// Get a file name and line number for the caller.
 	_, file, line, _ := runtime.Caller(1)
 
@@ -70,7 +70,7 @@ func (m *mockStore) Contains(p0 []uint8) (o0 bool, o1 error) {
 	return
 }
 
-func (m *mockStore) Get(p0 []uint8) (o0 []uint8, o1 error) {
+func (m *mockStore) Get(p0 string) (o0 []uint8, o1 error) {
 	// Get a file name and line number for the caller.
 	_, file, line, _ := runtime.Caller(1)
 
@@ -99,7 +99,36 @@ func (m *mockStore) Get(p0 []uint8) (o0 []uint8, o1 error) {
 	return
 }
 
-func (m *mockStore) Set(p0 []uint8, p1 []uint8) (o0 error) {
+func (m *mockStore) ListKeys(p0 string) (o0 []string, o1 error) {
+	// Get a file name and line number for the caller.
+	_, file, line, _ := runtime.Caller(1)
+
+	// Hand the call off to the controller, which does most of the work.
+	retVals := m.controller.HandleMethodCall(
+		m,
+		"ListKeys",
+		file,
+		line,
+		[]interface{}{p0})
+
+	if len(retVals) != 2 {
+		panic(fmt.Sprintf("mockStore.ListKeys: invalid return values: %v", retVals))
+	}
+
+	// o0 []string
+	if retVals[0] != nil {
+		o0 = retVals[0].([]string)
+	}
+
+	// o1 error
+	if retVals[1] != nil {
+		o1 = retVals[1].(error)
+	}
+
+	return
+}
+
+func (m *mockStore) Set(p0 string, p1 []uint8) (o0 error) {
 	// Get a file name and line number for the caller.
 	_, file, line, _ := runtime.Caller(1)
 

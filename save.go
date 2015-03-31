@@ -16,9 +16,10 @@
 package main
 
 import (
-	"github.com/jacobsa/comeback/registry"
 	"log"
 	"time"
+
+	"github.com/jacobsa/comeback/registry"
 )
 
 var cmdSave = &Command{
@@ -81,11 +82,9 @@ func runSave(args []string) {
 	}
 
 	// Register the successful backup.
-	randSrc := getRandSrc()
 	completedJob := registry.CompletedJob{
-		Id:        randUint64(randSrc),
-		Name:      *g_jobName,
 		StartTime: startTime,
+		Name:      *g_jobName,
 		Score:     score,
 	}
 
@@ -93,7 +92,7 @@ func runSave(args []string) {
 		log.Fatalln("Recoding to registry:", err)
 	}
 
-	log.Printf("Successfully backed up. ID: %16x\n", completedJob.Id)
+	log.Printf("Successfully backed up. Start time: %v\n", startTime.UTC())
 
 	// Store state for next time.
 	saveStateTicker.Stop()
