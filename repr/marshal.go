@@ -43,7 +43,8 @@ func convertType(t fs.EntryType) (repr_proto.DirectoryEntryProto_Type, error) {
 	return 0, fmt.Errorf("Unrecognized EntryType: %v", t)
 }
 
-func makeEntryProto(entry *fs.DirectoryEntry) (*repr_proto.DirectoryEntryProto, error) {
+func makeEntryProto(
+	entry *fs.DirectoryEntry) (*repr_proto.DirectoryEntryProto, error) {
 	blobs := []*repr_proto.BlobInfoProto{}
 	for i, _ := range entry.Scores {
 		// Make a copy of the score (a value type, not a reference type), for
@@ -90,9 +91,18 @@ func makeEntryProto(entry *fs.DirectoryEntry) (*repr_proto.DirectoryEntryProto, 
 	return entryProto, nil
 }
 
-// Marshal turns a list of directory entries into bytes that can later be used
-// with Unmarshal. Note that ContainingDevice and Inode fields are lost.
-func Marshal(entries []*fs.DirectoryEntry) (d []byte, err error) {
+const (
+	magicByte_Dir  byte = 'd'
+	magicByte_File byte = 'f'
+)
+
+// MarshalDir turns a list of directory entries into bytes that can later be
+// used with IsDir and UnmarshalDir. Note that ContainingDevice and Inode
+// fields are lost.
+//
+// The input array may be modified.
+func MarshalDir(entries []*fs.DirectoryEntry) (d []byte, err error) {
+	// Set entry proto buffers.
 	entryProtos := []*repr_proto.DirectoryEntryProto{}
 	for _, entry := range entries {
 		entryProto, err := makeEntryProto(entry)
@@ -103,6 +113,35 @@ func Marshal(entries []*fs.DirectoryEntry) (d []byte, err error) {
 		entryProtos = append(entryProtos, entryProto)
 	}
 
+	// Encapsulate the entries into a listing proto and serialize that.
 	listingProto := &repr_proto.DirectoryListingProto{Entry: entryProtos}
-	return proto.Marshal(listingProto)
+
+	d, err = proto.Marshal(listingProto)
+	if err != nil {
+		err = fmt.Errorf("proto.Marshal: %v", err)
+		return
+	}
+
+	// Append a magic byte so IsDir can recognize this as a directory.
+	d = append(d, magicByte_Dir)
+
+	return
+}
+
+// MarshalFile encodes the supplied file contents into bytes that can later be
+// used with IsDir and UnmarshalFile. The input array may be modified.
+func MarshalFile(contents []byte) (f []byte, err error) {
+	// Append a magic byte so IsDir can recognize this as a file.
+	f = append(contents, magicByte_File)
+	return
+}
+
+// IsDir returns true if the supplied data should be decoded with UnmarshalDir,
+// and false if it should be decoded with UnmarshalFile. In either case, the
+// error code should be checked because this function does not check for valid
+// data.
+func IsDir(buf []byte) (dir bool) {
+	l := len(buf)
+	dir = l > 0 && buf[l-1] == magicByte_Dir
+	return
 }

@@ -17,11 +17,13 @@ package backup
 
 import (
 	"fmt"
+	"io"
+	"io/ioutil"
+
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/concurrent"
 	"github.com/jacobsa/comeback/fs"
-	"io"
-	"io/ioutil"
+	"github.com/jacobsa/comeback/repr"
 )
 
 // An object that knows how to save files to some underlying storage.
@@ -119,11 +121,27 @@ func (s *fileSaver) Save(path string) (scores []blob.Score, err error) {
 
 		processChunk := func() {
 			var r result
-			r.score, r.err = s.blobStore.Store(chunk)
-			resultChan <- r
 
-			// Close the channel since it can no longer be written to.
-			close(resultChan)
+			// Write the result when we're done.
+			defer func() {
+				resultChan <- r
+				close(resultChan)
+			}()
+
+			// Marshal the chunk.
+			var blob []byte
+			blob, r.err = repr.MarshalFile(chunk)
+			if r.err != nil {
+				r.err = fmt.Errorf("MarshalFile: %v", r.err)
+				return
+			}
+
+			// Write out the blob.
+			r.score, r.err = s.blobStore.Store(blob)
+			if r.err != nil {
+				r.err = fmt.Errorf("blobStore.Store: %v", r.err)
+				return
+			}
 		}
 
 		s.executor.Add(processChunk)

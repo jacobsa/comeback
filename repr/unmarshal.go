@@ -28,7 +28,8 @@ import (
 	"github.com/jacobsa/comeback/sys"
 )
 
-func convertProtoType(t repr_proto.DirectoryEntryProto_Type) (fs.EntryType, error) {
+func convertProtoType(
+	t repr_proto.DirectoryEntryProto_Type) (fs.EntryType, error) {
 	switch t {
 	case repr_proto.DirectoryEntryProto_TYPE_FILE:
 		return fs.TypeFile, nil
@@ -51,7 +52,8 @@ func convertTimeProto(timeProto *repr_proto.TimeProto) (time.Time, error) {
 	return time.Unix(timeProto.GetSecond(), int64(timeProto.GetNanosecond())), nil
 }
 
-func convertBlobInfoProto(p *repr_proto.BlobInfoProto) (s blob.Score, err error) {
+func convertBlobInfoProto(
+	p *repr_proto.BlobInfoProto) (s blob.Score, err error) {
 	if len(p.Hash) != blob.ScoreLength {
 		err = fmt.Errorf("Illegal hash length: %d", len(p.Hash))
 		return
@@ -61,7 +63,10 @@ func convertBlobInfoProto(p *repr_proto.BlobInfoProto) (s blob.Score, err error)
 	return
 }
 
-func convertEntryProto(entryProto *repr_proto.DirectoryEntryProto) (entry *fs.DirectoryEntry, err error) {
+func convertEntryProto(
+	entryProto *repr_proto.DirectoryEntryProto) (
+	entry *fs.DirectoryEntry,
+	err error) {
 	entry = &fs.DirectoryEntry{}
 
 	entry.Name = entryProto.GetName()
@@ -103,9 +108,18 @@ func convertEntryProto(entryProto *repr_proto.DirectoryEntryProto) (entry *fs.Di
 	return entry, nil
 }
 
-// Unmarshal recovers a list of directory entries from bytes previously
-// returned by Marshal.
-func Unmarshal(d []byte) (entries []*fs.DirectoryEntry, err error) {
+// UnmarshalDir recovers a list of directory entries from bytes previously
+// returned by MarshalDir.
+func UnmarshalDir(d []byte) (entries []*fs.DirectoryEntry, err error) {
+	// Verify and strip the magic byte.
+	l := len(d)
+	if l == 0 || d[l-1] != magicByte_Dir {
+		err = fmt.Errorf("Not a directory")
+		return
+	}
+
+	d = d[:l-1]
+
 	// Parse the protocol buffer.
 	listingProto := new(repr_proto.DirectoryListingProto)
 	err = proto.Unmarshal(d, listingProto)
@@ -124,5 +138,18 @@ func Unmarshal(d []byte) (entries []*fs.DirectoryEntry, err error) {
 		entries = append(entries, entry)
 	}
 
+	return
+}
+
+// UnmarshalFile recovers file contents previously encoded with MarshalFile.
+func UnmarshalFile(f []byte) (contents []byte, err error) {
+	// Verify and strip the magic byte.
+	l := len(f)
+	if l == 0 || f[l-1] != magicByte_File {
+		err = fmt.Errorf("Not a file")
+		return
+	}
+
+	contents = f[:l-1]
 	return
 }
