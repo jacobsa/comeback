@@ -301,22 +301,22 @@ func writeResults(
 }
 
 func runScanBlobs(args []string) {
-	var err error
-	b := syncutil.NewBundle(context.Background())
-
-	// Grab dependencies.
-	bucket := getBucket()
-	crypter := getCrypter()
-
 	// Die on error.
+	var err error
 	defer func() {
 		if err != nil {
 			log.Fatalln(err)
 		}
 	}()
 
+	// Grab dependencies.
+	bucket := getBucket()
+	crypter := getCrypter()
+
 	// Allow parallelism.
 	runtime.GOMAXPROCS(runtime.NumCPU())
+
+	b := syncutil.NewBundle(context.Background())
 
 	// List all of the scores in the bucket.
 	scores := make(chan blob.Score, 100)
