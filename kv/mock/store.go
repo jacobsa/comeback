@@ -41,7 +41,7 @@ func (m *mockStore) Oglemock_Description() string {
 	return m.description
 }
 
-func (m *mockStore) Contains(p0 string) (o0 bool, o1 error) {
+func (m *mockStore) Contains(p0 string) (o0 bool) {
 	// Get a file name and line number for the caller.
 	_, file, line, _ := runtime.Caller(1)
 
@@ -53,18 +53,13 @@ func (m *mockStore) Contains(p0 string) (o0 bool, o1 error) {
 		line,
 		[]interface{}{p0})
 
-	if len(retVals) != 2 {
+	if len(retVals) != 1 {
 		panic(fmt.Sprintf("mockStore.Contains: invalid return values: %v", retVals))
 	}
 
 	// o0 bool
 	if retVals[0] != nil {
 		o0 = retVals[0].(bool)
-	}
-
-	// o1 error
-	if retVals[1] != nil {
-		o1 = retVals[1].(error)
 	}
 
 	return

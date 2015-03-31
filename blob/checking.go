@@ -67,3 +67,13 @@ func (s *checkingStore) Load(score Score) (blob []byte, err error) {
 
 	return
 }
+
+func (s *checkingStore) Flush() (err error) {
+	err = s.wrapped.Flush()
+	return
+}
+
+func (s *checkingStore) Contains(score Score) (b bool) {
+	b = s.wrapped.Contains(score)
+	return
+}

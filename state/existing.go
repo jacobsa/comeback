@@ -55,7 +55,7 @@ func (s *existingKeysStore) Get(key string) (val []byte, err error) {
 	return s.wrapped.Get(key)
 }
 
-func (s *existingKeysStore) Contains(key string) (res bool, err error) {
+func (s *existingKeysStore) Contains(key string) (res bool) {
 	res = s.keys.Contains(string(key))
 	return
 }

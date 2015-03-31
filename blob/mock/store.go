@@ -41,6 +41,54 @@ func (m *mockStore) Oglemock_Description() string {
 	return m.description
 }
 
+func (m *mockStore) Contains(p0 blob.Score) (o0 bool) {
+	// Get a file name and line number for the caller.
+	_, file, line, _ := runtime.Caller(1)
+
+	// Hand the call off to the controller, which does most of the work.
+	retVals := m.controller.HandleMethodCall(
+		m,
+		"Contains",
+		file,
+		line,
+		[]interface{}{p0})
+
+	if len(retVals) != 1 {
+		panic(fmt.Sprintf("mockStore.Contains: invalid return values: %v", retVals))
+	}
+
+	// o0 bool
+	if retVals[0] != nil {
+		o0 = retVals[0].(bool)
+	}
+
+	return
+}
+
+func (m *mockStore) Flush() (o0 error) {
+	// Get a file name and line number for the caller.
+	_, file, line, _ := runtime.Caller(1)
+
+	// Hand the call off to the controller, which does most of the work.
+	retVals := m.controller.HandleMethodCall(
+		m,
+		"Flush",
+		file,
+		line,
+		[]interface{}{})
+
+	if len(retVals) != 1 {
+		panic(fmt.Sprintf("mockStore.Flush: invalid return values: %v", retVals))
+	}
+
+	// o0 error
+	if retVals[0] != nil {
+		o0 = retVals[0].(error)
+	}
+
+	return
+}
+
 func (m *mockStore) Load(p0 blob.Score) (o0 []uint8, o1 error) {
 	// Get a file name and line number for the caller.
 	_, file, line, _ := runtime.Caller(1)

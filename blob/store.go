@@ -18,8 +18,17 @@ package blob
 // A Store knows how to store blobs for later retrieval.
 type Store interface {
 	// Store the supplied blob, returning a score with which it can later be
-	// retrieved.
+	// retrieved. Note that the blob is not guaranteed to be durable until Flush
+	// is successfully called.
 	Store(blob []byte) (s Score, err error)
+
+	// Flush previous stored blobs to durable storage. Store must not be called
+	// again.
+	Flush() (err error)
+
+	// Return true only if the supplied score is in the blob store and will be
+	// durable by the time of a successful Flush call.
+	Contains(score Score) (b bool)
 
 	// Load a previously-stored blob.
 	Load(s Score) (blob []byte, err error)

@@ -138,7 +138,7 @@ func (s *gcsStore) Get(key string) (val []byte, err error) {
 	return
 }
 
-func (s *gcsStore) Contains(key string) (res bool, err error) {
+func (s *gcsStore) Contains(key string) (res bool) {
 	// Unsupported.
 	res = false
 	return
