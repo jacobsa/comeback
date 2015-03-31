@@ -35,6 +35,7 @@ import (
 	"sync"
 
 	"github.com/jacobsa/comeback/blob"
+	"github.com/jacobsa/comeback/crypto"
 	"github.com/jacobsa/comeback/repr"
 	"github.com/jacobsa/gcloud/gcs"
 	"github.com/jacobsa/gcloud/syncutil"
@@ -197,9 +198,18 @@ func scoresEqual(a, b blob.Score) bool {
 	return true
 }
 
-// Parse the blob as a directory if appropriate, returning a list of children.
-// If not a directory, return the empty list.
-func unmarshalBlob(b []byte) (children []blob.Score, err error) {
+// Parse the blob ciphertext as a directory if appropriate, returning a list of
+// children. If not a directory, return the empty list.
+func unmarshalBlob(
+	crypter crypto.Crypter,
+	b []byte) (children []blob.Score, err error) {
+	// Attempt to decrypt.
+	b, err = crypter.Decrypt(b)
+	if err != nil {
+		err = fmt.Errorf("Decrypt: %v", err)
+		return
+	}
+
 	// If this is a file, simply make sure it is in a legal format.
 	if !repr.IsDir(b) {
 		_, err = repr.UnmarshalFile(b)
@@ -232,6 +242,7 @@ func unmarshalBlob(b []byte) (children []blob.Score, err error) {
 // channel.
 func verifyScores(
 	ctx context.Context,
+	crypter crypto.Crypter,
 	blobs <-chan scoreAndContents,
 	results chan<- verifiedScore) (err error) {
 	for b := range blobs {
@@ -251,7 +262,7 @@ func verifyScores(
 		}
 
 		// Parse the blob.
-		result.children, err = unmarshalBlob(b.contents)
+		result.children, err = unmarshalBlob(crypter, b.contents)
 		if err != nil {
 			err = fmt.Errorf("unmarshalBlob: %v", err)
 			return
@@ -290,10 +301,12 @@ func writeResults(
 }
 
 func runScanBlobs(args []string) {
-	bucket := getBucket()
-
 	var err error
 	b := syncutil.NewBundle(context.Background())
+
+	// Grab dependencies.
+	bucket := getBucket()
+	crypter := getCrypter()
 
 	// Die on error.
 	defer func() {
@@ -342,7 +355,7 @@ func runScanBlobs(args []string) {
 		verifyWaitGroup.Add(1)
 		b.Add(func(ctx context.Context) (err error) {
 			defer verifyWaitGroup.Done()
-			err = verifyScores(ctx, blobs, results)
+			err = verifyScores(ctx, crypter, blobs, results)
 			return
 		})
 	}
