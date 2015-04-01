@@ -48,9 +48,9 @@ const (
 	gcsJobKeyPrefix      = "jobs/"
 	gcsMetadataKey_Name  = "job_name"
 	gcsMetadataKey_Score = "hex_score"
-)
 
-const (
+	// Constants related to the "marker" object, used to ensure that the user has
+	// the right password. See notes on gcsRegistry.
 	markerObjectName                = "marker"
 	markerObjectMetadata_Salt       = "base64_salt"
 	markerObjectMetadata_Ciphertext = "base64_ciphertext"
