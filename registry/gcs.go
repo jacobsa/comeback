@@ -23,8 +23,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/crypto"
 	"github.com/jacobsa/gcloud/gcs"
+	"github.com/jacobsa/gcloud/gcs/gcsutil"
 	"golang.org/x/net/context"
 )
 
@@ -101,8 +103,81 @@ func (r *gcsRegistry) RecordBackup(j CompletedJob) (err error) {
 	return
 }
 
+func parseObjectAsJob(o *gcs.Object) (j CompletedJob, err error) {
+	// Extract the formatted time.
+	if !strings.HasPrefix(o.Name, gcsJobKeyPrefix) {
+		err = fmt.Errorf("Unexpected object name: \"%s\"", o.Name)
+		return
+	}
+
+	formattedTime := strings.TrimPrefix(o.Name, gcsJobKeyPrefix)
+
+	// Parse it.
+	j.StartTime, err = time.Parse(time.RFC3339Nano, formattedTime)
+	if err != nil {
+		err = fmt.Errorf("Parsing time \"%s\": %v", formattedTime, err)
+		return
+	}
+
+	// Extract the job name.
+	{
+		var ok bool
+		if j.Name, ok = o.Metadata[gcsMetadataKey_Name]; !ok {
+			err = fmt.Errorf(
+				"Object with name \"%s\" is missing metadata key %s",
+				o.Name,
+				gcsMetadataKey_Name)
+
+			return
+		}
+	}
+
+	// Extract the score.
+	{
+		hexScore, ok := o.Metadata[gcsMetadataKey_Score]
+		if !ok {
+			err = fmt.Errorf(
+				"Object with name \"%s\" is missing metadata key %s",
+				o.Name,
+				gcsMetadataKey_Score)
+
+			return
+		}
+
+		j.Score, err = blob.ParseHexScore(hexScore)
+		if err != nil {
+			err = fmt.Errorf("Parsing hex score \"%s\": %v", hexScore, err)
+			return
+		}
+	}
+
+	return
+}
+
 func (r *gcsRegistry) ListRecentBackups() (jobs []CompletedJob, err error) {
-	err = fmt.Errorf("gcsRegistry.ListRecentBackups is not implemented.")
+	// List all of the objects with the appropriate name prefix.
+	req := &gcs.ListObjectsRequest{
+		Prefix: gcsJobKeyPrefix,
+	}
+
+	objects, _, err := gcsutil.List(context.Background(), r.bucket, req)
+	if err != nil {
+		err = fmt.Errorf("gcsutil.List: %v", err)
+		return
+	}
+
+	// Process each object.
+	for _, o := range objects {
+		var j CompletedJob
+		j, err = parseObjectAsJob(o)
+		if err != nil {
+			err = fmt.Errorf("parseObjectAsJob: %v", err)
+			return
+		}
+
+		jobs = append(jobs, j)
+	}
+
 	return
 }
 
