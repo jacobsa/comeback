@@ -385,7 +385,7 @@ func runScanBlobs(args []string) {
 
 	// Read the contents of the corresponding blobs in parallel, bounding how
 	// hard we hammer GCS by bounding the parallelism.
-	const readWorkers = 128
+	const readWorkers = 8
 	var readWaitGroup sync.WaitGroup
 
 	blobs := make(chan scoreAndContents, 10)
