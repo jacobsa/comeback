@@ -77,7 +77,27 @@ type gcsRegistry struct {
 }
 
 func (r *gcsRegistry) RecordBackup(j CompletedJob) (err error) {
-	err = fmt.Errorf("gcsRegistry.RecordBackup is not implemented.")
+	// Write an object to the bucket. On the small change that the time collides
+	// (or we've done something dumb like use the zero time), use a generation
+	// precondition to ensure we don't overwrite anything.
+	var precond int64
+	req := &gcs.CreateObjectRequest{
+		Name:                   gcsJobKeyPrefix + j.StartTime.Format(time.RFC3339Nano),
+		Contents:               strings.NewReader(""),
+		GenerationPrecondition: &precond,
+
+		Metadata: map[string]string{
+			gcsMetadataKey_Name:  j.Name,
+			gcsMetadataKey_Score: j.Score.Hex(),
+		},
+	}
+
+	_, err = r.bucket.CreateObject(context.Background(), req)
+	if err != nil {
+		err = fmt.Errorf("CreateObject: %v", err)
+		return
+	}
+
 	return
 }
 
