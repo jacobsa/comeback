@@ -18,6 +18,7 @@ package main
 import (
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/jacobsa/gcloud/gcs"
 	"github.com/jacobsa/gcloud/oauthutil"
@@ -42,7 +43,8 @@ func makeBucket() (bucket gcs.Bucket, err error) {
 
 	// Turn that into a connection.
 	connCfg := &gcs.ConnConfig{
-		HTTPClient: httpClient,
+		HTTPClient:      httpClient,
+		MaxBackoffSleep: time.Minute,
 	}
 
 	conn, err := gcs.NewConn(connCfg)
