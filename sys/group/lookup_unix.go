@@ -27,6 +27,22 @@ import (
 */
 import "C"
 
+/*
+// For whatever reason, cgo on Linux gets the wrong prototype for getgrgid_r,
+// wanting type __gid_t for the first argument:
+//
+//     cannot use C.gid_t(gid) (type C.gid_t) as type C.__gid_t
+//
+// Work around this with a C trampoline function, making use of that language's
+// laxer rules about type conversions.
+int my_getgrgid_r(
+	gid_t gid, struct group *grp,
+	char *buf, size_t buflen, struct group **result) {
+	return getgrgid_r(gid, grp, buf, buflen, result);
+}
+*/
+import "C"
+
 // Current returns the current group.
 func Current() (*Group, error) {
 	return lookup(syscall.Getgid(), "", false)
@@ -79,7 +95,7 @@ func lookup(gid int, groupname string, lookupByName bool) (*Group, error) {
 			return nil, UnknownGroupError(groupname)
 		}
 	} else {
-		rv = C.getgrgid_r(C.gid_t(gid),
+		rv = C.my_getgrgid_r(C.gid_t(gid),
 			&grp,
 			(*C.char)(buf),
 			C.size_t(bufSize),
