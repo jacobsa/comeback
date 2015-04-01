@@ -34,6 +34,7 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/crypto"
@@ -167,6 +168,23 @@ func readBlob(
 	return
 }
 
+func readBlobWithRetryLoop(
+	ctx context.Context,
+	bucket gcs.Bucket,
+	score blob.Score) (blob scoreAndContents, err error) {
+	const maxRetries = 5
+	for n := 0; n < maxRetries; n++ {
+		blob, err = readBlob(ctx, bucket, score)
+		if err == nil {
+			return
+		}
+
+		time.Sleep(500 * time.Millisecond)
+	}
+
+	return
+}
+
 // Read the contents of blobs specified on the incoming channel. Do not close
 // the outgoing channel.
 func readBlobs(
@@ -178,7 +196,7 @@ func readBlobs(
 		var blob scoreAndContents
 
 		// Read the contents for this score.
-		blob, err = readBlob(ctx, bucket, score)
+		blob, err = readBlobWithRetryLoop(ctx, bucket, score)
 		if err != nil {
 			err = fmt.Errorf("readBlob: %v", err)
 			return
