@@ -65,6 +65,9 @@ func init() {
 }
 
 func (c *lruCache) GobEncode() (b []byte, err error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	// Simply encode the wrapped cache. Our tricky part is on the decode path.
 	b, err = c.wrapped.GobEncode()
 	return
