@@ -16,118 +16,42 @@
 package cache
 
 import (
-	"bytes"
-	"container/list"
 	"encoding/gob"
-	"fmt"
-	"sync"
+
+	"github.com/jacobsa/gcloud/syncutil"
+	"github.com/jacobsa/util/lrucache"
 )
 
 // Create a cache that holds the given number of items, evicting the least
-// recently used item when more space is needed. The capacity
+// recently used item when more space is needed.
 func NewLruCache(capacity uint) Cache {
-	result := &lruCache{}
-	result.init(capacity)
-	return result
-}
+	c := &lruCache{
+		wrapped: lrucache.New(int(capacity)),
+	}
 
-type lruCacheElement struct {
-	Key   Key
-	Value interface{}
+	c.mu = syncutil.NewInvariantMutex(c.wrapped.CheckInvariants)
+	return c
 }
 
 type lruCache struct {
-	mutex    sync.RWMutex
-	capacity uint
+	mu syncutil.InvariantMutex
 
-	// List of elements, with least recently used at the tail. The type of list
-	// values is lruCacheElement.
-	elems list.List
-
-	// Index into `elems` for lookup by key.
-	index map[Key]*list.Element
-}
-
-func (c *lruCache) init(capacity uint) {
-	if c.index != nil {
-		panic("lruCache.init called twice?")
-	}
-
-	if capacity == 0 {
-		panic("Capacity must be non-zero.")
-	}
-
-	c.capacity = capacity
-	c.index = make(map[Key]*list.Element)
+	// GUARDED_BY(mu)
+	wrapped lrucache.Cache
 }
 
 func (c *lruCache) Insert(key Key, value interface{}) {
-	c.mutex.Lock()
-	defer c.checkInvariantsAndUnlock()
+	c.mu.Lock()
+	defer c.mu.Unlock()
 
-	// If we allowed inserting nil values, LookUp's semantics wouldn't make sense.
-	if value == nil {
-		panic("Cannot insert nil value.")
-	}
-
-	// Make sure the key isn't already present.
-	c.erase_Locked(key)
-
-	// Add a list element and index it.
-	elem := c.elems.PushFront(&lruCacheElement{key, value})
-	c.index[key] = elem
-
-	// Expire the least recently used element if necessary.
-	if uint(len(c.index)) > c.capacity {
-		c.erase_Locked(c.elems.Back().Value.(*lruCacheElement).Key)
-	}
-}
-
-func (c *lruCache) erase_Locked(key Key) {
-	elem, ok := c.index[key]
-	if !ok {
-		return
-	}
-
-	delete(c.index, key)
-	c.elems.Remove(elem)
-}
-
-func (c *lruCache) checkInvariantsAndUnlock() {
-	// Don't mask other panics.
-	if r := recover(); r != nil {
-		panic(r)
-	}
-
-	if uint(len(c.index)) > c.capacity {
-		panic(
-			fmt.Sprintf(
-				"Index length greater than capacity: %d vs. %d",
-				len(c.index),
-				c.capacity))
-	}
-
-	if len(c.index) != c.elems.Len() {
-		panic(
-			fmt.Sprintf(
-				"Index length doesn't match list length: %d vs. %d",
-				len(c.index),
-				c.elems.Len()))
-	}
-
-	c.mutex.Unlock()
+	c.wrapped.Insert(string(key[:]), value)
 }
 
 func (c *lruCache) LookUp(key Key) interface{} {
-	c.mutex.Lock()
-	defer c.checkInvariantsAndUnlock()
+	c.mu.Lock()
+	defer c.mu.Unlock()
 
-	if elem, ok := c.index[key]; ok {
-		c.elems.MoveToFront(elem)
-		return elem.Value.(*lruCacheElement).Value
-	}
-
-	return nil
+	return c.wrapped.LookUp(string(key[:]))
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -141,62 +65,20 @@ func init() {
 }
 
 func (c *lruCache) GobEncode() (b []byte, err error) {
-	buf := new(bytes.Buffer)
-	encoder := gob.NewEncoder(buf)
-
-	c.mutex.RLock()
-	defer c.mutex.RUnlock()
-
-	// Encode the capacity.
-	if err = encoder.Encode(c.capacity); err != nil {
-		err = fmt.Errorf("Encoding capacity: %v", err)
-		return
-	}
-
-	// Encode the cached elements.
-	elemsSlice := make([]*lruCacheElement, 0, c.elems.Len())
-	for e := c.elems.Front(); e != nil; e = e.Next() {
-		elemsSlice = append(elemsSlice, e.Value.(*lruCacheElement))
-	}
-
-	if err = encoder.Encode(elemsSlice); err != nil {
-		err = fmt.Errorf("Encoding elems: %v", err)
-		return
-	}
-
-	b = buf.Bytes()
+	// Simply encode the wrapped cache. Our tricky part is on the decode path.
+	b, err = c.wrapped.GobEncode()
 	return
 }
 
 func (c *lruCache) GobDecode(b []byte) (err error) {
-	buf := bytes.NewBuffer(b)
-	decoder := gob.NewDecoder(buf)
-
-	// Decode the capacity.
-	var capacity uint
-	if err = decoder.Decode(&capacity); err != nil {
-		err = fmt.Errorf("Decoding capacity: %v", err)
+	// Decode the wrapped cache.
+	err = c.wrapped.GobDecode(b)
+	if err != nil {
 		return
 	}
 
-	// Initialize the receiver.
-	c.init(capacity)
-
-	// Decode the elements.
-	var elemsSlice []*lruCacheElement
-	if err = decoder.Decode(&elemsSlice); err != nil {
-		err = fmt.Errorf("Decoding elems: %v", err)
-		return
-	}
-
-	// Set up the receiver's elements.
-	for _, elem := range elemsSlice {
-		e := c.elems.PushBack(elem)
-		c.index[elem.Key] = e
-	}
-
-	c.mutex.Lock()
-	c.checkInvariantsAndUnlock()
+	// Initialize the mutex.
+	c.mu = syncutil.NewInvariantMutex(c.wrapped.CheckInvariants)
 
 	return
 }
