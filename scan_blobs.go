@@ -72,7 +72,7 @@ func listBlobs(
 	bucket gcs.Bucket,
 	scores chan<- blob.Score) (err error) {
 	req := &gcs.ListObjectsRequest{
-		Prefix: blobKeyPrefix,
+		Prefix: blobObjectNamePrefix,
 	}
 
 	// List until we run out.
@@ -89,7 +89,9 @@ func listBlobs(
 		var batch []blob.Score
 		for _, o := range listing.Objects {
 			var score blob.Score
-			score, err = blob.ParseHexScore(strings.TrimPrefix(o.Name, blobKeyPrefix))
+			score, err = blob.ParseHexScore(
+				strings.TrimPrefix(o.Name, blobObjectNamePrefix))
+
 			if err != nil {
 				err = fmt.Errorf("Parsing object name \"%s\": %v", o.Name, err)
 				return
@@ -149,7 +151,7 @@ func readBlob(
 
 	// Obtain a reader.
 	req := &gcs.ReadObjectRequest{
-		Name: blobKeyPrefix + score.Hex(),
+		Name: blobObjectNamePrefix + score.Hex(),
 	}
 
 	rc, err := bucket.NewReader(ctx, req)
