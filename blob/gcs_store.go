@@ -31,6 +31,9 @@ import (
 // The blob store trusts that it has full ownership of this portion of the
 // bucket's key space -- if a score name exists, then it points to the correct
 // data.
+//
+// The returned store does not support Flush or Contains; these methods must
+// not be called.
 func NewGCSStore(
 	bucket gcs.Bucket,
 	prefix string) (store Store)
