@@ -18,6 +18,7 @@ package blob
 import (
 	"bytes"
 	"fmt"
+	"io/ioutil"
 
 	"golang.org/x/net/context"
 
@@ -88,13 +89,30 @@ func (s *gcsStore) Contains(score Score) (b bool) {
 	panic("gcsStore.Contains not supported; wiring code bug?")
 }
 
-func (s *kvBasedBlobStore) Load(score Score) (blob []byte, err error) {
-	// Choose the appropriate key.
-	key := s.makeKey(score)
+func (s *gcsStore) Load(score Score) (blob []byte, err error) {
+	// Create a ReadCloser.
+	req := &gcs.ReadObjectRequest{
+		Name: s.makeName(score),
+	}
 
-	// Call the key/value store.
-	if blob, err = s.kvStore.Get(key); err != nil {
-		err = fmt.Errorf("Get: %v", err)
+	rc, err := s.bucket.NewReader(context.Background(), req)
+	if err != nil {
+		err = fmt.Errorf("NewReader: %v", err)
+		return
+	}
+
+	// Read from it.
+	blob, err = ioutil.ReadAll(rc)
+	if err != nil {
+		rc.Close()
+		err = fmt.Errorf("ReadAll: %v", err)
+		return
+	}
+
+	// Close it.
+	err = rc.Close()
+	if err != nil {
+		err = fmt.Errorf("Close: %v", err)
 		return
 	}
 
