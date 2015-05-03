@@ -62,8 +62,7 @@ func (bs *existingScoresStore) Flush() (err error) {
 }
 
 func (bs *existingScoresStore) Contains(score Score) (b bool) {
-	// TODO
-	b = false
+	b = bs.scores.Contains(score.Hex())
 	return
 }
 
