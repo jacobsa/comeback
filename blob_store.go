@@ -77,21 +77,26 @@ func initBlobStore() {
 		}
 	}
 
-	// Store blobs in a key/value store.
+	// Respond efficiently to Contains requests.
+	g_blobStore = blob.NewExistingScoresStore(
+		stateStruct.ExistingScores,
+		g_blobStore)
+
+	// Buffer around GCS with bounded parallelism, allowing file system
+	// scanning to proceed independent of waiting for GCS to ack writes.
 	const latencySecs = 2
 	const bandwidthBytesPerSec = 50e6
 	const bandwidthHz = 512
 
-	g_blobStore = blob.NewKVStoreBlobStore(
-		kvStore,
-		blobKeyPrefix,
+	g_blobStore = blob.NewBufferingStore(
 		3*bandwidthBytesPerSec*latencySecs,
-		minInt(osFileLimit, 3*bandwidthHz*latencySecs))
+		minInt(osFileLimit, 3*bandwidthHz*latencySecs),
+		g_blobStore)
 
-	// Make sure the values returned by the key/value store aren't corrupted.
+	// Make paranoid checks on the results.
 	g_blobStore = blob.NewCheckingStore(g_blobStore)
 
-	// Encrypt blob data.
+	// Encrypt blob data before sending it off to GCS.
 	g_blobStore = blob.NewEncryptingStore(crypter, g_blobStore)
 }
 
