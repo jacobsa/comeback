@@ -175,7 +175,7 @@ func (s *bufferingStore) makeDurable(score Score, blob []byte) {
 // Public interface
 ////////////////////////////////////////////////////////////////////////
 
-func (s *kvBasedBlobStore) Store(blob []byte) (score Score, err error) {
+func (s *bufferingStore) Store(blob []byte) (score Score, err error) {
 	// Will this blob ever fit?
 	if len(blob) > s.maxBytesBuffered {
 		err = fmt.Errorf(
@@ -186,9 +186,8 @@ func (s *kvBasedBlobStore) Store(blob []byte) (score Score, err error) {
 		return
 	}
 
-	// Compute a score and a key for use under the lock below.
+	// Compute a score for use under the lock below.
 	score = ComputeScore(blob)
-	key := s.makeKey(score)
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -211,8 +210,9 @@ func (s *kvBasedBlobStore) Store(blob []byte) (score Score, err error) {
 		return
 	}
 
-	// If the KV store already contains the key, we need not do anything further.
-	if s.kvStore.Contains(key) {
+	// If the wrapped store already contains the score, we need not do anything
+	// further.
+	if s.wrapped.Contains(score) {
 		return
 	}
 
@@ -222,7 +222,7 @@ func (s *kvBasedBlobStore) Store(blob []byte) (score Score, err error) {
 	s.inFlightChanged.Broadcast()
 
 	// Spawn a goroutine that will make the blob durable in the background.
-	go s.makeDurable(score, key, blob)
+	go s.makeDurable(score, blob)
 
 	return
 }
