@@ -22,6 +22,7 @@ import (
 
 	"github.com/jacobsa/comeback/kv"
 	"github.com/jacobsa/comeback/state"
+	"github.com/jacobsa/comeback/util"
 )
 
 func makeBasicKeyStore() (store kv.Store) {
@@ -62,7 +63,7 @@ func initKvStore() {
 			len(allKeys),
 			time.Since(stateStruct.RelistTime))
 
-		stateStruct.ExistingKeys = state.NewStringSet()
+		stateStruct.ExistingKeys = util.NewStringSet()
 		for _, key := range allKeys {
 			stateStruct.ExistingKeys.Add(key)
 		}

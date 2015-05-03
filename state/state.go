@@ -19,13 +19,15 @@ import (
 	"encoding/gob"
 	"io"
 	"time"
+
+	"github.com/jacobsa/comeback/util"
 )
 
 // State that should be saved between runs of the program.
 type State struct {
 	// The set of keys that are known to already exist in the KV store. It is
 	// unnecessary to again store any blob whose score maps to one of these keys.
-	ExistingKeys StringSet
+	ExistingKeys util.StringSet
 
 	// The time at which ExistingScores was last updated from the authoritative
 	// source.

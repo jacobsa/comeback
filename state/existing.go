@@ -19,13 +19,14 @@ import (
 	"fmt"
 
 	"github.com/jacobsa/comeback/kv"
+	"github.com/jacobsa/comeback/util"
 )
 
 // Return a key/value store that reads keys from the supplied string set to
 // serve Contains requests, and updates the sets upon successful calls to the
 // wrapped store's Set method.
 func NewExistingKeysStore(
-	existingKeys StringSet,
+	existingKeys util.StringSet,
 	wrapped kv.Store,
 ) (store kv.Store) {
 	return &existingKeysStore{existingKeys, wrapped}
@@ -36,7 +37,7 @@ func NewExistingKeysStore(
 ////////////////////////////////////////////////////////////////////////
 
 type existingKeysStore struct {
-	keys    StringSet
+	keys    util.StringSet
 	wrapped kv.Store
 }
 

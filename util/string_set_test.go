@@ -13,14 +13,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package state_test
+package util_test
 
 import (
 	"bytes"
 	"encoding/gob"
-	"github.com/jacobsa/comeback/state"
-	. "github.com/jacobsa/ogletest"
 	"testing"
+
+	"github.com/jacobsa/comeback/util"
+	. "github.com/jacobsa/ogletest"
 )
 
 func TestStringSet(t *testing.T) { RunTests(t) }
@@ -30,13 +31,13 @@ func TestStringSet(t *testing.T) { RunTests(t) }
 ////////////////////////////////////////////////////////////////////////
 
 type StringSetTest struct {
-	set state.StringSet
+	set util.StringSet
 }
 
 func init() { RegisterTestSuite(&StringSetTest{}) }
 
 func (t *StringSetTest) SetUp(i *TestInfo) {
-	t.set = state.NewStringSet()
+	t.set = util.NewStringSet()
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -80,7 +81,7 @@ func (t *StringSetTest) GobRoundTrip() {
 
 	// Decode
 	decoder := gob.NewDecoder(buf)
-	var decodedSet state.StringSet
+	var decodedSet util.StringSet
 	AssertEq(nil, decoder.Decode(&decodedSet))
 
 	ExpectFalse(decodedSet.Contains(""))
@@ -99,7 +100,7 @@ func (t *StringSetTest) DecodingOverwritesContents() {
 	AssertEq(nil, encoder.Encode(&t.set))
 
 	// Destination
-	decodedSet := state.NewStringSet()
+	decodedSet := util.NewStringSet()
 	decodedSet.Add("burrito")
 
 	// Decode
