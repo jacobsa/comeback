@@ -84,24 +84,8 @@ func (s *gcsStore) Flush() (err error) {
 	panic("gcsStore.Flush not supported; wiring code bug?")
 }
 
-func (s *kvBasedBlobStore) Contains(score Score) (b bool) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	// Do we have an in-flight request?
-	if _, ok := s.inFlight[score]; ok {
-		b = true
-		return
-	}
-
-	// Does the key exist in the KV store?
-	key := s.makeKey(score)
-	if s.kvStore.Contains(key) {
-		b = true
-		return
-	}
-
-	return
+func (s *gcsStore) Contains(score Score) (b bool) {
+	panic("gcsStore.Contains not supported; wiring code bug?")
 }
 
 func (s *kvBasedBlobStore) Load(score Score) (blob []byte, err error) {
