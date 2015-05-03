@@ -32,6 +32,9 @@ import "github.com/jacobsa/comeback/util"
 //
 //  *  Load will be forwarded to the wrapped store.
 //
+// In other words, assuming that wrapped.Store returns successfully only when
+// durable, this store maintains the invariant that existingScores contains
+// only durable scores.
 func NewExistingScoresStore(
 	existingScores util.StringSet,
 	wrapped Store) (store Store) {
