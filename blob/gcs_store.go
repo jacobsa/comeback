@@ -34,7 +34,7 @@ import (
 // expected for the object contents. This is of course redundant with the
 // object name; we use it as a paranoid check against GCS returning the
 // metadata or contents for the wrong object.
-const GCSMetadataKey_SHA1Hex = "comeback_sha1_hex"
+const metadataKey_SHA1Hex = "comeback_sha1_hex"
 
 // A key placed in GCS object metadata by GCSStore containing the hex MD5 sum
 // expected for the object contents. If GCS reports a different MD5 sum or
@@ -42,7 +42,7 @@ const GCSMetadataKey_SHA1Hex = "comeback_sha1_hex"
 // happened.
 //
 // See here for more info: https://github.com/jacobsa/comeback/issues/18
-const GCSMetadataKey_MD5Hex = "comeback_md5_hex"
+const metadataKey_MD5Hex = "comeback_md5_hex"
 
 // Return a blob store that stores blobs in the supplied GCS bucket. GCS object
 // names look like:
@@ -94,12 +94,12 @@ func ParseObjectRecord(
 	}
 
 	// We expect the hex score to match the hex SHA-1 in the metadata.
-	hexSHA1, ok := o.Metadata[GCSMetadataKey_SHA1Hex]
+	hexSHA1, ok := o.Metadata[metadataKey_SHA1Hex]
 	if !ok {
 		err = fmt.Errorf(
 			"Object %q is missing metadata key %q",
 			o.Name,
-			GCSMetadataKey_SHA1Hex)
+			metadataKey_SHA1Hex)
 		return
 	}
 
@@ -113,12 +113,12 @@ func ParseObjectRecord(
 
 	// We expect the hex MD5 in the object metadata to align with what GCS says
 	// the object's MD5 is.
-	hexMD5, ok := o.Metadata[GCSMetadataKey_MD5Hex]
+	hexMD5, ok := o.Metadata[metadataKey_MD5Hex]
 	if !ok {
 		err = fmt.Errorf(
 			"Object %q is missing metadata key %q",
 			o.Name,
-			GCSMetadataKey_MD5Hex)
+			metadataKey_MD5Hex)
 		return
 	}
 
@@ -182,8 +182,8 @@ func (s *GCSStore) Store(blob []byte) (score Score, err error) {
 		MD5:      &md5,
 
 		Metadata: map[string]string{
-			GCSMetadataKey_SHA1Hex: hex.EncodeToString(sha1[:]),
-			GCSMetadataKey_MD5Hex:  hex.EncodeToString(md5[:]),
+			metadataKey_SHA1Hex: hex.EncodeToString(sha1[:]),
+			metadataKey_MD5Hex:  hex.EncodeToString(md5[:]),
 		},
 	}
 
