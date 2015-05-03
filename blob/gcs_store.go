@@ -273,12 +273,20 @@ func (s *GCSStore) List() (scores []Score, err error) {
 
 		// Process results.
 		for _, o := range listing.Objects {
+			// Special case: listing "blobs/*" includes "blobs/" itself, which we
+			// allow to exist for convenience of use with e.g. gcsfuse.
+			if o.Name == s.namePrefix {
+				continue
+			}
+
+			// Parse and verify the record.
 			var score Score
 			score, err = ParseObjectRecord(o, s.namePrefix)
 			if err != nil {
 				return
 			}
 
+			// Save the score.
 			scores = append(scores, score)
 		}
 
