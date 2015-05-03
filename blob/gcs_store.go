@@ -184,10 +184,27 @@ func (s *GCSStore) Store(blob []byte) (score Score, err error) {
 		},
 	}
 
-	_, err = s.bucket.CreateObject(context.Background(), req)
+	o, err := s.bucket.CreateObject(context.Background(), req)
 	if err != nil {
 		err = fmt.Errorf("CreateObject: %v", err)
 		return
+	}
+
+	// Paranoid check: what we get back from GCS should match what we put in.
+	if o.CRC32C != crc32c {
+		panic(fmt.Sprintf(
+			"CRC32C mismatch for object %q: 0x%08xv vs. 0x%08x",
+			o.Name,
+			o.CRC32C,
+			crc32c))
+	}
+
+	if o.MD5 != md5 {
+		panic(fmt.Sprintf(
+			"MD5 mismatch for object %q: %s vs. %s",
+			o.Name,
+			hex.EncodeToString(o.MD5[:]),
+			hex.EncodeToString(md5[:])))
 	}
 
 	return
