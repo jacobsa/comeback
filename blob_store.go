@@ -16,13 +16,16 @@
 package main
 
 import (
+	"log"
 	"sync"
+	"time"
 
 	"github.com/jacobsa/comeback/blob"
+	"github.com/jacobsa/comeback/util"
 )
 
 const (
-	blobKeyPrefix = "blobs/"
+	blobObjectNamePrefix = "blobs/"
 )
 
 var g_blobStoreOnce sync.Once
@@ -42,8 +45,37 @@ func minInt(a, b int) int {
 }
 
 func initBlobStore() {
-	kvStore := getKvStore()
+	bucket := getBucket()
 	crypter := getCrypter()
+	stateStruct := getState()
+
+	// Store blobs in GCS.
+	g_blobStore = blob.NewGCSStore(bucket, blobObjectNamePrefix)
+
+	// If we don't know the set of hex scores in the store, or the set of scores
+	// is stale, re-list.
+	age := time.Now().Sub(stateStruct.RelistTime)
+	const maxAge = 30 * 24 * time.Hour
+
+	if stateStruct.ExistingScores == nil || age > maxAge {
+		log.Println("Listing existing scores...")
+
+		stateStruct.RelistTime = time.Now()
+		allScores, err := g_blobStore.List()
+		if err != nil {
+			log.Fatalln("g_blobStore.List:", err)
+		}
+
+		log.Printf(
+			"Listed %d scores in %v.",
+			len(allScores),
+			time.Since(stateStruct.RelistTime))
+
+		stateStruct.ExistingScores = util.NewStringSet()
+		for _, score := range allScores {
+			stateStruct.ExistingScores.Add(score.Hex())
+		}
+	}
 
 	// Store blobs in a key/value store.
 	const latencySecs = 2
