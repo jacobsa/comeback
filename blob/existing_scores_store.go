@@ -58,8 +58,7 @@ func (bs *existingScoresStore) Store(blob []byte) (s Score, err error) {
 }
 
 func (bs *existingScoresStore) Flush() (err error) {
-	err = errors.New("TODO")
-	return
+	panic("We expect buffering to happen outside of here")
 }
 
 func (bs *existingScoresStore) Contains(score Score) (b bool) {
