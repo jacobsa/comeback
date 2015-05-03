@@ -227,7 +227,7 @@ func (s *bufferingStore) Store(blob []byte) (score Score, err error) {
 	return
 }
 
-func (s *kvBasedBlobStore) Flush() (err error) {
+func (s *bufferingStore) Flush() (err error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -240,7 +240,7 @@ func (s *kvBasedBlobStore) Flush() (err error) {
 	return
 }
 
-func (s *kvBasedBlobStore) Contains(score Score) (b bool) {
+func (s *bufferingStore) Contains(score Score) (b bool) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -250,9 +250,8 @@ func (s *kvBasedBlobStore) Contains(score Score) (b bool) {
 		return
 	}
 
-	// Does the key exist in the KV store?
-	key := s.makeKey(score)
-	if s.kvStore.Contains(key) {
+	// Does the score exist in the wrapped store?
+	if s.wrapped.Contains(score) {
 		b = true
 		return
 	}
@@ -260,15 +259,7 @@ func (s *kvBasedBlobStore) Contains(score Score) (b bool) {
 	return
 }
 
-func (s *kvBasedBlobStore) Load(score Score) (blob []byte, err error) {
-	// Choose the appropriate key.
-	key := s.makeKey(score)
-
-	// Call the key/value store.
-	if blob, err = s.kvStore.Get(key); err != nil {
-		err = fmt.Errorf("Get: %v", err)
-		return
-	}
-
+func (s *bufferingStore) Load(score Score) (blob []byte, err error) {
+	blob, err = s.wrapped.Load(score)
 	return
 }
