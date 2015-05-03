@@ -32,7 +32,6 @@ import (
 	"log"
 	"os"
 	"runtime"
-	"strings"
 	"sync"
 	"time"
 
@@ -89,11 +88,9 @@ func listBlobs(
 		var batch []blob.Score
 		for _, o := range listing.Objects {
 			var score blob.Score
-			score, err = blob.ParseHexScore(
-				strings.TrimPrefix(o.Name, blobObjectNamePrefix))
-
+			score, err = blob.ParseObjectRecord(o, blobObjectNamePrefix)
 			if err != nil {
-				err = fmt.Errorf("Parsing object name \"%s\": %v", o.Name, err)
+				err = fmt.Errorf("ParseObjectRecord: %v", err)
 				return
 			}
 

@@ -73,26 +73,20 @@ type GCSStore struct {
 	namePrefix string
 }
 
-////////////////////////////////////////////////////////////////////////
-// Helpers
-////////////////////////////////////////////////////////////////////////
-
-func (s *GCSStore) makeName(score Score) (name string) {
-	name = s.namePrefix + score.Hex()
-	return
-}
-
-// Verify the internal consistency of the object record, and return the score
-// of the blob that it represents.
-func (s *GCSStore) parseObject(o *gcs.Object) (score Score, err error) {
+// Parse and verify the internal consistency of the supplied object record in
+// the same manner that a GCSStore configured with the supplied object name
+// prefix would. Return the score of the blob that the object contains.
+func ParseObjectRecord(
+	o *gcs.Object,
+	namePrefix string) (score Score, err error) {
 	// Is the name of the appropriate form?
-	if !strings.HasPrefix(o.Name, s.namePrefix) {
+	if !strings.HasPrefix(o.Name, namePrefix) {
 		err = fmt.Errorf("Unexpected object name: %q", o.Name)
 		return
 	}
 
 	// Parse the hex score.
-	hexScore := strings.TrimPrefix(o.Name, s.namePrefix)
+	hexScore := strings.TrimPrefix(o.Name, namePrefix)
 	score, err = ParseHexScore(hexScore)
 	if err != nil {
 		err = fmt.Errorf("Unexpected hex score %q: %v", hexScore, err)
@@ -155,6 +149,15 @@ func (s *GCSStore) parseObject(o *gcs.Object) (score Score, err error) {
 		return
 	}
 
+	return
+}
+
+////////////////////////////////////////////////////////////////////////
+// Helpers
+////////////////////////////////////////////////////////////////////////
+
+func (s *GCSStore) makeName(score Score) (name string) {
+	name = s.namePrefix + score.Hex()
 	return
 }
 
@@ -267,7 +270,7 @@ func (s *GCSStore) List() (scores []Score, err error) {
 		// Process results.
 		for _, o := range listing.Objects {
 			var score Score
-			score, err = s.parseObject(o)
+			score, err = ParseObjectRecord(o, s.namePrefix)
 			if err != nil {
 				return
 			}
