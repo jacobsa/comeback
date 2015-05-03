@@ -67,6 +67,6 @@ func (bs *existingScoresStore) Contains(score Score) (b bool) {
 }
 
 func (bs *existingScoresStore) Load(s Score) (blob []byte, err error) {
-	err = errors.New("TODO")
+	blob, err = bs.wrapped.Load(s)
 	return
 }
