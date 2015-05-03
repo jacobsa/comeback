@@ -89,7 +89,11 @@ func ParseObjectRecord(
 	hexScore := strings.TrimPrefix(o.Name, namePrefix)
 	score, err = ParseHexScore(hexScore)
 	if err != nil {
-		err = fmt.Errorf("Unexpected hex score %q: %v", hexScore, err)
+		err = fmt.Errorf(
+			"Unexpected hex score %q for object %q: %v",
+			hexScore,
+			o.Name,
+			err)
 		return
 	}
 
