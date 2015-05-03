@@ -50,7 +50,8 @@ func initBlobStore() {
 	stateStruct := getState()
 
 	// Store blobs in GCS.
-	g_blobStore = blob.NewGCSStore(bucket, blobObjectNamePrefix)
+	gcsStore := blob.NewGCSStore(bucket, blobObjectNamePrefix)
+	g_blobStore = gcsStore
 
 	// If we don't know the set of hex scores in the store, or the set of scores
 	// is stale, re-list.
@@ -61,7 +62,7 @@ func initBlobStore() {
 		log.Println("Listing existing scores...")
 
 		stateStruct.RelistTime = time.Now()
-		allScores, err := g_blobStore.List()
+		allScores, err := gcsStore.List()
 		if err != nil {
 			log.Fatalln("g_blobStore.List:", err)
 		}
