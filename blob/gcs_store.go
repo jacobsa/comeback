@@ -80,17 +80,8 @@ func (s *gcsStore) Store(blob []byte) (score Score, err error) {
 	return
 }
 
-func (s *kvBasedBlobStore) Flush() (err error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	// Wait until there are no requests in flight.
-	for len(s.inFlight) != 0 {
-		s.inFlightChanged.Wait()
-	}
-
-	err = s.writeErr
-	return
+func (s *gcsStore) Flush() (err error) {
+	panic("gcsStore.Flush not supported; wiring code bug?")
 }
 
 func (s *kvBasedBlobStore) Contains(score Score) (b bool) {
