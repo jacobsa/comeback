@@ -15,11 +15,7 @@
 
 package blob
 
-import (
-	"errors"
-
-	"github.com/jacobsa/comeback/util"
-)
+import "github.com/jacobsa/comeback/util"
 
 // Create a blob store that wraps another, responding to calls as follows:
 //
@@ -53,7 +49,11 @@ type existingScoresStore struct {
 }
 
 func (bs *existingScoresStore) Store(blob []byte) (s Score, err error) {
-	err = errors.New("TODO")
+	s, err = bs.wrapped.Store(blob)
+	if err == nil {
+		bs.scores.Add(s.Hex())
+	}
+
 	return
 }
 
