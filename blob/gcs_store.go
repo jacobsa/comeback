@@ -24,6 +24,7 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/jacobsa/gcloud/gcs"
+	"github.com/jacobsa/gcloud/gcs/gcsutil"
 )
 
 // Return a blob store that stores blobs in the supplied GCS bucket. GCS object
@@ -74,11 +75,11 @@ func (s *GCSStore) Store(blob []byte) (score Score, err error) {
 	name := s.makeName(score)
 
 	// Create the object.
-	//
-	// TODO(jacobsa): Set MD5 and CRC32C. See issue #18.
 	req := &gcs.CreateObjectRequest{
 		Name:     name,
 		Contents: bytes.NewReader(blob),
+		CRC32C:   gcsutil.CRC32C(blob),
+		MD5:      gcsutil.MD5(blob),
 	}
 
 	_, err = s.bucket.CreateObject(context.Background(), req)
