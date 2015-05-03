@@ -16,7 +16,10 @@
 package blob
 
 import (
+	"bytes"
 	"fmt"
+
+	"golang.org/x/net/context"
 
 	"github.com/jacobsa/gcloud/gcs"
 )
@@ -29,7 +32,7 @@ import (
 // where <score> is the result of calling Score.Hex.
 //
 // The blob store trusts that it has full ownership of this portion of the
-// bucket's key space -- if a score name exists, then it points to the correct
+// bucket's namespace -- if a score name exists, then it points to the correct
 // data.
 //
 // The returned store does not support Flush or Contains; these methods must
@@ -39,16 +42,16 @@ func NewGCSStore(
 	prefix string) (store Store)
 
 type gcsStore struct {
-	bucket    gcs.Bucket
-	keyPrefix string
+	bucket     gcs.Bucket
+	namePrefix string
 }
 
 ////////////////////////////////////////////////////////////////////////
 // Helpers
 ////////////////////////////////////////////////////////////////////////
 
-func (s *kvBasedBlobStore) makeKey(score Score) (key string) {
-	key = s.keyPrefix + score.Hex()
+func (s *gcsStore) makeName(score Score) (name string) {
+	name = s.namePrefix + score.Hex()
 	return
 }
 
@@ -56,54 +59,23 @@ func (s *kvBasedBlobStore) makeKey(score Score) (key string) {
 // Public interface
 ////////////////////////////////////////////////////////////////////////
 
-func (s *kvBasedBlobStore) Store(blob []byte) (score Score, err error) {
-	// Will this blob ever fit?
-	if len(blob) > s.maxBytesBuffered {
-		err = fmt.Errorf(
-			"%v-byte blob is larger than buffer size of %v",
-			len(blob),
-			s.maxBytesBuffered)
-
-		return
-	}
-
-	// Compute a score and a key for use under the lock below.
+func (s *gcsStore) Store(blob []byte) (score Score, err error) {
+	// Compute a score and an object name.
 	score = ComputeScore(blob)
-	key := s.makeKey(score)
+	name := s.makeName(score)
 
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	// Wait until there is room for this request.
-	for !s.hasRoom(len(blob)) {
-		s.inFlightChanged.Wait()
+	// Create the object.
+	//
+	// TODO(jacobsa): Set MD5 and CRC32C. See issue #18.
+	req := &gcs.CreateObjectRequest{
+		Name:     name,
+		Contents: bytes.NewReader(blob),
 	}
 
-	// Have we already decided on a final error?
-	if s.writeErr != nil {
-		err = fmt.Errorf("Error from previous write: %v", s.writeErr)
-		return
+	_, err = s.bucket.CreateObject(context.Background(), req)
+	if err != nil {
+		err = fmt.Errorf("CreateObject: %v", err)
 	}
-
-	// If we already have a request for this score in flight, we can avoid
-	// spawning another one. (If the existing one fails, the user will see an
-	// error from Flush.)
-	if _, ok := s.inFlight[score]; ok {
-		return
-	}
-
-	// If the KV store already contains the key, we need not do anything further.
-	if s.kvStore.Contains(key) {
-		return
-	}
-
-	// Mark this blob as in flight.
-	s.inFlight[score] = len(blob)
-	s.bytesBuffered += len(blob)
-	s.inFlightChanged.Broadcast()
-
-	// Spawn a goroutine that will make the blob durable in the background.
-	go s.makeDurable(score, key, blob)
 
 	return
 }
