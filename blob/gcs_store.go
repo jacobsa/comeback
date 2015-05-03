@@ -17,6 +17,9 @@ package blob
 
 import (
 	"bytes"
+	"crypto/md5"
+	"crypto/sha1"
+	"encoding/hex"
 	"fmt"
 	"io/ioutil"
 	"strings"
@@ -26,6 +29,20 @@ import (
 	"github.com/jacobsa/gcloud/gcs"
 	"github.com/jacobsa/gcloud/gcs/gcsutil"
 )
+
+// A key placed in GCS object metadata by GCSStore containing the hex SHA-1
+// expected for the object contents. This is of course redundant with the
+// object name; we use it as a paranoid check against GCS returning the
+// metadata or contents for the wrong object.
+const GCSMetadataKey_SHA1Hex = "comeback_sha1_hex"
+
+// A key placed in GCS object metadata by GCSStore containing the hex MD5 sum
+// expected for the object contents. If GCS reports a different MD5 sum or
+// returns contents with a different MD5 sum, we know something screwy has
+// happened.
+//
+// See here for more info: https://github.com/jacobsa/comeback/issues/18
+const GCSMetadataKey_MD5Hex = "comeback_md5_hex"
 
 // Return a blob store that stores blobs in the supplied GCS bucket. GCS object
 // names look like:
@@ -82,6 +99,62 @@ func (s *GCSStore) parseObject(o *gcs.Object) (score Score, err error) {
 		return
 	}
 
+	// We expect the hex score to match the hex SHA-1 in the metadata.
+	hexSHA1, ok := o.Metadata[GCSMetadataKey_SHA1Hex]
+	if !ok {
+		err = fmt.Errorf(
+			"Object %q is missing metadata key %q",
+			o.Name,
+			GCSMetadataKey_SHA1Hex)
+		return
+	}
+
+	if hexSHA1 != hexScore {
+		err = fmt.Errorf(
+			"Score/SHA-1 metadata mismatch for object %q: %q",
+			o.Name,
+			hexSHA1)
+		return
+	}
+
+	// We expect the hex MD5 in the object metadata to align with what GCS says
+	// the object's MD5 is.
+	hexMD5, ok := o.Metadata[GCSMetadataKey_MD5Hex]
+	if !ok {
+		err = fmt.Errorf(
+			"Object %q is missing metadata key %q",
+			o.Name,
+			GCSMetadataKey_MD5Hex)
+		return
+	}
+
+	if hex.DecodedLen(len(hexMD5)) != md5.Size {
+		err = fmt.Errorf(
+			"Object %q has weird hex MD5 metadata: %q",
+			o.Name,
+			hexMD5)
+		return
+	}
+
+	var md5 [md5.Size]byte
+	_, err = hex.Decode(md5[:], []byte(hexMD5))
+	if err != nil {
+		err = fmt.Errorf(
+			"Object %q has invalid hex MD5 in metadata: %q",
+			o.Name,
+			hexMD5)
+		return
+	}
+
+	if md5 != o.MD5 {
+		err = fmt.Errorf(
+			"MD5 mismatch for object %q: %s vs. %s",
+			o.Name,
+			hex.EncodeToString(md5[:]),
+			hex.EncodeToString(o.MD5[:]))
+		return
+	}
+
 	return
 }
 
@@ -95,11 +168,20 @@ func (s *GCSStore) Store(blob []byte) (score Score, err error) {
 	name := s.makeName(score)
 
 	// Create the object.
+	crc32c := *gcsutil.CRC32C(blob)
+	md5 := *gcsutil.MD5(blob)
+	sha1 := sha1.Sum(blob)
+
 	req := &gcs.CreateObjectRequest{
 		Name:     name,
 		Contents: bytes.NewReader(blob),
-		CRC32C:   gcsutil.CRC32C(blob),
-		MD5:      gcsutil.MD5(blob),
+		CRC32C:   &crc32c,
+		MD5:      &md5,
+
+		Metadata: map[string]string{
+			GCSMetadataKey_SHA1Hex: hex.EncodeToString(sha1[:]),
+			GCSMetadataKey_MD5Hex:  hex.EncodeToString(md5[:]),
+		},
 	}
 
 	_, err = s.bucket.CreateObject(context.Background(), req)
