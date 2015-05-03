@@ -20,47 +20,23 @@ import (
 	"sync"
 
 	"github.com/jacobsa/comeback/kv"
+	"github.com/jacobsa/gcloud/gcs"
 	"github.com/jacobsa/gcloud/syncutil"
 )
 
-// Return a blob store that stores blobs in the supplied key/value store. Keys
-// look like:
+// Return a blob store that stores blobs in the supplied GCS bucket. GCS object
+// names look like:
 //
 //     <prefix><score>
 //
 // where <score> is the result of calling Score.Hex.
 //
 // The blob store trusts that it has full ownership of this portion of the
-// store's key space -- if a score key exists, then it points to the correct
+// bucket's key space -- if a score name exists, then it points to the correct
 // data.
-//
-// bufferSize controls the number of bytes that may be buffered by this class,
-// used to avoid hogging RAM. It should be set to a few times the product of
-// the desired bandwidth in bytes and the typical latency of a write to the KV
-// store. This must be at least as large as the largest blob written.
-//
-// maxInFlight controls the maximum parallelism with which we will call the KV
-// store, used to avoid hammering it too hard. It should be set to a few times
-// the product of the desired request rate in Hz and the typical latency of a
-// write.
-func NewKVStoreBlobStore(
-	kvStore kv.Store,
-	prefix string,
-	bufferSize int,
-	maxInFlight int) Store {
-	s := &kvBasedBlobStore{
-		kvStore:             kvStore,
-		keyPrefix:           prefix,
-		maxBytesBuffered:    bufferSize,
-		maxRequestsInFlight: maxInFlight,
-		inFlight:            make(map[Score]int),
-	}
-
-	s.mu = syncutil.NewInvariantMutex(s.checkInvariants)
-	s.inFlightChanged.L = &s.mu
-
-	return s
-}
+func NewGCSStore(
+	bucket gcs.Bucket,
+	prefix string) (store Store)
 
 type kvBasedBlobStore struct {
 	/////////////////////////
