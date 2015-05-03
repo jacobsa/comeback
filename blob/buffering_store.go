@@ -105,7 +105,7 @@ type bufferingStore struct {
 // Helpers
 ////////////////////////////////////////////////////////////////////////
 
-func (s *kvBasedBlobStore) checkInvariants() {
+func (s *bufferingStore) checkInvariants() {
 	// INVARIANT: len(inFlight) <= maxRequestsInFlight
 	if !(len(s.inFlight) <= s.maxRequestsInFlight) {
 		panic(fmt.Sprintf("Too many in flight: %v", len(s.inFlight)))
@@ -130,19 +130,14 @@ func (s *kvBasedBlobStore) checkInvariants() {
 	}
 }
 
-func (s *kvBasedBlobStore) makeKey(score Score) (key string) {
-	key = s.keyPrefix + score.Hex()
-	return
-}
-
 // LOCKS_REQURED(s.mu)
-func (s *kvBasedBlobStore) hasRoom(blobLen int) bool {
+func (s *bufferingStore) hasRoom(blobLen int) bool {
 	bytesLeft := s.maxBytesBuffered - s.bytesBuffered
 	return len(s.inFlight) < s.maxRequestsInFlight && blobLen <= bytesLeft
 }
 
 // LOCKS_EXCLUDED(s.mu)
-func (s *kvBasedBlobStore) makeDurable(score Score, key string, blob []byte) {
+func (s *bufferingStore) makeDurable(score Score, blob []byte) {
 	var err error
 
 	// When we exit, set a write error (if appropriate) and update the in-flight
@@ -161,10 +156,15 @@ func (s *kvBasedBlobStore) makeDurable(score Score, key string, blob []byte) {
 		s.inFlightChanged.Broadcast()
 	}()
 
-	// Attempt to write out the blob.
-	err = s.kvStore.Set(key, blob)
+	// Call through to the wrapped store.
+	wrappedScore, err := s.wrapped.Store(blob)
 	if err != nil {
-		err = fmt.Errorf("kvStore.Set: %v", err)
+		return
+	}
+
+	// Ensure that the score it returned matches what we computed.
+	if wrappedScore != score {
+		err = fmt.Errorf("Score mismatch: %v vs. %v", score.Hex(), wrappedScore.Hex())
 		return
 	}
 
