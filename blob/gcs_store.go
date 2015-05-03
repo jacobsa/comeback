@@ -65,6 +65,26 @@ func (s *GCSStore) makeName(score Score) (name string) {
 	return
 }
 
+// Verify the internal consistency of the object record, and return the score
+// of the blob that it represents.
+func (s *GCSStore) parseObject(o *gcs.Object) (score Score, err error) {
+	// Is the name of the appropriate form?
+	if !strings.HasPrefix(o.Name, s.namePrefix) {
+		err = fmt.Errorf("Unexpected object name: %q", o.Name)
+		return
+	}
+
+	// Parse the hex score.
+	hexScore := strings.TrimPrefix(o.Name, s.namePrefix)
+	score, err = ParseHexScore(hexScore)
+	if err != nil {
+		err = fmt.Errorf("Unexpected hex score %q: %v", hexScore, err)
+		return
+	}
+
+	return
+}
+
 ////////////////////////////////////////////////////////////////////////
 // Public interface
 ////////////////////////////////////////////////////////////////////////
@@ -147,16 +167,9 @@ func (s *GCSStore) List() (scores []Score, err error) {
 
 		// Process results.
 		for _, o := range listing.Objects {
-			if !strings.HasPrefix(o.Name, s.namePrefix) {
-				err = fmt.Errorf("Unexpected object name: %q", o.Name)
-				return
-			}
-
 			var score Score
-			hexScore := strings.TrimPrefix(o.Name, s.namePrefix)
-			score, err = ParseHexScore(hexScore)
+			score, err = s.parseObject(o)
 			if err != nil {
-				err = fmt.Errorf("Unexpected hex score %q: %v", hexScore, err)
 				return
 			}
 
