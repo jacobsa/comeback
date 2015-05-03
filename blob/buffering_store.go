@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/jacobsa/comeback/kv"
 	"github.com/jacobsa/gcloud/syncutil"
 )
 
@@ -32,10 +31,10 @@ import (
 // the desired bandwidth in bytes and the typical latency of a write to the
 // wrapped store. This must be at least as large as the largest blob written.
 //
-// maxInFlight controls the maximum parallelism with which we will call the KV
-// store, used to avoid hammering it too hard. It should be set to a few times
-// the product of the desired request rate in Hz and the typical latency of a
-// write.
+// maxInFlight controls the maximum parallelism with which we will call the
+// wrapped store, used to avoid hammering it too hard. It should be set to a
+// few times the product of the desired request rate in Hz and the typical
+// latency of a write.
 //
 // It is assumed that when wrapped.Store returns successfully, the blob is
 // durable.
@@ -56,18 +55,17 @@ func NewBufferingStore(
 	return s
 }
 
-type kvBasedBlobStore struct {
+type bufferingStore struct {
 	/////////////////////////
 	// Dependencies
 	/////////////////////////
 
-	kvStore kv.Store
+	wrapped Store
 
 	/////////////////////////
 	// Constant data
 	/////////////////////////
 
-	keyPrefix           string
 	maxBytesBuffered    int
 	maxRequestsInFlight int
 
@@ -77,8 +75,8 @@ type kvBasedBlobStore struct {
 
 	mu syncutil.InvariantMutex
 
-	// If any background write to the KV store has failed, an error that should
-	// be returned for all future calls to Store or Flush.
+	// If any background write to the wrapped store has failed, an error that
+	// should be returned for all future calls to Store or Flush.
 	//
 	// GUARDED_BY(mu)
 	writeErr error
