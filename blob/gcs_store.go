@@ -40,7 +40,14 @@ import (
 // not be called.
 func NewGCSStore(
 	bucket gcs.Bucket,
-	prefix string) (store Store)
+	prefix string) (store Store) {
+	store = &gcsStore{
+		bucket:     bucket,
+		namePrefix: prefix,
+	}
+
+	return
+}
 
 type gcsStore struct {
 	bucket     gcs.Bucket
