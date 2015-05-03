@@ -17,11 +17,8 @@ package blob
 
 import (
 	"fmt"
-	"sync"
 
-	"github.com/jacobsa/comeback/kv"
 	"github.com/jacobsa/gcloud/gcs"
-	"github.com/jacobsa/gcloud/syncutil"
 )
 
 // Return a blob store that stores blobs in the supplied GCS bucket. GCS object
@@ -38,120 +35,17 @@ func NewGCSStore(
 	bucket gcs.Bucket,
 	prefix string) (store Store)
 
-type kvBasedBlobStore struct {
-	/////////////////////////
-	// Dependencies
-	/////////////////////////
-
-	kvStore kv.Store
-
-	/////////////////////////
-	// Constant data
-	/////////////////////////
-
-	keyPrefix           string
-	maxBytesBuffered    int
-	maxRequestsInFlight int
-
-	/////////////////////////
-	// Mutable state
-	/////////////////////////
-
-	mu syncutil.InvariantMutex
-
-	// If any background write to the KV store has failed, an error that should
-	// be returned for all future calls to Store or Flush.
-	//
-	// GUARDED_BY(mu)
-	writeErr error
-
-	// A map from scores that have been accepted by Store but not yet
-	// successfully written out to the length of the corresponding blobs.
-	//
-	// INVARIANT: len(inFlight) <= maxRequestsInFlight
-	//
-	// GUARDED_BY(mu)
-	inFlight map[Score]int
-
-	// A cached sum of the lengths of in-flight scores.
-	//
-	// INVARIANT: bytesBuffered is the sum of all values of inFlight
-	// INVARIANT: 0 <= bytesBuffered <= maxBytesBuffered
-	//
-	// GUARDED_BY(mu)
-	bytesBuffered int
-
-	// Signalled when the contents of inFlight change.
-	inFlightChanged sync.Cond
+type gcsStore struct {
+	bucket    gcs.Bucket
+	keyPrefix string
 }
 
 ////////////////////////////////////////////////////////////////////////
 // Helpers
 ////////////////////////////////////////////////////////////////////////
 
-func (s *kvBasedBlobStore) checkInvariants() {
-	// INVARIANT: len(inFlight) <= maxRequestsInFlight
-	if !(len(s.inFlight) <= s.maxRequestsInFlight) {
-		panic(fmt.Sprintf("Too many in flight: %v", len(s.inFlight)))
-	}
-
-	// INVARIANT: bytesBuffered is the sum of all values of inFlight
-	sum := 0
-	for _, v := range s.inFlight {
-		sum += v
-	}
-
-	if sum != s.bytesBuffered {
-		panic(fmt.Sprintf("Differing sum: %v vs. %v", sum, s.bytesBuffered))
-	}
-
-	// INVARIANT: 0 <= bytesBuffered <= maxBytesBuffered
-	if !(0 <= s.bytesBuffered && s.bytesBuffered <= s.maxBytesBuffered) {
-		panic(fmt.Sprintf(
-			"bytesBuffered of %v not in range [0, %v]",
-			s.bytesBuffered,
-			s.maxBytesBuffered))
-	}
-}
-
 func (s *kvBasedBlobStore) makeKey(score Score) (key string) {
 	key = s.keyPrefix + score.Hex()
-	return
-}
-
-// LOCKS_REQURED(s.mu)
-func (s *kvBasedBlobStore) hasRoom(blobLen int) bool {
-	bytesLeft := s.maxBytesBuffered - s.bytesBuffered
-	return len(s.inFlight) < s.maxRequestsInFlight && blobLen <= bytesLeft
-}
-
-// LOCKS_EXCLUDED(s.mu)
-func (s *kvBasedBlobStore) makeDurable(score Score, key string, blob []byte) {
-	var err error
-
-	// When we exit, set a write error (if appropriate) and update the in-flight
-	// map.
-	defer func() {
-		s.mu.Lock()
-		defer s.mu.Unlock()
-
-		// Is this the first write error?
-		if err != nil && s.writeErr == nil {
-			s.writeErr = err
-		}
-
-		delete(s.inFlight, score)
-		s.bytesBuffered -= len(blob)
-		s.inFlightChanged.Broadcast()
-	}()
-
-	// Attempt to write out the blob.
-	err = s.kvStore.Set(key, blob)
-	if err != nil {
-		err = fmt.Errorf("kvStore.Set: %v", err)
-		return
-	}
-
 	return
 }
 
