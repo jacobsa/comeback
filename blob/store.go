@@ -27,7 +27,8 @@ type Store interface {
 	Flush() (err error)
 
 	// Return true only if the supplied score is in the blob store and will be
-	// durable by the time of a successful Flush call.
+	// durable by the time of a successful Flush call. Implementations may choose
+	// to return false if the information is not available.
 	Contains(score Score) (b bool)
 
 	// Load a previously-stored blob.
