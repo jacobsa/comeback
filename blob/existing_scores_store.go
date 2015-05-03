@@ -15,6 +15,12 @@
 
 package blob
 
+import (
+	"errors"
+
+	"github.com/jacobsa/comeback/util"
+)
+
 // Create a blob store that wraps another, responding to calls as follows:
 //
 //  *  Flush will panic; it is assumed that any buffering and early returning
@@ -31,5 +37,38 @@ package blob
 //  *  Load will be forwarded to the wrapped store.
 //
 func NewExistingScoresStore(
-	existingScores StringSet,
-	wrapped Store) (store Store)
+	existingScores util.StringSet,
+	wrapped Store) (store Store) {
+	store = &existingScoresStore{
+		scores:  existingScores,
+		wrapped: wrapped,
+	}
+
+	return
+}
+
+type existingScoresStore struct {
+	scores  util.StringSet
+	wrapped Store
+}
+
+func (bs *existingScoresStore) Store(blob []byte) (s Score, err error) {
+	err = errors.New("TODO")
+	return
+}
+
+func (bs *existingScoresStore) Flush() (err error) {
+	err = errors.New("TODO")
+	return
+}
+
+func (bs *existingScoresStore) Contains(score Score) (b bool) {
+	// TODO
+	b = false
+	return
+}
+
+func (bs *existingScoresStore) Load(s Score) (blob []byte, err error) {
+	err = errors.New("TODO")
+	return
+}
