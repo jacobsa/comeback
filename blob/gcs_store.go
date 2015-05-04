@@ -34,7 +34,7 @@ import (
 // expected for the object contents. This is of course redundant with the
 // object name; we use it as a paranoid check against GCS returning the
 // metadata or contents for the wrong object.
-const metadataKey_SHA1Hex = "comeback_sha1"
+const metadataKey_SHA1 = "comeback_sha1"
 
 // A key placed in GCS object metadata by GCSStore containing the CRC32C
 // checksum expected for the object contents. If GCS reports a different
@@ -50,7 +50,7 @@ const metadataKey_CRC32C = "comeback_crc32c"
 // happened.
 //
 // See here for more info: https://github.com/jacobsa/comeback/issues/18
-const metadataKey_MD5Hex = "comeback_md5"
+const metadataKey_MD5 = "comeback_md5"
 
 // Return a blob store that stores blobs in the supplied GCS bucket. GCS object
 // names look like:
