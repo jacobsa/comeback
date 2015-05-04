@@ -106,12 +106,12 @@ func ParseObjectRecord(
 	}
 
 	// We expect the hex score to match the hex SHA-1 in the metadata.
-	hexSHA1, ok := o.Metadata[metadataKey_SHA1Hex]
+	hexSHA1, ok := o.Metadata[metadataKey_SHA1]
 	if !ok {
 		err = fmt.Errorf(
 			"Object %q is missing metadata key %q",
 			o.Name,
-			metadataKey_SHA1Hex)
+			metadataKey_SHA1)
 		return
 	}
 
@@ -125,12 +125,12 @@ func ParseObjectRecord(
 
 	// We expect the hex MD5 in the object metadata to align with what GCS says
 	// the object's MD5 is.
-	hexMD5, ok := o.Metadata[metadataKey_MD5Hex]
+	hexMD5, ok := o.Metadata[metadataKey_MD5]
 	if !ok {
 		err = fmt.Errorf(
 			"Object %q is missing metadata key %q",
 			o.Name,
-			metadataKey_MD5Hex)
+			metadataKey_MD5)
 		return
 	}
 
@@ -194,8 +194,8 @@ func (s *GCSStore) Store(blob []byte) (score Score, err error) {
 		MD5:      &md5,
 
 		Metadata: map[string]string{
-			metadataKey_SHA1Hex: hex.EncodeToString(sha1[:]),
-			metadataKey_MD5Hex:  hex.EncodeToString(md5[:]),
+			metadataKey_SHA1: hex.EncodeToString(sha1[:]),
+			metadataKey_MD5:  hex.EncodeToString(md5[:]),
 		},
 	}
 
