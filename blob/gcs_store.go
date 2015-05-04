@@ -22,6 +22,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io/ioutil"
+	"strconv"
 	"strings"
 
 	"golang.org/x/net/context"
@@ -123,8 +124,38 @@ func ParseObjectRecord(
 		return
 	}
 
-	// We expect the hex MD5 in the object metadata to align with what GCS says
-	// the object's MD5 is.
+	// We expect the hex CRC32C in the object metadata to match what GCS says the
+	// object's checksum is.
+	hexCRC32C, ok := o.Metadata[metadataKey_CRC32C]
+	if !ok {
+		err = fmt.Errorf(
+			"Object %q is missing metadata key %q",
+			o.Name,
+			metadataKey_CRC32C)
+		return
+	}
+
+	crc32Uint64, err := strconv.ParseUint(hexCRC32C, 0, 32)
+	if err != nil {
+		err = fmt.Errorf(
+			"Object %q has invalid hex CRC32C %q: %v",
+			o.Name,
+			hexCRC32C,
+			err)
+		return
+	}
+
+	if uint32(crc32Uint64) != o.CRC32C {
+		err = fmt.Errorf(
+			"CRC32C mismatch for object %q: %#08x vs. %#08x",
+			o.Name,
+			crc32Uint64,
+			o.CRC32C)
+		return
+	}
+
+	// We expect the hex MD5 in the object metadata to match what GCS says the
+	// object's MD5 sum is.
 	hexMD5, ok := o.Metadata[metadataKey_MD5]
 	if !ok {
 		err = fmt.Errorf(
