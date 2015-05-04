@@ -225,8 +225,9 @@ func (s *GCSStore) Store(blob []byte) (score Score, err error) {
 		MD5:      &md5,
 
 		Metadata: map[string]string{
-			metadataKey_SHA1: hex.EncodeToString(sha1[:]),
-			metadataKey_MD5:  hex.EncodeToString(md5[:]),
+			metadataKey_SHA1:   hex.EncodeToString(sha1[:]),
+			metadataKey_CRC32C: fmt.Sprintf("%#08x", crc32c),
+			metadataKey_MD5:    hex.EncodeToString(md5[:]),
 		},
 	}
 
