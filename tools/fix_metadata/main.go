@@ -53,7 +53,7 @@ func filterToProblematicNames(
 // For each object name, issue a request to set the appropriate metadata keys
 // based on the contents of the supplied map. Write out the names of the
 // objects processed.
-func filterToProblematicNames(
+func fixProblematicObjects(
 	ctx context.Context,
 	infoMap map[sha1hash]info,
 	names <-chan string,
