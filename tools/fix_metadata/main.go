@@ -299,8 +299,47 @@ func fixProblematicObjects(
 // processed, returning an error if non-zero.
 func monitorProgress(
 	ctx context.Context,
-	processed <-chan string,
-	unknown <-chan string) (err error)
+	processedChan <-chan string,
+	unknownChan <-chan string) (err error) {
+	var processed int
+	var unknown int
+
+	// Set up a ticker for logging status updates.
+	const period = time.Second
+	ticker := time.NewTicker(period)
+	defer ticker.Stop()
+
+	// Keep going until both channels are closed.
+	for processedChan != nil || unknownChan != nil {
+		select {
+		case <-ticker.C:
+			log.Printf("%v processed successfully, %v unknown", processed, unknown)
+
+		case _, ok := <-processedChan:
+			if ok {
+				processed++
+			} else {
+				processedChan = nil
+			}
+
+		case name, ok := <-unknownChan:
+			if ok {
+				log.Printf("Unknown object: %q", name)
+				unknown++
+			} else {
+				unknownChan = nil
+			}
+		}
+	}
+
+	// Return an error if any object was unknown.
+	if unknown != 0 {
+		err = fmt.Errorf("%v unknown objects", unknown)
+		return
+	}
+
+	return
+}
 
 func run(
 	bucket gcs.Bucket,
