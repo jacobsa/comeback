@@ -430,6 +430,4 @@ func main() {
 		err = fmt.Errorf("run: %v", err)
 		return
 	}
-
-	panic("TODO")
 }
