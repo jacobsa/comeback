@@ -70,7 +70,7 @@ const (
 )
 
 var gInputLineRe = regexp.MustCompile(
-	"^([0-9a-f]{40}) (0x[0-9a-f]{8}) ([0-9a-f]{16})$")
+	"^([0-9a-f]{40}) (0x[0-9a-f]{8}) ([0-9a-f]{32})$")
 
 func parseInputLine(line []byte) (sha1 sha1Hash, c checksums, err error) {
 	// Match against the regexp.
