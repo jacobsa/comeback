@@ -31,6 +31,7 @@ import (
 
 	"github.com/jacobsa/gcloud/gcs"
 	"github.com/jacobsa/gcloud/gcs/gcstesting"
+	"github.com/jacobsa/gcloud/syncutil"
 	"golang.org/x/net/context"
 )
 
@@ -73,7 +74,46 @@ func fixProblematicObjects(
 
 func run(
 	bucket gcs.Bucket,
-	info checksumMap) (err error)
+	info checksumMap) (err error) {
+	b := syncutil.NewBundle(context.Background())
+	defer func() { err = b.Join() }()
+
+	// List all of the blob objects.
+	objectRecords := make(chan *gcs.Object, 100)
+	b.Add(func(ctx context.Context) (err error) {
+		defer close(objectRecords)
+		err = listBlobObjects(ctx, bucket, objectRecords)
+		if err != nil {
+			err = fmt.Errorf("listBlobObjects: %v", err)
+			return
+		}
+
+		return
+	})
+
+	// Filter to the ones we need to fix up.
+	problematicNames := make(chan string, 100)
+	b.Add(func(ctx context.Context) (err error) {
+		defer close(problematicNames)
+		err = filterToProblematicNames(ctx, objectRecords, problematicNames)
+		if err != nil {
+			err = fmt.Errorf("filterToProblematicNames: %v", err)
+			return
+		}
+
+		return
+	})
+
+	// Fix those objects with some parallelism.
+	const parallelism = 128
+	panic("TODO")
+
+	// Log status updates, and at the end log the objects that were not
+	// processed, returning an error if non-zero.
+	panic("TODO")
+
+	return
+}
 
 func panicIf(err *error) {
 	if *err != nil {
