@@ -20,3 +20,41 @@
 //     e04b25d650dee1dff6ab1743724fa7c184282e94 0x12e9bf88 2bad5bb78f17232ef8c727f59eb82325
 //
 package main
+
+import (
+	"crypto/md5"
+	"crypto/sha1"
+
+	"github.com/jacobsa/gcloud/gcs"
+	"golang.org/x/net/context"
+)
+
+type crc32cChecksum uint32
+type md5hash [md5.Size]byte
+type sha1hash [sha1.Size]byte
+
+type info struct {
+	crc32c crc32cChecksum
+	md5    md5hash
+}
+
+// List all blob objects in the GCS bucket into the channel.
+func listBlobObjects(
+	ctx context.Context,
+	bucket gcs.Bucket,
+	objects chan<- *gcs.Object) (err error)
+
+// Filter to names of objects that lack the appropriate metadata keys.
+func filterToProblematicNames(
+	ctx context.Context,
+	objects <-chan *gcs.Object,
+	names chan<- string) (err error)
+
+// For each object name, issue a request to set the appropriate metadata keys
+// based on the contents of the supplied map. Write out the names of the
+// objects processed.
+func filterToProblematicNames(
+	ctx context.Context,
+	infoMap map[sha1hash]info,
+	names <-chan string,
+	processed chan<- string) (err error)
