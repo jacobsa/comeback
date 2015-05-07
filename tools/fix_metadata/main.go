@@ -328,11 +328,17 @@ func run(
 
 	// Fix those objects with some parallelism.
 	const parallelism = 128
-	panic("TODO")
+	b.Add(func(ctx context.Context) (err error) {
+		err = errors.New("TODO")
+		return
+	})
 
 	// Log status updates, and at the end log the objects that were not
 	// processed, returning an error if non-zero.
-	panic("TODO")
+	b.Add(func(ctx context.Context) (err error) {
+		err = errors.New("TODO")
+		return
+	})
 
 	return
 }
