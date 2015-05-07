@@ -406,6 +406,7 @@ func getBucket() (b gcs.Bucket) {
 
 func main() {
 	flag.Parse()
+	bucket := getBucket()
 
 	// Panic if anything below fails.
 	var err error
@@ -419,7 +420,7 @@ func main() {
 	}
 
 	// Run.
-	err = run(getBucket(), info)
+	err = run(bucket, info)
 	if err != nil {
 		err = fmt.Errorf("run: %v", err)
 		return
