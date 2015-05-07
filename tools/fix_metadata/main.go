@@ -25,10 +25,14 @@ import (
 	"bufio"
 	"crypto/md5"
 	"crypto/sha1"
+	"encoding/hex"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
 	"os"
+	"regexp"
+	"strconv"
 
 	"github.com/jacobsa/gcloud/gcs"
 	"github.com/jacobsa/gcloud/gcs/gcstesting"
@@ -48,7 +52,37 @@ type checksums struct {
 // A mapping from SHA-1 to CRC32C and MD5.
 type checksumMap map[sha1Hash]checksums
 
-func parseInputLine(line []byte) (sha1 sha1Hash, c checksums, err error)
+var gInputLineRe = regexp.MustCompile(
+	"^([0-9a-f]{40}) (0x[0-9a-f]{8}) ([0-9a-f]{16})$")
+
+func parseInputLine(line []byte) (sha1 sha1Hash, c checksums, err error) {
+	// Match against the regexp.
+	matches := gInputLineRe.FindSubmatch(line)
+	if matches == nil {
+		err = errors.New("No match.")
+		return
+	}
+
+	// Parse each component.
+	_, err = hex.Decode(sha1[:], matches[1])
+	if err != nil {
+		panic(fmt.Sprintf("Unexpected decode error for %q: %v", matches[1], err))
+	}
+
+	crc32c64, err := strconv.ParseUint(string(matches[2]), 0, 32)
+	if err != nil {
+		panic(fmt.Sprintf("Unexpected decode error for %q: %v", matches[2], err))
+	}
+
+	c.crc32c = crc32cChecksum(crc32c64)
+
+	_, err = hex.Decode(c.md5[:], matches[3])
+	if err != nil {
+		panic(fmt.Sprintf("Unexpected decode error for %q: %v", matches[3], err))
+	}
+
+	return
+}
 
 // Read the supplied input file, producing a checksum map.
 func parseInput(in io.Reader) (m checksumMap, err error) {
