@@ -33,7 +33,9 @@ import (
 	"os"
 	"regexp"
 	"strconv"
+	"strings"
 
+	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/gcloud/gcs"
 	"github.com/jacobsa/gcloud/gcs/gcstesting"
 	"github.com/jacobsa/gcloud/syncutil"
@@ -199,7 +201,22 @@ func filterToProblematicNames(
 }
 
 // Parse the object name into its expected SHA-1 hash.
-func parseObjectName(name string) (sha1 sha1Hash, err error)
+func parseObjectName(name string) (sha1 sha1Hash, err error) {
+	if !strings.HasPrefix(name, blobObjectNamePrefix) {
+		err = fmt.Errorf("Expected prefix")
+		return
+	}
+
+	hexSha1 := strings.TrimPrefix(name, blobObjectNamePrefix)
+	score, err := blob.ParseHexScore(hexSha1)
+	if err != nil {
+		err = fmt.Errorf("ParseHexScore: %v", err)
+		return
+	}
+
+	sha1 = sha1Hash(score)
+	return
+}
 
 // For each object name, issue a request to set the appropriate metadata keys
 // based on the contents of the supplied map. Write out the names of the
