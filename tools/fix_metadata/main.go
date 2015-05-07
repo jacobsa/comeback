@@ -52,6 +52,10 @@ type checksums struct {
 // A mapping from SHA-1 to CRC32C and MD5.
 type checksumMap map[sha1Hash]checksums
 
+const (
+	blobObjectNamePrefix = "blobs/"
+)
+
 var gInputLineRe = regexp.MustCompile(
 	"^([0-9a-f]{40}) (0x[0-9a-f]{8}) ([0-9a-f]{16})$")
 
@@ -115,7 +119,49 @@ func parseInput(in io.Reader) (m checksumMap, err error) {
 func listBlobObjects(
 	ctx context.Context,
 	bucket gcs.Bucket,
-	objects chan<- *gcs.Object) (err error)
+	objects chan<- *gcs.Object) (err error) {
+	req := &gcs.ListObjectsRequest{
+		Prefix: blobObjectNamePrefix,
+	}
+
+	// List until we run out.
+	for {
+		// Fetch the next batch.
+		var listing *gcs.Listing
+		listing, err = bucket.ListObjects(ctx, req)
+		if err != nil {
+			err = fmt.Errorf("ListObjects: %v", err)
+			return
+		}
+
+		// Pass on each object.
+		for _, o := range listing.Objects {
+			// Special case: for gcsfuse compatibility, we allow blobObjectNamePrefix
+			// to exist as its own object name. Skip it.
+			if o.Name == blobObjectNamePrefix {
+				continue
+			}
+
+			select {
+			case objects <- o:
+
+				// Cancelled?
+			case <-ctx.Done():
+				err = ctx.Err()
+				return
+			}
+		}
+
+		// Are we done?
+		if listing.ContinuationToken == "" {
+			break
+		}
+
+		req.ContinuationToken = listing.ContinuationToken
+	}
+
+	return
+}
 
 // Filter to names of objects that lack the appropriate metadata keys.
 func filterToProblematicNames(
