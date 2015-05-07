@@ -198,15 +198,78 @@ func filterToProblematicNames(
 	return
 }
 
+// Parse the object name into its expected SHA-1 hash.
+func parseObjectName(name string) (sha1 sha1Hash, err error)
+
 // For each object name, issue a request to set the appropriate metadata keys
 // based on the contents of the supplied map. Write out the names of the
 // objects processed, and those for whom info wasn't available.
 func fixProblematicObjects(
 	ctx context.Context,
+	bucket gcs.Bucket,
 	info checksumMap,
 	names <-chan string,
 	processed chan<- string,
-	unknown chan<- string) (err error)
+	unknown chan<- string) (err error) {
+	for name := range names {
+		// Parse the name.
+		var sha1 sha1Hash
+		sha1, err = parseObjectName(name)
+		if err != nil {
+			err = fmt.Errorf("Parsing object name %q: %v", name, err)
+			return
+		}
+
+		// Do we have info for this object?
+		c, ok := info[sha1]
+		if !ok {
+			select {
+			case unknown <- name:
+
+				// Cancelled?
+			case <-ctx.Done():
+				err = ctx.Err()
+				return
+			}
+
+			continue
+		}
+
+		// Fix it up.
+		//
+		// Formats cf. gcs_store.go.
+		sha1Str := hex.EncodeToString(sha1[:])
+		crc32cStr := fmt.Sprintf("%#08x", c.crc32c)
+		md5Str := hex.EncodeToString(c.md5[:])
+
+		req := &gcs.UpdateObjectRequest{
+			Name: name,
+			Metadata: map[string]*string{
+				metadataKey_SHA1:   &sha1Str,
+				metadataKey_CRC32C: &crc32cStr,
+				metadataKey_MD5:    &md5Str,
+			},
+		}
+
+		_, err = bucket.UpdateObject(ctx, req)
+		if err != nil {
+			err = fmt.Errorf("UpdateObject: %v", err)
+			return
+		}
+
+		// Pass on the name as processed.
+		select {
+		case processed <- name:
+
+			// Cancelled?
+		case <-ctx.Done():
+			err = ctx.Err()
+			return
+		}
+	}
+
+	return
+}
 
 func run(
 	bucket gcs.Bucket,
