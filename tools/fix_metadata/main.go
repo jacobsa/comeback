@@ -71,15 +71,15 @@ func fixProblematicObjects(
 	processed chan<- string,
 	unknown chan<- string) (err error)
 
+func run(
+	bucket gcs.Bucket,
+	info checksumMap) (err error)
+
 func panicIf(err *error) {
 	if *err != nil {
 		panic(*err)
 	}
 }
-
-func run(
-	bucket gcs.Bucket,
-	info checksumMap) (err error)
 
 func main() {
 	flag.Parse()
