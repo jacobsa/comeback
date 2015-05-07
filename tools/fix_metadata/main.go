@@ -30,6 +30,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"regexp"
@@ -407,17 +408,21 @@ func getBucket() (b gcs.Bucket) {
 func main() {
 	flag.Parse()
 	bucket := getBucket()
+	log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds)
 
 	// Panic if anything below fails.
 	var err error
 	defer panicIf(&err)
 
 	// Parse the input.
+	log.Println("Parsing input...")
 	info, err := parseInput(os.Stdin)
 	if err != nil {
 		err = fmt.Errorf("parseInput: %v", err)
 		return
 	}
+
+	log.Println("Done parsing input.")
 
 	// Run.
 	err = run(bucket, info)
