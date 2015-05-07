@@ -36,6 +36,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/jacobsa/comeback/blob"
@@ -294,6 +295,13 @@ func fixProblematicObjects(
 	return
 }
 
+// Log status updates, and at the end log the objects that were not
+// processed, returning an error if non-zero.
+func monitorProgress(
+	ctx context.Context,
+	processed <-chan string,
+	unknown <-chan string) (err error)
+
 func run(
 	bucket gcs.Bucket,
 	info checksumMap) (err error) {
@@ -328,15 +336,47 @@ func run(
 
 	// Fix those objects with some parallelism.
 	const parallelism = 128
-	b.Add(func(ctx context.Context) (err error) {
-		err = errors.New("TODO")
-		return
-	})
+	var wg sync.WaitGroup
+
+	processed := make(chan string)
+	unknown := make(chan string)
+
+	for i := 0; i < parallelism; i++ {
+		wg.Add(1)
+		b.Add(func(ctx context.Context) (err error) {
+			defer wg.Done()
+			err = fixProblematicObjects(
+				ctx,
+				bucket,
+				info,
+				problematicNames,
+				processed,
+				unknown)
+
+			if err != nil {
+				err = fmt.Errorf("fixProblematicObjects: %v", err)
+				return
+			}
+
+			return
+		})
+	}
+
+	go func() {
+		wg.Wait()
+		close(processed)
+		close(unknown)
+	}()
 
 	// Log status updates, and at the end log the objects that were not
 	// processed, returning an error if non-zero.
 	b.Add(func(ctx context.Context) (err error) {
-		err = errors.New("TODO")
+		err = monitorProgress(ctx, processed, unknown)
+		if err != nil {
+			err = fmt.Errorf("monitorProgress: %v", err)
+			return
+		}
+
 		return
 	})
 
