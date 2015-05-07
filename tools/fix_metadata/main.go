@@ -418,7 +418,11 @@ func main() {
 
 	// Panic if anything below fails.
 	var err error
-	defer panicIf(&err)
+	defer func() {
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
 
 	// Parse the input.
 	log.Println("Parsing input...")
