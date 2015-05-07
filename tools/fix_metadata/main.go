@@ -24,19 +24,26 @@ package main
 import (
 	"crypto/md5"
 	"crypto/sha1"
+	"io"
 
 	"github.com/jacobsa/gcloud/gcs"
 	"golang.org/x/net/context"
 )
 
 type crc32cChecksum uint32
-type md5hash [md5.Size]byte
-type sha1hash [sha1.Size]byte
+type md5Hash [md5.Size]byte
+type sha1Hash [sha1.Size]byte
 
-type info struct {
+type checksums struct {
 	crc32c crc32cChecksum
-	md5    md5hash
+	md5    md5Hash
 }
+
+// A mapping from SHA-1 to CRC32C and MD5.
+type checksumMap map[sha1Hash]checksums
+
+// Read the supplied input file, producing a checksum map.
+func parseInput(in io.Reader) (m checksumMap, err error)
 
 // List all blob objects in the GCS bucket into the channel.
 func listBlobObjects(
@@ -52,9 +59,10 @@ func filterToProblematicNames(
 
 // For each object name, issue a request to set the appropriate metadata keys
 // based on the contents of the supplied map. Write out the names of the
-// objects processed.
+// objects processed, and those for whom info wasn't available.
 func fixProblematicObjects(
 	ctx context.Context,
-	infoMap map[sha1hash]info,
+	info checksumMap,
 	names <-chan string,
-	processed chan<- string) (err error)
+	processed chan<- string,
+	unknown chan<- string) (err error)
