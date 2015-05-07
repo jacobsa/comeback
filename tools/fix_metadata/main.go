@@ -30,17 +30,22 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/gcloud/gcs"
-	"github.com/jacobsa/gcloud/gcs/gcstesting"
+	"github.com/jacobsa/gcloud/oauthutil"
 	"github.com/jacobsa/gcloud/syncutil"
 	"golang.org/x/net/context"
 )
+
+var fKeyFile = flag.String("key_file", "", "")
+var fBucket = flag.String("bucket", "", "")
 
 type crc32cChecksum uint32
 type md5Hash [md5.Size]byte
@@ -337,6 +342,68 @@ func panicIf(err *error) {
 	}
 }
 
+func getHTTPClient() (client *http.Client, err error) {
+	if *fKeyFile == "" {
+		err = errors.New("You must set --key_file.")
+		return
+	}
+
+	const scope = gcs.Scope_FullControl
+	client, err = oauthutil.NewJWTHttpClient(*fKeyFile, []string{scope})
+	if err != nil {
+		err = fmt.Errorf("oauthutil.NewJWTHttpClient: %v", err)
+		return
+	}
+
+	return
+}
+
+func bucketName() (name string, err error) {
+	name = *fBucket
+	if name == "" {
+		err = errors.New("You must set --bucket.")
+		return
+	}
+
+	return
+}
+
+func getBucket() (b gcs.Bucket) {
+	var err error
+	defer panicIf(&err)
+
+	// Get the HTTP client,
+	client, err := getHTTPClient()
+	if err != nil {
+		err = fmt.Errorf("IntegrationTestHTTPClient: %v", err)
+		return
+	}
+
+	// Find the bucket name.
+	name, err := bucketName()
+	if err != nil {
+		err = fmt.Errorf("bucketName: %v", err)
+		return
+	}
+
+	// Create a connection.
+	cfg := &gcs.ConnConfig{
+		HTTPClient:      client,
+		MaxBackoffSleep: 30 * time.Second,
+	}
+
+	conn, err := gcs.NewConn(cfg)
+	if err != nil {
+		err = fmt.Errorf("gcs.NewConn: %v", err)
+		return
+	}
+
+	// Extract the bucket.
+	b = conn.GetBucket(name)
+
+	return
+}
+
 func main() {
 	flag.Parse()
 
@@ -352,7 +419,7 @@ func main() {
 	}
 
 	// Run.
-	err = run(gcstesting.IntegrationTestBucketOrDie(), info)
+	err = run(getBucket(), info)
 	if err != nil {
 		err = fmt.Errorf("run: %v", err)
 		return
