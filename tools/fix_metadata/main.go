@@ -53,7 +53,13 @@ type checksums struct {
 type checksumMap map[sha1Hash]checksums
 
 const (
+	// Cf. blob_store.go
 	blobObjectNamePrefix = "blobs/"
+
+	// Cf. gcs_store.go
+	metadataKey_SHA1   = "comeback_sha1"
+	metadataKey_CRC32C = "comeback_crc32c"
+	metadataKey_MD5    = "comeback_md5"
 )
 
 var gInputLineRe = regexp.MustCompile(
@@ -167,7 +173,30 @@ func listBlobObjects(
 func filterToProblematicNames(
 	ctx context.Context,
 	objects <-chan *gcs.Object,
-	names chan<- string) (err error)
+	names chan<- string) (err error) {
+	for o := range objects {
+		// Skip objects that already have all of the keys.
+		_, ok0 := o.Metadata[metadataKey_SHA1]
+		_, ok1 := o.Metadata[metadataKey_CRC32C]
+		_, ok2 := o.Metadata[metadataKey_MD5]
+
+		if ok0 && ok1 && ok2 {
+			continue
+		}
+
+		// Pass on the names of others.
+		select {
+		case names <- o.Name:
+
+			// Cancelled?
+		case <-ctx.Done():
+			err = ctx.Err()
+			return
+		}
+	}
+
+	return
+}
 
 // For each object name, issue a request to set the appropriate metadata keys
 // based on the contents of the supplied map. Write out the names of the
