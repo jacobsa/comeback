@@ -22,6 +22,7 @@
 package main
 
 import (
+	"bufio"
 	"crypto/md5"
 	"crypto/sha1"
 	"flag"
@@ -47,8 +48,34 @@ type checksums struct {
 // A mapping from SHA-1 to CRC32C and MD5.
 type checksumMap map[sha1Hash]checksums
 
+func parseInputLine(line []byte) (sha1 sha1Hash, c checksums, err error)
+
 // Read the supplied input file, producing a checksum map.
-func parseInput(in io.Reader) (m checksumMap, err error)
+func parseInput(in io.Reader) (m checksumMap, err error) {
+	m = make(checksumMap)
+
+	// Scan each line.
+	scanner := bufio.NewScanner(in)
+	for scanner.Scan() {
+		var sha1 sha1Hash
+		var c checksums
+		sha1, c, err = parseInputLine(scanner.Bytes())
+		if err != nil {
+			err = fmt.Errorf("Parsing input line %q: %v", scanner.Text(), err)
+			return
+		}
+
+		m[sha1] = c
+	}
+
+	// Was there an error scanning?
+	if scanner.Err() != nil {
+		err = fmt.Errorf("Scanning: %v", scanner.Err())
+		return
+	}
+
+	return
+}
 
 // List all blob objects in the GCS bucket into the channel.
 func listBlobObjects(
