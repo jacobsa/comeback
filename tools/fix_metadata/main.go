@@ -15,7 +15,7 @@
 
 // A tool to add missing fields to an existing GCS bucket, for #18.
 //
-// Input is of the form "<SHA-1> <CRC32C> <MD5>", e.g.:
+// Input is on stdin, and is of the form "<SHA-1> <CRC32C> <MD5>", e.g.:
 //
 //     e04b25d650dee1dff6ab1743724fa7c184282e94 0x12e9bf88 2bad5bb78f17232ef8c727f59eb82325
 //
@@ -24,9 +24,13 @@ package main
 import (
 	"crypto/md5"
 	"crypto/sha1"
+	"flag"
+	"fmt"
 	"io"
+	"os"
 
 	"github.com/jacobsa/gcloud/gcs"
+	"github.com/jacobsa/gcloud/gcs/gcstesting"
 	"golang.org/x/net/context"
 )
 
@@ -66,3 +70,37 @@ func fixProblematicObjects(
 	names <-chan string,
 	processed chan<- string,
 	unknown chan<- string) (err error)
+
+func panicIf(err *error) {
+	if *err != nil {
+		panic(*err)
+	}
+}
+
+func run(
+	bucket gcs.Bucket,
+	info checksumMap) (err error)
+
+func main() {
+	flag.Parse()
+
+	// Panic if anything below fails.
+	var err error
+	defer panicIf(&err)
+
+	// Parse the input.
+	info, err := parseInput(os.Stdin)
+	if err != nil {
+		err = fmt.Errorf("parseInput: %v", err)
+		return
+	}
+
+	// Run.
+	err = run(gcstesting.IntegrationTestBucketOrDie(), info)
+	if err != nil {
+		err = fmt.Errorf("run: %v", err)
+		return
+	}
+
+	panic("TODO")
+}
