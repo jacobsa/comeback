@@ -58,7 +58,14 @@ var cmdScanBlobs = &Command{
 }
 
 var fOutputFile = cmdScanBlobs.Flags.String(
-	"output_file", "", "Path to scan_blobs output file. Will be truncated.")
+	"output_file",
+	"",
+	"Path to scan_blobs output file. Will be truncated.")
+
+var fFast = cmdScanBlobs.Flags.Bool(
+	"fast",
+	false,
+	"Only verify object metadata.")
 
 func init() {
 	cmdScanBlobs.Run = runScanBlobs // Break flag-related dependency loop.
