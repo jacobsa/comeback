@@ -88,61 +88,45 @@ func listBlobs(
 	ctx context.Context,
 	bucket gcs.Bucket,
 	scores chan<- blob.Score) (err error) {
-	req := &gcs.ListObjectsRequest{
-		Prefix: blobObjectNamePrefix,
-	}
+	b := syncutil.NewBundle()
 
-	// List until we run out.
-	for {
-		// Fetch the next batch.
-		var listing *gcs.Listing
-		listing, err = bucket.ListObjects(ctx, req)
+	// List object records into a channel.
+	objects := make(chan *gcs.Object, 100)
+	b.Add(func(ctx context.Context) (err error) {
+		defer close(objects)
+		err = blob.ListBlobObjects(ctx, bucket, blobObjectNamePrefix, objects)
 		if err != nil {
-			err = fmt.Errorf("ListObjects: %v", err)
+			err = fmt.Errorf("ListBlobObjects: %v", err)
 			return
 		}
 
-		// Transform to scores, verifying in the process.
-		var batch []blob.Score
-		for _, o := range listing.Objects {
-			// Skip an object named simply blobObjectNamePrefix, which we allow to
-			// exist for gcsfuse compatibility.
-			if o.Name == blobObjectNamePrefix {
-				continue
-			}
+		return
+	})
 
-			// Parse and verify the record.
-			var score blob.Score
-			score, err = blob.ParseObjectRecord(o, blobObjectNamePrefix)
+	// Parse and verify records, and write out scores.
+	b.Add(func(ctx context.Context) (err error) {
+		for o := range objects {
+			// Parse and verify.
+			var score Score
+			score, err = ParseObjectRecord(o, s.namePrefix)
 			if err != nil {
 				err = fmt.Errorf("ParseObjectRecord: %v", err)
 				return
 			}
 
-			batch = append(batch, score)
-		}
-
-		// Feed out each score.
-		for _, score := range batch {
+			// Send on the score.
 			select {
 			case scores <- score:
 
-				// Cancelled?
+			// Cancelled?
 			case <-ctx.Done():
 				err = ctx.Err()
 				return
 			}
 		}
 
-		// Are we done?
-		if listing.ContinuationToken == "" {
-			break
-		}
-
-		req.ContinuationToken = listing.ContinuationToken
-	}
-
-	return
+		return
+	})
 }
 
 func readAndClose(rc io.ReadCloser) (d []byte, err error) {
