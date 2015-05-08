@@ -403,28 +403,21 @@ func (s *GCSStore) List() (scores []Score, err error) {
 	b := syncutil.NewBundle(context.Background())
 
 	// List into a channel.
-	objects := make(chan *gcs.Object, 100)
+	scoreChan := make(chan Score, 100)
 	b.Add(func(ctx context.Context) (err error) {
-		defer close(objects)
-		err = ListBlobObjects(ctx, s.bucket, s.namePrefix, objects)
+		defer close(scoreChan)
+		err = ListScores(ctx, s.bucket, s.namePrefix, scoreChan)
 		if err != nil {
-			err = fmt.Errorf("ListBlobObjects: %v", err)
+			err = fmt.Errorf("ListScores: %v", err)
 			return
 		}
 
 		return
 	})
 
-	// Parse and verify records, and accumulate into the slice.
+	// Accumulate into the slice.
 	b.Add(func(ctx context.Context) (err error) {
-		for o := range objects {
-			var score Score
-			score, err = ParseObjectRecord(o, s.namePrefix)
-			if err != nil {
-				err = fmt.Errorf("ParseObjectRecord: %v", err)
-				return
-			}
-
+		for score := range scoreChan {
 			scores = append(scores, score)
 		}
 
