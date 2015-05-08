@@ -13,8 +13,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// A command that scans all of the blobs in a GCS bucket, verifying their
-// scores against their content.
+// A command that processes all of the blobs in a GCS bucket. For each blob:
+//
+//  1. The GCS object record is verified for internal consistency. In
+//     particular, comeback's expected MD5 and CRC32C are checked against the
+//     GCS-reported values.
+//
+//  2. The object contents are read and the SHA-1 computed and checked against
+//     the blob's name and expected SHA-1.
+//
+//  3. The edges in the directory graph are printed to standard output.
+//
+// (In "fast mode", only #1 is performed.)
 //
 // Output is space-separated lines of the form:
 //
