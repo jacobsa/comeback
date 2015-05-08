@@ -29,6 +29,7 @@ import (
 
 	"github.com/jacobsa/gcloud/gcs"
 	"github.com/jacobsa/gcloud/gcs/gcsutil"
+	"github.com/jacobsa/gcloud/syncutil"
 )
 
 // A key placed in GCS object metadata by GCSStore containing the hex SHA-1
@@ -348,46 +349,37 @@ func (s *GCSStore) Load(score Score) (blob []byte, err error) {
 
 // List all of the blobs that are known to be durable in the bucket.
 func (s *GCSStore) List() (scores []Score, err error) {
-	req := &gcs.ListObjectsRequest{
-		Prefix: s.namePrefix,
-	}
+	b := syncutil.NewBundle(context.Background())
 
-	// List repeatedly until we're done.
-	for {
-		// Call the bucket.
-		var listing *gcs.Listing
-		listing, err = s.bucket.ListObjects(context.Background(), req)
+	// List into a channel.
+	objects := make(chan *gcs.Object, 100)
+	b.Add(func(ctx context.Context) (err error) {
+		defer close(objects)
+		err = ListBlobObjects(ctx, s.bucket, s.namePrefix, objects)
 		if err != nil {
-			err = fmt.Errorf("ListObjects: %v", err)
+			err = fmt.Errorf("ListBlobObjects: %v", err)
 			return
 		}
 
-		// Process results.
-		for _, o := range listing.Objects {
-			// Special case: listing "blobs/*" includes "blobs/" itself, which we
-			// allow to exist for convenience of use with e.g. gcsfuse.
-			if o.Name == s.namePrefix {
-				continue
-			}
+		return
+	})
 
-			// Parse and verify the record.
+	// Parse and verify records, and accumulate into the slice.
+	b.Add(func(ctx context.Context) (err error) {
+		for o := range objects {
 			var score Score
 			score, err = ParseObjectRecord(o, s.namePrefix)
 			if err != nil {
+				err = fmt.Errorf("ParseObjectRecord: %v", err)
 				return
 			}
 
-			// Save the score.
 			scores = append(scores, score)
 		}
 
-		// Continue?
-		if listing.ContinuationToken == "" {
-			break
-		}
+		return
+	})
 
-		req.ContinuationToken = listing.ContinuationToken
-	}
-
+	err = b.Join()
 	return
 }
