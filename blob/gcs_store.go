@@ -22,7 +22,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"strconv"
 	"strings"
 
@@ -205,8 +204,7 @@ func ListBlobObjects(
 	namePrefix string,
 	objects chan<- *gcs.Object) (err error) {
 	req := &gcs.ListObjectsRequest{
-		Prefix:            blobObjectNamePrefix,
-		ContinuationToken: *fToken,
+		Prefix: namePrefix,
 	}
 
 	// List until we run out.
@@ -221,9 +219,9 @@ func ListBlobObjects(
 
 		// Pass on each object.
 		for _, o := range listing.Objects {
-			// Special case: for gcsfuse compatibility, we allow blobObjectNamePrefix
-			// to exist as its own object name. Skip it.
-			if o.Name == blobObjectNamePrefix {
+			// Special case: for gcsfuse compatibility, we allow namePrefix to exist
+			// as its own object name. Skip it.
+			if o.Name == namePrefix {
 				continue
 			}
 
@@ -243,7 +241,6 @@ func ListBlobObjects(
 		}
 
 		req.ContinuationToken = listing.ContinuationToken
-		log.Printf("Continuation token: %q", req.ContinuationToken)
 	}
 
 	return
