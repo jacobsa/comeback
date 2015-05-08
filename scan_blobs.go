@@ -24,7 +24,8 @@
 //
 //  3. The edges in the directory graph are printed to standard output.
 //
-// (In "fast mode", only #1 is performed.)
+// (In "fast mode", only #1 is performed, and the output is a simple list of
+// scores, one per line.)
 //
 // Output is space-separated lines of the form:
 //
@@ -81,8 +82,8 @@ type verifiedScore struct {
 	children []blob.Score
 }
 
-// List all scores in the GCS bucket into the channel. Do not close the
-// channel.
+// List all blob objects in the GCS bucket, and verify their metadata. Write
+// their scores into the supplied channel.
 func listBlobs(
 	ctx context.Context,
 	bucket gcs.Bucket,
@@ -101,7 +102,7 @@ func listBlobs(
 			return
 		}
 
-		// Transform to scores.
+		// Transform to scores, verifying in the process.
 		var batch []blob.Score
 		for _, o := range listing.Objects {
 			var score blob.Score
