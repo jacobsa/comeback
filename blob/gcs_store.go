@@ -196,10 +196,8 @@ func ParseObjectRecord(
 	return
 }
 
-// Write object records for all of the blob objects in the supplied bucket into
-// the given channel, without closing it. The order of records is undefined.
-// The caller will likely want to call ParseObjectRecord for each record.
-func ListBlobObjects(
+// An implementation detail of ListBlobObjects that doesn't recurse.
+func listBlobObjects(
 	ctx context.Context,
 	bucket gcs.Bucket,
 	namePrefix string,
@@ -220,12 +218,6 @@ func ListBlobObjects(
 
 		// Pass on each object.
 		for _, o := range listing.Objects {
-			// Special case: for gcsfuse compatibility, we allow namePrefix to exist
-			// as its own object name. Skip it.
-			if o.Name == namePrefix {
-				continue
-			}
-
 			select {
 			case objects <- o:
 
@@ -244,6 +236,30 @@ func ListBlobObjects(
 		req.ContinuationToken = listing.ContinuationToken
 	}
 
+	return
+}
+
+// Write object records for all of the blob objects in the supplied bucket into
+// the given channel, without closing it. The order of records is undefined.
+// The caller will likely want to call ParseObjectRecord for each record.
+func ListBlobObjects(
+	ctx context.Context,
+	bucket gcs.Bucket,
+	namePrefix string,
+	objects chan<- *gcs.Object) (err error) {
+	b := syncutil.NewBundle(ctx)
+
+	// GCS object listing is slow. Parallelize sixteen ways.
+	const hexDigits = "0123456789abcdef"
+	for i := 0; i < len(hexDigits); i++ {
+		digit := hexDigits[i]
+		b.Add(func(ctx context.Context) (err error) {
+			err = listBlobObjects(ctx, bucket, namePrefix+string(digit), objects)
+			return
+		})
+	}
+
+	err = b.Join()
 	return
 }
 
