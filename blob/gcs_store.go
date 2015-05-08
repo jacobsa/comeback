@@ -247,6 +247,57 @@ func ListBlobObjects(
 	return
 }
 
+// Feed the output of ListBlobObjects into ParseObjectRecord, passing on the
+// scores to the supplied channel without closing it.
+func ListScores(
+	ctx context.Context,
+	bucket gcs.Bucket,
+	namePrefix string,
+	scores chan<- Score) (err error) {
+	b := syncutil.NewBundle(ctx)
+
+	// List object records into a channel.
+	objects := make(chan *gcs.Object, 100)
+	b.Add(func(ctx context.Context) (err error) {
+		defer close(objects)
+		err = ListBlobObjects(ctx, bucket, namePrefix, objects)
+		if err != nil {
+			err = fmt.Errorf("ListBlobObjects: %v", err)
+			return
+		}
+
+		return
+	})
+
+	// Parse and verify records, and write out scores.
+	b.Add(func(ctx context.Context) (err error) {
+		for o := range objects {
+			// Parse and verify.
+			var score Score
+			score, err = ParseObjectRecord(o, namePrefix)
+			if err != nil {
+				err = fmt.Errorf("ParseObjectRecord: %v", err)
+				return
+			}
+
+			// Send on the score.
+			select {
+			case scores <- score:
+
+			// Cancelled?
+			case <-ctx.Done():
+				err = ctx.Err()
+				return
+			}
+		}
+
+		return
+	})
+
+	err = b.Join()
+	return
+}
+
 ////////////////////////////////////////////////////////////////////////
 // Helpers
 ////////////////////////////////////////////////////////////////////////
