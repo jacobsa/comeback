@@ -82,69 +82,6 @@ type verifiedScore struct {
 	children []blob.Score
 }
 
-// List all blob objects in the GCS bucket, and verify their metadata. Write
-// their scores into the supplied channel.
-func listBlobs(
-	ctx context.Context,
-	bucket gcs.Bucket,
-	scores chan<- blob.Score) (err error) {
-	req := &gcs.ListObjectsRequest{
-		Prefix: blobObjectNamePrefix,
-	}
-
-	// List until we run out.
-	for {
-		// Fetch the next batch.
-		var listing *gcs.Listing
-		listing, err = bucket.ListObjects(ctx, req)
-		if err != nil {
-			err = fmt.Errorf("ListObjects: %v", err)
-			return
-		}
-
-		// Transform to scores, verifying in the process.
-		var batch []blob.Score
-		for _, o := range listing.Objects {
-			// Skip an object named simply blobObjectNamePrefix, which we allow to
-			// exist for gcsfuse compatibility.
-			if o.Name == blobObjectNamePrefix {
-				continue
-			}
-
-			// Parse and verify the record.
-			var score blob.Score
-			score, err = blob.ParseObjectRecord(o, blobObjectNamePrefix)
-			if err != nil {
-				err = fmt.Errorf("ParseObjectRecord: %v", err)
-				return
-			}
-
-			batch = append(batch, score)
-		}
-
-		// Feed out each score.
-		for _, score := range batch {
-			select {
-			case scores <- score:
-
-				// Cancelled?
-			case <-ctx.Done():
-				err = ctx.Err()
-				return
-			}
-		}
-
-		// Are we done?
-		if listing.ContinuationToken == "" {
-			break
-		}
-
-		req.ContinuationToken = listing.ContinuationToken
-	}
-
-	return
-}
-
 func readAndClose(rc io.ReadCloser) (d []byte, err error) {
 	// Read.
 	d, err = ioutil.ReadAll(rc)
@@ -406,7 +343,7 @@ func runScanBlobs(args []string) {
 	scores := make(chan blob.Score, 5000)
 	b.Add(func(ctx context.Context) (err error) {
 		defer close(scores)
-		err = listBlobs(ctx, bucket, scores)
+		err = blob.ListScores(ctx, bucket, blobObjectNamePrefix, scores)
 		return
 	})
 

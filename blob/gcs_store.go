@@ -29,6 +29,7 @@ import (
 
 	"github.com/jacobsa/gcloud/gcs"
 	"github.com/jacobsa/gcloud/gcs/gcsutil"
+	"github.com/jacobsa/gcloud/syncutil"
 )
 
 // A key placed in GCS object metadata by GCSStore containing the hex SHA-1
@@ -195,6 +196,108 @@ func ParseObjectRecord(
 	return
 }
 
+// Write object records for all of the blob objects in the supplied bucket into
+// the given channel, without closing it. The order of records is undefined.
+// The caller will likely want to call ParseObjectRecord for each record.
+func ListBlobObjects(
+	ctx context.Context,
+	bucket gcs.Bucket,
+	namePrefix string,
+	objects chan<- *gcs.Object) (err error) {
+	req := &gcs.ListObjectsRequest{
+		Prefix: namePrefix,
+	}
+
+	// List until we run out.
+	for {
+		// Fetch the next batch.
+		var listing *gcs.Listing
+		listing, err = bucket.ListObjects(ctx, req)
+		if err != nil {
+			err = fmt.Errorf("ListObjects: %v", err)
+			return
+		}
+
+		// Pass on each object.
+		for _, o := range listing.Objects {
+			// Special case: for gcsfuse compatibility, we allow namePrefix to exist
+			// as its own object name. Skip it.
+			if o.Name == namePrefix {
+				continue
+			}
+
+			select {
+			case objects <- o:
+
+				// Cancelled?
+			case <-ctx.Done():
+				err = ctx.Err()
+				return
+			}
+		}
+
+		// Are we done?
+		if listing.ContinuationToken == "" {
+			break
+		}
+
+		req.ContinuationToken = listing.ContinuationToken
+	}
+
+	return
+}
+
+// Feed the output of ListBlobObjects into ParseObjectRecord, passing on the
+// scores to the supplied channel without closing it.
+func ListScores(
+	ctx context.Context,
+	bucket gcs.Bucket,
+	namePrefix string,
+	scores chan<- Score) (err error) {
+	b := syncutil.NewBundle(ctx)
+
+	// List object records into a channel.
+	objects := make(chan *gcs.Object, 100)
+	b.Add(func(ctx context.Context) (err error) {
+		defer close(objects)
+		err = ListBlobObjects(ctx, bucket, namePrefix, objects)
+		if err != nil {
+			err = fmt.Errorf("ListBlobObjects: %v", err)
+			return
+		}
+
+		return
+	})
+
+	// Parse and verify records, and write out scores.
+	b.Add(func(ctx context.Context) (err error) {
+		for o := range objects {
+			// Parse and verify.
+			var score Score
+			score, err = ParseObjectRecord(o, namePrefix)
+			if err != nil {
+				err = fmt.Errorf("ParseObjectRecord: %v", err)
+				return
+			}
+
+			// Send on the score.
+			select {
+			case scores <- score:
+
+			// Cancelled?
+			case <-ctx.Done():
+				err = ctx.Err()
+				return
+			}
+		}
+
+		return
+	})
+
+	err = b.Join()
+	return
+}
+
 ////////////////////////////////////////////////////////////////////////
 // Helpers
 ////////////////////////////////////////////////////////////////////////
@@ -297,46 +400,30 @@ func (s *GCSStore) Load(score Score) (blob []byte, err error) {
 
 // List all of the blobs that are known to be durable in the bucket.
 func (s *GCSStore) List() (scores []Score, err error) {
-	req := &gcs.ListObjectsRequest{
-		Prefix: s.namePrefix,
-	}
+	b := syncutil.NewBundle(context.Background())
 
-	// List repeatedly until we're done.
-	for {
-		// Call the bucket.
-		var listing *gcs.Listing
-		listing, err = s.bucket.ListObjects(context.Background(), req)
+	// List into a channel.
+	scoreChan := make(chan Score, 100)
+	b.Add(func(ctx context.Context) (err error) {
+		defer close(scoreChan)
+		err = ListScores(ctx, s.bucket, s.namePrefix, scoreChan)
 		if err != nil {
-			err = fmt.Errorf("ListObjects: %v", err)
+			err = fmt.Errorf("ListScores: %v", err)
 			return
 		}
 
-		// Process results.
-		for _, o := range listing.Objects {
-			// Special case: listing "blobs/*" includes "blobs/" itself, which we
-			// allow to exist for convenience of use with e.g. gcsfuse.
-			if o.Name == s.namePrefix {
-				continue
-			}
+		return
+	})
 
-			// Parse and verify the record.
-			var score Score
-			score, err = ParseObjectRecord(o, s.namePrefix)
-			if err != nil {
-				return
-			}
-
-			// Save the score.
+	// Accumulate into the slice.
+	b.Add(func(ctx context.Context) (err error) {
+		for score := range scoreChan {
 			scores = append(scores, score)
 		}
 
-		// Continue?
-		if listing.ContinuationToken == "" {
-			break
-		}
+		return
+	})
 
-		req.ContinuationToken = listing.ContinuationToken
-	}
-
+	err = b.Join()
 	return
 }

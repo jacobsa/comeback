@@ -132,56 +132,6 @@ func parseInput(in io.Reader) (m checksumMap, err error) {
 	return
 }
 
-// List all blob objects in the GCS bucket into the channel.
-func listBlobObjects(
-	ctx context.Context,
-	bucket gcs.Bucket,
-	objects chan<- *gcs.Object) (err error) {
-	req := &gcs.ListObjectsRequest{
-		Prefix:            blobObjectNamePrefix,
-		ContinuationToken: *fToken,
-	}
-
-	// List until we run out.
-	for {
-		// Fetch the next batch.
-		var listing *gcs.Listing
-		listing, err = bucket.ListObjects(ctx, req)
-		if err != nil {
-			err = fmt.Errorf("ListObjects: %v", err)
-			return
-		}
-
-		// Pass on each object.
-		for _, o := range listing.Objects {
-			// Special case: for gcsfuse compatibility, we allow blobObjectNamePrefix
-			// to exist as its own object name. Skip it.
-			if o.Name == blobObjectNamePrefix {
-				continue
-			}
-
-			select {
-			case objects <- o:
-
-				// Cancelled?
-			case <-ctx.Done():
-				err = ctx.Err()
-				return
-			}
-		}
-
-		// Are we done?
-		if listing.ContinuationToken == "" {
-			break
-		}
-
-		req.ContinuationToken = listing.ContinuationToken
-		log.Printf("Continuation token: %q", req.ContinuationToken)
-	}
-
-	return
-}
-
 // Filter to names of objects that lack the appropriate metadata keys.
 func filterToProblematicNames(
 	ctx context.Context,
@@ -355,9 +305,9 @@ func run(
 	objectRecords := make(chan *gcs.Object, 10000)
 	b.Add(func(ctx context.Context) (err error) {
 		defer close(objectRecords)
-		err = listBlobObjects(ctx, bucket, objectRecords)
+		err = blob.ListBlobObjects(ctx, bucket, blobObjectNamePrefix, objectRecords)
 		if err != nil {
-			err = fmt.Errorf("listBlobObjects: %v", err)
+			err = fmt.Errorf("ListBlobObjects: %v", err)
 			return
 		}
 
