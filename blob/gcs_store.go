@@ -22,6 +22,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"strconv"
 	"strings"
 
@@ -201,7 +202,52 @@ func ParseObjectRecord(
 func ListBlobObjects(
 	ctx context.Context,
 	bucket gcs.Bucket,
-	objects chan<- *gcs.Object) (err error)
+	namePrefix string,
+	objects chan<- *gcs.Object) (err error) {
+	req := &gcs.ListObjectsRequest{
+		Prefix:            blobObjectNamePrefix,
+		ContinuationToken: *fToken,
+	}
+
+	// List until we run out.
+	for {
+		// Fetch the next batch.
+		var listing *gcs.Listing
+		listing, err = bucket.ListObjects(ctx, req)
+		if err != nil {
+			err = fmt.Errorf("ListObjects: %v", err)
+			return
+		}
+
+		// Pass on each object.
+		for _, o := range listing.Objects {
+			// Special case: for gcsfuse compatibility, we allow blobObjectNamePrefix
+			// to exist as its own object name. Skip it.
+			if o.Name == blobObjectNamePrefix {
+				continue
+			}
+
+			select {
+			case objects <- o:
+
+				// Cancelled?
+			case <-ctx.Done():
+				err = ctx.Err()
+				return
+			}
+		}
+
+		// Are we done?
+		if listing.ContinuationToken == "" {
+			break
+		}
+
+		req.ContinuationToken = listing.ContinuationToken
+		log.Printf("Continuation token: %q", req.ContinuationToken)
+	}
+
+	return
+}
 
 ////////////////////////////////////////////////////////////////////////
 // Helpers
