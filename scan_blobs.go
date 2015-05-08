@@ -22,7 +22,7 @@
 //  2. The object contents are read and the SHA-1 computed and checked against
 //     the blob's name and expected SHA-1.
 //
-//  3. The edges in the directory graph are printed to standard output.
+//  3. The edges in the directory graph are printed to an output file.
 //
 // (In "fast mode", only #1 is performed, and the output is a simple list of
 // scores, one per line.)
