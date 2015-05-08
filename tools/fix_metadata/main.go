@@ -377,8 +377,8 @@ func run(
 	const parallelism = 128
 	var wg sync.WaitGroup
 
-	processed := make(chan string)
-	unknown := make(chan string)
+	processed := make(chan string, 100)
+	unknown := make(chan string, 100)
 
 	for i := 0; i < parallelism; i++ {
 		wg.Add(1)
