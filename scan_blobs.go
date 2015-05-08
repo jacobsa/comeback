@@ -13,8 +13,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// A command that scans all of the blobs in a GCS bucket, verifying their
-// scores against their content.
+// A command that processes all of the blobs in a GCS bucket. For each blob:
+//
+//  1. The GCS object record is verified for internal consistency. In
+//     particular, comeback's expected MD5 and CRC32C are checked against the
+//     GCS-reported values.
+//
+//  2. The object contents are read and the SHA-1 computed and checked against
+//     the blob's name and expected SHA-1.
+//
+//  3. The edges in the directory graph are printed to an output file.
+//
+// (In "fast mode", only #1 is performed, and the output is a simple list of
+// scores, one per line.)
 //
 // Output is space-separated lines of the form:
 //
@@ -48,7 +59,14 @@ var cmdScanBlobs = &Command{
 }
 
 var fOutputFile = cmdScanBlobs.Flags.String(
-	"output_file", "", "Path to scan_blobs output file. Will be truncated.")
+	"output_file",
+	"",
+	"Path to scan_blobs output file. Will be truncated.")
+
+var fFast = cmdScanBlobs.Flags.Bool(
+	"fast",
+	false,
+	"Only verify object metadata.")
 
 func init() {
 	cmdScanBlobs.Run = runScanBlobs // Break flag-related dependency loop.
@@ -64,8 +82,8 @@ type verifiedScore struct {
 	children []blob.Score
 }
 
-// List all scores in the GCS bucket into the channel. Do not close the
-// channel.
+// List all blob objects in the GCS bucket, and verify their metadata. Write
+// their scores into the supplied channel.
 func listBlobs(
 	ctx context.Context,
 	bucket gcs.Bucket,
@@ -84,9 +102,16 @@ func listBlobs(
 			return
 		}
 
-		// Transform to scores.
+		// Transform to scores, verifying in the process.
 		var batch []blob.Score
 		for _, o := range listing.Objects {
+			// Skip an object named simply blobObjectNamePrefix, which we allow to
+			// exist for gcsfuse compatibility.
+			if o.Name == blobObjectNamePrefix {
+				continue
+			}
+
+			// Parse and verify the record.
 			var score blob.Score
 			score, err = blob.ParseObjectRecord(o, blobObjectNamePrefix)
 			if err != nil {
@@ -367,7 +392,10 @@ func runScanBlobs(args []string) {
 
 	// Grab dependencies.
 	bucket := getBucket()
-	crypter := getCrypter()
+	var crypter crypto.Crypter
+	if !*fFast {
+		crypter = getCrypter()
+	}
 
 	// Allow parallelism.
 	runtime.GOMAXPROCS(runtime.NumCPU())
@@ -375,51 +403,70 @@ func runScanBlobs(args []string) {
 	b := syncutil.NewBundle(context.Background())
 
 	// List all of the scores in the bucket.
-	scores := make(chan blob.Score, 100)
+	scores := make(chan blob.Score, 5000)
 	b.Add(func(ctx context.Context) (err error) {
 		defer close(scores)
 		err = listBlobs(ctx, bucket, scores)
 		return
 	})
 
-	// Read the contents of the corresponding blobs in parallel, bounding how
-	// hard we hammer GCS by bounding the parallelism.
-	const readWorkers = 8
-	var readWaitGroup sync.WaitGroup
-
-	blobs := make(chan scoreAndContents, 10)
-	for i := 0; i < readWorkers; i++ {
-		readWaitGroup.Add(1)
-		b.Add(func(ctx context.Context) (err error) {
-			defer readWaitGroup.Done()
-			err = readBlobs(ctx, bucket, scores, blobs)
-			return
-		})
-	}
-
-	go func() {
-		readWaitGroup.Wait()
-		close(blobs)
-	}()
-
-	// Verify the blob contents and summarize their children. Use one worker per
-	// CPU.
-	var verifyWaitGroup sync.WaitGroup
-
 	results := make(chan verifiedScore, 100)
-	for i := 0; i < runtime.NumCPU(); i++ {
-		verifyWaitGroup.Add(1)
+	if !*fFast {
+		// Read the contents of the corresponding blobs in parallel, bounding how
+		// hard we hammer GCS by bounding the parallelism.
+		const readWorkers = 8
+		var readWaitGroup sync.WaitGroup
+
+		blobs := make(chan scoreAndContents, 10)
+		for i := 0; i < readWorkers; i++ {
+			readWaitGroup.Add(1)
+			b.Add(func(ctx context.Context) (err error) {
+				defer readWaitGroup.Done()
+				err = readBlobs(ctx, bucket, scores, blobs)
+				return
+			})
+		}
+
+		go func() {
+			readWaitGroup.Wait()
+			close(blobs)
+		}()
+
+		// Verify the blob contents and summarize their children. Use one worker per
+		// CPU.
+		var verifyWaitGroup sync.WaitGroup
+		for i := 0; i < runtime.NumCPU(); i++ {
+			verifyWaitGroup.Add(1)
+			b.Add(func(ctx context.Context) (err error) {
+				defer verifyWaitGroup.Done()
+				err = verifyScores(ctx, crypter, blobs, results)
+				return
+			})
+		}
+
+		go func() {
+			verifyWaitGroup.Wait()
+			close(results)
+		}()
+	} else {
+		// Fast mode. Pretend that everything is verified, and that nothing has
+		// children.
 		b.Add(func(ctx context.Context) (err error) {
-			defer verifyWaitGroup.Done()
-			err = verifyScores(ctx, crypter, blobs, results)
+			defer close(results)
+			for score := range scores {
+				select {
+				case results <- verifiedScore{score: score}:
+
+				// Cancelled?
+				case <-ctx.Done():
+					err = ctx.Err()
+					return
+				}
+			}
+
 			return
 		})
 	}
-
-	go func() {
-		verifyWaitGroup.Wait()
-		close(results)
-	}()
 
 	// Process results.
 	b.Add(func(ctx context.Context) (err error) {
