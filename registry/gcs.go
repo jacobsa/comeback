@@ -64,7 +64,7 @@ const (
 //     <gcsJobKeyPrefix><time>
 //
 // where <time> is a time.Time with UTC location formatted according to
-// time.RFC3339Nano. Additional information is stored as object metadata fields
+// time.RFC3339. Additional information is stored as object metadata fields
 // keyed by the constants above. Metadata fields are used in preference to
 // object content so that they are accessible on a ListObjects request.
 //
@@ -83,8 +83,9 @@ func (r *gcsRegistry) RecordBackup(j CompletedJob) (err error) {
 	// (or we've done something dumb like use the zero time), use a generation
 	// precondition to ensure we don't overwrite anything.
 	var precond int64
+	formattedTime := j.StartTime.UTC().Format(time.RFC3339)
 	req := &gcs.CreateObjectRequest{
-		Name:                   gcsJobKeyPrefix + j.StartTime.Format(time.RFC3339Nano),
+		Name:                   gcsJobKeyPrefix + formattedTime,
 		Contents:               strings.NewReader(""),
 		GenerationPrecondition: &precond,
 
@@ -113,7 +114,7 @@ func parseObjectAsJob(o *gcs.Object) (j CompletedJob, err error) {
 	formattedTime := strings.TrimPrefix(o.Name, gcsJobKeyPrefix)
 
 	// Parse it.
-	j.StartTime, err = time.Parse(time.RFC3339Nano, formattedTime)
+	j.StartTime, err = time.Parse(time.RFC3339, formattedTime)
 	if err != nil {
 		err = fmt.Errorf("Parsing time \"%s\": %v", formattedTime, err)
 		return
