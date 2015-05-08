@@ -385,7 +385,10 @@ func runScanBlobs(args []string) {
 
 	// Grab dependencies.
 	bucket := getBucket()
-	crypter := getCrypter()
+	var crypter crypto.Crypter
+	if !*fFast {
+		crypter = getCrypter()
+	}
 
 	// Allow parallelism.
 	runtime.GOMAXPROCS(runtime.NumCPU())
