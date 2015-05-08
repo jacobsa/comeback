@@ -82,53 +82,6 @@ type verifiedScore struct {
 	children []blob.Score
 }
 
-// List all blob objects in the GCS bucket, and verify their metadata. Write
-// their scores into the supplied channel.
-func listBlobs(
-	ctx context.Context,
-	bucket gcs.Bucket,
-	scores chan<- blob.Score) (err error) {
-	b := syncutil.NewBundle()
-
-	// List object records into a channel.
-	objects := make(chan *gcs.Object, 100)
-	b.Add(func(ctx context.Context) (err error) {
-		defer close(objects)
-		err = blob.ListBlobObjects(ctx, bucket, blobObjectNamePrefix, objects)
-		if err != nil {
-			err = fmt.Errorf("ListBlobObjects: %v", err)
-			return
-		}
-
-		return
-	})
-
-	// Parse and verify records, and write out scores.
-	b.Add(func(ctx context.Context) (err error) {
-		for o := range objects {
-			// Parse and verify.
-			var score Score
-			score, err = ParseObjectRecord(o, s.namePrefix)
-			if err != nil {
-				err = fmt.Errorf("ParseObjectRecord: %v", err)
-				return
-			}
-
-			// Send on the score.
-			select {
-			case scores <- score:
-
-			// Cancelled?
-			case <-ctx.Done():
-				err = ctx.Err()
-				return
-			}
-		}
-
-		return
-	})
-}
-
 func readAndClose(rc io.ReadCloser) (d []byte, err error) {
 	// Read.
 	d, err = ioutil.ReadAll(rc)
@@ -390,7 +343,7 @@ func runScanBlobs(args []string) {
 	scores := make(chan blob.Score, 5000)
 	b.Add(func(ctx context.Context) (err error) {
 		defer close(scores)
-		err = listBlobs(ctx, bucket, scores)
+		err = blob.ListScores(ctx, bucket, blobObjectNamePrefix, scores)
 		return
 	})
 
