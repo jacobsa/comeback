@@ -105,6 +105,13 @@ func listBlobs(
 		// Transform to scores, verifying in the process.
 		var batch []blob.Score
 		for _, o := range listing.Objects {
+			// Skip an object named simply blobObjectNamePrefix, which we allow to
+			// exist for gcsfuse compatibility.
+			if o.Name == blobObjectNamePrefix {
+				continue
+			}
+
+			// Parse and verify the record.
 			var score blob.Score
 			score, err = blob.ParseObjectRecord(o, blobObjectNamePrefix)
 			if err != nil {
