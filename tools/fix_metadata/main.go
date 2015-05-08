@@ -49,6 +49,7 @@ import (
 var fKeyFile = flag.String("key_file", "", "")
 var fBucket = flag.String("bucket", "", "")
 var fToken = flag.String("token", "", "Initial continuation token. Be careful.")
+var fUpdateParallelism = flag.Int("parallelism", 128, "")
 
 type crc32cChecksum uint32
 type md5Hash [md5.Size]byte
@@ -383,7 +384,7 @@ func run(
 	processed := make(chan string, 100)
 	unknown := make(chan string, 100)
 
-	for i := 0; i < parallelism; i++ {
+	for i := 0; i < *fUpdateParallelism; i++ {
 		wg.Add(1)
 		b.Add(func(ctx context.Context) (err error) {
 			defer wg.Done()
