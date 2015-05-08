@@ -400,44 +400,49 @@ func runScanBlobs(args []string) {
 		return
 	})
 
-	// Read the contents of the corresponding blobs in parallel, bounding how
-	// hard we hammer GCS by bounding the parallelism.
-	const readWorkers = 8
-	var readWaitGroup sync.WaitGroup
+	if !*fFast {
+		// Read the contents of the corresponding blobs in parallel, bounding how
+		// hard we hammer GCS by bounding the parallelism.
+		const readWorkers = 8
+		var readWaitGroup sync.WaitGroup
 
-	blobs := make(chan scoreAndContents, 10)
-	for i := 0; i < readWorkers; i++ {
-		readWaitGroup.Add(1)
-		b.Add(func(ctx context.Context) (err error) {
-			defer readWaitGroup.Done()
-			err = readBlobs(ctx, bucket, scores, blobs)
-			return
-		})
+		blobs := make(chan scoreAndContents, 10)
+		for i := 0; i < readWorkers; i++ {
+			readWaitGroup.Add(1)
+			b.Add(func(ctx context.Context) (err error) {
+				defer readWaitGroup.Done()
+				err = readBlobs(ctx, bucket, scores, blobs)
+				return
+			})
+		}
+
+		go func() {
+			readWaitGroup.Wait()
+			close(blobs)
+		}()
+
+		// Verify the blob contents and summarize their children. Use one worker per
+		// CPU.
+		var verifyWaitGroup sync.WaitGroup
+
+		results := make(chan verifiedScore, 100)
+		for i := 0; i < runtime.NumCPU(); i++ {
+			verifyWaitGroup.Add(1)
+			b.Add(func(ctx context.Context) (err error) {
+				defer verifyWaitGroup.Done()
+				err = verifyScores(ctx, crypter, blobs, results)
+				return
+			})
+		}
+
+		go func() {
+			verifyWaitGroup.Wait()
+			close(results)
+		}()
+	} else {
+		// Fast mode.
+		panic("TODO")
 	}
-
-	go func() {
-		readWaitGroup.Wait()
-		close(blobs)
-	}()
-
-	// Verify the blob contents and summarize their children. Use one worker per
-	// CPU.
-	var verifyWaitGroup sync.WaitGroup
-
-	results := make(chan verifiedScore, 100)
-	for i := 0; i < runtime.NumCPU(); i++ {
-		verifyWaitGroup.Add(1)
-		b.Add(func(ctx context.Context) (err error) {
-			defer verifyWaitGroup.Done()
-			err = verifyScores(ctx, crypter, blobs, results)
-			return
-		})
-	}
-
-	go func() {
-		verifyWaitGroup.Wait()
-		close(results)
-	}()
 
 	// Process results.
 	b.Add(func(ctx context.Context) (err error) {
