@@ -48,6 +48,7 @@ import (
 
 var fKeyFile = flag.String("key_file", "", "")
 var fBucket = flag.String("bucket", "", "")
+var fToken = flag.String("token", "", "Initial continuation token. Be careful.")
 
 type crc32cChecksum uint32
 type md5Hash [md5.Size]byte
@@ -136,7 +137,8 @@ func listBlobObjects(
 	bucket gcs.Bucket,
 	objects chan<- *gcs.Object) (err error) {
 	req := &gcs.ListObjectsRequest{
-		Prefix: blobObjectNamePrefix,
+		Prefix:            blobObjectNamePrefix,
+		ContinuationToken: *fToken,
 	}
 
 	// List until we run out.
@@ -173,6 +175,7 @@ func listBlobObjects(
 		}
 
 		req.ContinuationToken = listing.ContinuationToken
+		log.Printf("Continuation token: %q", req.ContinuationToken)
 	}
 
 	return
