@@ -400,6 +400,7 @@ func runScanBlobs(args []string) {
 		return
 	})
 
+	results := make(chan verifiedScore, 100)
 	if !*fFast {
 		// Read the contents of the corresponding blobs in parallel, bounding how
 		// hard we hammer GCS by bounding the parallelism.
@@ -424,8 +425,6 @@ func runScanBlobs(args []string) {
 		// Verify the blob contents and summarize their children. Use one worker per
 		// CPU.
 		var verifyWaitGroup sync.WaitGroup
-
-		results := make(chan verifiedScore, 100)
 		for i := 0; i < runtime.NumCPU(); i++ {
 			verifyWaitGroup.Add(1)
 			b.Add(func(ctx context.Context) (err error) {
@@ -440,8 +439,23 @@ func runScanBlobs(args []string) {
 			close(results)
 		}()
 	} else {
-		// Fast mode.
-		panic("TODO")
+		// Fast mode. Pretend that everything is verified, and that nothing has
+		// children.
+		b.Add(func(ctx context.Context) (err error) {
+			defer close(results)
+			for score := range scores {
+				select {
+				case results <- verifiedScore{score: score}:
+
+				// Cancelled?
+				case <-ctx.Done():
+					err = ctx.Err()
+					return
+				}
+			}
+
+			return
+		})
 	}
 
 	// Process results.
