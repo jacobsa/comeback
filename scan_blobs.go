@@ -403,7 +403,7 @@ func runScanBlobs(args []string) {
 	b := syncutil.NewBundle(context.Background())
 
 	// List all of the scores in the bucket.
-	scores := make(chan blob.Score, 100)
+	scores := make(chan blob.Score, 5000)
 	b.Add(func(ctx context.Context) (err error) {
 		defer close(scores)
 		err = listBlobs(ctx, bucket, scores)
