@@ -351,7 +351,7 @@ func run(
 	defer func() { err = b.Join() }()
 
 	// List all of the blob objects.
-	objectRecords := make(chan *gcs.Object, 100)
+	objectRecords := make(chan *gcs.Object, 10000)
 	b.Add(func(ctx context.Context) (err error) {
 		defer close(objectRecords)
 		err = listBlobObjects(ctx, bucket, objectRecords)
