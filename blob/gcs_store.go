@@ -195,6 +195,14 @@ func ParseObjectRecord(
 	return
 }
 
+// Write object records for all of the blob objects in the supplied bucket into
+// the given channel, without closing it. The order of records is undefined.
+// The caller will likely want to call ParseObjectRecord for each record.
+func ListBlobObjects(
+	ctx context.Context,
+	bucket gcs.Bucket,
+	objects chan<- *gcs.Object) (err error)
+
 ////////////////////////////////////////////////////////////////////////
 // Helpers
 ////////////////////////////////////////////////////////////////////////
