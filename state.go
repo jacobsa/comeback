@@ -20,8 +20,10 @@ import (
 	"log"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/jacobsa/comeback/state"
+	"github.com/jacobsa/comeback/util"
 )
 
 var g_stateOnce sync.Once
@@ -65,6 +67,31 @@ func initState() {
 	// Make sure there are no nil interface values.
 	if g_state.ScoresForFiles == nil {
 		g_state.ScoresForFiles = state.NewScoreMap()
+	}
+
+	// If we don't know the set of hex scores in the store, or the set of scores
+	// is stale, re-list.
+	age := time.Now().Sub(g_state.RelistTime)
+	const maxAge = 30 * 24 * time.Hour
+
+	if g_state.ExistingScores == nil || age > maxAge {
+		log.Println("Listing existing scores...")
+
+		g_state.RelistTime = time.Now()
+		allScores, err := gcsStore.List()
+		if err != nil {
+			log.Fatalln("g_blobStore.List:", err)
+		}
+
+		log.Printf(
+			"Listed %d scores in %v.",
+			len(allScores),
+			time.Since(g_state.RelistTime))
+
+		g_state.ExistingScores = util.NewStringSet()
+		for _, score := range allScores {
+			g_state.ExistingScores.Add(score.Hex())
+		}
 	}
 }
 
