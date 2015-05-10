@@ -53,9 +53,9 @@ func MakeDirSaver(
 
 	// Create a crypter from the supplied password, verifying it against any past
 	// use of the bucket.
-	_, crypter, err := makeRegistryAndCrypter(password, bucket)
+	_, crypter, err := MakeRegistryAndCrypter(password, bucket)
 	if err != nil {
-		err = fmt.Errorf("makeRegistryAndCrypter: %v", err)
+		err = fmt.Errorf("MakeRegistryAndCrypter: %v", err)
 		return
 	}
 

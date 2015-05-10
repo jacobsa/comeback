@@ -26,7 +26,7 @@ import (
 
 // Create a registry for the supplied bucket, given the supplied crypto key
 // password.
-func makeRegistryAndCrypter(
+func MakeRegistryAndCrypter(
 	password string,
 	bucket gcs.Bucket) (r registry.Registry, crypter crypto.Crypter, err error) {
 	// Derive a crypto key from the password using PBKDF2, recommended for use by
