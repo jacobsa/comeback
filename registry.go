@@ -1,4 +1,4 @@
-// Copyright 2012 Aaron Jacobs. All Rights Reserved.
+// Copyright 2015 Aaron Jacobs. All Rights Reserved.
 // Author: aaronjjacobs@gmail.com (Aaron Jacobs)
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,54 +16,46 @@
 package main
 
 import (
-	"crypto/sha256"
+	"fmt"
 	"log"
 	"sync"
 
 	"github.com/jacobsa/comeback/crypto"
 	"github.com/jacobsa/comeback/registry"
-	"github.com/jacobsa/util/password"
+	"github.com/jacobsa/comeback/wiring"
 )
 
-var g_registryAndCrypterOnce sync.Once
-var g_registry registry.Registry
-var g_crypter crypto.Crypter
+var gRegistryAndCrypterOnce sync.Once
+var gRegistry registry.Registry
+var gCrypter crypto.Crypter
 
 func initRegistryAndCrypter() {
 	var err error
+	defer func() {
+		if err != nil {
+			log.Fatalln(err)
+		}
+	}()
+
 	bucket := getBucket()
+	password := getPassword()
 
-	// Read in the crypto password.
-	cryptoPassword := password.ReadPassword("Entry crypto password: ")
-	if len(cryptoPassword) == 0 {
-		log.Fatalln("You must enter a password.")
-	}
-
-	// Derive a crypto key from the password using PBKDF2, recommended for use by
-	// NIST Special Publication 800-132. The latter says that PBKDF2 is approved
-	// for use with HMAC and any approved hash function. Special Publication
-	// 800-107 lists SHA-256 as an approved hash function.
-	const pbkdf2Iters = 4096
-	const keyLen = 32 // Minimum key length for AES-SIV
-	keyDeriver := crypto.NewPbkdf2KeyDeriver(pbkdf2Iters, keyLen, sha256.New)
-
-	// Create the registry and crypter.
-	g_registry, g_crypter, err = registry.NewGCSRegistry(
-		bucket,
-		cryptoPassword,
-		keyDeriver)
+	gRegistry, gCrypter, err = wiring.MakeRegistryAndCrypter(
+		password,
+		bucket)
 
 	if err != nil {
-		log.Fatalln("Creating registry:", err)
+		err = fmt.Errorf("MakeRegistryAndCrypter: %v", err)
+		return
 	}
 }
 
 func getRegistry() registry.Registry {
-	g_registryAndCrypterOnce.Do(initRegistryAndCrypter)
-	return g_registry
+	gRegistryAndCrypterOnce.Do(initRegistryAndCrypter)
+	return gRegistry
 }
 
 func getCrypter() crypto.Crypter {
-	g_registryAndCrypterOnce.Do(initRegistryAndCrypter)
-	return g_crypter
+	gRegistryAndCrypterOnce.Do(initRegistryAndCrypter)
+	return gCrypter
 }

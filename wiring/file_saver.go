@@ -1,4 +1,4 @@
-// Copyright 2012 Aaron Jacobs. All Rights Reserved.
+// Copyright 2015 Aaron Jacobs. All Rights Reserved.
 // Author: aaronjjacobs@gmail.com (Aaron Jacobs)
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,48 +13,37 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package wiring
 
 import (
-	"log"
-	"sync"
+	"fmt"
 
 	"github.com/jacobsa/comeback/backup"
+	"github.com/jacobsa/comeback/blob"
+	"github.com/jacobsa/comeback/fs"
 	"github.com/jacobsa/comeback/state"
 )
 
-var g_fileSaverOnce sync.Once
-var g_fileSaver backup.FileSaver
-
-func initFileSaver() {
-	var err error
-
-	blobStore := getBlobStore()
-	fileSystem := getFileSystem()
-	stateStruct := getState()
-
+// Create a file saver that uses the supplied file system and blob store.
+//
+// scoresForFiles is a cache from file system info to the scores that were seen
+// at the time that file was stat'd, to be used in saving the work of reading
+// file contents each time. It will be updated by the file saver.
+func makeFileSaver(
+	bs blob.Store,
+	fs fs.FileSystem,
+	scoresForFiles state.ScoreMap) (fileSaver backup.FileSaver, err error) {
 	// Write chunks to the blob store.
 	const chunkSize = 1 << 24 // 16 MiB
 
-	g_fileSaver, err = backup.NewFileSaver(
-		blobStore,
-		chunkSize,
-		fileSystem,
-	)
-
+	fileSaver, err = backup.NewFileSaver(bs, chunkSize, fs)
 	if err != nil {
-		log.Fatalln("Creating file saver:", err)
+		err = fmt.Errorf("NewFileSaver: %v", err)
+		return
 	}
 
 	// Avoid computing scores when unnecessary.
-	g_fileSaver = state.NewScoreMapFileSaver(
-		stateStruct.ScoresForFiles,
-		blobStore,
-		fileSystem,
-		g_fileSaver)
-}
+	fileSaver = state.NewScoreMapFileSaver(scoresForFiles, bs, fs, fileSaver)
 
-func getFileSaver() backup.FileSaver {
-	g_fileSaverOnce.Do(initFileSaver)
-	return g_fileSaver
+	return
 }

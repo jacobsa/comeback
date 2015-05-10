@@ -1,4 +1,4 @@
-// Copyright 2012 Aaron Jacobs. All Rights Reserved.
+// Copyright 2015 Aaron Jacobs. All Rights Reserved.
 // Author: aaronjjacobs@gmail.com (Aaron Jacobs)
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,39 +13,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package wiring
 
 import (
-	"log"
-	"sync"
+	"fmt"
 
 	"github.com/jacobsa/comeback/backup"
-	"github.com/jacobsa/comeback/wiring"
+	"github.com/jacobsa/comeback/blob"
+	"github.com/jacobsa/comeback/fs"
 )
 
-var gDirSaverOnce sync.Once
-var gDirSaver backup.DirectorySaver
+// Create a file restorer that uses the supplied file system and blob store.
+func makeFileRestorer(
+	bs blob.Store,
+	fs fs.FileSystem) (fr backup.FileRestorer, err error) {
+	fr, err = backup.NewFileRestorer(bs, fs)
+	if err != nil {
+		err = fmt.Errorf("NewFileRestorer: %v", err)
+		return
+	}
 
-func initDirSaver() {
-	var err error
-	defer func() {
-		if err != nil {
-			log.Fatalln(err)
-		}
-	}()
-
-	bucket := getBucket()
-	password := getPassword()
-	state := getState()
-
-	gDirSaver, err = wiring.MakeDirSaver(
-		password,
-		bucket,
-		state.ExistingScores,
-		state.ScoresForFiles)
-}
-
-func getDirSaver() backup.DirectorySaver {
-	gDirSaverOnce.Do(initDirSaver)
-	return gDirSaver
+	return
 }

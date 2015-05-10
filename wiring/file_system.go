@@ -1,4 +1,4 @@
-// Copyright 2012 Aaron Jacobs. All Rights Reserved.
+// Copyright 2015 Aaron Jacobs. All Rights Reserved.
 // Author: aaronjjacobs@gmail.com (Aaron Jacobs)
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,39 +13,37 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package wiring
 
 import (
+	"fmt"
+
 	"github.com/jacobsa/comeback/fs"
 	"github.com/jacobsa/comeback/sys"
-	"log"
-	"sync"
 )
 
-var g_fileSystemOnce sync.Once
-var g_fileSystem fs.FileSystem
-
-func initFileSystem() {
+// Create a FileSystem that writes to the real file system.
+func makeFileSystem() (fileSystem fs.FileSystem, err error) {
 	// Create a user registry.
 	userRegistry, err := sys.NewUserRegistry()
 	if err != nil {
-		log.Fatalln("Creating user registry:", err)
+		err = fmt.Errorf("NewUserRegistry: %v", err)
+		return
 	}
 
 	// Create a group registry.
 	groupRegistry, err := sys.NewGroupRegistry()
 	if err != nil {
-		log.Fatalln("Creating group registry:", err)
+		err = fmt.Errorf("NewGroupRegistry: %v", err)
+		return
 	}
 
 	// Create the file system.
-	g_fileSystem, err = fs.NewFileSystem(userRegistry, groupRegistry)
+	fileSystem, err = fs.NewFileSystem(userRegistry, groupRegistry)
 	if err != nil {
-		log.Fatalln("Creating file system:", err)
+		err = fmt.Errorf("NewFileSystem: %v", err)
+		return
 	}
-}
 
-func getFileSystem() fs.FileSystem {
-	g_fileSystemOnce.Do(initFileSystem)
-	return g_fileSystem
+	return
 }

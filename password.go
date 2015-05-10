@@ -19,33 +19,20 @@ import (
 	"log"
 	"sync"
 
-	"github.com/jacobsa/comeback/backup"
-	"github.com/jacobsa/comeback/wiring"
+	"github.com/jacobsa/util/password"
 )
 
-var gDirSaverOnce sync.Once
-var gDirSaver backup.DirectorySaver
+var gPassword string
+var gPasswordOnce sync.Once
 
-func initDirSaver() {
-	var err error
-	defer func() {
-		if err != nil {
-			log.Fatalln(err)
-		}
-	}()
-
-	bucket := getBucket()
-	password := getPassword()
-	state := getState()
-
-	gDirSaver, err = wiring.MakeDirSaver(
-		password,
-		bucket,
-		state.ExistingScores,
-		state.ScoresForFiles)
+func initPassword() {
+	gPassword = password.ReadPassword("Entry crypto password: ")
+	if len(gPassword) == 0 {
+		log.Fatalln("You must enter a password.")
+	}
 }
 
-func getDirSaver() backup.DirectorySaver {
-	gDirSaverOnce.Do(initDirSaver)
-	return gDirSaver
+func getPassword() string {
+	gPasswordOnce.Do(initPassword)
+	return gPassword
 }
