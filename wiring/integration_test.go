@@ -20,6 +20,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"strings"
 	"testing"
 
 	"github.com/googlecloudplatform/gcsfuse/timeutil"
@@ -218,7 +219,38 @@ func (t *SaveAndRestoreTest) SingleSmallFile() {
 }
 
 func (t *SaveAndRestoreTest) SingleLargeFile() {
-	AssertFalse(true, "TODO")
+	var fi os.FileInfo
+	var err error
+
+	contents := strings.Repeat("baz", 1<<24)
+
+	// Create.
+	err = ioutil.WriteFile(path.Join(t.src, "foo"), []byte(contents), 0400)
+	AssertEq(nil, err)
+
+	// Save and restore.
+	score, err := t.save()
+	AssertEq(nil, err)
+
+	err = t.restore(score)
+	AssertEq(nil, err)
+
+	// Read entries.
+	entries, err := ioutil.ReadDir(t.dst)
+	AssertEq(nil, err)
+	AssertEq(1, len(entries))
+
+	fi = entries[0]
+	ExpectEq("foo", fi.Name())
+	ExpectEq(len(contents), fi.Size())
+	ExpectFalse(fi.IsDir())
+
+	// Read the file.
+	b, err := ioutil.ReadFile(path.Join(t.dst, "foo"))
+	AssertEq(nil, err)
+	if string(b) != contents {
+		AddFailure("Contents mismatch")
+	}
 }
 
 func (t *SaveAndRestoreTest) SingleEmptySubDir() {
