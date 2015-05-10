@@ -179,3 +179,19 @@ func (t *SaveAndRestoreTest) MissingBlob() {
 func (t *SaveAndRestoreTest) CorruptedBlob() {
 	AssertFalse(true, "TODO")
 }
+
+func (t *SaveAndRestoreTest) ExistingScoreCaching() {
+	AssertFalse(true, "TODO")
+}
+
+func (t *SaveAndRestoreTest) FileToScoreCaching_EntryOutOfDate() {
+	AssertFalse(true, "TODO")
+}
+
+func (t *SaveAndRestoreTest) FileToScoreCaching_CachedScorePresent() {
+	AssertFalse(true, "TODO")
+}
+
+func (t *SaveAndRestoreTest) FileToScoreCaching_CachedScoreNotPresent() {
+	AssertFalse(true, "TODO")
+}
