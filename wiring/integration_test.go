@@ -129,7 +129,18 @@ func (t *SaveAndRestoreTest) restore(score blob.Score) (err error) {
 }
 
 func (t *SaveAndRestoreTest) EmptyDirectory() {
-	AssertFalse(true, "TODO")
+	// Save.
+	score, err := t.save()
+	AssertEq(nil, err)
+
+	// Restore.
+	err = t.restore(score)
+	AssertEq(nil, err)
+
+	// Check.
+	entries, err := ioutil.ReadDir(t.dst)
+	AssertEq(nil, err)
+	ExpectEq(0, len(entries))
 }
 
 func (t *SaveAndRestoreTest) SingleFile() {
