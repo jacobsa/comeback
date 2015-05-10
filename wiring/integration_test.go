@@ -49,11 +49,21 @@ func (t *WiringTest) WrongPasswordForDirRestorer() {
 ////////////////////////////////////////////////////////////////////////
 
 type SaveAndRestoreTest struct {
+	// Temporary directories for saving from and restoring to.
+	src string
+	dst string
 }
+
+var _ SetUpInterface = &SaveAndRestoreTest{}
+var _ TearDownInterface = &SaveAndRestoreTest{}
 
 func init() { RegisterTestSuite(&SaveAndRestoreTest{}) }
 
 func (t *SaveAndRestoreTest) SetUp(i *TestInfo) {
+	panic("TODO")
+}
+
+func (t *SaveAndRestoreTest) TearDown() {
 	panic("TODO")
 }
 
