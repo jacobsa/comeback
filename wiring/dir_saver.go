@@ -44,6 +44,13 @@ func MakeDirSaver(
 	bucket gcs.Bucket,
 	existingScores util.StringSet,
 	scoresForFiles state.ScoreMap) (ds backup.DirectorySaver, err error) {
+	// Use the real file system.
+	fs, err := makeFileSystem()
+	if err != nil {
+		err = fmt.Errorf("makeFileSystem: %v", err)
+		return
+	}
+
 	// Create a crypter from the supplied password, verifying it against any past
 	// use of the bucket.
 	_, crypter, err := makeRegistryAndCrypter(password, bucket)
