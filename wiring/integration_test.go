@@ -16,6 +16,7 @@
 package wiring_test
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -120,7 +121,33 @@ func (t *SaveAndRestoreTest) TearDown() {
 // Make a backup of the contents of t.src into t.bucket, returning a score for
 // the root listing.
 func (t *SaveAndRestoreTest) save() (score blob.Score, err error) {
-	panic("TODO")
+	// Create the dir saver.
+	dirSaver, err := wiring.MakeDirSaver(
+		password,
+		t.bucket,
+		util.NewStringSet(),
+		state.NewScoreMap())
+
+	if err != nil {
+		err = fmt.Errorf("MakeDirSaver: %v", err)
+		return
+	}
+
+	// Save the source directory.
+	score, err = dirSaver.Save(t.src, "", nil)
+	if err != nil {
+		err = fmt.Errorf("Save: %v", err)
+		return
+	}
+
+	// Flush to stable storage.
+	err = dirSaver.Flush()
+	if err != nil {
+		err = fmt.Errorf("Flush: %v", err)
+		return
+	}
+
+	return
 }
 
 // Restore a backup with the given root listing into t.dst.
