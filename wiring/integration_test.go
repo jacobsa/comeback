@@ -348,6 +348,9 @@ func (t *SaveAndRestoreTest) MultipleFilesAndDirs() {
 }
 
 func (t *SaveAndRestoreTest) ResultScoreIsStable() {
+	// TODO(jacobsa): Set GOMAXPROCS to a large value, restore when done.
+	// TODO(jacobsa): Set up a deep hierarchy branching with a factor of two,
+	// with random files in each directory.
 	AssertFalse(true, "TODO")
 }
 
