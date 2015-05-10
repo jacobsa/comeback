@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
 	"testing"
 
 	"github.com/googlecloudplatform/gcsfuse/timeutil"
@@ -170,11 +171,10 @@ func (t *SaveAndRestoreTest) restore(score blob.Score) (err error) {
 }
 
 func (t *SaveAndRestoreTest) EmptyDirectory() {
-	// Save.
+	// Save and restore.
 	score, err := t.save()
 	AssertEq(nil, err)
 
-	// Restore.
 	err = t.restore(score)
 	AssertEq(nil, err)
 
@@ -184,7 +184,40 @@ func (t *SaveAndRestoreTest) EmptyDirectory() {
 	ExpectEq(0, len(entries))
 }
 
-func (t *SaveAndRestoreTest) SingleFile() {
+func (t *SaveAndRestoreTest) SingleSmallFile() {
+	const contents = "taco"
+
+	var fi os.FileInfo
+	var err error
+
+	// Create.
+	err = ioutil.WriteFile(path.Join(t.src, "foo"), []byte(contents), 0400)
+	AssertEq(nil, err)
+
+	// Save and restore.
+	score, err := t.save()
+	AssertEq(nil, err)
+
+	err = t.restore(score)
+	AssertEq(nil, err)
+
+	// Read entries.
+	entries, err := ioutil.ReadDir(t.dst)
+	AssertEq(nil, err)
+	AssertEq(1, len(entries))
+
+	fi = entries[0]
+	ExpectEq("foo", fi.Name())
+	ExpectEq(len(contents), fi.Size())
+	ExpectFalse(fi.IsDir())
+
+	// Read the file.
+	b, err := ioutil.ReadFile(path.Join(t.dst, "foo"))
+	AssertEq(nil, err)
+	ExpectEq(contents, string(b))
+}
+
+func (t *SaveAndRestoreTest) SingleLargeFile() {
 	AssertFalse(true, "TODO")
 }
 
