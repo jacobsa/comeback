@@ -16,55 +16,33 @@
 package main
 
 import (
-	"github.com/jacobsa/comeback/backup"
-	"github.com/jacobsa/comeback/fs"
-	"github.com/jacobsa/comeback/sys"
 	"log"
 	"sync"
+
+	"github.com/jacobsa/comeback/backup"
+	"github.com/jacobsa/comeback/wiring"
 )
 
-var g_dirRestorerOnce sync.Once
-var g_dirRestorer backup.DirectoryRestorer
+var gDirRestorer backup.DirectoryRestorer
+var gDirRestorerOnce sync.Once
 
 func initDirRestorer() {
-	blobStore := getBlobStore()
+	var err error
+	defer func() {
+		if err != nil {
+			log.Fatalln(err)
+		}
+	}()
 
-	// Create a user registry.
-	userRegistry, err := sys.NewUserRegistry()
-	if err != nil {
-		log.Fatalln("Creating user registry:", err)
-	}
+	bucket := getBucket()
+	password := getPassword()
 
-	// Create a group registry.
-	groupRegistry, err := sys.NewGroupRegistry()
-	if err != nil {
-		log.Fatalln("Creating group registry:", err)
-	}
-
-	// Create a file system.
-	fileSystem, err := fs.NewFileSystem(userRegistry, groupRegistry)
-	if err != nil {
-		log.Fatalln("Creating file system:", err)
-	}
-
-	// Create the file restorer.
-	fileRestorer, err := backup.NewFileRestorer(blobStore, fileSystem)
-	if err != nil {
-		log.Fatalln("Creating file restorer:", err)
-	}
-
-	// Create the directory restorer.
-	g_dirRestorer, err = backup.NewDirectoryRestorer(
-		blobStore,
-		fileSystem,
-		fileRestorer)
-
-	if err != nil {
-		log.Fatalln("Creating directory restorer:", err)
-	}
+	gDirRestorer, err = wiring.MakeDirRestorer(
+		password,
+		bucket)
 }
 
 func getDirRestorer() backup.DirectoryRestorer {
-	g_dirRestorerOnce.Do(initDirRestorer)
-	return g_dirRestorer
+	gDirRestorerOnce.Do(initDirRestorer)
+	return gDirRestorer
 }
