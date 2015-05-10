@@ -18,6 +18,8 @@ package wiring_test
 import (
 	"testing"
 
+	"github.com/jacobsa/comeback/blob"
+	"github.com/jacobsa/gcloud/gcs"
 	. "github.com/jacobsa/ogletest"
 )
 
@@ -49,6 +51,8 @@ func (t *WiringTest) WrongPasswordForDirRestorer() {
 ////////////////////////////////////////////////////////////////////////
 
 type SaveAndRestoreTest struct {
+	bucket gcs.Bucket
+
 	// Temporary directories for saving from and restoring to.
 	src string
 	dst string
@@ -64,6 +68,17 @@ func (t *SaveAndRestoreTest) SetUp(i *TestInfo) {
 }
 
 func (t *SaveAndRestoreTest) TearDown() {
+	panic("TODO")
+}
+
+// Make a backup of the contents of t.src into t.bucket, returning a score for
+// the root listing.
+func (t *SaveAndRestoreTest) save() (score blob.Score, err error) {
+	panic("TODO")
+}
+
+// Restore a backup with the given root listing into t.dst.
+func (t *SaveAndRestoreTest) restore(score blob.Score) (err error) {
 	panic("TODO")
 }
 
@@ -108,5 +123,13 @@ func (t *SaveAndRestoreTest) Mtime() {
 }
 
 func (t *SaveAndRestoreTest) BackupExclusions() {
+	AssertFalse(true, "TODO")
+}
+
+func (t *SaveAndRestoreTest) MissingBlob() {
+	AssertFalse(true, "TODO")
+}
+
+func (t *SaveAndRestoreTest) CorruptedBlob() {
 	AssertFalse(true, "TODO")
 }
