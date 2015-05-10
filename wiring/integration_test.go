@@ -152,7 +152,21 @@ func (t *SaveAndRestoreTest) save() (score blob.Score, err error) {
 
 // Restore a backup with the given root listing into t.dst.
 func (t *SaveAndRestoreTest) restore(score blob.Score) (err error) {
-	panic("TODO")
+	// Create the dir restorer.
+	dirRestorer, err := wiring.MakeDirRestorer(password, t.bucket)
+	if err != nil {
+		err = fmt.Errorf("MakeDirRestorer: %v", err)
+		return
+	}
+
+	// Call it.
+	err = dirRestorer.RestoreDirectory(score, t.dst, "")
+	if err != nil {
+		err = fmt.Errorf("RestoreDirectory: %v", err)
+		return
+	}
+
+	return
 }
 
 func (t *SaveAndRestoreTest) EmptyDirectory() {
