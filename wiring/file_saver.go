@@ -16,6 +16,8 @@
 package wiring
 
 import (
+	"fmt"
+
 	"github.com/jacobsa/comeback/backup"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/fs"
@@ -30,4 +32,18 @@ import (
 func makeFileSaver(
 	bs blob.Store,
 	fs fs.FileSystem,
-	scoresForFiles state.ScoreMap) (fileSaver backup.FileSaver, err error)
+	scoresForFiles state.ScoreMap) (fileSaver backup.FileSaver, err error) {
+	// Write chunks to the blob store.
+	const chunkSize = 1 << 24 // 16 MiB
+
+	fileSaver, err = backup.NewFileSaver(bs, chunkSize, fs)
+	if err != nil {
+		err = fmt.Errorf("NewFileSaver: %v", err)
+		return
+	}
+
+	// Avoid computing scores when unnecessary.
+	fileSaver = state.NewScoreMapFileSaver(scoresForFiles, bs, fs, fileSaver)
+
+	return
+}
