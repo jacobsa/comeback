@@ -24,6 +24,7 @@ import (
 
 	"github.com/jacobsa/comeback/state"
 	"github.com/jacobsa/comeback/util"
+	"github.com/jacobsa/gcloud/gcs"
 )
 
 var g_stateOnce sync.Once
@@ -31,8 +32,12 @@ var g_state state.State
 
 var g_saveStateMutex sync.Mutex
 
+func buildExistingScores(
+	bucket gcs.Bucket) (existingScores util.StringSet, err error)
+
 func initState() {
 	cfg := getConfig()
+	bucket := getBucket()
 	var err error
 
 	// Open the specified file.
@@ -78,19 +83,9 @@ func initState() {
 		log.Println("Listing existing scores...")
 
 		g_state.RelistTime = time.Now()
-		allScores, err := gcsStore.List()
+		g_state.ExistingScores, err = buildExistingScores(bucket)
 		if err != nil {
-			log.Fatalln("g_blobStore.List:", err)
-		}
-
-		log.Printf(
-			"Listed %d scores in %v.",
-			len(allScores),
-			time.Since(g_state.RelistTime))
-
-		g_state.ExistingScores = util.NewStringSet()
-		for _, score := range allScores {
-			g_state.ExistingScores.Add(score.Hex())
+			log.Fatalf("buildExistingScores: %v", err)
 		}
 	}
 }
