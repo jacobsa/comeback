@@ -284,8 +284,67 @@ func (t *SaveAndRestoreTest) SingleEmptySubDir() {
 	ExpectEq(0, len(entries))
 }
 
-func (t *SaveAndRestoreTest) DecentHierarchy() {
-	AssertFalse(true, "TODO")
+func (t *SaveAndRestoreTest) MultipleFilesAndDirs() {
+	var b []byte
+	var entries []os.FileInfo
+	var fi os.FileInfo
+	var err error
+
+	// Create.
+	AssertEq(nil, os.Mkdir(path.Join(t.src, "foo"), 0700))
+	AssertEq(nil, os.Mkdir(path.Join(t.src, "bar"), 0700))
+	AssertEq(nil, ioutil.WriteFile(path.Join(t.src, "baz"), []byte("aa"), 0400))
+	AssertEq(nil, ioutil.WriteFile(path.Join(t.src, "bar/qux"), []byte("b"), 0400))
+
+	// Save and restore.
+	score, err := t.save()
+	AssertEq(nil, err)
+
+	err = t.restore(score)
+	AssertEq(nil, err)
+
+	// Read entries (root).
+	entries, err = ioutil.ReadDir(t.dst)
+	AssertEq(nil, err)
+	AssertEq(3, len(entries))
+
+	fi = entries[0]
+	ExpectEq("bar", fi.Name())
+	ExpectTrue(fi.IsDir())
+
+	fi = entries[1]
+	ExpectEq("baz", fi.Name())
+	ExpectFalse(fi.IsDir())
+	ExpectEq(2, fi.Size())
+
+	fi = entries[2]
+	ExpectEq("foo", fi.Name())
+	ExpectTrue(fi.IsDir())
+
+	// Read entries (foo)
+	entries, err = ioutil.ReadDir(path.Join(t.dst, "foo"))
+	AssertEq(nil, err)
+	ExpectEq(0, len(entries))
+
+	// Read entries (bar)
+	entries, err = ioutil.ReadDir(path.Join(t.dst, "bar"))
+	AssertEq(nil, err)
+	AssertEq(1, len(entries))
+
+	fi = entries[0]
+	ExpectEq("qux", fi.Name())
+	ExpectFalse(fi.IsDir())
+	ExpectEq(1, fi.Size())
+
+	// Read file (baz)
+	b, err = ioutil.ReadFile(path.Join(t.dst, "baz"))
+	AssertEq(nil, err)
+	ExpectEq("aa", string(b))
+
+	// Read file (qux)
+	b, err = ioutil.ReadFile(path.Join(t.dst, "bar/qux"))
+	AssertEq(nil, err)
+	ExpectEq("b", string(b))
 }
 
 func (t *SaveAndRestoreTest) ResultScoreIsStable() {
