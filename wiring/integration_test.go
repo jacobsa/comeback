@@ -17,6 +17,7 @@ package wiring_test
 
 import (
 	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/googlecloudplatform/gcsfuse/timeutil"
@@ -92,7 +93,9 @@ func (t *SaveAndRestoreTest) SetUp(ti *TestInfo) {
 }
 
 func (t *SaveAndRestoreTest) TearDown() {
-	panic("TODO")
+	// Remove the temporary directories.
+	ExpectEq(nil, os.RemoveAll(t.src))
+	ExpectEq(nil, os.RemoveAll(t.dst))
 }
 
 // Make a backup of the contents of t.src into t.bucket, returning a score for
