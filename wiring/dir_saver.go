@@ -67,14 +67,14 @@ func MakeDirSaver(
 	}
 
 	// Create a file saver that writes to the blob store.
-	fileSaver, err := backup.NewFileSaver(bs, chunkSize, fs)
+	fileSaver, err := makeFileSaver(bs, fs, scoresForFiles)
 	if err != nil {
-		err = fmt.Errorf("NewFileSaver: %v", err)
+		err = fmt.Errorf("makeFileSaver: %v", err)
 		return
 	}
 
 	// Create a directory saver that shares the blob store with the file saver.
-	ds, err := backup.NewDirectorySaver(bs, fs, fileSaver)
+	ds, err = backup.NewDirectorySaver(bs, fs, fileSaver)
 	if err != nil {
 		err = fmt.Errorf("NewDirectorySaver: %v", err)
 		return
