@@ -196,7 +196,7 @@ func (t *SaveAndRestoreTest) DecentHierarchy() {
 	AssertFalse(true, "TODO")
 }
 
-func (t *SaveAndRestoreTest) StableResult() {
+func (t *SaveAndRestoreTest) ResultScoreIsStable() {
 	AssertFalse(true, "TODO")
 }
 
