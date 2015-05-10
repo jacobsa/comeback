@@ -40,6 +40,54 @@ func (t *IntegrationTest) SetUp(i *TestInfo) {
 // Tests
 ////////////////////////////////////////////////////////////////////////
 
-func (t *IntegrationTest) DoesFoo() {
+func (t *IntegrationTest) WrongPasswordForRegistry() {
+	AssertFalse(true, "TODO")
+}
+
+func (t *IntegrationTest) WrongPasswordForDirSaver() {
+	AssertFalse(true, "TODO")
+}
+
+func (t *IntegrationTest) WrongPasswordForDirRestorer() {
+	AssertFalse(true, "TODO")
+}
+
+func (t *IntegrationTest) EmptyDirectory() {
+	AssertFalse(true, "TODO")
+}
+
+func (t *IntegrationTest) SingleFile() {
+	AssertFalse(true, "TODO")
+}
+
+func (t *IntegrationTest) SingleEmptySubDir() {
+	AssertFalse(true, "TODO")
+}
+
+func (t *IntegrationTest) DecentHierarchy() {
+	AssertFalse(true, "TODO")
+}
+
+func (t *IntegrationTest) StableResult() {
+	AssertFalse(true, "TODO")
+}
+
+func (t *IntegrationTest) Symlinks() {
+	AssertFalse(true, "TODO")
+}
+
+func (t *IntegrationTest) HardLinks() {
+	AssertFalse(true, "TODO")
+}
+
+func (t *IntegrationTest) Permissions() {
+	AssertFalse(true, "TODO")
+}
+
+func (t *IntegrationTest) OwnershipInfo() {
+	AssertFalse(true, "TODO")
+}
+
+func (t *IntegrationTest) Mtime() {
 	AssertFalse(true, "TODO")
 }
