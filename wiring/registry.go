@@ -16,6 +16,9 @@
 package wiring
 
 import (
+	"crypto/sha256"
+	"fmt"
+
 	"github.com/jacobsa/comeback/crypto"
 	"github.com/jacobsa/comeback/registry"
 	"github.com/jacobsa/gcloud/gcs"
@@ -25,4 +28,21 @@ import (
 // password.
 func makeRegistryAndCrypter(
 	password string,
-	bucket gcs.Bucket) (r registry.Registry, crypter crypto.Crypter, err error)
+	bucket gcs.Bucket) (r registry.Registry, crypter crypto.Crypter, err error) {
+	// Derive a crypto key from the password using PBKDF2, recommended for use by
+	// NIST Special Publication 800-132. The latter says that PBKDF2 is approved
+	// for use with HMAC and any approved hash function. Special Publication
+	// 800-107 lists SHA-256 as an approved hash function.
+	const pbkdf2Iters = 4096
+	const keyLen = 32 // Minimum key length for AES-SIV
+	keyDeriver := crypto.NewPbkdf2KeyDeriver(pbkdf2Iters, keyLen, sha256.New)
+
+	// Create the registry and crypter.
+	r, crypter, err = registry.NewGCSRegistry(bucket, password, keyDeriver)
+	if err != nil {
+		err = fmt.Errorf("NewGCSRegistry: %v", err)
+		return
+	}
+
+	return
+}
