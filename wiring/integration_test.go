@@ -254,7 +254,34 @@ func (t *SaveAndRestoreTest) SingleLargeFile() {
 }
 
 func (t *SaveAndRestoreTest) SingleEmptySubDir() {
-	AssertFalse(true, "TODO")
+	var entries []os.FileInfo
+	var fi os.FileInfo
+	var err error
+
+	// Create.
+	err = os.Mkdir(path.Join(t.src, "foo"), 0500)
+	AssertEq(nil, err)
+
+	// Save and restore.
+	score, err := t.save()
+	AssertEq(nil, err)
+
+	err = t.restore(score)
+	AssertEq(nil, err)
+
+	// Read entries (root).
+	entries, err = ioutil.ReadDir(t.dst)
+	AssertEq(nil, err)
+	AssertEq(1, len(entries))
+
+	fi = entries[0]
+	ExpectEq("foo", fi.Name())
+	ExpectTrue(fi.IsDir())
+
+	// Read entries (sub-dir).
+	entries, err = ioutil.ReadDir(path.Join(t.dst, "foo"))
+	AssertEq(nil, err)
+	ExpectEq(0, len(entries))
 }
 
 func (t *SaveAndRestoreTest) DecentHierarchy() {
