@@ -24,70 +24,79 @@ import (
 func TestIntegration(t *testing.T) { RunTests(t) }
 
 ////////////////////////////////////////////////////////////////////////
-// Boilerplate
+// Wiring
 ////////////////////////////////////////////////////////////////////////
 
-type IntegrationTest struct {
+type WiringTest struct {
 }
 
-func init() { RegisterTestSuite(&IntegrationTest{}) }
+func init() { RegisterTestSuite(&WiringTest{}) }
 
-func (t *IntegrationTest) SetUp(i *TestInfo) {
+func (t *WiringTest) WrongPasswordForRegistry() {
+	AssertFalse(true, "TODO")
+}
+
+func (t *WiringTest) WrongPasswordForDirSaver() {
+	AssertFalse(true, "TODO")
+}
+
+func (t *WiringTest) WrongPasswordForDirRestorer() {
+	AssertFalse(true, "TODO")
+}
+
+////////////////////////////////////////////////////////////////////////
+// Saving and restoring
+////////////////////////////////////////////////////////////////////////
+
+type SaveAndRestoreTest struct {
+}
+
+func init() { RegisterTestSuite(&SaveAndRestoreTest{}) }
+
+func (t *SaveAndRestoreTest) SetUp(i *TestInfo) {
 	panic("TODO")
 }
 
-////////////////////////////////////////////////////////////////////////
-// Tests
-////////////////////////////////////////////////////////////////////////
-
-func (t *IntegrationTest) WrongPasswordForRegistry() {
+func (t *SaveAndRestoreTest) EmptyDirectory() {
 	AssertFalse(true, "TODO")
 }
 
-func (t *IntegrationTest) WrongPasswordForDirSaver() {
+func (t *SaveAndRestoreTest) SingleFile() {
 	AssertFalse(true, "TODO")
 }
 
-func (t *IntegrationTest) WrongPasswordForDirRestorer() {
+func (t *SaveAndRestoreTest) SingleEmptySubDir() {
 	AssertFalse(true, "TODO")
 }
 
-func (t *IntegrationTest) EmptyDirectory() {
+func (t *SaveAndRestoreTest) DecentHierarchy() {
 	AssertFalse(true, "TODO")
 }
 
-func (t *IntegrationTest) SingleFile() {
+func (t *SaveAndRestoreTest) StableResult() {
 	AssertFalse(true, "TODO")
 }
 
-func (t *IntegrationTest) SingleEmptySubDir() {
+func (t *SaveAndRestoreTest) Symlinks() {
 	AssertFalse(true, "TODO")
 }
 
-func (t *IntegrationTest) DecentHierarchy() {
+func (t *SaveAndRestoreTest) HardLinks() {
 	AssertFalse(true, "TODO")
 }
 
-func (t *IntegrationTest) StableResult() {
+func (t *SaveAndRestoreTest) Permissions() {
 	AssertFalse(true, "TODO")
 }
 
-func (t *IntegrationTest) Symlinks() {
+func (t *SaveAndRestoreTest) OwnershipInfo() {
 	AssertFalse(true, "TODO")
 }
 
-func (t *IntegrationTest) HardLinks() {
+func (t *SaveAndRestoreTest) Mtime() {
 	AssertFalse(true, "TODO")
 }
 
-func (t *IntegrationTest) Permissions() {
-	AssertFalse(true, "TODO")
-}
-
-func (t *IntegrationTest) OwnershipInfo() {
-	AssertFalse(true, "TODO")
-}
-
-func (t *IntegrationTest) Mtime() {
+func (t *SaveAndRestoreTest) BackupExclusions() {
 	AssertFalse(true, "TODO")
 }
