@@ -16,6 +16,7 @@
 package wiring_test
 
 import (
+	"io/ioutil"
 	"testing"
 
 	"github.com/googlecloudplatform/gcsfuse/timeutil"
@@ -79,9 +80,15 @@ var _ TearDownInterface = &SaveAndRestoreTest{}
 func init() { RegisterTestSuite(&SaveAndRestoreTest{}) }
 
 func (t *SaveAndRestoreTest) SetUp(ti *TestInfo) {
+	var err error
 	t.commonTest.SetUp(ti)
 
-	panic("TODO")
+	// Create the temporary directories.
+	t.src, err = ioutil.TempDir("", "comeback_integration_test")
+	AssertEq(nil, err)
+
+	t.dst, err = ioutil.TempDir("", "comeback_integration_test")
+	AssertEq(nil, err)
 }
 
 func (t *SaveAndRestoreTest) TearDown() {
