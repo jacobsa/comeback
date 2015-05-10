@@ -22,8 +22,12 @@ import (
 
 	"github.com/googlecloudplatform/gcsfuse/timeutil"
 	"github.com/jacobsa/comeback/blob"
+	"github.com/jacobsa/comeback/state"
+	"github.com/jacobsa/comeback/util"
+	"github.com/jacobsa/comeback/wiring"
 	"github.com/jacobsa/gcloud/gcs"
 	"github.com/jacobsa/gcloud/gcs/gcsfake"
+	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
 )
 
@@ -32,6 +36,8 @@ func TestIntegration(t *testing.T) { RunTests(t) }
 ////////////////////////////////////////////////////////////////////////
 // Common
 ////////////////////////////////////////////////////////////////////////
+
+const password = "some password"
 
 type commonTest struct {
 	bucket gcs.Bucket
@@ -51,16 +57,29 @@ type WiringTest struct {
 
 func init() { RegisterTestSuite(&WiringTest{}) }
 
-func (t *WiringTest) WrongPasswordForRegistry() {
-	AssertFalse(true, "TODO")
-}
+func (t *WiringTest) WrongPassword() {
+	const wrongPassword = password + "bar"
+	var err error
 
-func (t *WiringTest) WrongPasswordForDirSaver() {
-	AssertFalse(true, "TODO")
-}
+	// Create a registry in the bucket with the "official" password.
+	_, _, err = wiring.MakeRegistryAndCrypter(password, t.bucket)
+	AssertEq(nil, err)
 
-func (t *WiringTest) WrongPasswordForDirRestorer() {
-	AssertFalse(true, "TODO")
+	// Using a different password to do the same should fail.
+	_, _, err = wiring.MakeRegistryAndCrypter(wrongPassword, t.bucket)
+	ExpectThat(err, Error(HasSubstr("password is incorrect")))
+
+	// Ditto with the dir saver.
+	_, err = wiring.MakeDirSaver(
+		wrongPassword,
+		t.bucket,
+		util.NewStringSet(),
+		state.NewScoreMap())
+	ExpectThat(err, Error(HasSubstr("password is incorrect")))
+
+	// And the dir restorer.
+	_, err = wiring.MakeDirRestorer(wrongPassword, t.bucket)
+	ExpectThat(err, Error(HasSubstr("password is incorrect")))
 }
 
 ////////////////////////////////////////////////////////////////////////
