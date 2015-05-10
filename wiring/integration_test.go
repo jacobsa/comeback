@@ -18,18 +18,33 @@ package wiring_test
 import (
 	"testing"
 
+	"github.com/googlecloudplatform/gcsfuse/timeutil"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/gcloud/gcs"
+	"github.com/jacobsa/gcloud/gcs/gcsfake"
 	. "github.com/jacobsa/ogletest"
 )
 
 func TestIntegration(t *testing.T) { RunTests(t) }
 
 ////////////////////////////////////////////////////////////////////////
+// Common
+////////////////////////////////////////////////////////////////////////
+
+type commonTest struct {
+	bucket gcs.Bucket
+}
+
+func (t *commonTest) SetUp(ti *TestInfo) {
+	t.bucket = gcsfake.NewFakeBucket(timeutil.RealClock(), "")
+}
+
+////////////////////////////////////////////////////////////////////////
 // Wiring
 ////////////////////////////////////////////////////////////////////////
 
 type WiringTest struct {
+	commonTest
 }
 
 func init() { RegisterTestSuite(&WiringTest{}) }
@@ -51,7 +66,7 @@ func (t *WiringTest) WrongPasswordForDirRestorer() {
 ////////////////////////////////////////////////////////////////////////
 
 type SaveAndRestoreTest struct {
-	bucket gcs.Bucket
+	commonTest
 
 	// Temporary directories for saving from and restoring to.
 	src string
@@ -63,7 +78,9 @@ var _ TearDownInterface = &SaveAndRestoreTest{}
 
 func init() { RegisterTestSuite(&SaveAndRestoreTest{}) }
 
-func (t *SaveAndRestoreTest) SetUp(i *TestInfo) {
+func (t *SaveAndRestoreTest) SetUp(ti *TestInfo) {
+	t.commonTest.SetUp(ti)
+
 	panic("TODO")
 }
 
