@@ -29,8 +29,8 @@ import (
 // been used by comeback in the past, the password must match the password used
 // previously or an error will be returned.
 //
-// existingScores must contain only scores that are known to exist in the blob
-// store, in hex form. It will be updated as the directory saver is used.
+// existingScores must contain only scores that are known to exist in the
+// bucket, in hex form. It will be updated as the directory saver is used.
 //
 // scoresForFiles is a cache from file system info to the scores that were seen
 // at the time that file was stat'd, to be used in saving the work of reading
