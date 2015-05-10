@@ -16,32 +16,36 @@
 package main
 
 import (
-	"github.com/jacobsa/comeback/backup"
 	"log"
 	"sync"
+
+	"github.com/jacobsa/comeback/backup"
+	"github.com/jacobsa/comeback/wiring"
 )
 
-var g_dirSaverOnce sync.Once
-var g_dirSaver backup.DirectorySaver
+var gDirSaverOnce sync.Once
+var gDirSaver backup.DirectorySaver
 
 func initDirSaver() {
 	var err error
-	blobStore := getBlobStore()
-	fileSystem := getFileSystem()
-	fileSaver := getFileSaver()
+	defer func() {
+		if err != nil {
+			log.Fatalln(err)
+		}
+	}()
 
-	// Create the directory saver.
-	g_dirSaver, err = backup.NewDirectorySaver(
-		blobStore,
-		fileSystem,
-		fileSaver)
+	bucket := getBucket()
+	password := getPassword()
+	state := getState()
 
-	if err != nil {
-		log.Fatalln("Creating directory saver:", err)
-	}
+	gDirSaver, err = wiring.MakeDirSaver(
+		password,
+		bucket,
+		state.ExistingScores,
+		state.ScoresForFiles)
 }
 
 func getDirSaver() backup.DirectorySaver {
-	g_dirSaverOnce.Do(initDirSaver)
-	return g_dirSaver
+	gDirSaverOnce.Do(initDirSaver)
+	return gDirSaver
 }
