@@ -16,15 +16,21 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"sync"
 	"time"
 
+	"golang.org/x/net/context"
+
+	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/state"
 	"github.com/jacobsa/comeback/util"
+	"github.com/jacobsa/comeback/wiring"
 	"github.com/jacobsa/gcloud/gcs"
+	"github.com/jacobsa/gcloud/syncutil"
 )
 
 var g_stateOnce sync.Once
@@ -33,7 +39,35 @@ var g_state state.State
 var g_saveStateMutex sync.Mutex
 
 func buildExistingScores(
-	bucket gcs.Bucket) (existingScores util.StringSet, err error)
+	bucket gcs.Bucket) (existingScores util.StringSet, err error) {
+	b := syncutil.NewBundle(context.Background())
+	defer func() { err = b.Join() }()
+
+	// List scores into a channel.
+	scores := make(chan blob.Score, 100)
+	b.Add(func(ctx context.Context) (err error) {
+		defer close(scores)
+		err = blob.ListScores(ctx, bucket, wiring.BlobObjectNamePrefix, scores)
+		if err != nil {
+			err = fmt.Errorf("ListScores: %v", err)
+			return
+		}
+
+		return
+	})
+
+	// Accumulate hex scores into a string set.
+	existingScores = util.NewStringSet()
+	b.Add(func(ctx context.Context) (err error) {
+		for score := range scores {
+			existingScores.Add(score.Hex())
+		}
+
+		return
+	})
+
+	return
+}
 
 func initState() {
 	cfg := getConfig()
