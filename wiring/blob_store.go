@@ -23,7 +23,7 @@ import (
 )
 
 const (
-	blobObjectNamePrefix = "blobs/"
+	BlobObjectNamePrefix = "blobs/"
 
 	// A generous lower bound for where the OS starts to tell us to fuck off if
 	// we have too many files. This may also cover the case where we get "no such
@@ -49,7 +49,7 @@ func makeBlobStore(
 	crypter crypto.Crypter,
 	existingScores util.StringSet) (bs blob.Store, err error) {
 	// Store blobs in GCS.
-	bs = blob.NewGCSStore(bucket, blobObjectNamePrefix)
+	bs = blob.NewGCSStore(bucket, BlobObjectNamePrefix)
 
 	// Respond efficiently to Contains requests.
 	bs = blob.NewExistingScoresStore(existingScores, bs)

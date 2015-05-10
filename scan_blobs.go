@@ -49,6 +49,7 @@ import (
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/crypto"
 	"github.com/jacobsa/comeback/repr"
+	"github.com/jacobsa/comeback/wiring"
 	"github.com/jacobsa/gcloud/gcs"
 	"github.com/jacobsa/gcloud/syncutil"
 	"golang.org/x/net/context"
@@ -110,7 +111,7 @@ func readBlob(
 
 	// Obtain a reader.
 	req := &gcs.ReadObjectRequest{
-		Name: blobObjectNamePrefix + score.Hex(),
+		Name: wiring.BlobObjectNamePrefix + score.Hex(),
 	}
 
 	rc, err := bucket.NewReader(ctx, req)
@@ -343,7 +344,7 @@ func runScanBlobs(args []string) {
 	scores := make(chan blob.Score, 5000)
 	b.Add(func(ctx context.Context) (err error) {
 		defer close(scores)
-		err = blob.ListScores(ctx, bucket, blobObjectNamePrefix, scores)
+		err = blob.ListScores(ctx, bucket, wiring.BlobObjectNamePrefix, scores)
 		return
 	})
 
