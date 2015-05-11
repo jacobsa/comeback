@@ -20,6 +20,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"math/rand"
 	"os"
 	"path"
@@ -129,6 +130,8 @@ func populateDir(dir string, depth int) (err error) {
 
 const password = "some password"
 
+var gDiscardLogger = log.New(ioutil.Discard, "", 0)
+
 type commonTest struct {
 	ctx            context.Context
 	bucket         gcs.Bucket
@@ -170,7 +173,8 @@ func (t *WiringTest) WrongPassword() {
 		t.bucket,
 		1<<24,
 		util.NewStringSet(),
-		state.NewScoreMap())
+		state.NewScoreMap(),
+		gDiscardLogger)
 	ExpectThat(err, Error(HasSubstr("password is incorrect")))
 
 	// And the dir restorer.
@@ -224,7 +228,8 @@ func (t *SaveAndRestoreTest) save() (score blob.Score, err error) {
 		t.bucket,
 		fileChunkSize,
 		t.existingScores,
-		state.NewScoreMap())
+		state.NewScoreMap(),
+		gDiscardLogger)
 
 	if err != nil {
 		err = fmt.Errorf("MakeDirSaver: %v", err)

@@ -17,6 +17,7 @@ package main
 
 import (
 	"log"
+	"os"
 	"sync"
 
 	"github.com/jacobsa/comeback/backup"
@@ -44,7 +45,8 @@ func initDirSaver() {
 		bucket,
 		chunkSize,
 		state.ExistingScores,
-		state.ScoresForFiles)
+		state.ScoresForFiles,
+		log.New(os.Stderr, "", log.Ldate|log.Ltime|log.Lmicroseconds))
 }
 
 func getDirSaver() backup.DirectorySaver {

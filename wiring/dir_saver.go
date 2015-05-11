@@ -17,6 +17,7 @@ package wiring
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/jacobsa/comeback/backup"
 	"github.com/jacobsa/comeback/state"
@@ -46,7 +47,8 @@ func MakeDirSaver(
 	bucket gcs.Bucket,
 	chunkSize int,
 	existingScores util.StringSet,
-	scoresForFiles state.ScoreMap) (ds backup.DirectorySaver, err error) {
+	scoresForFiles state.ScoreMap,
+	logger *log.Logger) (ds backup.DirectorySaver, err error) {
 	// Use the real file system.
 	fs, err := makeFileSystem()
 	if err != nil {
@@ -77,7 +79,7 @@ func MakeDirSaver(
 	}
 
 	// Create a directory saver that shares the blob store with the file saver.
-	ds, err = backup.NewDirectorySaver(bs, fs, fileSaver)
+	ds, err = backup.NewDirectorySaver(bs, fs, fileSaver, logger)
 	if err != nil {
 		err = fmt.Errorf("NewDirectorySaver: %v", err)
 		return
