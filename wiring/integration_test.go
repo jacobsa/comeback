@@ -20,6 +20,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -35,6 +36,54 @@ import (
 )
 
 func TestIntegration(t *testing.T) { RunTests(t) }
+
+////////////////////////////////////////////////////////////////////////
+// Helpers
+////////////////////////////////////////////////////////////////////////
+
+func randHex(n int) (s string) {
+	panic("TODO")
+}
+
+func addRandomFile(dir string) (err error) {
+	panic("TODO")
+}
+
+// Put random files into a directory, recursing into two further children up to
+// some limit.
+func populateDir(dir string, depth int) (err error) {
+	const depthLimit = 10
+
+	// Add files.
+	const numFiles = 10
+	for i := 0; i < numFiles; i++ {
+		err = addRandomFile(dir)
+		if err != nil {
+			err = fmt.Errorf("depth %v, addFile: %v", depth, err)
+			return
+		}
+	}
+
+	// Add sub-dirs if appropriate.
+	if depth < depthLimit {
+		const numSubdirs = 2
+		for i := 0; i < numSubdirs; i++ {
+			c := path.Join(dir, randHex(16))
+			err = os.Mkdir(c, 0700)
+			if err != nil {
+				err = fmt.Errorf("Mkdir: %v", err)
+				return
+			}
+
+			err = populateDir(c, depth+1)
+			if err != nil {
+				return
+			}
+		}
+	}
+
+	return
+}
 
 ////////////////////////////////////////////////////////////////////////
 // Common
@@ -354,10 +403,29 @@ func (t *SaveAndRestoreTest) MultipleFilesAndDirs() {
 }
 
 func (t *SaveAndRestoreTest) ResultScoreIsStable() {
-	// TODO(jacobsa): Set GOMAXPROCS to a large value, restore when done.
-	// TODO(jacobsa): Set up a deep hierarchy branching with a factor of two,
-	// with random files in each directory.
-	AssertFalse(true, "TODO")
+	var err error
+
+	// Ensure we get some parallelism for the duration of this test, in hopes of
+	// exposing races.
+	defer runtime.GOMAXPROCS(runtime.GOMAXPROCS(16))
+
+	// Set up random contents.
+	err = populateDir(t.src, 0)
+	AssertEq(nil, err)
+
+	// Save multiple times.
+	score0, err := t.save()
+	AssertEq(nil, err)
+
+	score1, err := t.save()
+	AssertEq(nil, err)
+
+	score2, err := t.save()
+	AssertEq(nil, err)
+
+	// The output should be the same each time.
+	ExpectEq(score0, score1)
+	ExpectEq(score0, score2)
 }
 
 func (t *SaveAndRestoreTest) Symlinks() {
