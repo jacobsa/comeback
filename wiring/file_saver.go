@@ -26,16 +26,17 @@ import (
 
 // Create a file saver that uses the supplied file system and blob store.
 //
+// chunkSize is the size of chunks into which large files are split.
+//
 // scoresForFiles is a cache from file system info to the scores that were seen
 // at the time that file was stat'd, to be used in saving the work of reading
 // file contents each time. It will be updated by the file saver.
 func makeFileSaver(
 	bs blob.Store,
 	fs fs.FileSystem,
+	chunkSize int,
 	scoresForFiles state.ScoreMap) (fileSaver backup.FileSaver, err error) {
 	// Write chunks to the blob store.
-	const chunkSize = 1 << 24 // 16 MiB
-
 	fileSaver, err = backup.NewFileSaver(bs, chunkSize, fs)
 	if err != nil {
 		err = fmt.Errorf("NewFileSaver: %v", err)

@@ -71,7 +71,8 @@ func (s *onDemandDirSaver) Flush() (err error) {
 func NewDirectorySaver(
 	blobStore blob.Store,
 	fileSystem fs.FileSystem,
-	fileSaver FileSaver) (DirectorySaver, error) {
+	fileSaver FileSaver,
+	logger *log.Logger) (DirectorySaver, error) {
 	linkResolver := NewLinkResolver()
 	createSaver := func(wrapped DirectorySaver) DirectorySaver {
 		saver, err := NewNonRecursiveDirectorySaver(
@@ -79,7 +80,8 @@ func NewDirectorySaver(
 			fileSystem,
 			fileSaver,
 			wrapped,
-			linkResolver)
+			linkResolver,
+			logger)
 
 		if err != nil {
 			panic(err)
@@ -99,13 +101,15 @@ func NewNonRecursiveDirectorySaver(
 	fileSystem fs.FileSystem,
 	fileSaver FileSaver,
 	wrapped DirectorySaver,
-	linkResolver LinkResolver) (DirectorySaver, error) {
+	linkResolver LinkResolver,
+	logger *log.Logger) (DirectorySaver, error) {
 	return &dirSaver{
 		blobStore:    store,
 		fileSystem:   fileSystem,
 		fileSaver:    fileSaver,
 		wrapped:      wrapped,
 		linkResolver: linkResolver,
+		logger:       logger,
 	}, nil
 }
 
@@ -115,6 +119,7 @@ type dirSaver struct {
 	fileSaver    FileSaver
 	wrapped      DirectorySaver
 	linkResolver LinkResolver
+	logger       *log.Logger
 }
 
 func (s *dirSaver) Flush() (err error) {
@@ -191,7 +196,7 @@ func (s *dirSaver) Save(
 
 	// Save the data for each entry.
 	for _, entry := range entries {
-		log.Println("Processing:", path.Join(relPath, entry.Name))
+		s.logger.Println("Processing:", path.Join(relPath, entry.Name))
 
 		// Call the appropriate method based on this entry's type.
 		switch entry.Type {

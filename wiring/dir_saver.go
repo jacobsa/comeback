@@ -17,6 +17,7 @@ package wiring
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/jacobsa/comeback/backup"
 	"github.com/jacobsa/comeback/state"
@@ -28,6 +29,8 @@ import (
 // encrypting with a key derived from the given password. If the bucket has
 // been used by comeback in the past, the password must match the password used
 // previously or an error will be returned.
+//
+// chunkSize is the size of chunks into which large files are split.
 //
 // existingScores must contain only scores that are known to exist in the
 // bucket, in hex form. It will be updated as the directory saver is used.
@@ -42,8 +45,10 @@ import (
 func MakeDirSaver(
 	password string,
 	bucket gcs.Bucket,
+	chunkSize int,
 	existingScores util.StringSet,
-	scoresForFiles state.ScoreMap) (ds backup.DirectorySaver, err error) {
+	scoresForFiles state.ScoreMap,
+	logger *log.Logger) (ds backup.DirectorySaver, err error) {
 	// Use the real file system.
 	fs, err := makeFileSystem()
 	if err != nil {
@@ -67,14 +72,14 @@ func MakeDirSaver(
 	}
 
 	// Create a file saver that writes to the blob store.
-	fileSaver, err := makeFileSaver(bs, fs, scoresForFiles)
+	fileSaver, err := makeFileSaver(bs, fs, chunkSize, scoresForFiles)
 	if err != nil {
 		err = fmt.Errorf("makeFileSaver: %v", err)
 		return
 	}
 
 	// Create a directory saver that shares the blob store with the file saver.
-	ds, err = backup.NewDirectorySaver(bs, fs, fileSaver)
+	ds, err = backup.NewDirectorySaver(bs, fs, fileSaver, logger)
 	if err != nil {
 		err = fmt.Errorf("NewDirectorySaver: %v", err)
 		return
