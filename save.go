@@ -105,7 +105,10 @@ func runSave(args []string) {
 		log.Fatalln("Recoding to registry:", err)
 	}
 
-	log.Printf("Successfully backed up. Start time: %v\n", startTime.UTC())
+	log.Printf(
+		"Successfully backed up with score %v. Start time: %v\n",
+		score.Hex(),
+		startTime.UTC())
 
 	// Store state for next time.
 	saveStateTicker.Stop()
