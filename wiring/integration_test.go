@@ -16,8 +16,10 @@
 package wiring_test
 
 import (
+	cryptorand "crypto/rand"
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"os"
 	"path"
 	"runtime"
@@ -46,7 +48,25 @@ func randHex(n int) (s string) {
 }
 
 func addRandomFile(dir string) (err error) {
-	panic("TODO")
+	// Choose a random length that may or may not straddle multiple chunks.
+	length := int(rand.Int31n(3 * fileChunkSize))
+
+	// Generate contents.
+	contents := make([]byte, length)
+	_, err = cryptorand.Read(contents)
+	if err != nil {
+		err = fmt.Errorf("rand.Read: %v", err)
+		return
+	}
+
+	// Write out a file.
+	err = ioutil.WriteFile(path.Join(dir, randHex(16)), contents, 0400)
+	if err != nil {
+		err = fmt.Errorf("WriteFile: %v", err)
+		return
+	}
+
+	return
 }
 
 // Put random files into a directory, recursing into two further children up to
