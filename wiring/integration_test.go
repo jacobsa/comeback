@@ -650,15 +650,3 @@ func (t *SaveAndRestoreTest) ExistingScoreCaching() {
 	_, err = gcsutil.ReadObject(t.ctx, t.bucket, objectName)
 	ExpectThat(err, HasSameTypeAs(&gcs.NotFoundError{}))
 }
-
-func (t *SaveAndRestoreTest) FileToScoreCaching_EntryOutOfDate() {
-	AssertFalse(true, "TODO")
-}
-
-func (t *SaveAndRestoreTest) FileToScoreCaching_CachedScorePresent() {
-	AssertFalse(true, "TODO")
-}
-
-func (t *SaveAndRestoreTest) FileToScoreCaching_CachedScoreNotPresent() {
-	AssertFalse(true, "TODO")
-}
