@@ -26,6 +26,7 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/googlecloudplatform/gcsfuse/timeutil"
 	"github.com/jacobsa/comeback/blob"
@@ -525,7 +526,7 @@ func (t *SaveAndRestoreTest) Permissions() {
 	var fi os.FileInfo
 	var err error
 
-	// Create a directoryt that we initially have write access to.
+	// Create a directory that we initially have write access to.
 	err = os.Mkdir(path.Join(t.src, "foo"), 0740)
 	AssertEq(nil, err)
 
@@ -552,12 +553,28 @@ func (t *SaveAndRestoreTest) Permissions() {
 	ExpectEq(os.FileMode(0540), fi.Mode())
 }
 
-func (t *SaveAndRestoreTest) OwnershipInfo() {
-	AssertFalse(true, "TODO")
-}
-
 func (t *SaveAndRestoreTest) Mtime() {
-	AssertFalse(true, "TODO")
+	var fi os.FileInfo
+	var err error
+
+	// Create.
+	err = ioutil.WriteFile(path.Join(t.src, "foo"), []byte{}, 0400)
+	AssertEq(nil, err)
+
+	expected := time.Date(2012, 8, 15, 22, 56, 0, 0, time.Local)
+	err = os.Chtimes(path.Join(t.src, "foo"), time.Time{}, expected)
+	AssertEq(nil, err)
+
+	// Save and restore.
+	score, err := t.save()
+	AssertEq(nil, err)
+
+	err = t.restore(score)
+	AssertEq(nil, err)
+
+	// Stat.
+	fi, err = os.Stat(path.Join(t.dst, "foo"))
+	ExpectThat(fi.ModTime(), timeutil.TimeEq(expected))
 }
 
 func (t *SaveAndRestoreTest) BackupExclusions() {
