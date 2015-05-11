@@ -23,6 +23,7 @@ import (
 	"math/rand"
 	"os"
 	"path"
+	"regexp"
 	"runtime"
 	"strings"
 	"testing"
@@ -126,7 +127,8 @@ func populateDir(dir string, depth int) (err error) {
 const password = "some password"
 
 type commonTest struct {
-	bucket gcs.Bucket
+	bucket     gcs.Bucket
+	exclusions []*regexp.Regexp
 }
 
 func (t *commonTest) SetUp(ti *TestInfo) {
@@ -223,7 +225,7 @@ func (t *SaveAndRestoreTest) save() (score blob.Score, err error) {
 	}
 
 	// Save the source directory.
-	score, err = dirSaver.Save(t.src, "", nil)
+	score, err = dirSaver.Save(t.src, "", t.exclusions)
 	if err != nil {
 		err = fmt.Errorf("Save: %v", err)
 		return
@@ -578,7 +580,43 @@ func (t *SaveAndRestoreTest) Mtime() {
 }
 
 func (t *SaveAndRestoreTest) BackupExclusions() {
-	AssertFalse(true, "TODO")
+	var fi os.FileInfo
+	var err error
+
+	// Set up two exclusions.
+	t.exclusions = []*regexp.Regexp{
+		regexp.MustCompile(".*bad0.*"),
+		regexp.MustCompile(".*bad1.*"),
+	}
+
+	// Create some content that should be excluded.
+	err = ioutil.WriteFile(path.Join(t.src, "bad0"), []byte{}, 0400)
+	AssertEq(nil, err)
+
+	err = os.Mkdir(path.Join(t.src, "bad1"), 0700)
+	AssertEq(nil, err)
+
+	err = ioutil.WriteFile(path.Join(t.src, "bad1/blah"), []byte{}, 0400)
+	AssertEq(nil, err)
+
+	// And one file that should be backed up.
+	err = ioutil.WriteFile(path.Join(t.src, "foo"), []byte{}, 0400)
+	AssertEq(nil, err)
+
+	// Save and restore.
+	score, err := t.save()
+	AssertEq(nil, err)
+
+	err = t.restore(score)
+	AssertEq(nil, err)
+
+	// Only the one file should have made it.
+	entries, err := ioutil.ReadDir(t.dst)
+	AssertEq(nil, err)
+	AssertEq(1, len(entries))
+
+	fi = entries[0]
+	ExpectEq("foo", fi.Name())
 }
 
 func (t *SaveAndRestoreTest) MissingBlob() {
