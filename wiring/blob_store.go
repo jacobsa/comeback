@@ -28,7 +28,7 @@ const (
 	// A generous lower bound for where the OS starts to tell us to fuck off if
 	// we have too many files. This may also cover the case where we get "no such
 	// host" errors, apparently because we do too many lookups all at once.
-	osFileLimit = 128
+	osFileLimit = 96
 )
 
 func minInt(a, b int) int {
