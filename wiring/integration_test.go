@@ -461,11 +461,39 @@ func (t *SaveAndRestoreTest) ResultScoreIsStable() {
 	ExpectEq(score0, score2)
 }
 
-func (t *SaveAndRestoreTest) Symlinks() {
-	AssertFalse(true, "TODO")
+func (t *SaveAndRestoreTest) HardLinks() {
+	const contents = "taco"
+	var err error
+
+	// Create.
+	err = ioutil.WriteFile(path.Join(t.src, "foo"), []byte(contents), 0400)
+	AssertEq(nil, err)
+
+	err = os.Link(path.Join(t.src, "foo"), path.Join(t.src, "bar"))
+	AssertEq(nil, err)
+
+	// Save and restore.
+	score, err := t.save()
+	AssertEq(nil, err)
+
+	err = t.restore(score)
+	AssertEq(nil, err)
+
+	// Check.
+	b, err := ioutil.ReadFile(path.Join(t.dst, "foo"))
+	AssertEq(nil, err)
+	ExpectEq(contents, string(b))
+
+	fi0, err := os.Stat(path.Join(t.dst, "foo"))
+	AssertEq(nil, err)
+
+	fi1, err := os.Stat(path.Join(t.dst, "foo"))
+	AssertEq(nil, err)
+
+	ExpectTrue(os.SameFile(fi0, fi1))
 }
 
-func (t *SaveAndRestoreTest) HardLinks() {
+func (t *SaveAndRestoreTest) Symlinks() {
 	AssertFalse(true, "TODO")
 }
 
