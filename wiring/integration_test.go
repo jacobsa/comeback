@@ -29,6 +29,8 @@ import (
 	"testing"
 	"time"
 
+	"golang.org/x/net/context"
+
 	"github.com/googlecloudplatform/gcsfuse/timeutil"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/state"
@@ -36,6 +38,7 @@ import (
 	"github.com/jacobsa/comeback/wiring"
 	"github.com/jacobsa/gcloud/gcs"
 	"github.com/jacobsa/gcloud/gcs/gcsfake"
+	"github.com/jacobsa/gcloud/gcs/gcsutil"
 	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
 )
@@ -127,12 +130,16 @@ func populateDir(dir string, depth int) (err error) {
 const password = "some password"
 
 type commonTest struct {
-	bucket     gcs.Bucket
-	exclusions []*regexp.Regexp
+	ctx            context.Context
+	bucket         gcs.Bucket
+	exclusions     []*regexp.Regexp
+	existingScores util.StringSet
 }
 
 func (t *commonTest) SetUp(ti *TestInfo) {
+	t.ctx = ti.Ctx
 	t.bucket = gcsfake.NewFakeBucket(timeutil.RealClock(), "")
+	t.existingScores = util.NewStringSet()
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -216,7 +223,7 @@ func (t *SaveAndRestoreTest) save() (score blob.Score, err error) {
 		password,
 		t.bucket,
 		fileChunkSize,
-		util.NewStringSet(),
+		t.existingScores,
 		state.NewScoreMap())
 
 	if err != nil {
@@ -619,16 +626,29 @@ func (t *SaveAndRestoreTest) BackupExclusions() {
 	ExpectEq("foo", fi.Name())
 }
 
-func (t *SaveAndRestoreTest) MissingBlob() {
-	AssertFalse(true, "TODO")
-}
-
-func (t *SaveAndRestoreTest) CorruptedBlob() {
-	AssertFalse(true, "TODO")
-}
-
 func (t *SaveAndRestoreTest) ExistingScoreCaching() {
-	AssertFalse(true, "TODO")
+	var err error
+
+	// Save a backup.
+	score, err := t.save()
+	AssertEq(nil, err)
+
+	// The score should have been added to the set of existing scores.
+	ExpectTrue(t.existingScores.Contains(score.Hex()))
+
+	// Delete the underlying object, then attempt to save again. We should get
+	// the same score.
+	objectName := wiring.BlobObjectNamePrefix + score.Hex()
+	err = t.bucket.DeleteObject(t.ctx, objectName)
+	AssertEq(nil, err)
+
+	newScore, err := t.save()
+	AssertEq(nil, err)
+	ExpectEq(score, newScore)
+
+	// No new object for this score should have been saved.
+	_, err = gcsutil.ReadObject(t.ctx, t.bucket, objectName)
+	ExpectThat(err, HasSameTypeAs(&gcs.NotFoundError{}))
 }
 
 func (t *SaveAndRestoreTest) FileToScoreCaching_EntryOutOfDate() {
