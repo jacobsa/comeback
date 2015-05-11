@@ -520,7 +520,36 @@ func (t *SaveAndRestoreTest) Symlinks() {
 }
 
 func (t *SaveAndRestoreTest) Permissions() {
-	AssertFalse(true, "TODO")
+	const contents = "taco"
+
+	var fi os.FileInfo
+	var err error
+
+	// Create a directoryt that we initially have write access to.
+	err = os.Mkdir(path.Join(t.src, "foo"), 0740)
+	AssertEq(nil, err)
+
+	// Create a file within it.
+	err = ioutil.WriteFile(path.Join(t.src, "foo/bar"), []byte(contents), 0540)
+	AssertEq(nil, err)
+
+	// Seal off the directory.
+	err = os.Chmod(path.Join(t.src, "foo"), 0540)
+	AssertEq(nil, err)
+
+	// Save and restore.
+	score, err := t.save()
+	AssertEq(nil, err)
+
+	err = t.restore(score)
+	AssertEq(nil, err)
+
+	// Check permissions.
+	fi, err = os.Stat(path.Join(t.dst, "foo"))
+	ExpectEq(os.FileMode(0540)|os.ModeDir, fi.Mode())
+
+	fi, err = os.Stat(path.Join(t.dst, "foo/bar"))
+	ExpectEq(os.FileMode(0540), fi.Mode())
 }
 
 func (t *SaveAndRestoreTest) OwnershipInfo() {
