@@ -17,6 +17,7 @@ package wiring_test
 
 import (
 	cryptorand "crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"io/ioutil"
 	"math/rand"
@@ -44,7 +45,19 @@ func TestIntegration(t *testing.T) { RunTests(t) }
 ////////////////////////////////////////////////////////////////////////
 
 func randHex(n int) (s string) {
-	panic("TODO")
+	if n%2 != 0 {
+		panic(fmt.Sprintf("Invalid length: %v", n))
+	}
+
+	b := make([]byte, n/2)
+	_, err := cryptorand.Read(b)
+	if err != nil {
+		panic(fmt.Sprintf("cryptorand.Read: %v", err))
+		return
+	}
+
+	s = hex.EncodeToString(b)
+	return
 }
 
 func addRandomFile(dir string) (err error) {
