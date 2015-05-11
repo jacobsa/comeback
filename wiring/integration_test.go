@@ -487,14 +487,36 @@ func (t *SaveAndRestoreTest) HardLinks() {
 	fi0, err := os.Stat(path.Join(t.dst, "foo"))
 	AssertEq(nil, err)
 
-	fi1, err := os.Stat(path.Join(t.dst, "foo"))
+	fi1, err := os.Stat(path.Join(t.dst, "bar"))
 	AssertEq(nil, err)
 
 	ExpectTrue(os.SameFile(fi0, fi1))
 }
 
 func (t *SaveAndRestoreTest) Symlinks() {
-	AssertFalse(true, "TODO")
+	const target = "/foo/bar/baz"
+	var err error
+
+	// Create.
+	err = os.Symlink(target, path.Join(t.src, "foo"))
+	AssertEq(nil, err)
+
+	// Save and restore.
+	score, err := t.save()
+	AssertEq(nil, err)
+
+	err = t.restore(score)
+	AssertEq(nil, err)
+
+	// Check lstat.
+	fi, err := os.Lstat(path.Join(t.dst, "foo"))
+	AssertEq(nil, err)
+	ExpectEq(os.ModeSymlink, fi.Mode()&os.ModeType)
+
+	// Check Readlink.
+	actualTarget, err := os.Readlink(path.Join(t.dst, "foo"))
+	AssertEq(nil, err)
+	ExpectEq(target, actualTarget)
 }
 
 func (t *SaveAndRestoreTest) Permissions() {
