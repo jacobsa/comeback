@@ -76,6 +76,7 @@ func (t *WiringTest) WrongPassword() {
 	_, err = wiring.MakeDirSaver(
 		wrongPassword,
 		t.bucket,
+		1<<24,
 		util.NewStringSet(),
 		state.NewScoreMap())
 	ExpectThat(err, Error(HasSubstr("password is incorrect")))
@@ -88,6 +89,8 @@ func (t *WiringTest) WrongPassword() {
 ////////////////////////////////////////////////////////////////////////
 // Saving and restoring
 ////////////////////////////////////////////////////////////////////////
+
+const fileChunkSize = 1 << 12
 
 type SaveAndRestoreTest struct {
 	commonTest
@@ -127,6 +130,7 @@ func (t *SaveAndRestoreTest) save() (score blob.Score, err error) {
 	dirSaver, err := wiring.MakeDirSaver(
 		password,
 		t.bucket,
+		fileChunkSize,
 		util.NewStringSet(),
 		state.NewScoreMap())
 
@@ -222,7 +226,9 @@ func (t *SaveAndRestoreTest) SingleLargeFile() {
 	var fi os.FileInfo
 	var err error
 
-	contents := strings.Repeat("baz", 1<<24)
+	// Set up contents that span multiple chunks, including a partial one at the
+	// end.
+	contents := strings.Repeat("baz", 7*fileChunkSize+3)
 
 	// Create.
 	err = ioutil.WriteFile(path.Join(t.src, "foo"), []byte(contents), 0400)
