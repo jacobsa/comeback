@@ -85,7 +85,7 @@ func addRandomFile(dir string) (err error) {
 // Put random files into a directory, recursing into two further children up to
 // some limit.
 func populateDir(dir string, depth int) (err error) {
-	const depthLimit = 10
+	const depthLimit = 5
 
 	// Add files.
 	const numFiles = 10
