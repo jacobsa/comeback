@@ -38,9 +38,11 @@ func initDirSaver() {
 	password := getPassword()
 	state := getState()
 
+	const chunkSize = 1 << 24 // 16 MiB
 	gDirSaver, err = wiring.MakeDirSaver(
 		password,
 		bucket,
+		chunkSize,
 		state.ExistingScores,
 		state.ScoresForFiles)
 }

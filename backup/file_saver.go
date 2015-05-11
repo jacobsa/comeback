@@ -37,9 +37,9 @@ type FileSaver interface {
 // chunks of the specified size.
 func NewFileSaver(
 	store blob.Store,
-	chunkSize uint32,
+	chunkSize int,
 	fileSystem fs.FileSystem) (s FileSaver, err error) {
-	if chunkSize == 0 {
+	if chunkSize <= 0 {
 		return nil, fmt.Errorf("Chunk size must be positive.")
 	}
 
@@ -54,13 +54,13 @@ func NewFileSaver(
 
 type fileSaver struct {
 	blobStore  blob.Store
-	chunkSize  uint32
+	chunkSize  int
 	fileSystem fs.FileSystem
 }
 
 // Read 16 MiB from the supplied reader, returning less iff the reader returns
 // an error (including EOF). Do not treat EOF as an error condition.
-func getChunk(r io.Reader, chunkSize uint32) ([]byte, error) {
+func getChunk(r io.Reader, chunkSize int) ([]byte, error) {
 	r = io.LimitReader(r, int64(chunkSize))
 	return ioutil.ReadAll(r)
 }
