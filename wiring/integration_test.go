@@ -286,8 +286,35 @@ func (t *SaveAndRestoreTest) EmptyDirectory() {
 	ExpectEq(0, len(entries))
 }
 
-func (t *SaveAndRestoreTest) EmptyFile() {
-	AssertFalse(true, "TODO")
+func (t *SaveAndRestoreTest) SingleEmptyFile() {
+	var fi os.FileInfo
+	var err error
+
+	// Create.
+	err = ioutil.WriteFile(path.Join(t.src, "foo"), []byte{}, 0400)
+	AssertEq(nil, err)
+
+	// Save and restore.
+	score, err := t.save()
+	AssertEq(nil, err)
+
+	err = t.restore(score)
+	AssertEq(nil, err)
+
+	// Read entries.
+	entries, err := ioutil.ReadDir(t.dst)
+	AssertEq(nil, err)
+	AssertEq(1, len(entries))
+
+	fi = entries[0]
+	ExpectEq("foo", fi.Name())
+	ExpectEq(0, fi.Size())
+	ExpectFalse(fi.IsDir())
+
+	// Read the file.
+	b, err := ioutil.ReadFile(path.Join(t.dst, "foo"))
+	AssertEq(nil, err)
+	ExpectEq("", string(b))
 }
 
 func (t *SaveAndRestoreTest) SingleSmallFile() {
