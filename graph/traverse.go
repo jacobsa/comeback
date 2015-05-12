@@ -15,11 +15,7 @@
 
 package graph
 
-import (
-	"fmt"
-
-	"golang.org/x/net/context"
-)
+import "golang.org/x/net/context"
 
 // A visitor in a directed graph whose nodes are identified by strings.
 type Visitor interface {
@@ -66,7 +62,6 @@ func Traverse(
 		var adjacent []string
 		adjacent, err = v.Visit(ctx, node)
 		if err != nil {
-			err = fmt.Errorf("Visit: %v", err)
 			return
 		}
 
