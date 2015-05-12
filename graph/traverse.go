@@ -16,7 +16,7 @@
 package graph
 
 import (
-	"errors"
+	"fmt"
 
 	"golang.org/x/net/context"
 )
@@ -45,6 +45,38 @@ func Traverse(
 	parallelism int,
 	roots []string,
 	v Visitor) (err error) {
-	err = errors.New("TODO: Traverse")
+	// TODO(jacobsa): Add parallelism.
+
+	// Set up initial state.
+	toVisit := make([]string, len(roots))
+	copy(toVisit, roots)
+
+	admitted := make(map[string]struct{})
+	for _, n := range toVisit {
+		admitted[n] = struct{}{}
+	}
+
+	// Visit until we're done.
+	for len(toVisit) > 0 {
+		// Pop the last node.
+		node := toVisit[len(toVisit)-1]
+		toVisit = toVisit[:len(toVisit)-1]
+
+		// Visit it.
+		var adjacent []string
+		adjacent, err = v.Visit(ctx, node)
+		if err != nil {
+			err = fmt.Errorf("Visit: %v", err)
+			return
+		}
+
+		// Add adjacent ndoes that we haven't already admitted.
+		for _, n := range adjacent {
+			if _, ok := admitted[n]; !ok {
+				toVisit = append(toVisit, n)
+			}
+		}
+	}
+
 	return
 }
