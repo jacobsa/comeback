@@ -49,10 +49,14 @@ func (fv *funcVisitor) Visit(
 // Boilerplate
 ////////////////////////////////////////////////////////////////////////
 
+const parallelism = 16
+
 type TraverseTest struct {
+	ctx context.Context
 }
 
 var _ SetUpTestSuiteInterface = &TraverseTest{}
+var _ SetUpInterface = &TraverseTest{}
 
 func init() { RegisterTestSuite(&TraverseTest{}) }
 
@@ -61,12 +65,28 @@ func (t *TraverseTest) SetUpTestSuite() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 }
 
+func (t *TraverseTest) SetUp(ti *TestInfo) {
+	t.ctx = ti.Ctx
+}
+
 ////////////////////////////////////////////////////////////////////////
 // Tests
 ////////////////////////////////////////////////////////////////////////
 
 func (t *TraverseTest) EmptyGraph() {
-	AssertFalse(true, "TODO")
+	// Visitor -- should never be called.
+	f := func(ctx context.Context, node string) (adjacent []string, err error) {
+		AddFailure("Visitor unexpectedly called with node %q", node)
+		return
+	}
+
+	v := &funcVisitor{F: f}
+
+	// Traverse.
+	roots := []string{}
+	err := graph.Traverse(t.ctx, parallelism, roots, v)
+
+	AssertEq(nil, err)
 }
 
 func (t *TraverseTest) SimpleRootedTree() {
