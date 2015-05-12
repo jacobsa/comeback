@@ -347,7 +347,34 @@ func (t *TraverseTest) RedundantRoots() {
 }
 
 func (t *TraverseTest) Cycle() {
-	AssertFalse(true, "TODO")
+	// Graph structure:
+	//
+	//        A
+	//      / ^\
+	//     B  | C
+	//      \ |/
+	//        D
+	//
+	t.roots = []string{"A"}
+	t.edges = map[string][]string{
+		"A": []string{"B", "C"},
+		"B": []string{"D"},
+		"C": []string{"D"},
+		"D": []string{"A"},
+	}
+
+	// Traverse.
+	err := t.traverse()
+	AssertEq(nil, err)
+
+	AssertThat(
+		sortNodes(t.nodesVisited),
+		ElementsAre(
+			"A",
+			"B",
+			"C",
+			"D",
+		))
 }
 
 func (t *TraverseTest) LargeRootedTree() {
