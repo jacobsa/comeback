@@ -143,7 +143,25 @@ func (t *TraverseTest) EmptyGraph() {
 }
 
 func (t *TraverseTest) SingleNodeConnectedComponents() {
-	AssertFalse(true, "TODO")
+	// Graph structure:
+	//
+	//     A  B  C  D
+	//
+	t.roots = []string{"A", "B", "C", "D"}
+	t.edges = map[string][]string{}
+
+	// Traverse.
+	err := t.traverse()
+	AssertEq(nil, err)
+
+	AssertThat(
+		sortNodes(t.nodesVisited),
+		ElementsAre(
+			"A",
+			"B",
+			"C",
+			"D",
+		))
 }
 
 func (t *TraverseTest) SimpleRootedTree() {
