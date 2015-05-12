@@ -154,6 +154,7 @@ func (t *TraverseTest) SimpleRootedTree() {
 	//           | \
 	//           J  K
 	//
+	t.roots = []string{"A"}
 	t.edges = map[string][]string{
 		"A": []string{"B", "C"},
 		"C": []string{"D", "E", "F"},
