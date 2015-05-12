@@ -21,6 +21,7 @@ import (
 	"golang.org/x/net/context"
 )
 
+// A visitor in a graph whose nodes are identified by strings.
 type Visitor interface {
 	// Process the supplied node and return a list of adjacent nodes.
 	Visit(ctx context.Context, node string) (adjacent []string, err error)

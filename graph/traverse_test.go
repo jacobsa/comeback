@@ -19,10 +19,31 @@ import (
 	"runtime"
 	"testing"
 
+	"golang.org/x/net/context"
+
+	"github.com/jacobsa/comeback/graph"
 	. "github.com/jacobsa/ogletest"
 )
 
 func TestTraverse(t *testing.T) { RunTests(t) }
+
+////////////////////////////////////////////////////////////////////////
+// Helper
+////////////////////////////////////////////////////////////////////////
+
+// A graph.Visitor that invokes a wrapped function.
+type funcVisitor struct {
+	F func(context.Context, string) ([]string, error)
+}
+
+var _ graph.Visitor = &funcVisitor{}
+
+func (fv *funcVisitor) Visit(
+	ctx context.Context,
+	node string) (adjacent []string, err error) {
+	adjacent, err = fv.F(ctx, node)
+	return
+}
 
 ////////////////////////////////////////////////////////////////////////
 // Boilerplate
