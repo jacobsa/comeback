@@ -228,7 +228,7 @@ func (t *TraverseTest) SimpleDAG() {
 	t.roots = []string{"A"}
 	t.edges = map[string][]string{
 		"A": []string{"B", "C"},
-		"B": []string{"E"},
+		"B": []string{"D"},
 		"C": []string{"D", "E"},
 		"D": []string{"E"},
 	}
@@ -261,7 +261,48 @@ func (t *TraverseTest) SimpleDAG() {
 }
 
 func (t *TraverseTest) MultipleConnectedComponents() {
-	AssertFalse(true, "TODO")
+	// Graph structure:
+	//
+	//        A       E
+	//      /  \      |\
+	//     B    C     F G
+	//      \  /
+	//        D
+	//
+	t.roots = []string{"A", "E"}
+	t.edges = map[string][]string{
+		"A": []string{"B", "C"},
+		"B": []string{"D"},
+		"C": []string{"D"},
+		"E": []string{"F", "G"},
+	}
+
+	// Traverse.
+	err := t.traverse()
+	AssertEq(nil, err)
+
+	AssertThat(
+		sortNodes(t.nodesVisited),
+		ElementsAre(
+			"A",
+			"B",
+			"C",
+			"D",
+			"E",
+			"F",
+			"G",
+		))
+
+	nodeIndex := indexNodes(t.nodesVisited)
+	ExpectGt(nodeIndex["B"], nodeIndex["A"])
+	ExpectGt(nodeIndex["C"], nodeIndex["A"])
+
+	ExpectThat(
+		nodeIndex["D"],
+		AnyOf(GreaterThan(nodeIndex["B"]), GreaterThan(nodeIndex["C"])))
+
+	ExpectGt(nodeIndex["F"], nodeIndex["E"])
+	ExpectGt(nodeIndex["G"], nodeIndex["E"])
 }
 
 func (t *TraverseTest) RedundantRoots() {
