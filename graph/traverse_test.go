@@ -16,6 +16,7 @@
 package graph_test
 
 import (
+	"errors"
 	"fmt"
 	"math/rand"
 	"runtime"
@@ -429,5 +430,49 @@ func (t *TraverseTest) LargeRootedTree() {
 }
 
 func (t *TraverseTest) VisitorReturnsError() {
-	AssertFalse(true, "TODO")
+	// Graph structure:
+	//
+	//        A
+	//      / |
+	//     B  C
+	//      / | \
+	//     D  E  F
+	//      / |  |
+	//     G  H  I
+	//           | \
+	//           J  K
+	//
+	t.roots = []string{"A"}
+	t.edges = map[string][]string{
+		"A": []string{"B", "C"},
+		"C": []string{"D", "E", "F"},
+		"E": []string{"G", "H"},
+		"F": []string{"I"},
+		"I": []string{"J", "K"},
+	}
+
+	// Operate as normal, except return an error on node C.
+	expected := errors.New("taco")
+	t.visit = func(
+		ctx context.Context,
+		node string) (adjacent []string, err error) {
+		adjacent, err = t.defaultVisit(ctx, node)
+		if node == "C" {
+			err = expected
+		}
+
+		return
+	}
+
+	// Traverse. We should get the expected error.
+	err := t.traverse()
+	ExpectEq(expected, err)
+
+	// Nothing descending from C should have been visted.
+	ExpectThat(
+		sortNodes(t.nodesVisited),
+		AnyOf(
+			ElementsAre("A", "B", "C"),
+			ElementsAre("A", "C"),
+		))
 }
