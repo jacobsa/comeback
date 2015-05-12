@@ -73,6 +73,7 @@ func Traverse(
 		// Add adjacent ndoes that we haven't already admitted.
 		for _, n := range adjacent {
 			if _, ok := admitted[n]; !ok {
+				admitted[n] = struct{}{}
 				toVisit = append(toVisit, n)
 			}
 		}
