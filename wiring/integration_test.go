@@ -688,7 +688,41 @@ func (t *SaveAndRestoreTest) ExistingScoreCaching() {
 }
 
 func (t *SaveAndRestoreTest) IdenticalFileContents() {
-	AssertFalse(true, "TODO")
+	const contents = "taco"
+	var err error
+
+	// Create multiple files at various places in a directory hierarchy, all with
+	// identical contents.
+	AssertEq(nil, os.Mkdir(path.Join(t.src, "dir0"), 0700))
+	AssertEq(nil, os.Mkdir(path.Join(t.src, "dir1"), 0700))
+	AssertEq(nil, os.Mkdir(path.Join(t.src, "dir1/sub"), 0700))
+
+	paths := []string{
+		"foo",
+		"bar",
+		"dir0/baz",
+		"dir1/qux",
+		"dir1/sub/norf",
+	}
+
+	for _, p := range paths {
+		err = ioutil.WriteFile(path.Join(t.src, p), []byte(contents), 0400)
+		AssertEq(nil, err)
+	}
+
+	// Save and restore.
+	score, err := t.save()
+	AssertEq(nil, err)
+
+	err = t.restore(score)
+	AssertEq(nil, err)
+
+	// Each file should have made it through.
+	for _, p := range paths {
+		b, err := ioutil.ReadFile(path.Join(t.dst, p))
+		AssertEq(nil, err)
+		ExpectEq(contents, string(b))
+	}
 }
 
 func (t *SaveAndRestoreTest) IdenticalDirectoryContents() {
