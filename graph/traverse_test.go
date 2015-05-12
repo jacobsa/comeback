@@ -250,8 +250,14 @@ func (t *TraverseTest) SimpleDAG() {
 	nodeIndex := indexNodes(t.nodesVisited)
 	ExpectGt(nodeIndex["B"], nodeIndex["A"])
 	ExpectGt(nodeIndex["C"], nodeIndex["A"])
-	ExpectThat(nodeIndex["D"], AnyOf(GreaterThan("B"), GreaterThan("C")))
-	ExpectThat(nodeIndex["E"], AnyOf(GreaterThan("D"), GreaterThan("C")))
+
+	ExpectThat(
+		nodeIndex["D"],
+		AnyOf(GreaterThan(nodeIndex["B"]), GreaterThan(nodeIndex["C"])))
+
+	ExpectThat(
+		nodeIndex["E"],
+		AnyOf(GreaterThan(nodeIndex["D"]), GreaterThan(nodeIndex["C"])))
 }
 
 func (t *TraverseTest) MultipleConnectedComponents() {
