@@ -38,6 +38,9 @@ type Visitor interface {
 //
 // In particular, if the graph is a rooted tree and searching starts at the
 // root, then parents will be successfully visited before children are visited.
+// Traversing a DAG starting from the minimum elements under the induced
+// partial order guarantees that *some* ancestor has been processed before each
+// node, but not that all ancestors have been.
 func Traverse(
 	ctx context.Context,
 	parallelism int,
