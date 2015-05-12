@@ -21,27 +21,25 @@ import (
 	"golang.org/x/net/context"
 )
 
-// A visitor in a graph whose nodes are identified by strings.
+// A visitor in a directed graph whose nodes are identified by strings.
 type Visitor interface {
-	// Process the supplied node and return a list of adjacent nodes.
+	// Process the supplied node and return a list of direct successors.
 	Visit(ctx context.Context, node string) (adjacent []string, err error)
 }
 
-// Invoke v.Visit on each node in the connected graph(s) containing the
-// supplied search root nodes, whose edges are defined by the output of
-// v.Visit. Use the supplied degree of parallelism.
+// Invoke v.Visit on each node reachable from the supplied search roots,
+// including the roots themselves. Use the supplied degree of parallelism.
 //
 // It is guaranteed that if a node N is fed to v.Visit, then either:
 //
 //  *  N is an element of roots, or
-//  *  There exists an adjacent node N' such that v.Visit(N') was called and
-//     returned successfully.
+//  *  There exists a direct predecessor N' of N such that v.Visit(N') was
+//     called and returned successfully.
 //
 // In particular, if the graph is a rooted tree and searching starts at the
 // root, then parents will be successfully visited before children are visited.
-// Traversing a DAG starting from the minimum elements under the induced
-// partial order guarantees that *some* ancestor has been processed before each
-// node, but not that all ancestors have been.
+// However note that in arbitrary DAGs it is *not* guaranteed that all of a
+// node's predecessors have been visited before it is.
 func Traverse(
 	ctx context.Context,
 	parallelism int,
