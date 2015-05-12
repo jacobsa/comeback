@@ -655,3 +655,11 @@ func (t *SaveAndRestoreTest) ExistingScoreCaching() {
 	_, err = gcsutil.ReadObject(t.ctx, t.bucket, objectName)
 	ExpectThat(err, HasSameTypeAs(&gcs.NotFoundError{}))
 }
+
+func (t *SaveAndRestoreTest) IdenticalFileContents() {
+	AssertFalse(true, "TODO")
+}
+
+func (t *SaveAndRestoreTest) IdenticalDirectoryContents() {
+	AssertFalse(true, "TODO")
+}
