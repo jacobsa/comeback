@@ -48,8 +48,11 @@ func (fv *funcVisitor) Visit(
 	return
 }
 
-func sortNodes(in []string) (out []sort.StringSlice) {
-	panic("TODO")
+func sortNodes(in []string) (out sort.StringSlice) {
+	out = make(sort.StringSlice, len(in))
+	copy(out, in)
+	sort.Sort(out)
+	return
 }
 
 func indexNodes(nodes []string) (index map[string]int) {
