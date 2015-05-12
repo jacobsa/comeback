@@ -286,6 +286,10 @@ func (t *SaveAndRestoreTest) EmptyDirectory() {
 	ExpectEq(0, len(entries))
 }
 
+func (t *SaveAndRestoreTest) EmptyFile() {
+	AssertFalse(true, "TODO")
+}
+
 func (t *SaveAndRestoreTest) SingleSmallFile() {
 	const contents = "taco"
 
