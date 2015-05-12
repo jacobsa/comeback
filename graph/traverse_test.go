@@ -17,12 +17,14 @@ package graph_test
 
 import (
 	"runtime"
+	"sort"
 	"sync"
 	"testing"
 
 	"golang.org/x/net/context"
 
 	"github.com/jacobsa/comeback/graph"
+	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
 )
 
@@ -44,6 +46,14 @@ func (fv *funcVisitor) Visit(
 	node string) (adjacent []string, err error) {
 	adjacent, err = fv.F(ctx, node)
 	return
+}
+
+func sortNodes(in []string) (out []sort.StringSlice) {
+	panic("TODO")
+}
+
+func indexNodes(nodes []string) (index map[string]int) {
+	panic("TODO")
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -124,8 +134,57 @@ func (t *TraverseTest) EmptyGraph() {
 	ExpectEq(0, len(t.nodesVisited))
 }
 
-func (t *TraverseTest) SimpleRootedTree() {
+func (t *TraverseTest) SingleNodeConnectedComponents() {
 	AssertFalse(true, "TODO")
+}
+
+func (t *TraverseTest) SimpleRootedTree() {
+	// Graph structure:
+	//
+	//        A
+	//      / |
+	//     B  C
+	//      / | \
+	//     D  E  F
+	//      / |  |
+	//     G  H  I
+	//           | \
+	//           J  K
+	//
+	t.edges = map[string][]string{
+		"A": []string{"B", "C"},
+		"C": []string{"D", "E", "F"},
+		"E": []string{"G", "H"},
+		"F": []string{"I"},
+		"I": []string{"J", "K"},
+	}
+
+	// Traverse.
+	err := t.traverse()
+	AssertEq(nil, err)
+
+	AssertThat(
+		sortNodes(t.nodesVisited),
+		ElementsAre(
+			"A",
+			"B",
+			"C",
+			"D",
+			"E",
+			"F",
+			"G",
+			"H",
+			"I",
+			"J",
+			"K",
+		))
+
+	nodeIndex := indexNodes(t.nodesVisited)
+	for p, successors := range t.edges {
+		for _, s := range successors {
+			ExpectLt(nodeIndex[p], nodeIndex[s], "%q %q", p, s)
+		}
+	}
 }
 
 func (t *TraverseTest) SimpleDAG() {
@@ -137,6 +196,10 @@ func (t *TraverseTest) MultipleConnectedComponents() {
 }
 
 func (t *TraverseTest) RedundantRoots() {
+	AssertFalse(true, "TODO")
+}
+
+func (t *TraverseTest) Cycle() {
 	AssertFalse(true, "TODO")
 }
 
