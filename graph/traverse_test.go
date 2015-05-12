@@ -16,6 +16,8 @@
 package graph_test
 
 import (
+	"fmt"
+	"math/rand"
 	"runtime"
 	"sort"
 	"sync"
@@ -102,6 +104,7 @@ func (t *TraverseTest) SetUpTestSuite() {
 
 func (t *TraverseTest) SetUp(ti *TestInfo) {
 	t.ctx = ti.Ctx
+	t.edges = make(map[string][]string)
 }
 
 func (t *TraverseTest) defaultVisit(
@@ -378,7 +381,51 @@ func (t *TraverseTest) Cycle() {
 }
 
 func (t *TraverseTest) LargeRootedTree() {
-	AssertFalse(true, "TODO")
+	// Set up a tree of the given depth, with a random number of children for
+	// each node.
+	const depth = 10
+	t.roots = []string{"root"}
+
+	nextID := 0
+	nextLevel := []string{"root"}
+	allNodes := map[string]struct{}{
+		"root": struct{}{},
+	}
+
+	for depthI := 0; depthI < depth; depthI++ {
+		thisLevel := nextLevel
+		nextLevel = nil
+		for _, parent := range thisLevel {
+			numChildren := int(rand.Int31n(6))
+			for childI := 0; childI < numChildren; childI++ {
+				child := fmt.Sprintf("%v", nextID)
+				nextID++
+
+				nextLevel = append(nextLevel, child)
+				t.edges[parent] = append(t.edges[parent], child)
+				allNodes[child] = struct{}{}
+			}
+		}
+	}
+
+	// Traverse.
+	err := t.traverse()
+	AssertEq(nil, err)
+
+	// All ndoes should be represented.
+	AssertEq(len(allNodes), len(t.nodesVisited))
+	for _, n := range t.nodesVisited {
+		_, ok := allNodes[n]
+		AssertTrue(ok, "Unexpected node: %q", n)
+	}
+
+	// Edge order should be respected.
+	nodeIndex := indexNodes(t.nodesVisited)
+	for p, successors := range t.edges {
+		for _, s := range successors {
+			ExpectLt(nodeIndex[p], nodeIndex[s], "%q %q", p, s)
+		}
+	}
 }
 
 func (t *TraverseTest) VisitorReturnsError() {
