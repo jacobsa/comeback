@@ -16,6 +16,7 @@
 package graph_test
 
 import (
+	"runtime"
 	"testing"
 
 	. "github.com/jacobsa/ogletest"
@@ -31,16 +32,12 @@ type TraverseTest struct {
 }
 
 var _ SetUpTestSuiteInterface = &TraverseTest{}
-var _ TearDownTestSuiteInterface = &TraverseTest{}
 
 func init() { RegisterTestSuite(&TraverseTest{}) }
 
 func (t *TraverseTest) SetUpTestSuite() {
-	panic("TODO: GOMAXPROCS")
-}
-
-func (t *TraverseTest) TearDownTestSuite() {
-	panic("TODO: GOMAXPROCS")
+	// Ensure that we get real parallelism where available.
+	runtime.GOMAXPROCS(runtime.NumCPU())
 }
 
 ////////////////////////////////////////////////////////////////////////
