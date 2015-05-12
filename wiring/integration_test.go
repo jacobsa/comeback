@@ -726,5 +726,55 @@ func (t *SaveAndRestoreTest) IdenticalFileContents() {
 }
 
 func (t *SaveAndRestoreTest) IdenticalDirectoryContents() {
-	AssertFalse(true, "TODO")
+	var fi os.FileInfo
+	var err error
+
+	// Create two directories with identical contents.
+	names := []string{"dir0", "dir1"}
+	mtime := time.Date(2015, 4, 5, 2, 15, 0, 0, time.Local)
+
+	for _, name := range names {
+		err = os.Mkdir(path.Join(t.src, name), 0700)
+		AssertEq(nil, err)
+
+		filePath := path.Join(t.src, name, "foo")
+		err = ioutil.WriteFile(filePath, []byte("blah"), 0400)
+		AssertEq(nil, err)
+
+		err = os.Chtimes(filePath, mtime, mtime)
+		AssertEq(nil, err)
+	}
+
+	// Save.
+	score, err := t.save()
+	AssertEq(nil, err)
+
+	// Sanity check: if we got the directory contents perfectly identical, then
+	// we should see only these blobs in the bucket:
+	//
+	//  1. A listing for the root directory.
+	//  2. A listing shared by the two directories.
+	//  3. The contents of the (identical) files.
+	//
+	listReq := &gcs.ListObjectsRequest{Prefix: wiring.BlobObjectNamePrefix}
+	objects, _, err := gcsutil.List(t.ctx, t.bucket, listReq)
+
+	AssertEq(nil, err)
+	AssertEq(3, len(objects))
+
+	// Restore.
+	err = t.restore(score)
+	AssertEq(nil, err)
+
+	// Read each directory.
+	for _, name := range names {
+		entries, err := ioutil.ReadDir(path.Join(t.dst, name))
+		AssertEq(nil, err)
+		AssertEq(1, len(entries))
+
+		fi = entries[0]
+		ExpectEq("foo", fi.Name())
+		ExpectEq(4, fi.Size())
+		ExpectFalse(fi.IsDir())
+	}
 }
