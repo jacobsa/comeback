@@ -15,7 +15,11 @@
 
 package graph
 
-import "golang.org/x/net/context"
+import (
+	"errors"
+
+	"golang.org/x/net/context"
+)
 
 type Visitor interface {
 	// Process the supplied node and return a list of adjacent nodes.
@@ -38,4 +42,7 @@ func Traverse(
 	ctx context.Context,
 	parallelism int,
 	roots []string,
-	v Visitor) (err error)
+	v Visitor) (err error) {
+	err = errors.New("TODO: Traverse")
+	return
+}
