@@ -56,7 +56,12 @@ func sortNodes(in []string) (out sort.StringSlice) {
 }
 
 func indexNodes(nodes []string) (index map[string]int) {
-	panic("TODO")
+	index = make(map[string]int)
+	for i, n := range nodes {
+		index[n] = i
+	}
+
+	return
 }
 
 ////////////////////////////////////////////////////////////////////////
