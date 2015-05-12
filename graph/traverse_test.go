@@ -47,6 +47,26 @@ func (t *TraverseTest) TearDownTestSuite() {
 // Tests
 ////////////////////////////////////////////////////////////////////////
 
-func (t *TraverseTest) DoesFoo() {
+func (t *TraverseTest) EmptyGraph() {
+	AssertFalse(true, "TODO")
+}
+
+func (t *TraverseTest) SimpleRootedTree() {
+	AssertFalse(true, "TODO")
+}
+
+func (t *TraverseTest) SimpleDAG() {
+	AssertFalse(true, "TODO")
+}
+
+func (t *TraverseTest) MultipleConnectedComponents() {
+	AssertFalse(true, "TODO")
+}
+
+func (t *TraverseTest) LargeRootedTree() {
+	AssertFalse(true, "TODO")
+}
+
+func (t *TraverseTest) VisitorReturnsError() {
 	AssertFalse(true, "TODO")
 }
