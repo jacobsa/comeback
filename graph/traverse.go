@@ -15,7 +15,12 @@
 
 package graph
 
-import "golang.org/x/net/context"
+import (
+	"sync"
+
+	"github.com/jacobsa/gcloud/syncutil"
+	"golang.org/x/net/context"
+)
 
 // A visitor in a directed graph whose nodes are identified by strings.
 type Visitor interface {
@@ -75,4 +80,47 @@ func Traverse(
 	}
 
 	return
+}
+
+// State shared by each traverse worker.
+type traverseState struct {
+	mu syncutil.InvariantMutex
+
+	// All nodes that have ever been seen. If a node is in this map, it will
+	// eventually be visted (barring errors returned by the visitor).
+	//
+	// GUARDED_BY(mu)
+	admitted map[string]struct{}
+
+	// Admitted nodes that have yet to be visted.
+	//
+	// GUARDED_BY(mu)
+	toVisit []string
+
+	// Set to true if the context has been cancelled. All workers should return
+	// when this happens.
+	//
+	// GUARDED_BY(mu)
+	cancelled bool
+
+	// The number of workers that are doing something besides waiting on a node
+	// to visit. If this hits zero with toVisit empty, it means that there is
+	// nothing further to do.
+	//
+	// GUARDED_BY(mu)
+	busyWorkers int
+
+	// Signalled with mu held when any of the following state changes:
+	//
+	//  *  toVisit
+	//  *  cancelled
+	//  *  busyWorkers
+	//
+	// GUARDED_BY(mu)
+	cond sync.Cond
+}
+
+// LOCKS_REQUIRED(ts.mu)
+func (ts *traverseState) checkInvariants() {
+	panic("TODO")
 }
