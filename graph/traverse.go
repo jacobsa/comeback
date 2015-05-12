@@ -17,14 +17,25 @@ package graph
 
 import "golang.org/x/net/context"
 
-// TODO(jacobsa): Comments.
-type Visistor interface {
-	// TODO(jacobsa): Comments.
+type Visitor interface {
+	// Process the supplied node and return a list of adjacent nodes.
 	Visit(ctx context.Context, node string) (adjacent []string, err error)
 }
 
-// TODO(jacobsa): Comments.
+// Invoke v.Visit on each node in the connected graph(s) containing the
+// supplied search root nodes, whose edges are defined by the output of
+// v.Visit. Use the supplied degree of parallelism.
+//
+// It is guaranteed that if a node N is fed to v.Visit, then either:
+//
+//  *  N is an element of roots, or
+//  *  There exists an adjacent node N' such that v.Visit(N') was called and
+//     returned successfully.
+//
+// In particular, if the graph is a rooted tree and searching starts at the
+// root, then parents will be successfully visited before children are visited.
 func Traverse(
 	ctx context.Context,
+	parallelism int,
 	roots []string,
-	visitor Visistor) (err error)
+	v Visitor) (err error)
