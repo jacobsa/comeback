@@ -16,6 +16,7 @@
 package graph
 
 import (
+	"errors"
 	"sync"
 
 	"github.com/jacobsa/gcloud/syncutil"
@@ -46,37 +47,31 @@ func Traverse(
 	parallelism int,
 	roots []string,
 	v Visitor) (err error) {
-	// TODO(jacobsa): Add parallelism.
+	b := syncutil.NewBundle(ctx)
+	defer func() { err = b.Join() }()
 
 	// Set up initial state.
-	toVisit := make([]string, len(roots))
-	copy(toVisit, roots)
-
-	admitted := make(map[string]struct{})
-	for _, n := range toVisit {
-		admitted[n] = struct{}{}
+	ts := &traverseState{
+		admitted: make(map[string]struct{}),
 	}
 
-	// Visit until we're done.
-	for len(toVisit) > 0 {
-		// Pop the last node.
-		node := toVisit[len(toVisit)-1]
-		toVisit = toVisit[:len(toVisit)-1]
+	ts.mu = syncutil.NewInvariantMutex(ts.checkInvariants)
+	ts.cond.L = &ts.mu
 
-		// Visit it.
-		var adjacent []string
-		adjacent, err = v.Visit(ctx, node)
-		if err != nil {
+	for _, r := range roots {
+		ts.admitted[r] = struct{}{}
+		ts.toVisit = append(ts.toVisit, r)
+	}
+
+	// Ensure that ts.cancelled is set when the context is eventually cancelled.
+	go watchForCancel(ctx, ts)
+
+	// Run the appropriate number of workers.
+	for i := 0; i < parallelism; i++ {
+		b.Add(func(ctx context.Context) (err error) {
+			err = traverse(ctx, ts, v)
 			return
-		}
-
-		// Add adjacent ndoes that we haven't already admitted.
-		for _, n := range adjacent {
-			if _, ok := admitted[n]; !ok {
-				admitted[n] = struct{}{}
-				toVisit = append(toVisit, n)
-			}
-		}
+		})
 	}
 
 	return
@@ -122,5 +117,21 @@ type traverseState struct {
 
 // LOCKS_REQUIRED(ts.mu)
 func (ts *traverseState) checkInvariants() {
+	panic("TODO")
+}
+
+// A single traverse worker.
+func traverse(
+	ctx context.Context,
+	ts *traverseState,
+	v Visitor) (err error) {
+	err = errors.New("TODO")
+	return
+}
+
+// Bridge context cancellation with traverseState.cancelled.
+func watchForCancel(
+	ctx context.Context,
+	ts *traverseState) {
 	panic("TODO")
 }
