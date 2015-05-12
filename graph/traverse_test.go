@@ -215,7 +215,43 @@ func (t *TraverseTest) SimpleRootedTree() {
 }
 
 func (t *TraverseTest) SimpleDAG() {
-	AssertFalse(true, "TODO")
+	// Graph structure:
+	//
+	//        A
+	//      /  \
+	//     B    C
+	//      \  /|
+	//        D |
+	//         \|
+	//          E
+	//
+	t.roots = []string{"A"}
+	t.edges = map[string][]string{
+		"A": []string{"B", "C"},
+		"B": []string{"E"},
+		"C": []string{"D", "E"},
+		"D": []string{"E"},
+	}
+
+	// Traverse.
+	err := t.traverse()
+	AssertEq(nil, err)
+
+	AssertThat(
+		sortNodes(t.nodesVisited),
+		ElementsAre(
+			"A",
+			"B",
+			"C",
+			"D",
+			"E",
+		))
+
+	nodeIndex := indexNodes(t.nodesVisited)
+	ExpectGt(nodeIndex["B"], nodeIndex["A"])
+	ExpectGt(nodeIndex["C"], nodeIndex["A"])
+	ExpectThat(nodeIndex["D"], AnyOf(GreaterThan("B"), GreaterThan("C")))
+	ExpectThat(nodeIndex["E"], AnyOf(GreaterThan("D"), GreaterThan("C")))
 }
 
 func (t *TraverseTest) MultipleConnectedComponents() {
