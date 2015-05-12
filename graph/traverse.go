@@ -89,6 +89,8 @@ type traverseState struct {
 
 	// Admitted nodes that have yet to be visted.
 	//
+	// INVARIANT: For each n in toVisit, n is a key of admitted.
+	//
 	// GUARDED_BY(mu)
 	toVisit []string
 
