@@ -286,6 +286,37 @@ func (t *SaveAndRestoreTest) EmptyDirectory() {
 	ExpectEq(0, len(entries))
 }
 
+func (t *SaveAndRestoreTest) SingleEmptyFile() {
+	var fi os.FileInfo
+	var err error
+
+	// Create.
+	err = ioutil.WriteFile(path.Join(t.src, "foo"), []byte{}, 0400)
+	AssertEq(nil, err)
+
+	// Save and restore.
+	score, err := t.save()
+	AssertEq(nil, err)
+
+	err = t.restore(score)
+	AssertEq(nil, err)
+
+	// Read entries.
+	entries, err := ioutil.ReadDir(t.dst)
+	AssertEq(nil, err)
+	AssertEq(1, len(entries))
+
+	fi = entries[0]
+	ExpectEq("foo", fi.Name())
+	ExpectEq(0, fi.Size())
+	ExpectFalse(fi.IsDir())
+
+	// Read the file.
+	b, err := ioutil.ReadFile(path.Join(t.dst, "foo"))
+	AssertEq(nil, err)
+	ExpectEq("", string(b))
+}
+
 func (t *SaveAndRestoreTest) SingleSmallFile() {
 	const contents = "taco"
 
@@ -654,4 +685,96 @@ func (t *SaveAndRestoreTest) ExistingScoreCaching() {
 	// No new object for this score should have been saved.
 	_, err = gcsutil.ReadObject(t.ctx, t.bucket, objectName)
 	ExpectThat(err, HasSameTypeAs(&gcs.NotFoundError{}))
+}
+
+func (t *SaveAndRestoreTest) IdenticalFileContents() {
+	const contents = "taco"
+	var err error
+
+	// Create multiple files at various places in a directory hierarchy, all with
+	// identical contents.
+	AssertEq(nil, os.Mkdir(path.Join(t.src, "dir0"), 0700))
+	AssertEq(nil, os.Mkdir(path.Join(t.src, "dir1"), 0700))
+	AssertEq(nil, os.Mkdir(path.Join(t.src, "dir1/sub"), 0700))
+
+	paths := []string{
+		"foo",
+		"bar",
+		"dir0/baz",
+		"dir1/qux",
+		"dir1/sub/norf",
+	}
+
+	for _, p := range paths {
+		err = ioutil.WriteFile(path.Join(t.src, p), []byte(contents), 0400)
+		AssertEq(nil, err)
+	}
+
+	// Save and restore.
+	score, err := t.save()
+	AssertEq(nil, err)
+
+	err = t.restore(score)
+	AssertEq(nil, err)
+
+	// Each file should have made it through.
+	for _, p := range paths {
+		b, err := ioutil.ReadFile(path.Join(t.dst, p))
+		AssertEq(nil, err)
+		ExpectEq(contents, string(b))
+	}
+}
+
+func (t *SaveAndRestoreTest) IdenticalDirectoryContents() {
+	var fi os.FileInfo
+	var err error
+
+	// Create two directories with identical contents.
+	names := []string{"dir0", "dir1"}
+	mtime := time.Date(2015, 4, 5, 2, 15, 0, 0, time.Local)
+
+	for _, name := range names {
+		err = os.Mkdir(path.Join(t.src, name), 0700)
+		AssertEq(nil, err)
+
+		filePath := path.Join(t.src, name, "foo")
+		err = ioutil.WriteFile(filePath, []byte("blah"), 0400)
+		AssertEq(nil, err)
+
+		err = os.Chtimes(filePath, mtime, mtime)
+		AssertEq(nil, err)
+	}
+
+	// Save.
+	score, err := t.save()
+	AssertEq(nil, err)
+
+	// Sanity check: if we got the directory contents perfectly identical, then
+	// we should see only these blobs in the bucket:
+	//
+	//  1. A listing for the root directory.
+	//  2. A listing shared by the two directories.
+	//  3. The contents of the (identical) files.
+	//
+	listReq := &gcs.ListObjectsRequest{Prefix: wiring.BlobObjectNamePrefix}
+	objects, _, err := gcsutil.List(t.ctx, t.bucket, listReq)
+
+	AssertEq(nil, err)
+	AssertEq(3, len(objects))
+
+	// Restore.
+	err = t.restore(score)
+	AssertEq(nil, err)
+
+	// Read each directory.
+	for _, name := range names {
+		entries, err := ioutil.ReadDir(path.Join(t.dst, name))
+		AssertEq(nil, err)
+		AssertEq(1, len(entries))
+
+		fi = entries[0]
+		ExpectEq("foo", fi.Name())
+		ExpectEq(4, fi.Size())
+		ExpectFalse(fi.IsDir())
+	}
 }
