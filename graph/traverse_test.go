@@ -306,7 +306,44 @@ func (t *TraverseTest) MultipleConnectedComponents() {
 }
 
 func (t *TraverseTest) RedundantRoots() {
-	AssertFalse(true, "TODO")
+	// Graph structure:
+	//
+	//        A
+	//      /  \
+	//     B    C
+	//      \  /|
+	//        D |
+	//         \|
+	//          E
+	//
+	t.roots = []string{"A", "D", "B"}
+	t.edges = map[string][]string{
+		"A": []string{"B", "C"},
+		"B": []string{"D"},
+		"C": []string{"D", "E"},
+		"D": []string{"E"},
+	}
+
+	// Traverse.
+	err := t.traverse()
+	AssertEq(nil, err)
+
+	AssertThat(
+		sortNodes(t.nodesVisited),
+		ElementsAre(
+			"A",
+			"B",
+			"C",
+			"D",
+			"E",
+		))
+
+	nodeIndex := indexNodes(t.nodesVisited)
+	ExpectGt(nodeIndex["C"], nodeIndex["A"])
+
+	ExpectThat(
+		nodeIndex["E"],
+		AnyOf(GreaterThan(nodeIndex["D"]), GreaterThan(nodeIndex["C"])))
 }
 
 func (t *TraverseTest) Cycle() {
