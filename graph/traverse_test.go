@@ -17,6 +17,7 @@ package graph_test
 
 import (
 	"runtime"
+	"sync"
 	"testing"
 
 	"golang.org/x/net/context"
@@ -53,6 +54,22 @@ const parallelism = 16
 
 type TraverseTest struct {
 	ctx context.Context
+	mu  sync.Mutex
+
+	// The roots from which we traverse.
+	roots []string
+
+	// Edges used by the default implementation of visit.
+	edges map[string][]string
+
+	// The function that will be called for visiting nodes. By default, this
+	// writes to nodesVisited and reads from edges.
+	visit func(context.Context, string) ([]string, error)
+
+	// The nodes that were visited, in the order in which they were visited.
+	//
+	// GUARDED_BY(mu)
+	nodesVisited []string
 }
 
 var _ SetUpTestSuiteInterface = &TraverseTest{}
@@ -69,24 +86,42 @@ func (t *TraverseTest) SetUp(ti *TestInfo) {
 	t.ctx = ti.Ctx
 }
 
+func (t *TraverseTest) defaultVisit(
+	ctx context.Context,
+	node string) (adjacent []string, err error) {
+	t.mu.Lock()
+	t.nodesVisited = append(t.nodesVisited, node)
+	t.mu.Unlock()
+
+	adjacent = t.edges[node]
+	return
+}
+
+func (t *TraverseTest) traverse() (err error) {
+	// Choose a visit function.
+	visit := t.visit
+	if visit == nil {
+		visit = t.defaultVisit
+	}
+
+	// Traverse.
+	v := &funcVisitor{F: visit}
+	err = graph.Traverse(t.ctx, parallelism, t.roots, v)
+
+	return
+}
+
 ////////////////////////////////////////////////////////////////////////
 // Tests
 ////////////////////////////////////////////////////////////////////////
 
 func (t *TraverseTest) EmptyGraph() {
-	// Visitor -- should never be called.
-	f := func(ctx context.Context, node string) (adjacent []string, err error) {
-		AddFailure("Visitor unexpectedly called with node %q", node)
-		return
-	}
-
-	v := &funcVisitor{F: f}
-
 	// Traverse.
-	roots := []string{}
-	err := graph.Traverse(t.ctx, parallelism, roots, v)
-
+	err := t.traverse()
 	AssertEq(nil, err)
+
+	// Nothing should have been visited.
+	ExpectEq(0, len(t.nodesVisited))
 }
 
 func (t *TraverseTest) SimpleRootedTree() {
@@ -98,6 +133,10 @@ func (t *TraverseTest) SimpleDAG() {
 }
 
 func (t *TraverseTest) MultipleConnectedComponents() {
+	AssertFalse(true, "TODO")
+}
+
+func (t *TraverseTest) RedundantRoots() {
 	AssertFalse(true, "TODO")
 }
 
