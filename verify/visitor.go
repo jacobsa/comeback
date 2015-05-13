@@ -121,17 +121,6 @@ func (v *visitor) Visit(
 		return
 	}
 
-	// Verify the score.
-	expectedScore := blob.ComputeScore(contents)
-	if score != expectedScore {
-		err = fmt.Errorf(
-			"Score mismatch: %s vs. %s",
-			score.Hex(),
-			expectedScore.Hex())
-
-		return
-	}
-
 	// Parse the listing.
 	listing, err := repr.UnmarshalDir(contents)
 	if err != nil {

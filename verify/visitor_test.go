@@ -147,20 +147,6 @@ func (t *DirsTest) BlobStoreReturnsError() {
 	ExpectThat(err, Error(HasSubstr("taco")))
 }
 
-func (t *DirsTest) IncorrectScore() {
-	// Load
-	wrongContents := append(t.contents, 'a')
-	ExpectCall(t.blobStore, "Load")(Any()).
-		WillOnce(Return(wrongContents, nil))
-
-	// Call
-	_, err := t.visitor.Visit(t.ctx, t.node)
-
-	ExpectThat(err, Error(HasSubstr("Score")))
-	ExpectThat(err, Error(HasSubstr(t.score.Hex())))
-	ExpectThat(err, Error(HasSubstr(blob.ComputeScore(wrongContents).Hex())))
-}
-
 func (t *DirsTest) BlobIsJunk() {
 	// Set up junk contents.
 	t.contents = append(t.contents, 'a')
