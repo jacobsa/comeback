@@ -135,7 +135,7 @@ func (t *DirsTest) SetUp(ti *TestInfo) {
 
 func (t *DirsTest) CallsBlobStore() {
 	// Load
-	ExpectCall(t.blobStore, "Load")(t.score).
+	ExpectCall(t.blobStore, "Load")(Any(), t.score).
 		WillOnce(Return(nil, errors.New("")))
 
 	// Call
@@ -144,7 +144,7 @@ func (t *DirsTest) CallsBlobStore() {
 
 func (t *DirsTest) BlobStoreReturnsError() {
 	// Load
-	ExpectCall(t.blobStore, "Load")(Any()).
+	ExpectCall(t.blobStore, "Load")(Any(), Any()).
 		WillOnce(Return(nil, errors.New("taco")))
 
 	// Call
@@ -161,7 +161,7 @@ func (t *DirsTest) BlobIsJunk() {
 	t.node = verify.FormatNodeName(true, t.score)
 
 	// Load
-	ExpectCall(t.blobStore, "Load")(Any()).
+	ExpectCall(t.blobStore, "Load")(Any(), Any()).
 		WillOnce(Return(t.contents, nil))
 
 	// Call
@@ -191,7 +191,7 @@ func (t *DirsTest) UnknownEntryType() {
 	t.node = verify.FormatNodeName(true, t.score)
 
 	// Load
-	ExpectCall(t.blobStore, "Load")(Any()).
+	ExpectCall(t.blobStore, "Load")(Any(), Any()).
 		WillOnce(Return(t.contents, nil))
 
 	// Call
@@ -221,7 +221,7 @@ func (t *DirsTest) SymlinkWithScores() {
 	t.node = verify.FormatNodeName(true, t.score)
 
 	// Load
-	ExpectCall(t.blobStore, "Load")(Any()).
+	ExpectCall(t.blobStore, "Load")(Any(), Any()).
 		WillOnce(Return(t.contents, nil))
 
 	// Call
@@ -234,7 +234,7 @@ func (t *DirsTest) SymlinkWithScores() {
 
 func (t *DirsTest) ReturnsAppropriateAdjacentNodes() {
 	// Load
-	ExpectCall(t.blobStore, "Load")(Any()).
+	ExpectCall(t.blobStore, "Load")(Any(), Any()).
 		WillOnce(Return(t.contents, nil))
 
 	// Call
@@ -327,7 +327,7 @@ func (t *FilesFullTest) SetUp(ti *TestInfo) {
 
 func (t *FilesFullTest) CallsBlobStore() {
 	// Load
-	ExpectCall(t.blobStore, "Load")(t.knownScore).
+	ExpectCall(t.blobStore, "Load")(Any(), t.knownScore).
 		WillOnce(Return(nil, errors.New("")))
 
 	// Call
@@ -336,7 +336,7 @@ func (t *FilesFullTest) CallsBlobStore() {
 
 func (t *FilesFullTest) BlobStoreReturnsError() {
 	// Load
-	ExpectCall(t.blobStore, "Load")(Any()).
+	ExpectCall(t.blobStore, "Load")(Any(), Any()).
 		WillOnce(Return(nil, errors.New("taco")))
 
 	// Call
@@ -348,7 +348,7 @@ func (t *FilesFullTest) BlobStoreReturnsError() {
 
 func (t *FilesFullTest) BlobStoreSucceeds() {
 	// Load
-	ExpectCall(t.blobStore, "Load")(Any()).
+	ExpectCall(t.blobStore, "Load")(Any(), Any()).
 		WillOnce(Return(t.contents, nil))
 
 	// Call
