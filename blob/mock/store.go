@@ -10,6 +10,7 @@ import (
 	fmt "fmt"
 	blob "github.com/jacobsa/comeback/blob"
 	oglemock "github.com/jacobsa/oglemock"
+	context "golang.org/x/net/context"
 	runtime "runtime"
 	unsafe "unsafe"
 )
@@ -41,7 +42,7 @@ func (m *mockStore) Oglemock_Description() string {
 	return m.description
 }
 
-func (m *mockStore) Contains(p0 blob.Score) (o0 bool) {
+func (m *mockStore) Contains(p0 context.Context, p1 blob.Score) (o0 bool) {
 	// Get a file name and line number for the caller.
 	_, file, line, _ := runtime.Caller(1)
 
@@ -51,7 +52,7 @@ func (m *mockStore) Contains(p0 blob.Score) (o0 bool) {
 		"Contains",
 		file,
 		line,
-		[]interface{}{p0})
+		[]interface{}{p0, p1})
 
 	if len(retVals) != 1 {
 		panic(fmt.Sprintf("mockStore.Contains: invalid return values: %v", retVals))
@@ -65,7 +66,7 @@ func (m *mockStore) Contains(p0 blob.Score) (o0 bool) {
 	return
 }
 
-func (m *mockStore) Flush() (o0 error) {
+func (m *mockStore) Flush(p0 context.Context) (o0 error) {
 	// Get a file name and line number for the caller.
 	_, file, line, _ := runtime.Caller(1)
 
@@ -75,7 +76,7 @@ func (m *mockStore) Flush() (o0 error) {
 		"Flush",
 		file,
 		line,
-		[]interface{}{})
+		[]interface{}{p0})
 
 	if len(retVals) != 1 {
 		panic(fmt.Sprintf("mockStore.Flush: invalid return values: %v", retVals))
@@ -89,7 +90,7 @@ func (m *mockStore) Flush() (o0 error) {
 	return
 }
 
-func (m *mockStore) Load(p0 blob.Score) (o0 []uint8, o1 error) {
+func (m *mockStore) Load(p0 context.Context, p1 blob.Score) (o0 []uint8, o1 error) {
 	// Get a file name and line number for the caller.
 	_, file, line, _ := runtime.Caller(1)
 
@@ -99,7 +100,7 @@ func (m *mockStore) Load(p0 blob.Score) (o0 []uint8, o1 error) {
 		"Load",
 		file,
 		line,
-		[]interface{}{p0})
+		[]interface{}{p0, p1})
 
 	if len(retVals) != 2 {
 		panic(fmt.Sprintf("mockStore.Load: invalid return values: %v", retVals))
@@ -118,7 +119,7 @@ func (m *mockStore) Load(p0 blob.Score) (o0 []uint8, o1 error) {
 	return
 }
 
-func (m *mockStore) Store(p0 []uint8) (o0 blob.Score, o1 error) {
+func (m *mockStore) Store(p0 context.Context, p1 []uint8) (o0 blob.Score, o1 error) {
 	// Get a file name and line number for the caller.
 	_, file, line, _ := runtime.Caller(1)
 
@@ -128,7 +129,7 @@ func (m *mockStore) Store(p0 []uint8) (o0 blob.Score, o1 error) {
 		"Store",
 		file,
 		line,
-		[]interface{}{p0})
+		[]interface{}{p0, p1})
 
 	if len(retVals) != 2 {
 		panic(fmt.Sprintf("mockStore.Store: invalid return values: %v", retVals))

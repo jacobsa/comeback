@@ -22,6 +22,8 @@ import (
 	"path"
 	"regexp"
 
+	"golang.org/x/net/context"
+
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/fs"
 	"github.com/jacobsa/comeback/repr"
@@ -123,7 +125,7 @@ type dirSaver struct {
 }
 
 func (s *dirSaver) Flush() (err error) {
-	err = s.blobStore.Flush()
+	err = s.blobStore.Flush(context.TODO())
 	if err != nil {
 		err = fmt.Errorf("blobStore.Flush: %v", err)
 		return
@@ -234,7 +236,7 @@ func (s *dirSaver) Save(
 	}
 
 	// Store that serialized version.
-	score, err = s.blobStore.Store(data)
+	score, err = s.blobStore.Store(context.TODO(), data)
 	if err != nil {
 		err = errors.New("Storing dir blob: " + err.Error())
 		return

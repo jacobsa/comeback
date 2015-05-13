@@ -327,7 +327,9 @@ func (s *GCSStore) makeName(score Score) (name string) {
 // Public interface
 ////////////////////////////////////////////////////////////////////////
 
-func (s *GCSStore) Store(blob []byte) (score Score, err error) {
+func (s *GCSStore) Store(
+	ctx context.Context,
+	blob []byte) (score Score, err error) {
 	// Compute a score and an object name.
 	score = ComputeScore(blob)
 	name := s.makeName(score)
@@ -350,7 +352,7 @@ func (s *GCSStore) Store(blob []byte) (score Score, err error) {
 		},
 	}
 
-	o, err := s.bucket.CreateObject(context.Background(), req)
+	o, err := s.bucket.CreateObject(ctx, req)
 	if err != nil {
 		err = fmt.Errorf("CreateObject: %v", err)
 		return
@@ -376,21 +378,23 @@ func (s *GCSStore) Store(blob []byte) (score Score, err error) {
 	return
 }
 
-func (s *GCSStore) Flush() (err error) {
+func (s *GCSStore) Flush(ctx context.Context) (err error) {
 	panic("GCSStore.Flush not supported; wiring code bug?")
 }
 
-func (s *GCSStore) Contains(score Score) (b bool) {
+func (s *GCSStore) Contains(ctx context.Context, score Score) (b bool) {
 	panic("GCSStore.Contains not supported; wiring code bug?")
 }
 
-func (s *GCSStore) Load(score Score) (blob []byte, err error) {
+func (s *GCSStore) Load(
+	ctx context.Context,
+	score Score) (blob []byte, err error) {
 	// Create a ReadCloser.
 	req := &gcs.ReadObjectRequest{
 		Name: s.makeName(score),
 	}
 
-	rc, err := s.bucket.NewReader(context.Background(), req)
+	rc, err := s.bucket.NewReader(ctx, req)
 	if err != nil {
 		err = fmt.Errorf("NewReader: %v", err)
 		return
@@ -415,8 +419,10 @@ func (s *GCSStore) Load(score Score) (blob []byte, err error) {
 }
 
 // List all of the blobs that are known to be durable in the bucket.
-func (s *GCSStore) List() (scores []Score, err error) {
-	b := syncutil.NewBundle(context.Background())
+func (s *GCSStore) List() (
+	ctx context.Context,
+	scores []Score, err error) {
+	b := syncutil.NewBundle(ctx)
 
 	// List into a channel.
 	scoreChan := make(chan Score, 100)

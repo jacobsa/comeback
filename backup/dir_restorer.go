@@ -19,6 +19,8 @@ import (
 	"fmt"
 	"path"
 
+	"golang.org/x/net/context"
+
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/fs"
 	"github.com/jacobsa/comeback/repr"
@@ -128,7 +130,7 @@ func (r *dirRestorer) RestoreDirectory(
 	relPath string,
 ) (err error) {
 	// Load the appropriate blob.
-	blob, err := r.blobStore.Load(score)
+	blob, err := r.blobStore.Load(context.TODO(), score)
 	if err != nil {
 		err = fmt.Errorf("Loading blob: %v", err)
 		return
