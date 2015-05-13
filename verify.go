@@ -34,6 +34,7 @@ import (
 
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/graph"
+	"github.com/jacobsa/comeback/util"
 	"github.com/jacobsa/comeback/verify"
 	"github.com/jacobsa/comeback/wiring"
 	"github.com/jacobsa/gcloud/gcs"
@@ -104,6 +105,12 @@ func runVerify(args []string) {
 	bucket := getBucket()
 	crypter := getCrypter()
 
+	// Create a blob store.
+	blobStore, err := wiring.MakeBlobStore(
+		bucket,
+		crypter,
+		util.NewStringSet())
+
 	// List all scores in the bucket, verifying the object record metadata in the
 	// process.
 	knownScores, err := listAllScores(
@@ -115,12 +122,6 @@ func runVerify(args []string) {
 		err = fmt.Errorf("listAllScores: %v", err)
 		return
 	}
-
-	// Create a blob store.
-	blobStore, err := wiring.MakeBlobStore(
-		bucket,
-		crypter,
-		knownScores)
 
 	if err != nil {
 		err = fmt.Errorf("MakeBlobStore: %v", err)
