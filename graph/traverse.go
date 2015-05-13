@@ -141,6 +141,13 @@ func (ts *traverseState) checkInvariants() {
 	}
 }
 
+// Is there anything that needs a worker's attention?
+//
+// LOCKS_REQUIRED(ts.mu)
+func (ts *traverseState) shouldWake() {
+	return len(ts.toVisit) != nil || ts.cancelled || ts.busyWorkers == 0
+}
+
 ////////////////////////////////////////////////////////////////////////
 // Helpers
 ////////////////////////////////////////////////////////////////////////
