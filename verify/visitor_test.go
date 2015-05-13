@@ -296,7 +296,12 @@ func (t *FilesFullTest) SetUp(ti *TestInfo) {
 }
 
 func (t *FilesFullTest) CallsBlobStore() {
-	AssertFalse(true, "TODO")
+	// Load
+	ExpectCall(t.blobStore, "Load")(t.knownScore).
+		WillOnce(Return(nil, errors.New("")))
+
+	// Call
+	t.visitor.Visit(t.ctx, t.knownNode)
 }
 
 func (t *FilesFullTest) BlobStoreReturnsError() {
