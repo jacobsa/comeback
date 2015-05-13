@@ -66,6 +66,7 @@ func init() {
 ////////////////////////////////////////////////////////////////////////
 
 type loggingVisitor struct {
+	count   *uint64
 	wrapped graph.Visitor
 }
 
@@ -79,21 +80,13 @@ func (v *loggingVisitor) Visit(
 	}
 
 	// Log.
-	log.Printf("%s -> %s", node, strings.Join(adjacent, " "))
+	newCount := atomic.AddUint64(v.count, 1)
+	log.Printf(
+		"(%v visited) %s -> %s",
+		newCount,
+		node,
+		strings.Join(adjacent, " "))
 
-	return
-}
-
-type countingVisitor struct {
-	count   *uint64
-	wrapped graph.Visitor
-}
-
-func (v *countingVisitor) Visit(
-	ctx context.Context,
-	node string) (adjacent []string, err error) {
-	atomic.AddUint64(v.count, 1)
-	adjacent, err = v.wrapped.Visit(ctx, node)
 	return
 }
 
@@ -207,12 +200,8 @@ func runVerify(args []string) {
 		knownScores,
 		blobStore)
 
-	visitor = &loggingVisitor{
-		wrapped: visitor,
-	}
-
 	var nodesVisited uint64
-	visitor = &countingVisitor{
+	visitor = &loggingVisitor{
 		count:   &nodesVisited,
 		wrapped: visitor,
 	}
