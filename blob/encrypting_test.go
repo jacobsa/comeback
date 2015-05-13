@@ -17,13 +17,16 @@ package blob_test
 
 import (
 	"errors"
+	"testing"
+
+	"golang.org/x/net/context"
+
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/blob/mock"
 	"github.com/jacobsa/comeback/crypto/mock"
 	. "github.com/jacobsa/oglematchers"
 	"github.com/jacobsa/oglemock"
 	. "github.com/jacobsa/ogletest"
-	"testing"
 )
 
 func TestEncrypting(t *testing.T) { RunTests(t) }
@@ -33,12 +36,14 @@ func TestEncrypting(t *testing.T) { RunTests(t) }
 ////////////////////////////////////////////////////////////////////////
 
 type encryptingStoreTest struct {
+	ctx     context.Context
 	crypter mock_crypto.MockCrypter
 	wrapped mock_blob.MockStore
 	store   blob.Store
 }
 
 func (t *encryptingStoreTest) SetUp(i *TestInfo) {
+	t.ctx = i.Ctx
 	t.crypter = mock_crypto.NewMockCrypter(i.MockController, "crypter")
 	t.wrapped = mock_blob.NewMockStore(i.MockController, "wrapped")
 	t.store = blob.NewEncryptingStore(t.crypter, t.wrapped)
@@ -62,7 +67,7 @@ func (t *EncryptingStore_StoreTest) CallsCrypter() {
 		WillOnce(oglemock.Return(nil, errors.New("")))
 
 	// Call
-	t.store.Store(blob)
+	t.store.Store(t.ctx, blob)
 }
 
 func (t *EncryptingStore_StoreTest) CrypterReturnsError() {
@@ -71,7 +76,7 @@ func (t *EncryptingStore_StoreTest) CrypterReturnsError() {
 		WillOnce(oglemock.Return(nil, errors.New("taco")))
 
 	// Call
-	_, err := t.store.Store([]byte{})
+	_, err := t.store.Store(t.ctx, []byte{})
 
 	ExpectThat(err, Error(HasSubstr("Encrypt")))
 	ExpectThat(err, Error(HasSubstr("taco")))
@@ -85,11 +90,11 @@ func (t *EncryptingStore_StoreTest) CallsWrapped() {
 		WillOnce(oglemock.Return(encryptedBlob, nil))
 
 	// Wrapped
-	ExpectCall(t.wrapped, "Store")(DeepEquals(encryptedBlob)).
+	ExpectCall(t.wrapped, "Store")(Any(), DeepEquals(encryptedBlob)).
 		WillOnce(oglemock.Return(blob.Score{}, errors.New("")))
 
 	// Call
-	t.store.Store([]byte{})
+	t.store.Store(t.ctx, []byte{})
 }
 
 func (t *EncryptingStore_StoreTest) WrappedReturnsError() {
@@ -98,11 +103,11 @@ func (t *EncryptingStore_StoreTest) WrappedReturnsError() {
 		WillOnce(oglemock.Return([]byte{}, nil))
 
 	// Wrapped
-	ExpectCall(t.wrapped, "Store")(Any()).
+	ExpectCall(t.wrapped, "Store")(Any(), Any()).
 		WillOnce(oglemock.Return(blob.Score{}, errors.New("taco")))
 
 	// Call
-	_, err := t.store.Store([]byte{})
+	_, err := t.store.Store(t.ctx, []byte{})
 
 	ExpectThat(err, Error(Equals("taco")))
 }
@@ -115,11 +120,11 @@ func (t *EncryptingStore_StoreTest) WrappedSucceeds() {
 	// Wrapped
 	expected := blob.ComputeScore([]byte("taco"))
 
-	ExpectCall(t.wrapped, "Store")(Any()).
+	ExpectCall(t.wrapped, "Store")(Any(), Any()).
 		WillOnce(oglemock.Return(expected, nil))
 
 	// Call
-	score, err := t.store.Store([]byte{})
+	score, err := t.store.Store(t.ctx, []byte{})
 	AssertEq(nil, err)
 
 	ExpectThat(score, DeepEquals(expected))
@@ -139,20 +144,20 @@ func (t *EncryptingStore_LoadTest) CallsWrapped() {
 	score := blob.ComputeScore([]byte("taco"))
 
 	// Wrapped
-	ExpectCall(t.wrapped, "Load")(DeepEquals(score)).
+	ExpectCall(t.wrapped, "Load")(Any(), DeepEquals(score)).
 		WillOnce(oglemock.Return(nil, errors.New("")))
 
 	// Call
-	t.store.Load(score)
+	t.store.Load(t.ctx, score)
 }
 
 func (t *EncryptingStore_LoadTest) WrappedReturnsError() {
 	// Wrapped
-	ExpectCall(t.wrapped, "Load")(Any()).
+	ExpectCall(t.wrapped, "Load")(Any(), Any()).
 		WillOnce(oglemock.Return(nil, errors.New("taco")))
 
 	// Call
-	_, err := t.store.Load(blob.ComputeScore([]byte{}))
+	_, err := t.store.Load(t.ctx, blob.ComputeScore([]byte{}))
 
 	ExpectThat(err, Error(Equals("taco")))
 }
@@ -161,7 +166,7 @@ func (t *EncryptingStore_LoadTest) CallsCrypter() {
 	// Wrapped
 	ciphertext := []byte{0xde, 0xad}
 
-	ExpectCall(t.wrapped, "Load")(Any()).
+	ExpectCall(t.wrapped, "Load")(Any(), Any()).
 		WillOnce(oglemock.Return(ciphertext, nil))
 
 	// Crypter
@@ -169,12 +174,12 @@ func (t *EncryptingStore_LoadTest) CallsCrypter() {
 		WillOnce(oglemock.Return(nil, errors.New("")))
 
 	// Call
-	t.store.Load(blob.ComputeScore([]byte{}))
+	t.store.Load(t.ctx, blob.ComputeScore([]byte{}))
 }
 
 func (t *EncryptingStore_LoadTest) CrypterReturnsError() {
 	// Wrapped
-	ExpectCall(t.wrapped, "Load")(Any()).
+	ExpectCall(t.wrapped, "Load")(Any(), Any()).
 		WillOnce(oglemock.Return([]byte{}, nil))
 
 	// Crypter
@@ -182,7 +187,7 @@ func (t *EncryptingStore_LoadTest) CrypterReturnsError() {
 		WillOnce(oglemock.Return(nil, errors.New("taco")))
 
 	// Call
-	_, err := t.store.Load(blob.ComputeScore([]byte{}))
+	_, err := t.store.Load(t.ctx, blob.ComputeScore([]byte{}))
 
 	ExpectThat(err, Error(HasSubstr("Decrypt")))
 	ExpectThat(err, Error(HasSubstr("taco")))
@@ -190,7 +195,7 @@ func (t *EncryptingStore_LoadTest) CrypterReturnsError() {
 
 func (t *EncryptingStore_LoadTest) CrypterSucceeds() {
 	// Wrapped
-	ExpectCall(t.wrapped, "Load")(Any()).
+	ExpectCall(t.wrapped, "Load")(Any(), Any()).
 		WillOnce(oglemock.Return([]byte{}, nil))
 
 	// Crypter
@@ -200,7 +205,7 @@ func (t *EncryptingStore_LoadTest) CrypterSucceeds() {
 		WillOnce(oglemock.Return(expected, nil))
 
 	// Call
-	blob, err := t.store.Load(blob.ComputeScore([]byte{}))
+	blob, err := t.store.Load(t.ctx, blob.ComputeScore([]byte{}))
 	AssertEq(nil, err)
 
 	ExpectThat(blob, DeepEquals(expected))
