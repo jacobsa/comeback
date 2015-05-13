@@ -17,6 +17,7 @@ package verify
 
 import (
 	"github.com/jacobsa/comeback/blob"
+	"github.com/jacobsa/comeback/crypto"
 	"github.com/jacobsa/comeback/graph"
 	"github.com/jacobsa/gcloud/gcs"
 )
@@ -31,8 +32,9 @@ import (
 func NewVisitor(
 	readFiles bool,
 	allScores []blob.Score,
+	blobObjectNamePrefix string,
 	bucket gcs.Bucket,
-	blobObjectNamePrefix string) (v graph.Visitor) {
+	crypter crypto.Crypter) (v graph.Visitor) {
 	panic("TODO")
 }
 
