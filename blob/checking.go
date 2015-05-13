@@ -17,6 +17,8 @@ package blob
 
 import (
 	"fmt"
+
+	"golang.org/x/net/context"
 )
 
 // Return a blob store that wraps the supplied one, confirming that the blob
@@ -30,9 +32,11 @@ type checkingStore struct {
 	wrapped Store
 }
 
-func (s *checkingStore) Store(blob []byte) (score Score, err error) {
+func (s *checkingStore) Store(
+	ctx context.Context,
+	blob []byte) (score Score, err error) {
 	// Call the wrapped store.
-	if score, err = s.wrapped.Store(blob); err != nil {
+	if score, err = s.wrapped.Store(ctx, blob); err != nil {
 		return
 	}
 
@@ -50,9 +54,11 @@ func (s *checkingStore) Store(blob []byte) (score Score, err error) {
 	return
 }
 
-func (s *checkingStore) Load(score Score) (blob []byte, err error) {
+func (s *checkingStore) Load(
+	ctx context.Context,
+	score Score) (blob []byte, err error) {
 	// Call the wrapped store.
-	if blob, err = s.wrapped.Load(score); err != nil {
+	if blob, err = s.wrapped.Load(ctx, score); err != nil {
 		return
 	}
 
@@ -68,12 +74,12 @@ func (s *checkingStore) Load(score Score) (blob []byte, err error) {
 	return
 }
 
-func (s *checkingStore) Flush() (err error) {
-	err = s.wrapped.Flush()
+func (s *checkingStore) Flush(ctx context.Context) (err error) {
+	err = s.wrapped.Flush(ctx)
 	return
 }
 
-func (s *checkingStore) Contains(score Score) (b bool) {
-	b = s.wrapped.Contains(score)
+func (s *checkingStore) Contains(ctx context.Context, score Score) (b bool) {
+	b = s.wrapped.Contains(ctx, score)
 	return
 }
