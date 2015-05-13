@@ -144,8 +144,17 @@ func (ts *traverseState) checkInvariants() {
 // Is there anything that needs a worker's attention?
 //
 // LOCKS_REQUIRED(ts.mu)
-func (ts *traverseState) shouldWake() {
-	return len(ts.toVisit) != nil || ts.cancelled || ts.busyWorkers == 0
+func (ts *traverseState) shouldWake() bool {
+	return len(ts.toVisit) != 0 || ts.cancelled || ts.busyWorkers == 0
+}
+
+// Sleep until there's something interesting for a traverse worker.
+//
+// LOCKS_REQUIRED(ts.mu)
+func (ts *traverseState) waitForSomethingToDo() {
+	for !ts.shouldWake() {
+		ts.cond.Wait()
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -157,8 +166,18 @@ func traverse(
 	ctx context.Context,
 	ts *traverseState,
 	v Visitor) (err error) {
-	err = errors.New("TODO")
-	return
+	for {
+		// Wait for something to do.
+		ts.waitForSomethingToDo()
+
+		// Return immediately if cancelled.
+		if ts.cancelled {
+			err = errors.New("Cancelled")
+			return
+		}
+
+		panic("TODO")
+	}
 }
 
 // Bridge context cancellation with traverseState.cancelled.
