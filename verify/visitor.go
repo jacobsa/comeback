@@ -17,9 +17,7 @@ package verify
 
 import (
 	"github.com/jacobsa/comeback/blob"
-	"github.com/jacobsa/comeback/crypto"
 	"github.com/jacobsa/comeback/graph"
-	"github.com/jacobsa/gcloud/gcs"
 )
 
 // Create a visitor for the DAG of blobs in the supplied bucket. Node names are
@@ -32,9 +30,7 @@ import (
 func NewVisitor(
 	readFiles bool,
 	allScores []blob.Score,
-	blobObjectNamePrefix string,
-	bucket gcs.Bucket,
-	crypter crypto.Crypter) (v graph.Visitor) {
+	bs blob.Store) (v graph.Visitor) {
 	panic("TODO")
 }
 

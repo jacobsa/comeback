@@ -74,19 +74,11 @@ func (t *DirsTest) SetUp(ti *TestInfo) {
 	t.CommonTest.setUp(ti, false)
 }
 
-func (t *DirsTest) CallsNewReader() {
+func (t *DirsTest) CallsBlobStore() {
 	AssertFalse(true, "TODO")
 }
 
-func (t *DirsTest) NewReaderReturnsError() {
-	AssertFalse(true, "TODO")
-}
-
-func (t *DirsTest) ReadError() {
-	AssertFalse(true, "TODO")
-}
-
-func (t *DirsTest) CloseError() {
+func (t *DirsTest) BlobStoreReaderReturnsError() {
 	AssertFalse(true, "TODO")
 }
 
@@ -94,15 +86,7 @@ func (t *DirsTest) IncorrectScore() {
 	AssertFalse(true, "TODO")
 }
 
-func (t *DirsTest) CallsCrypter() {
-	AssertFalse(true, "TODO")
-}
-
-func (t *DirsTest) CrypterReturnsError() {
-	AssertFalse(true, "TODO")
-}
-
-func (t *DirsTest) CrypterReturnsJunk() {
+func (t *DirsTest) BlobIsJunk() {
 	AssertFalse(true, "TODO")
 }
 
