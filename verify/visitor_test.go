@@ -155,7 +155,7 @@ func (t *DirsTest) IncorrectScore() {
 	// Call
 	_, err := t.visitor.Visit(t.ctx, t.node)
 
-	ExpectThat(err, Error(HasSubstr("score")))
+	ExpectThat(err, Error(HasSubstr("Score")))
 	ExpectThat(err, Error(HasSubstr(t.score.Hex())))
 	ExpectThat(err, Error(HasSubstr(blob.ComputeScore(wrongContents).Hex())))
 }

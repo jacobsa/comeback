@@ -21,7 +21,9 @@ import (
 	"strings"
 
 	"github.com/jacobsa/comeback/blob"
+	"github.com/jacobsa/comeback/fs"
 	"github.com/jacobsa/comeback/graph"
+	"github.com/jacobsa/comeback/repr"
 	"golang.org/x/net/context"
 )
 
@@ -41,7 +43,10 @@ func NewVisitor(
 	readFiles bool,
 	allScores []blob.Score,
 	bs blob.Store) (v graph.Visitor) {
-	v = &visitor{}
+	v = &visitor{
+		blobStore: bs,
+	}
+
 	return
 }
 
@@ -73,13 +78,13 @@ func ParseNodeName(
 		hexScore = strings.TrimPrefix(node, dirPrefix)
 
 	default:
-		err = fmt.Errorf("Unknown prefix for node name %q", node)
+		err = fmt.Errorf("Unknown prefix")
 		return
 	}
 
 	score, err = blob.ParseHexScore(hexScore)
 	if err != nil {
-		err = fmt.Errorf("ParseHexScore for node %q: %v", node, err)
+		err = fmt.Errorf("ParseHexScore: %v", err)
 		return
 	}
 
@@ -91,11 +96,70 @@ func ParseNodeName(
 ////////////////////////////////////////////////////////////////////////
 
 type visitor struct {
+	blobStore blob.Store
 }
 
 func (v *visitor) Visit(
 	ctx context.Context,
 	node string) (adjacent []string, err error) {
-	err = errors.New("TODO: Visit")
+	// Parse the node name.
+	dir, score, err := ParseNodeName(node)
+	if err != nil {
+		err = fmt.Errorf("ParseNodeName(%q): %v", node, err)
+		return
+	}
+
+	if !dir {
+		err = errors.New("TODO: Support files")
+		return
+	}
+
+	// Load the blob contents.
+	contents, err := v.blobStore.Load(score)
+	if err != nil {
+		err = fmt.Errorf("Load(%s): %v", score.Hex(), err)
+		return
+	}
+
+	// Verify the score.
+	expectedScore := blob.ComputeScore(contents)
+	if score != expectedScore {
+		err = fmt.Errorf(
+			"Score mismatch: %s vs. %s",
+			score.Hex(),
+			expectedScore.Hex())
+
+		return
+	}
+
+	// Parse the listing.
+	listing, err := repr.UnmarshalDir(contents)
+	if err != nil {
+		err = fmt.Errorf("UnmarshalDir(%s): %v", score.Hex(), err)
+		return
+	}
+
+	// Return a node for each score in each entry.
+	for _, entry := range listing {
+		// Is this a directory?
+		var dir bool
+		switch entry.Type {
+		case fs.TypeFile:
+			dir = false
+
+		case fs.TypeDirectory:
+			dir = true
+
+		default:
+			err = fmt.Errorf("Node %q: unknown entry type %v", node, entry.Type)
+			return
+		}
+
+		// Return a node for each score.
+		for _, score := range entry.Scores {
+			adjacent = append(adjacent, FormatNodeName(dir, score))
+		}
+	}
+
 	return
 }
