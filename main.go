@@ -33,7 +33,7 @@ func main() {
 	flag.Parse()
 
 	// Set up bare logging output.
-	log.SetFlags(0)
+	log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds)
 
 	// We get the command name.
 	args := flag.Args()
