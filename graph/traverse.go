@@ -49,7 +49,6 @@ func Traverse(
 	roots []string,
 	v Visitor) (err error) {
 	b := syncutil.NewBundle(ctx)
-	defer func() { err = b.Join() }()
 
 	// Set up initial state.
 	ts := &traverseState{
@@ -84,6 +83,7 @@ func Traverse(
 		})
 	}
 
+	err = b.Join()
 	return
 }
 
