@@ -430,12 +430,14 @@ func (t *TraverseTest) LargeRootedTree() {
 }
 
 func (t *TraverseTest) VisitorReturnsError() {
+	AssertGt(parallelism, 1)
+
 	// Graph structure:
 	//
 	//        A
 	//      / |
 	//     B  C
-	//      / | \
+	//     |  | \
 	//     D  E  F
 	//      / |  |
 	//     G  H  I
@@ -445,26 +447,46 @@ func (t *TraverseTest) VisitorReturnsError() {
 	t.roots = []string{"A"}
 	t.edges = map[string][]string{
 		"A": []string{"B", "C"},
-		"C": []string{"D", "E", "F"},
+		"B": []string{"D"},
+		"C": []string{"E", "F"},
 		"E": []string{"G", "H"},
 		"F": []string{"I"},
 		"I": []string{"J", "K"},
 	}
 
-	// Operate as normal, except return an error on node C and save the context
-	// we see.
-	expected := errors.New("taco")
-	var visitCtx context.Context
+	// Operate as normal, except:
+	//
+	//  *  For C, wait until told and then return an error.
+	//
+	//  *  For B:
+	//     *   Tell C to proceed.
+	//     *   Block until cancelled.
+	//     *   Close a channel indicating that the context was cancelled.
+	//     *   Return children as normal.
+	//
+	cErr := errors.New("taco")
+	bReceived := make(chan struct{})
+	bCancelled := make(chan struct{})
+
 	t.visit = func(
 		ctx context.Context,
 		node string) (adjacent []string, err error) {
+		// Call through.
 		adjacent, err = t.defaultVisit(ctx, node)
-		if node == "C" {
-			err = expected
-		}
 
-		if visitCtx == nil {
-			visitCtx = ctx
+		// Perform special behavior.
+		switch node {
+		case "C":
+			<-bReceived
+			err = cErr
+
+		case "B":
+			close(bReceived)
+
+			done := ctx.Done()
+			AssertNe(nil, done)
+			<-done
+			close(bCancelled)
 		}
 
 		return
@@ -472,24 +494,13 @@ func (t *TraverseTest) VisitorReturnsError() {
 
 	// Traverse. We should get the expected error.
 	err := t.traverse()
-	ExpectEq(expected, err)
+	ExpectEq(cErr, err)
 
-	// The context should have been cancelled.
-	AssertNe(nil, visitCtx)
-	done := visitCtx.Done()
-	AssertNe(nil, done)
+	// B should have seen cancellation.
+	<-bCancelled
 
-	select {
-	case <-done:
-	default:
-		AddFailure("Expected context to be cancelled")
-	}
-
-	// Nothing descending from C should have been visted.
+	// Nothing descending from B or C should have been visted.
 	ExpectThat(
 		sortNodes(t.nodesVisited),
-		AnyOf(
-			ElementsAre("A", "B", "C"),
-			ElementsAre("A", "C"),
-		))
+		ElementsAre("A", "B", "C"))
 }

@@ -62,18 +62,6 @@ func Traverse(
 	ts.enqueueNodes(roots)
 	ts.mu.Unlock()
 
-	// Ensure that ts.cancelled is set when the context is cancelled (or when we
-	// return from this function, if the context will never be cancelled).
-	done := ctx.Done()
-	if done == nil {
-		doneChan := make(chan struct{})
-		defer close(doneChan)
-
-		done = doneChan
-	}
-
-	go watchForCancel(done, ts)
-
 	// Run the appropriate number of workers.
 	for i := 0; i < parallelism; i++ {
 		b.Add(func(ctx context.Context) (err error) {
@@ -82,7 +70,21 @@ func Traverse(
 		})
 	}
 
-	err = b.Join()
+	// Join the bundle, but use the explicitly tracked first worker error in
+	// order to circumvent the following race:
+	//
+	//  *  Worker A encounters an error, sets firstErr, and returns
+	//
+	//  *  Worker B wakes up, sees firstErr, and returns with a junk follow-on
+	//     error.
+	//
+	//  *  The bundle observes worker B's error before worker A's.
+	//
+	b.Join()
+	ts.mu.Lock()
+	err = ts.firstErr
+	ts.mu.Unlock()
+
 	return
 }
 
@@ -107,11 +109,15 @@ type traverseState struct {
 	// GUARDED_BY(mu)
 	toVisit []string
 
-	// Set to true if the context has been cancelled. All workers should return
-	// when this happens.
+	// Set to the first error seen by a worker, if any. When non-nil, all workers
+	// should wake up and return.
+	//
+	// We must track this explicitly rather than just using syncutil.Bundle's
+	// support because we sleep on a condition variable, which can't be composed
+	// with receiving from the context's Done channel.
 	//
 	// GUARDED_BY(mu)
-	cancelled bool
+	firstErr error
 
 	// The number of workers that are doing something besides waiting on a node
 	// to visit. If this hits zero with toVisit empty, it means that there is
@@ -123,7 +129,7 @@ type traverseState struct {
 	// Broadcasted to with mu held when any of the following state changes:
 	//
 	//  *  toVisit
-	//  *  cancelled
+	//  *  firstErr
 	//  *  busyWorkers
 	//
 	// GUARDED_BY(mu)
@@ -144,7 +150,7 @@ func (ts *traverseState) checkInvariants() {
 //
 // LOCKS_REQUIRED(ts.mu)
 func (ts *traverseState) shouldWake() bool {
-	return len(ts.toVisit) != 0 || ts.cancelled || ts.busyWorkers == 0
+	return len(ts.toVisit) != 0 || ts.firstErr != nil || ts.busyWorkers == 0
 }
 
 // Sleep until there's something interesting for a traverse worker.
@@ -219,14 +225,22 @@ func traverse(
 	ts.mu.Lock()
 	defer ts.mu.Unlock()
 
+	defer func() {
+		// Record our error if it's the first.
+		if ts.firstErr == nil && err != nil {
+			ts.firstErr = err
+			ts.cond.Broadcast()
+		}
+	}()
+
 	for {
 		// Wait for something to do.
 		ts.waitForSomethingToDo()
 
 		// Why were we awoken?
 		switch {
-		// Return immediately if cancelled.
-		case ts.cancelled:
+		// Return immediately if another worker has seen an error.
+		case ts.firstErr != nil:
 			err = errors.New("Cancelled")
 			return
 
@@ -245,16 +259,4 @@ func traverse(
 			panic("Unexpected wake-up")
 		}
 	}
-}
-
-// Bridge context cancellation with traverseState.cancelled.
-func watchForCancel(
-	done <-chan struct{},
-	ts *traverseState) {
-	<-done
-
-	ts.mu.Lock()
-	defer ts.mu.Unlock()
-	ts.cancelled = true
-	ts.cond.Broadcast()
 }
