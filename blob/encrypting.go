@@ -18,6 +18,8 @@ package blob
 import (
 	"fmt"
 
+	"golang.org/x/net/context"
+
 	"github.com/jacobsa/comeback/crypto"
 )
 
@@ -33,7 +35,9 @@ type encryptingStore struct {
 	wrapped Store
 }
 
-func (s *encryptingStore) Store(blob []byte) (Score, error) {
+func (s *encryptingStore) Store(
+	ctx context.Context,
+	blob []byte) (Score, error) {
 	// Encrypt the plaintext blob.
 	ciphertext, err := s.crypter.Encrypt(blob)
 	if err != nil {
@@ -41,12 +45,14 @@ func (s *encryptingStore) Store(blob []byte) (Score, error) {
 	}
 
 	// Pass on the encrypted blob.
-	return s.wrapped.Store(ciphertext)
+	return s.wrapped.Store(ctx, ciphertext)
 }
 
-func (s *encryptingStore) Load(score Score) ([]byte, error) {
+func (s *encryptingStore) Load(
+	ctx context.Context,
+	score Score) ([]byte, error) {
 	// Load the encrypted blob.
-	ciphertext, err := s.wrapped.Load(score)
+	ciphertext, err := s.wrapped.Load(ctx, score)
 	if err != nil {
 		return nil, err
 	}
@@ -60,12 +66,12 @@ func (s *encryptingStore) Load(score Score) ([]byte, error) {
 	return plaintext, nil
 }
 
-func (s *encryptingStore) Flush() (err error) {
-	err = s.wrapped.Flush()
+func (s *encryptingStore) Flush(ctx context.Context) (err error) {
+	err = s.wrapped.Flush(ctx)
 	return
 }
 
-func (s *encryptingStore) Contains(score Score) (b bool) {
-	b = s.wrapped.Contains(score)
+func (s *encryptingStore) Contains(ctx context.Context, score Score) (b bool) {
+	b = s.wrapped.Contains(ctx, score)
 	return
 }
