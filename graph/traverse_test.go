@@ -430,6 +430,8 @@ func (t *TraverseTest) LargeRootedTree() {
 }
 
 func (t *TraverseTest) VisitorReturnsError() {
+	AssertGt(parallelism, 1)
+
 	// Graph structure:
 	//
 	//        A
@@ -454,13 +456,18 @@ func (t *TraverseTest) VisitorReturnsError() {
 
 	// Operate as normal, except:
 	//
-	//  *  For C, return an error.
+	//  *  For C, wait until told and then return an error.
 	//
-	//  *  For B, block until cancelled, then close a channel indicating that the
-	//     context was cancelled and returned children as normal.
+	//  *  For B:
+	//     *   Tell C to proceed.
+	//     *   Block until cancelled.
+	//     *   Close a channel indicating that the context was cancelled.
+	//     *   Return children as normal.
 	//
-	bCancelled := make(chan struct{})
 	cErr := errors.New("taco")
+	bReceived := make(chan struct{})
+	bCancelled := make(chan struct{})
+
 	t.visit = func(
 		ctx context.Context,
 		node string) (adjacent []string, err error) {
@@ -470,9 +477,12 @@ func (t *TraverseTest) VisitorReturnsError() {
 		// Perform special behavior.
 		switch node {
 		case "C":
+			<-bReceived
 			err = cErr
 
 		case "B":
+			close(bReceived)
+
 			done := ctx.Done()
 			AssertNe(nil, done)
 			<-done
