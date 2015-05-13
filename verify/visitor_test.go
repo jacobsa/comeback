@@ -172,7 +172,7 @@ func (t *DirsTest) BlobIsJunk() {
 }
 
 func (t *DirsTest) UnknownEntryType() {
-	// Set up a listing with a junk entry type.
+	// Set up a listing with an unsupported entry type.
 	t.listing = []*fs.DirectoryEntry{
 		&fs.DirectoryEntry{
 			Type: fs.TypeCharDevice,
@@ -202,7 +202,34 @@ func (t *DirsTest) UnknownEntryType() {
 }
 
 func (t *DirsTest) SymlinkWithScores() {
-	AssertTrue(false, "TODO")
+	// Set up a listing with a symlink that unexpectedly has associated scores.
+	t.listing = []*fs.DirectoryEntry{
+		&fs.DirectoryEntry{
+			Type: fs.TypeSymlink,
+			Name: "foo",
+			Scores: []blob.Score{
+				blob.ComputeScore([]byte("0")),
+			},
+		},
+	}
+
+	var err error
+	t.contents, err = repr.MarshalDir(t.listing)
+	AssertEq(nil, err)
+
+	t.score = blob.ComputeScore(t.contents)
+	t.node = verify.FormatNodeName(true, t.score)
+
+	// Load
+	ExpectCall(t.blobStore, "Load")(Any()).
+		WillOnce(Return(t.contents, nil))
+
+	// Call
+	_, err = t.visitor.Visit(t.ctx, t.node)
+
+	ExpectThat(err, Error(HasSubstr(t.score.Hex())))
+	ExpectThat(err, Error(HasSubstr("symlink")))
+	ExpectThat(err, Error(HasSubstr("scores")))
 }
 
 func (t *DirsTest) ReturnsAppropriateAdjacentNodes() {
