@@ -170,7 +170,12 @@ func visitOne(
 	v Visitor) (err error) {
 	// Mark this worker as busy for the duration of this function.
 	ts.busyWorkers++
-	defer func() { ts.busyWorkers-- }()
+	ts.cond.Broadcast()
+
+	defer func() {
+		ts.busyWorkers--
+		ts.cond.Broadcast()
+	}()
 
 	// Extract the node to visit.
 	l := len(ts.toVisit)
