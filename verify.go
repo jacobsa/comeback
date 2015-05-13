@@ -26,6 +26,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"runtime"
@@ -34,6 +35,8 @@ import (
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/graph"
 	"github.com/jacobsa/comeback/verify"
+	"github.com/jacobsa/comeback/wiring"
+	"github.com/jacobsa/gcloud/gcs"
 	"golang.org/x/net/context"
 )
 
@@ -53,6 +56,15 @@ var fFast = cmdVerify.Flags.Bool(
 
 func init() {
 	cmdVerify.Run = runVerify // Break flag-related dependency loop.
+}
+
+// List blob.ListScores, but returns a slice instead of writing into a channel.
+func listAllScores(
+	ctx context.Context,
+	bucket gcs.Bucket,
+	namePrefix string) (scores []blob.Score, err error) {
+	err = errors.New("TODO: listAllScores")
+	return
 }
 
 func runVerify(args []string) {
@@ -89,7 +101,31 @@ func runVerify(args []string) {
 	}
 
 	// Grab dependencies.
-	blobStore := getBlobStore()
+	bucket := getBucket()
+	crypter := getCrypter()
+
+	// List all scores in the bucket, verifying the object record metadata in the
+	// process.
+	knownScores, err := listAllScores(
+		context.Background(),
+		bucket,
+		wiring.BlobObjectNamePrefix)
+
+	if err != nil {
+		err = fmt.Errorf("listAllScores: %v", err)
+		return
+	}
+
+	// Create a blob store.
+	blobStore, err := wiring.MakeBlobStore(
+		bucket,
+		crypter,
+		knownScores)
+
+	if err != nil {
+		err = fmt.Errorf("MakeBlobStore: %v", err)
+		return
+	}
 
 	// Create a graph visitor that perform the verification.
 	visitor := verify.NewVisitor(
