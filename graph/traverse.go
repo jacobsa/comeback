@@ -62,18 +62,6 @@ func Traverse(
 	ts.enqueueNodes(roots)
 	ts.mu.Unlock()
 
-	// Ensure that ts.cancelled is set when the context is cancelled (or when we
-	// return from this function, if the context will never be cancelled).
-	done := ctx.Done()
-	if done == nil {
-		doneChan := make(chan struct{})
-		defer close(doneChan)
-
-		done = doneChan
-	}
-
-	go watchForCancel(done, ts)
-
 	// Run the appropriate number of workers.
 	for i := 0; i < parallelism; i++ {
 		b.Add(func(ctx context.Context) (err error) {
@@ -82,7 +70,21 @@ func Traverse(
 		})
 	}
 
-	err = b.Join()
+	// Join the bundle, but use the explicitly tracked first worker error in
+	// order to circumvent the following race:
+	//
+	//  *  Worker A encounters an error, sets firstErr, and returns
+	//
+	//  *  Worker B wakes up, sees firstErr, and returns with a junk follow-on
+	//     error.
+	//
+	//  *  The bundle observes worker B's error before worker A's.
+	//
+	b.Join()
+	ts.mu.Lock()
+	err = ts.firstErr
+	ts.mu.Unlock()
+
 	return
 }
 
@@ -222,6 +224,14 @@ func traverse(
 	v Visitor) (err error) {
 	ts.mu.Lock()
 	defer ts.mu.Unlock()
+
+	defer func() {
+		// Record our error if it's the first.
+		if ts.firstErr == nil && err != nil {
+			ts.firstErr = err
+			ts.cond.Broadcast()
+		}
+	}()
 
 	for {
 		// Wait for something to do.
