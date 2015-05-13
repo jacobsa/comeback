@@ -60,6 +60,25 @@ func init() {
 	cmdVerify.Run = runVerify // Break flag-related dependency loop.
 }
 
+type loggingVisitor struct {
+	wrapped graph.Visitor
+}
+
+func (v *loggingVisitor) Visit(
+	ctx context.Context,
+	node string) (adjacent []string, err error) {
+	// Call through.
+	adjacent, err = v.wrapped.Visit(ctx, node)
+	if err != nil {
+		return
+	}
+
+	// Log.
+	log.Printf("%s -> %s", node, strings.Join(adjacent, " "))
+
+	return
+}
+
 // List blob.ListScores, but returns a slice instead of writing into a channel.
 func listAllScores(
 	ctx context.Context,
@@ -162,11 +181,15 @@ func runVerify(args []string) {
 		knownScores,
 		blobStore)
 
+	visitor = &loggingVisitor{
+		wrapped: visitor,
+	}
+
 	// Traverse starting at the specified roots. Use an "experimentally
 	// determined" parallelism, which in theory should depend on bandwidth-delay
 	// products but in practice comes down to when the OS gets cranky about open
 	// files.
-	const parallelism = 256
+	const parallelism = 128
 
 	err = graph.Traverse(
 		context.Background(),
