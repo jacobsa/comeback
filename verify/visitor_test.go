@@ -222,11 +222,13 @@ func (t *DirsTest) ReturnsAppropriateAdjacentNodes() {
 type FilesLiteTest struct {
 	superTest
 
-	contents   []byte
+	contents []byte
+
 	knownScore blob.Score
-	node       string
+	knownNode  string
 
 	unknownScore blob.Score
+	unknownNode  string
 }
 
 var _ SetUpInterface = &FilesLiteTest{}
@@ -235,9 +237,12 @@ func init() { RegisterTestSuite(&FilesLiteTest{}) }
 
 func (t *FilesLiteTest) setUp(ti *TestInfo, readFiles bool) {
 	t.contents = []byte("foobarbaz")
+
 	t.knownScore = blob.ComputeScore(t.contents)
-	t.node = verify.FormatNodeName(false, t.knownScore)
+	t.knownNode = verify.FormatNodeName(false, t.knownScore)
+
 	t.unknownScore = blob.ComputeScore(append(t.contents, 'a'))
+	t.unknownNode = verify.FormatNodeName(false, t.unknownScore)
 
 	t.superTest.setUp(ti, readFiles, []blob.Score{t.knownScore})
 }
@@ -247,7 +252,11 @@ func (t *FilesLiteTest) SetUp(ti *TestInfo) {
 }
 
 func (t *FilesLiteTest) ScoreNotInList() {
-	AssertFalse(true, "TODO")
+	// Call
+	_, err := t.visitor.Visit(t.ctx, t.unknownNode)
+
+	ExpectThat(err, Error(HasSubstr("Unknown score")))
+	ExpectThat(err, Error(HasSubstr(t.unknownScore.Hex())))
 }
 
 func (t *FilesLiteTest) ScoreIsInList() {
