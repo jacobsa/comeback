@@ -163,6 +163,15 @@ func (v *visitor) visitDir(
 		case fs.TypeDirectory:
 			dir = true
 
+		case fs.TypeSymlink:
+			if len(entry.Scores) != 0 {
+				err = fmt.Errorf(
+					"Dir %s: symlink unexpectedly contains scores",
+					score.Hex())
+
+				return
+			}
+
 		default:
 			err = fmt.Errorf("Dir %s: unknown entry type %v", score.Hex(), entry.Type)
 			return
