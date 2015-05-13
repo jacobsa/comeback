@@ -161,7 +161,20 @@ func (t *DirsTest) IncorrectScore() {
 }
 
 func (t *DirsTest) BlobIsJunk() {
-	AssertFalse(true, "TODO")
+	// Set up junk contents.
+	t.contents = append(t.contents, 'a')
+	t.score = blob.ComputeScore(t.contents)
+	t.node = verify.FormatNodeName(true, t.score)
+
+	// Load
+	ExpectCall(t.blobStore, "Load")(Any()).
+		WillOnce(Return(t.contents, nil))
+
+	// Call
+	_, err := t.visitor.Visit(t.ctx, t.node)
+
+	ExpectThat(err, Error(HasSubstr(t.score.Hex())))
+	ExpectThat(err, Error(HasSubstr("UnmarshalDir")))
 }
 
 func (t *DirsTest) UnknownEntryType() {
