@@ -108,12 +108,12 @@ func runVerify(args []string) {
 	// Read flags.
 	readFiles := !*fFast
 
-	rootHexScores := strings.Split(*fRoots, ",")
-	if len(rootHexScores) == 0 {
+	if *fRoots == "" {
 		err = fmt.Errorf("You must set --roots.")
 		return
 	}
 
+	rootHexScores := strings.Split(*fRoots, ",")
 	var roots []string
 	for _, hexScore := range rootHexScores {
 		var score blob.Score
