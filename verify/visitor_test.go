@@ -135,7 +135,7 @@ func (t *DirsTest) CallsBlobStore() {
 	t.visitor.Visit(t.ctx, t.node)
 }
 
-func (t *DirsTest) BlobStoreReaderReturnsError() {
+func (t *DirsTest) BlobStoreReturnsError() {
 	// Load
 	ExpectCall(t.blobStore, "Load")(Any()).
 		WillOnce(Return(nil, errors.New("taco")))
@@ -244,7 +244,11 @@ func (t *FilesLiteTest) SetUp(ti *TestInfo) {
 	t.superTest.setUp(ti, false)
 }
 
-func (t *FilesLiteTest) DoesFoo() {
+func (t *FilesLiteTest) ScoreNotInList() {
+	AssertFalse(true, "TODO")
+}
+
+func (t *FilesLiteTest) ScoreIsInList() {
 	AssertFalse(true, "TODO")
 }
 
@@ -264,6 +268,14 @@ func (t *FilesFullTest) SetUp(ti *TestInfo) {
 	t.superTest.setUp(ti, false)
 }
 
-func (t *FilesFullTest) DoesFoo() {
+func (t *FilesFullTest) CallsBlobStore() {
+	AssertFalse(true, "TODO")
+}
+
+func (t *FilesFullTest) BlobStoreReturnsError() {
+	AssertFalse(true, "TODO")
+}
+
+func (t *FilesFullTest) BlobStoreSucceeds() {
 	AssertFalse(true, "TODO")
 }
