@@ -17,6 +17,7 @@ package graph
 
 import (
 	"errors"
+	"fmt"
 	"sync"
 
 	"github.com/jacobsa/gcloud/syncutil"
@@ -119,7 +120,12 @@ type traverseState struct {
 
 // LOCKS_REQUIRED(ts.mu)
 func (ts *traverseState) checkInvariants() {
-	panic("TODO")
+	// INVARIANT: For each n in toVisit, n is a key of admitted.
+	for _, n := range ts.toVisit {
+		if _, ok := ts.admitted[n]; !ok {
+			panic(fmt.Sprintf("Expected %q to be in admitted map", n))
+		}
+	}
 }
 
 // A single traverse worker.
