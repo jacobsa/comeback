@@ -212,6 +212,7 @@ func traverse(
 		// Return immediately if cancelled.
 		case ts.cancelled:
 			err = errors.New("Cancelled")
+			return
 
 		// Otherwise, handle work if it exists.
 		case len(ts.toVisit) != 0:
