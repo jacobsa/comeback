@@ -15,7 +15,14 @@
 
 package graph
 
-import "golang.org/x/net/context"
+import (
+	"errors"
+	"fmt"
+	"sync"
+
+	"github.com/jacobsa/gcloud/syncutil"
+	"golang.org/x/net/context"
+)
 
 // A visitor in a directed graph whose nodes are identified by strings.
 type Visitor interface {
@@ -41,38 +48,206 @@ func Traverse(
 	parallelism int,
 	roots []string,
 	v Visitor) (err error) {
-	// TODO(jacobsa): Add parallelism.
+	b := syncutil.NewBundle(ctx)
 
 	// Set up initial state.
-	toVisit := make([]string, len(roots))
-	copy(toVisit, roots)
-
-	admitted := make(map[string]struct{})
-	for _, n := range toVisit {
-		admitted[n] = struct{}{}
+	ts := &traverseState{
+		admitted: make(map[string]struct{}),
 	}
 
-	// Visit until we're done.
-	for len(toVisit) > 0 {
-		// Pop the last node.
-		node := toVisit[len(toVisit)-1]
-		toVisit = toVisit[:len(toVisit)-1]
+	ts.mu = syncutil.NewInvariantMutex(ts.checkInvariants)
+	ts.cond.L = &ts.mu
 
-		// Visit it.
-		var adjacent []string
-		adjacent, err = v.Visit(ctx, node)
-		if err != nil {
+	for _, r := range roots {
+		ts.admitted[r] = struct{}{}
+		ts.toVisit = append(ts.toVisit, r)
+	}
+
+	// Ensure that ts.cancelled is set when the context is cancelled (or when we
+	// return from this function, if the context will never be cancelled).
+	done := ctx.Done()
+	if done == nil {
+		doneChan := make(chan struct{})
+		defer close(doneChan)
+
+		done = doneChan
+	}
+
+	go watchForCancel(done, ts)
+
+	// Run the appropriate number of workers.
+	for i := 0; i < parallelism; i++ {
+		b.Add(func(ctx context.Context) (err error) {
+			err = traverse(ctx, ts, v)
 			return
-		}
+		})
+	}
 
-		// Add adjacent ndoes that we haven't already admitted.
-		for _, n := range adjacent {
-			if _, ok := admitted[n]; !ok {
-				admitted[n] = struct{}{}
-				toVisit = append(toVisit, n)
-			}
+	err = b.Join()
+	return
+}
+
+////////////////////////////////////////////////////////////////////////
+// traverseState
+////////////////////////////////////////////////////////////////////////
+
+// State shared by each traverse worker.
+type traverseState struct {
+	mu syncutil.InvariantMutex
+
+	// All nodes that have ever been seen. If a node is in this map, it will
+	// eventually be visted (barring errors returned by the visitor).
+	//
+	// GUARDED_BY(mu)
+	admitted map[string]struct{}
+
+	// Admitted nodes that have yet to be visted.
+	//
+	// INVARIANT: For each n in toVisit, n is a key of admitted.
+	//
+	// GUARDED_BY(mu)
+	toVisit []string
+
+	// Set to true if the context has been cancelled. All workers should return
+	// when this happens.
+	//
+	// GUARDED_BY(mu)
+	cancelled bool
+
+	// The number of workers that are doing something besides waiting on a node
+	// to visit. If this hits zero with toVisit empty, it means that there is
+	// nothing further to do.
+	//
+	// GUARDED_BY(mu)
+	busyWorkers int
+
+	// Broadcasted to with mu held when any of the following state changes:
+	//
+	//  *  toVisit
+	//  *  cancelled
+	//  *  busyWorkers
+	//
+	// GUARDED_BY(mu)
+	cond sync.Cond
+}
+
+// LOCKS_REQUIRED(ts.mu)
+func (ts *traverseState) checkInvariants() {
+	// INVARIANT: For each n in toVisit, n is a key of admitted.
+	for _, n := range ts.toVisit {
+		if _, ok := ts.admitted[n]; !ok {
+			panic(fmt.Sprintf("Expected %q to be in admitted map", n))
+		}
+	}
+}
+
+// Is there anything that needs a worker's attention?
+//
+// LOCKS_REQUIRED(ts.mu)
+func (ts *traverseState) shouldWake() bool {
+	return len(ts.toVisit) != 0 || ts.cancelled || ts.busyWorkers == 0
+}
+
+// Sleep until there's something interesting for a traverse worker.
+//
+// LOCKS_REQUIRED(ts.mu)
+func (ts *traverseState) waitForSomethingToDo() {
+	for !ts.shouldWake() {
+		ts.cond.Wait()
+	}
+}
+
+////////////////////////////////////////////////////////////////////////
+// Helpers
+////////////////////////////////////////////////////////////////////////
+
+// REQUIRES: len(ts.toVisit) > 0
+//
+// LOCKS_REQUIRED(ts.mu)
+func visitOne(
+	ctx context.Context,
+	ts *traverseState,
+	v Visitor) (err error) {
+	// Mark this worker as busy for the duration of this function.
+	ts.busyWorkers++
+	ts.cond.Broadcast()
+
+	defer func() {
+		ts.busyWorkers--
+		ts.cond.Broadcast()
+	}()
+
+	// Extract the node to visit.
+	l := len(ts.toVisit)
+	node := ts.toVisit[l-1]
+	ts.toVisit = ts.toVisit[:l-1]
+	ts.cond.Broadcast()
+
+	// Unlock while visiting.
+	ts.mu.Unlock()
+	adjacent, err := v.Visit(ctx, node)
+	ts.mu.Lock()
+
+	if err != nil {
+		return
+	}
+
+	// Enqueue the adjacent nodes that we haven't already admitted.
+	for _, n := range adjacent {
+		if _, ok := ts.admitted[n]; !ok {
+			ts.toVisit = append(ts.toVisit, n)
+			ts.admitted[n] = struct{}{}
+			ts.cond.Broadcast()
 		}
 	}
 
 	return
+}
+
+// A single traverse worker.
+func traverse(
+	ctx context.Context,
+	ts *traverseState,
+	v Visitor) (err error) {
+	ts.mu.Lock()
+	defer ts.mu.Unlock()
+
+	for {
+		// Wait for something to do.
+		ts.waitForSomethingToDo()
+
+		// Why were we awoken?
+		switch {
+		// Return immediately if cancelled.
+		case ts.cancelled:
+			err = errors.New("Cancelled")
+			return
+
+		// Otherwise, handle work if it exists.
+		case len(ts.toVisit) != 0:
+			err = visitOne(ctx, ts, v)
+			if err != nil {
+				return
+			}
+
+		// Otherwise, are we done?
+		case ts.busyWorkers == 0:
+			return
+
+		default:
+			panic("Unexpected wake-up")
+		}
+	}
+}
+
+// Bridge context cancellation with traverseState.cancelled.
+func watchForCancel(
+	done <-chan struct{},
+	ts *traverseState) {
+	<-done
+
+	ts.mu.Lock()
+	defer ts.mu.Unlock()
+	ts.cancelled = true
+	ts.cond.Broadcast()
 }
