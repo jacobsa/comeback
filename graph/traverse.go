@@ -177,6 +177,9 @@ func traverse(
 	ctx context.Context,
 	ts *traverseState,
 	v Visitor) (err error) {
+	ts.mu.Lock()
+	defer ts.mu.Unlock()
+
 	for {
 		// Wait for something to do.
 		ts.waitForSomethingToDo()
