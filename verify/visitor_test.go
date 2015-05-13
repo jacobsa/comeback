@@ -317,5 +317,13 @@ func (t *FilesFullTest) BlobStoreReturnsError() {
 }
 
 func (t *FilesFullTest) BlobStoreSucceeds() {
-	AssertFalse(true, "TODO")
+	// Load
+	ExpectCall(t.blobStore, "Load")(Any()).
+		WillOnce(Return(t.contents, nil))
+
+	// Call
+	adjacent, err := t.visitor.Visit(t.ctx, t.knownNode)
+
+	AssertEq(nil, err)
+	ExpectThat(adjacent, ElementsAre())
 }
