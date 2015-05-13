@@ -16,8 +16,11 @@
 package verify
 
 import (
+	"errors"
+
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/graph"
+	"golang.org/x/net/context"
 )
 
 // Create a visitor for the DAG of blobs in the supplied bucket. Node names are
@@ -31,7 +34,8 @@ func NewVisitor(
 	readFiles bool,
 	allScores []blob.Score,
 	bs blob.Store) (v graph.Visitor) {
-	panic("TODO")
+	v = &visitor{}
+	return
 }
 
 // Create a node name that can be consumed by the visitor and by ParseNodeName.
@@ -46,4 +50,18 @@ func FormatNodeName(
 func ParseNodeName(
 	node string) (dir bool, score blob.Score, err error) {
 	panic("TODO")
+}
+
+////////////////////////////////////////////////////////////////////////
+// Implementation
+////////////////////////////////////////////////////////////////////////
+
+type visitor struct {
+}
+
+func (v *visitor) Visit(
+	ctx context.Context,
+	node string) (adjacent []string, err error) {
+	err = errors.New("TODO: Visit")
+	return
 }
