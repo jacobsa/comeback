@@ -23,7 +23,9 @@ import (
 
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/blob/mock"
+	"github.com/jacobsa/comeback/fs"
 	"github.com/jacobsa/comeback/graph"
+	"github.com/jacobsa/comeback/repr"
 	"github.com/jacobsa/comeback/verify"
 	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/oglemock"
@@ -82,6 +84,7 @@ func (t *CommonTest) InvalidNodeName() {
 type DirsTest struct {
 	superTest
 
+	listing  []*fs.DirectoryEntry
 	contents []byte
 	score    blob.Score
 	node     string
@@ -94,7 +97,30 @@ func init() { RegisterTestSuite(&DirsTest{}) }
 func (t *DirsTest) SetUp(ti *TestInfo) {
 	t.superTest.setUp(ti, false)
 
-	t.contents = []byte("foobarbaz")
+	// Set up canned data for a valid listing.
+	t.listing = []*fs.DirectoryEntry{
+		&fs.DirectoryEntry{
+			Type: fs.TypeFile,
+			Name: "foo",
+			Scores: []blob.Score{
+				blob.ComputeScore([]byte("0")),
+				blob.ComputeScore([]byte("1")),
+			},
+		},
+
+		&fs.DirectoryEntry{
+			Type: fs.TypeDirectory,
+			Name: "bar",
+			Scores: []blob.Score{
+				blob.ComputeScore([]byte("2")),
+			},
+		},
+	}
+
+	var err error
+	t.contents, err = repr.MarshalDir(t.listing)
+	AssertEq(nil, err)
+
 	t.score = blob.ComputeScore(t.contents)
 	t.node = verify.FormatNodeName(true, t.score)
 }
