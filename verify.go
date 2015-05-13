@@ -45,6 +45,7 @@ var cmdVerify = &Command{
 	Name: "verify",
 }
 
+// TODO(jacobsa): Get these automatically from the registry.
 var fRoots = cmdVerify.Flags.String(
 	"roots",
 	"",
