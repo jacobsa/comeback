@@ -90,6 +90,10 @@ func (t *DirsTest) CloseError() {
 	AssertFalse(true, "TODO")
 }
 
+func (t *DirsTest) IncorrectScore() {
+	AssertFalse(true, "TODO")
+}
+
 func (t *DirsTest) CallsCrypter() {
 	AssertFalse(true, "TODO")
 }
