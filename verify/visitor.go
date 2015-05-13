@@ -32,14 +32,20 @@ func NewVisitor(
 	readFiles bool,
 	allScores []blob.Score,
 	bucket gcs.Bucket,
-	blobObjectNamePrefix string) (v graph.Visitor)
+	blobObjectNamePrefix string) (v graph.Visitor) {
+	panic("TODO")
+}
 
 // Create a node name that can be consumed by the visitor and by ParseNodeName.
 // If dir is false, the node represents a file.
 func FormatNodeName(
 	dir bool,
-	score blob.Score) (node string)
+	score blob.Score) (node string) {
+	panic("TODO")
+}
 
 // Parse a node name created by FormatNodeName.
 func ParseNodeName(
-	node string) (dir bool, score blob.Score, err error)
+	node string) (dir bool, score blob.Score, err error) {
+	panic("TODO")
+}
