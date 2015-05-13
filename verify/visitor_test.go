@@ -219,8 +219,32 @@ func (t *DirsTest) ReturnsAppropriateAdjacentNodes() {
 // Files, no read
 ////////////////////////////////////////////////////////////////////////
 
-type FilesLiteTest struct {
+type filesCommonTest struct {
 	superTest
+
+	contents []byte
+
+	knownScore blob.Score
+	knownNode  string
+
+	unknownScore blob.Score
+	unknownNode  string
+}
+
+func (t *filesCommonTest) setUp(ti *TestInfo, readFiles bool) {
+	t.contents = []byte("foobarbaz")
+
+	t.knownScore = blob.ComputeScore(t.contents)
+	t.knownNode = verify.FormatNodeName(false, t.knownScore)
+
+	t.unknownScore = blob.ComputeScore(append(t.contents, 'a'))
+	t.unknownNode = verify.FormatNodeName(false, t.unknownScore)
+
+	t.superTest.setUp(ti, readFiles, []blob.Score{t.knownScore})
+}
+
+type FilesLiteTest struct {
+	filesCommonTest
 
 	contents []byte
 
@@ -235,20 +259,8 @@ var _ SetUpInterface = &FilesLiteTest{}
 
 func init() { RegisterTestSuite(&FilesLiteTest{}) }
 
-func (t *FilesLiteTest) setUp(ti *TestInfo, readFiles bool) {
-	t.contents = []byte("foobarbaz")
-
-	t.knownScore = blob.ComputeScore(t.contents)
-	t.knownNode = verify.FormatNodeName(false, t.knownScore)
-
-	t.unknownScore = blob.ComputeScore(append(t.contents, 'a'))
-	t.unknownNode = verify.FormatNodeName(false, t.unknownScore)
-
-	t.superTest.setUp(ti, readFiles, []blob.Score{t.knownScore})
-}
-
 func (t *FilesLiteTest) SetUp(ti *TestInfo) {
-	t.setUp(ti, false)
+	t.filesCommonTest.setUp(ti, false)
 }
 
 func (t *FilesLiteTest) ScoreNotInList() {
@@ -272,7 +284,7 @@ func (t *FilesLiteTest) ScoreIsInList() {
 ////////////////////////////////////////////////////////////////////////
 
 type FilesFullTest struct {
-	FilesLiteTest
+	filesCommonTest
 }
 
 var _ SetUpInterface = &FilesFullTest{}
@@ -280,7 +292,7 @@ var _ SetUpInterface = &FilesFullTest{}
 func init() { RegisterTestSuite(&FilesFullTest{}) }
 
 func (t *FilesFullTest) SetUp(ti *TestInfo) {
-	t.FilesLiteTest.setUp(ti, true)
+	t.filesCommonTest.setUp(ti, true)
 }
 
 func (t *FilesFullTest) CallsBlobStore() {
