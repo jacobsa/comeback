@@ -21,7 +21,7 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/jacobsa/comeback/blob"
-	"github.com/jacobsa/gcloud/gcs"
+	"github.com/jacobsa/comeback/blob/mock"
 	. "github.com/jacobsa/ogletest"
 )
 
@@ -35,8 +35,8 @@ const namePrefix = "blobs/"
 
 type CommonTest struct {
 	ctx       context.Context
-	bucket    gcs.Bucket
 	allScores []blob.Score
+	blobStore mock_blob.MockStore
 }
 
 var _ SetUpInterface = &CommonTest{}
@@ -47,7 +47,7 @@ func (t *CommonTest) setUp(
 	ti *TestInfo,
 	readFiles bool) {
 	t.ctx = ti.Ctx
-	panic("TODO")
+	t.blobStore = mock_blob.NewMockStore(ti.MockController, "blobStore")
 }
 
 func (t *CommonTest) SetUp(ti *TestInfo) {
