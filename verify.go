@@ -30,6 +30,7 @@ import (
 	"log"
 	"runtime"
 	"strings"
+	"sync/atomic"
 
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/graph"
@@ -60,6 +61,10 @@ func init() {
 	cmdVerify.Run = runVerify // Break flag-related dependency loop.
 }
 
+////////////////////////////////////////////////////////////////////////
+// Visitor types
+////////////////////////////////////////////////////////////////////////
+
 type loggingVisitor struct {
 	wrapped graph.Visitor
 }
@@ -78,6 +83,23 @@ func (v *loggingVisitor) Visit(
 
 	return
 }
+
+type countingVisitor struct {
+	count   *uint64
+	wrapped graph.Visitor
+}
+
+func (v *countingVisitor) Visit(
+	ctx context.Context,
+	node string) (adjacent []string, err error) {
+	atomic.AddUint64(v.count, 1)
+	adjacent, err = v.wrapped.Visit(ctx, node)
+	return
+}
+
+////////////////////////////////////////////////////////////////////////
+// Helpers
+////////////////////////////////////////////////////////////////////////
 
 // List blob.ListScores, but returns a slice instead of writing into a channel.
 func listAllScores(
@@ -111,6 +133,10 @@ func listAllScores(
 
 	return
 }
+
+////////////////////////////////////////////////////////////////////////
+// Verify
+////////////////////////////////////////////////////////////////////////
 
 func runVerify(args []string) {
 	// Allow parallelism.
@@ -185,6 +211,12 @@ func runVerify(args []string) {
 		wrapped: visitor,
 	}
 
+	var nodesVisited uint64
+	visitor = &countingVisitor{
+		count:   &nodesVisited,
+		wrapped: visitor,
+	}
+
 	// Traverse starting at the specified roots. Use an "experimentally
 	// determined" parallelism, which in theory should depend on bandwidth-delay
 	// products but in practice comes down to when the OS gets cranky about open
@@ -201,6 +233,8 @@ func runVerify(args []string) {
 		err = fmt.Errorf("Traverse: %v", err)
 		return
 	}
+
+	log.Printf("Successfully visited %v nodes.", nodesVisited)
 
 	return
 }
