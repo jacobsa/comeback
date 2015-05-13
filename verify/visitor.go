@@ -16,7 +16,6 @@
 package verify
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 
@@ -46,10 +45,17 @@ func NewVisitor(
 	readFiles bool,
 	allScores []blob.Score,
 	bs blob.Store) (v graph.Visitor) {
-	v = &visitor{
-		blobStore: bs,
+	typed := &visitor{
+		readFiles:   readFiles,
+		blobStore:   bs,
+		knownScores: make(map[blob.Score]struct{}),
 	}
 
+	for _, score := range allScores {
+		typed.knownScores[score] = struct{}{}
+	}
+
+	v = typed
 	return
 }
 
@@ -99,24 +105,39 @@ func ParseNodeName(
 ////////////////////////////////////////////////////////////////////////
 
 type visitor struct {
-	blobStore blob.Store
+	readFiles   bool
+	blobStore   blob.Store
+	knownScores map[blob.Score]struct{}
 }
 
-func (v *visitor) Visit(
+func (v *visitor) visitFile(
 	ctx context.Context,
-	node string) (adjacent []string, err error) {
-	// Parse the node name.
-	dir, score, err := ParseNodeName(node)
+	score blob.Score) (err error) {
+	// If reading files is disabled, simply check that the score is known.
+	if !v.readFiles {
+		_, ok := v.knownScores[score]
+		if !ok {
+			err = fmt.Errorf("Unknown file score: %s", score.Hex())
+			return
+		}
+
+		return
+	}
+
+	// Make sure we can load the blob contents. Presumably the blob store
+	// verifies the score (of the ciphertext) on the way through.
+	_, err = v.blobStore.Load(score)
 	if err != nil {
-		err = fmt.Errorf("ParseNodeName(%q): %v", node, err)
+		err = fmt.Errorf("Load(%s): %v", score.Hex(), err)
 		return
 	}
 
-	if !dir {
-		err = errors.New("TODO: Support files")
-		return
-	}
+	return
+}
 
+func (v *visitor) visitDir(
+	ctx context.Context,
+	score blob.Score) (adjacent []string, err error) {
 	// Load the blob contents.
 	contents, err := v.blobStore.Load(score)
 	if err != nil {
@@ -143,7 +164,7 @@ func (v *visitor) Visit(
 			dir = true
 
 		default:
-			err = fmt.Errorf("Node %q: unknown entry type %v", node, entry.Type)
+			err = fmt.Errorf("Dir %s: unknown entry type %v", score.Hex(), entry.Type)
 			return
 		}
 
@@ -154,4 +175,23 @@ func (v *visitor) Visit(
 	}
 
 	return
+}
+
+func (v *visitor) Visit(
+	ctx context.Context,
+	node string) (adjacent []string, err error) {
+	// Parse the node name.
+	dir, score, err := ParseNodeName(node)
+	if err != nil {
+		err = fmt.Errorf("ParseNodeName(%q): %v", node, err)
+		return
+	}
+
+	if dir {
+		adjacent, err = v.visitDir(ctx, score)
+		return
+	} else {
+		err = v.visitFile(ctx, score)
+		return
+	}
 }
