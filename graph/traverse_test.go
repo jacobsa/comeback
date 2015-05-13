@@ -320,7 +320,7 @@ func (t *TraverseTest) RedundantRoots() {
 	//         \|
 	//          E
 	//
-	t.roots = []string{"A", "D", "B"}
+	t.roots = []string{"A", "D", "B", "A"}
 	t.edges = map[string][]string{
 		"A": []string{"B", "C"},
 		"B": []string{"D"},

@@ -30,7 +30,7 @@ type Visitor interface {
 	Visit(ctx context.Context, node string) (adjacent []string, err error)
 }
 
-// Invoke v.Visit on each node reachable from the supplied search roots,
+// Invoke v.Visit once on each node reachable from the supplied search roots,
 // including the roots themselves. Use the supplied degree of parallelism.
 //
 // It is guaranteed that if a node N is fed to v.Visit, then either:
@@ -58,10 +58,9 @@ func Traverse(
 	ts.mu = syncutil.NewInvariantMutex(ts.checkInvariants)
 	ts.cond.L = &ts.mu
 
-	for _, r := range roots {
-		ts.admitted[r] = struct{}{}
-		ts.toVisit = append(ts.toVisit, r)
-	}
+	ts.mu.Lock()
+	ts.enqueueNodes(roots)
+	ts.mu.Unlock()
 
 	// Ensure that ts.cancelled is set when the context is cancelled (or when we
 	// return from this function, if the context will never be cancelled).
@@ -157,6 +156,20 @@ func (ts *traverseState) waitForSomethingToDo() {
 	}
 }
 
+// Enqueue any of the supplied nodes that haven't already been enqueued.
+//
+// LOCKS_REQUIRED(ts.mu)
+func (ts *traverseState) enqueueNodes(nodes []string) {
+	for _, n := range nodes {
+		if _, ok := ts.admitted[n]; !ok {
+			ts.toVisit = append(ts.toVisit, n)
+			ts.admitted[n] = struct{}{}
+		}
+	}
+
+	ts.cond.Broadcast()
+}
+
 ////////////////////////////////////////////////////////////////////////
 // Helpers
 ////////////////////////////////////////////////////////////////////////
@@ -193,13 +206,7 @@ func visitOne(
 	}
 
 	// Enqueue the adjacent nodes that we haven't already admitted.
-	for _, n := range adjacent {
-		if _, ok := ts.admitted[n]; !ok {
-			ts.toVisit = append(ts.toVisit, n)
-			ts.admitted[n] = struct{}{}
-			ts.cond.Broadcast()
-		}
-	}
+	ts.enqueueNodes(adjacent)
 
 	return
 }
