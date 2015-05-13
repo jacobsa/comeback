@@ -17,6 +17,7 @@ package verify_test
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
 	"golang.org/x/net/context"
@@ -181,7 +182,7 @@ func (t *DirsTest) UnknownEntryType() {
 	// Set up a listing with a junk entry type.
 	t.listing = []*fs.DirectoryEntry{
 		&fs.DirectoryEntry{
-			Type: 17,
+			Type: fs.TypeSymlink,
 			Name: "foo",
 			Scores: []blob.Score{
 				blob.ComputeScore([]byte("0")),
@@ -204,7 +205,7 @@ func (t *DirsTest) UnknownEntryType() {
 	_, err = t.visitor.Visit(t.ctx, t.node)
 
 	ExpectThat(err, Error(HasSubstr("entry type")))
-	ExpectThat(err, Error(HasSubstr("17")))
+	ExpectThat(err, Error(HasSubstr(fmt.Sprintf("%d", fs.TypeSymlink))))
 }
 
 func (t *DirsTest) ReturnsAppropriateAdjacentNodes() {
