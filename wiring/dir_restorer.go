@@ -44,9 +44,9 @@ func MakeDirRestorer(
 	}
 
 	// Wrap a blob store around the bucket. Tell it to decrypt using the crypter.
-	bs, err := makeBlobStore(bucket, crypter, util.NewStringSet())
+	bs, err := MakeBlobStore(bucket, crypter, util.NewStringSet())
 	if err != nil {
-		err = fmt.Errorf("makeBlobStore: %v", err)
+		err = fmt.Errorf("MakeBlobStore: %v", err)
 		return
 	}
 
