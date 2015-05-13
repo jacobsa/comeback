@@ -19,6 +19,8 @@ import (
 	"fmt"
 	"time"
 
+	"golang.org/x/net/context"
+
 	"github.com/jacobsa/comeback/backup"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/fs"
@@ -103,7 +105,7 @@ func (s *scoreMapFileSaver) Save(path string) (scores []blob.Score, err error) {
 		// store is flushed.
 		allDurable := true
 		for _, score := range scores {
-			if !s.blobStore.Contains(score) {
+			if !s.blobStore.Contains(context.TODO(), score) {
 				allDurable = false
 				break
 			}

@@ -15,7 +15,10 @@
 
 package blob
 
-import "github.com/jacobsa/comeback/util"
+import (
+	"github.com/jacobsa/comeback/util"
+	"golang.org/x/net/context"
+)
 
 // Create a blob store that wraps another, responding to calls as follows:
 //
@@ -51,8 +54,10 @@ type existingScoresStore struct {
 	wrapped Store
 }
 
-func (bs *existingScoresStore) Store(blob []byte) (s Score, err error) {
-	s, err = bs.wrapped.Store(blob)
+func (bs *existingScoresStore) Store(
+	ctx context.Context,
+	blob []byte) (s Score, err error) {
+	s, err = bs.wrapped.Store(ctx, blob)
 	if err == nil {
 		bs.scores.Add(s.Hex())
 	}
@@ -60,16 +65,20 @@ func (bs *existingScoresStore) Store(blob []byte) (s Score, err error) {
 	return
 }
 
-func (bs *existingScoresStore) Flush() (err error) {
+func (bs *existingScoresStore) Flush(ctx context.Context) (err error) {
 	panic("We expect buffering to happen outside of here")
 }
 
-func (bs *existingScoresStore) Contains(score Score) (b bool) {
+func (bs *existingScoresStore) Contains(
+	ctx context.Context,
+	score Score) (b bool) {
 	b = bs.scores.Contains(score.Hex())
 	return
 }
 
-func (bs *existingScoresStore) Load(s Score) (blob []byte, err error) {
-	blob, err = bs.wrapped.Load(s)
+func (bs *existingScoresStore) Load(
+	ctx context.Context,
+	s Score) (blob []byte, err error) {
+	blob, err = bs.wrapped.Load(ctx, s)
 	return
 }

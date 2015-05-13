@@ -19,6 +19,8 @@ import (
 	"fmt"
 	"os"
 
+	"golang.org/x/net/context"
+
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/fs"
 	"github.com/jacobsa/comeback/repr"
@@ -77,7 +79,7 @@ func (r *fileRestorer) RestoreFile(
 	for _, score := range scores {
 		// Load the blob.
 		var blob []byte
-		blob, err = r.blobStore.Load(score)
+		blob, err = r.blobStore.Load(context.TODO(), score)
 		if err != nil {
 			err = fmt.Errorf("blob.Store.Load: %v", err)
 			return

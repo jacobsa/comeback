@@ -17,12 +17,15 @@ package blob_test
 
 import (
 	"errors"
+	"testing"
+
+	"golang.org/x/net/context"
+
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/blob/mock"
 	. "github.com/jacobsa/oglematchers"
 	"github.com/jacobsa/oglemock"
 	. "github.com/jacobsa/ogletest"
-	"testing"
 )
 
 func TestChecking(t *testing.T) { RunTests(t) }
@@ -32,12 +35,14 @@ func TestChecking(t *testing.T) { RunTests(t) }
 ////////////////////////////////////////////////////////////////////////
 
 type checkingStoreTest struct {
+	ctx     context.Context
 	wrapped mock_blob.MockStore
 	store   blob.Store
 }
 
-func (t *checkingStoreTest) SetUp(i *TestInfo) {
-	t.wrapped = mock_blob.NewMockStore(i.MockController, "wrapped")
+func (t *checkingStoreTest) SetUp(ti *TestInfo) {
+	t.ctx = ti.Ctx
+	t.wrapped = mock_blob.NewMockStore(ti.MockController, "wrapped")
 	t.store = blob.NewCheckingStore(t.wrapped)
 }
 
@@ -55,22 +60,22 @@ func (t *CheckingStore_StoreTest) CallsWrapped() {
 	b := []byte{0xde, 0xad}
 
 	// Wrapped
-	ExpectCall(t.wrapped, "Store")(DeepEquals(b)).
+	ExpectCall(t.wrapped, "Store")(Any(), DeepEquals(b)).
 		WillOnce(oglemock.Return(blob.Score{}, errors.New("")))
 
 	// Call
-	t.store.Store(b)
+	t.store.Store(t.ctx, b)
 }
 
 func (t *CheckingStore_StoreTest) WrappedReturnsError() {
 	b := []byte{}
 
 	// Wrapped
-	ExpectCall(t.wrapped, "Store")(Any()).
+	ExpectCall(t.wrapped, "Store")(Any(), Any()).
 		WillOnce(oglemock.Return(blob.Score{}, errors.New("taco")))
 
 	// Call
-	_, err := t.store.Store(b)
+	_, err := t.store.Store(t.ctx, b)
 
 	ExpectThat(err, Error(Equals("taco")))
 }
@@ -81,11 +86,11 @@ func (t *CheckingStore_StoreTest) WrappedReturnsIncorrectScore() {
 	incorrectScore := blob.ComputeScore([]byte{0xbe, 0xef})
 
 	// Wrapped
-	ExpectCall(t.wrapped, "Store")(Any()).
+	ExpectCall(t.wrapped, "Store")(Any(), Any()).
 		WillOnce(oglemock.Return(incorrectScore, nil))
 
 	// Call
-	_, err := t.store.Store(b)
+	_, err := t.store.Store(t.ctx, b)
 
 	ExpectThat(err, Error(HasSubstr("Incorrect")))
 	ExpectThat(err, Error(HasSubstr("score")))
@@ -98,11 +103,11 @@ func (t *CheckingStore_StoreTest) WrappedReturnsCorrectScore() {
 	correctScore := blob.ComputeScore(b)
 
 	// Wrapped
-	ExpectCall(t.wrapped, "Store")(Any()).
+	ExpectCall(t.wrapped, "Store")(Any(), Any()).
 		WillOnce(oglemock.Return(correctScore, nil))
 
 	// Call
-	score, err := t.store.Store(b)
+	score, err := t.store.Store(t.ctx, b)
 
 	AssertEq(nil, err)
 	ExpectThat(score, DeepEquals(correctScore))
@@ -122,22 +127,22 @@ func (t *CheckingStore_LoadTest) CallsWrapped() {
 	score := blob.ComputeScore([]byte{0xde, 0xad})
 
 	// Wrapped
-	ExpectCall(t.wrapped, "Load")(DeepEquals(score)).
+	ExpectCall(t.wrapped, "Load")(Any(), DeepEquals(score)).
 		WillOnce(oglemock.Return(nil, errors.New("")))
 
 	// Call
-	t.store.Load(score)
+	t.store.Load(t.ctx, score)
 }
 
 func (t *CheckingStore_LoadTest) WrappedReturnsError() {
 	score := blob.ComputeScore([]byte{})
 
 	// Wrapped
-	ExpectCall(t.wrapped, "Load")(Any()).
+	ExpectCall(t.wrapped, "Load")(Any(), Any()).
 		WillOnce(oglemock.Return(nil, errors.New("taco")))
 
 	// Call
-	_, err := t.store.Load(score)
+	_, err := t.store.Load(t.ctx, score)
 
 	ExpectThat(err, Error(Equals("taco")))
 }
@@ -148,11 +153,11 @@ func (t *CheckingStore_LoadTest) WrappedReturnsIncorrectData() {
 	score := blob.ComputeScore(correctData)
 
 	// Wrapped
-	ExpectCall(t.wrapped, "Load")(Any()).
+	ExpectCall(t.wrapped, "Load")(Any(), Any()).
 		WillOnce(oglemock.Return(incorrectData, nil))
 
 	// Call
-	_, err := t.store.Load(score)
+	_, err := t.store.Load(t.ctx, score)
 
 	ExpectThat(err, Error(HasSubstr("Incorrect")))
 	ExpectThat(err, Error(HasSubstr("data")))
@@ -164,11 +169,11 @@ func (t *CheckingStore_LoadTest) WrappedReturnsCorrectData() {
 	score := blob.ComputeScore(correctData)
 
 	// Wrapped
-	ExpectCall(t.wrapped, "Load")(Any()).
+	ExpectCall(t.wrapped, "Load")(Any(), Any()).
 		WillOnce(oglemock.Return(correctData, nil))
 
 	// Call
-	data, err := t.store.Load(score)
+	data, err := t.store.Load(t.ctx, score)
 
 	AssertEq(nil, err)
 	ExpectThat(data, DeepEquals(correctData))

@@ -20,6 +20,8 @@ import (
 	"io"
 	"io/ioutil"
 
+	"golang.org/x/net/context"
+
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/fs"
 	"github.com/jacobsa/comeback/repr"
@@ -100,7 +102,7 @@ func (s *fileSaver) Save(path string) (scores []blob.Score, err error) {
 
 		// Feed the chunk to the blob store.
 		var score blob.Score
-		score, err = s.blobStore.Store(chunk)
+		score, err = s.blobStore.Store(context.TODO(), chunk)
 		if err != nil {
 			err = fmt.Errorf("Store: %v", err)
 			return
