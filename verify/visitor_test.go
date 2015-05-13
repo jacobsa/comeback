@@ -49,10 +49,11 @@ type superTest struct {
 
 func (t *superTest) setUp(
 	ti *TestInfo,
-	readFiles bool) {
+	readFiles bool,
+	allScores []blob.Score) {
 	t.ctx = ti.Ctx
 	t.blobStore = mock_blob.NewMockStore(ti.MockController, "blobStore")
-	t.visitor = verify.NewVisitor(readFiles, nil, t.blobStore)
+	t.visitor = verify.NewVisitor(readFiles, allScores, t.blobStore)
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -68,7 +69,7 @@ var _ SetUpInterface = &CommonTest{}
 func init() { RegisterTestSuite(&CommonTest{}) }
 
 func (t *CommonTest) SetUp(ti *TestInfo) {
-	t.superTest.setUp(ti, false)
+	t.superTest.setUp(ti, false, nil)
 }
 
 func (t *CommonTest) InvalidNodeName() {
@@ -96,7 +97,7 @@ var _ SetUpInterface = &DirsTest{}
 func init() { RegisterTestSuite(&DirsTest{}) }
 
 func (t *DirsTest) SetUp(ti *TestInfo) {
-	t.superTest.setUp(ti, false)
+	t.superTest.setUp(ti, false, nil)
 
 	// Set up canned data for a valid listing.
 	t.listing = []*fs.DirectoryEntry{
@@ -220,14 +221,29 @@ func (t *DirsTest) ReturnsAppropriateAdjacentNodes() {
 
 type FilesLiteTest struct {
 	superTest
+
+	contents   []byte
+	knownScore blob.Score
+	node       string
+
+	unknownScore blob.Score
 }
 
 var _ SetUpInterface = &FilesLiteTest{}
 
 func init() { RegisterTestSuite(&FilesLiteTest{}) }
 
+func (t *FilesLiteTest) setUp(ti *TestInfo, readFiles bool) {
+	t.contents = []byte("foobarbaz")
+	t.knownScore = blob.ComputeScore(t.contents)
+	t.node = verify.FormatNodeName(false, t.knownScore)
+	t.unknownScore = blob.ComputeScore(append(t.contents, 'a'))
+
+	t.superTest.setUp(ti, readFiles, []blob.Score{t.knownScore})
+}
+
 func (t *FilesLiteTest) SetUp(ti *TestInfo) {
-	t.superTest.setUp(ti, false)
+	t.setUp(ti, false)
 }
 
 func (t *FilesLiteTest) ScoreNotInList() {
@@ -243,7 +259,7 @@ func (t *FilesLiteTest) ScoreIsInList() {
 ////////////////////////////////////////////////////////////////////////
 
 type FilesFullTest struct {
-	superTest
+	FilesLiteTest
 }
 
 var _ SetUpInterface = &FilesFullTest{}
@@ -251,7 +267,7 @@ var _ SetUpInterface = &FilesFullTest{}
 func init() { RegisterTestSuite(&FilesFullTest{}) }
 
 func (t *FilesFullTest) SetUp(ti *TestInfo) {
-	t.superTest.setUp(ti, false)
+	t.FilesLiteTest.setUp(ti, true)
 }
 
 func (t *FilesFullTest) CallsBlobStore() {
