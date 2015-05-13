@@ -245,14 +245,6 @@ func (t *filesCommonTest) setUp(ti *TestInfo, readFiles bool) {
 
 type FilesLiteTest struct {
 	filesCommonTest
-
-	contents []byte
-
-	knownScore blob.Score
-	knownNode  string
-
-	unknownScore blob.Score
-	unknownNode  string
 }
 
 var _ SetUpInterface = &FilesLiteTest{}
@@ -267,7 +259,8 @@ func (t *FilesLiteTest) ScoreNotInList() {
 	// Call
 	_, err := t.visitor.Visit(t.ctx, t.unknownNode)
 
-	ExpectThat(err, Error(HasSubstr("Unknown score")))
+	ExpectThat(err, Error(HasSubstr("Unknown")))
+	ExpectThat(err, Error(HasSubstr("score")))
 	ExpectThat(err, Error(HasSubstr(t.unknownScore.Hex())))
 }
 
