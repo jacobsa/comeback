@@ -97,7 +97,12 @@ func runVerify(args []string) {
 		knownScores,
 		blobStore)
 
-	// Traverse starting at the specified roots.
+	// Traverse starting at the specified roots. Use an "experimentally
+	// determined" parallelism, which in theory should depend on bandwidth-delay
+	// products but in practice comes down to when the OS gets cranky about open
+	// files.
+	const parallelism = 256
+
 	err = graph.Traverse(
 		context.Background(),
 		parallelism,
