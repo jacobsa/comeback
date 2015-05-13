@@ -19,6 +19,8 @@ import (
 	"fmt"
 	"sync"
 
+	"golang.org/x/net/context"
+
 	"github.com/jacobsa/gcloud/syncutil"
 )
 
@@ -157,7 +159,7 @@ func (s *bufferingStore) makeDurable(score Score, blob []byte) {
 	}()
 
 	// Call through to the wrapped store.
-	wrappedScore, err := s.wrapped.Store(blob)
+	wrappedScore, err := s.wrapped.Store(context.TODO(), blob)
 	if err != nil {
 		return
 	}
@@ -175,7 +177,9 @@ func (s *bufferingStore) makeDurable(score Score, blob []byte) {
 // Public interface
 ////////////////////////////////////////////////////////////////////////
 
-func (s *bufferingStore) Store(blob []byte) (score Score, err error) {
+func (s *bufferingStore) Store(
+	ctx context.Context,
+	blob []byte) (score Score, err error) {
 	// Will this blob ever fit?
 	if len(blob) > s.maxBytesBuffered {
 		err = fmt.Errorf(
@@ -212,7 +216,7 @@ func (s *bufferingStore) Store(blob []byte) (score Score, err error) {
 
 	// If the wrapped store already contains the score, we need not do anything
 	// further.
-	if s.wrapped.Contains(score) {
+	if s.wrapped.Contains(ctx, score) {
 		return
 	}
 
@@ -227,7 +231,7 @@ func (s *bufferingStore) Store(blob []byte) (score Score, err error) {
 	return
 }
 
-func (s *bufferingStore) Flush() (err error) {
+func (s *bufferingStore) Flush(ctx context.Context) (err error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -240,7 +244,7 @@ func (s *bufferingStore) Flush() (err error) {
 	return
 }
 
-func (s *bufferingStore) Contains(score Score) (b bool) {
+func (s *bufferingStore) Contains(ctx context.Context, score Score) (b bool) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -251,7 +255,7 @@ func (s *bufferingStore) Contains(score Score) (b bool) {
 	}
 
 	// Does the score exist in the wrapped store?
-	if s.wrapped.Contains(score) {
+	if s.wrapped.Contains(ctx, score) {
 		b = true
 		return
 	}
@@ -259,7 +263,9 @@ func (s *bufferingStore) Contains(score Score) (b bool) {
 	return
 }
 
-func (s *bufferingStore) Load(score Score) (blob []byte, err error) {
-	blob, err = s.wrapped.Load(score)
+func (s *bufferingStore) Load(
+	ctx context.Context,
+	score Score) (blob []byte, err error) {
+	blob, err = s.wrapped.Load(ctx, score)
 	return
 }
