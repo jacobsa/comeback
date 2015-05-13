@@ -17,6 +17,8 @@ package verify
 
 import (
 	"errors"
+	"fmt"
+	"strings"
 
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/graph"
@@ -60,7 +62,28 @@ func FormatNodeName(
 // Parse a node name created by FormatNodeName.
 func ParseNodeName(
 	node string) (dir bool, score blob.Score, err error) {
-	panic("TODO")
+	var hexScore string
+
+	switch {
+	case strings.HasPrefix(node, filePrefix):
+		hexScore = strings.TrimPrefix(node, filePrefix)
+
+	case strings.HasPrefix(node, dirPrefix):
+		dir = true
+		hexScore = strings.TrimPrefix(node, dirPrefix)
+
+	default:
+		err = fmt.Errorf("Unknown prefix for node name %q", node)
+		return
+	}
+
+	score, err = blob.ParseHexScore(hexScore)
+	if err != nil {
+		err = fmt.Errorf("ParseHexScore for node %q: %v", node, err)
+		return
+	}
+
+	return
 }
 
 ////////////////////////////////////////////////////////////////////////
