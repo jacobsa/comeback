@@ -136,8 +136,14 @@ func runVerify(args []string) {
 		crypter,
 		util.NewStringSet())
 
+	if err != nil {
+		err = fmt.Errorf("MakeBlobStore: %v", err)
+		return
+	}
+
 	// List all scores in the bucket, verifying the object record metadata in the
 	// process.
+	log.Println("Listing scores...")
 	knownScores, err := listAllScores(
 		context.Background(),
 		bucket,
@@ -148,10 +154,7 @@ func runVerify(args []string) {
 		return
 	}
 
-	if err != nil {
-		err = fmt.Errorf("MakeBlobStore: %v", err)
-		return
-	}
+	log.Printf("Listed %d scores.", len(knownScores))
 
 	// Create a graph visitor that perform the verification.
 	visitor := verify.NewVisitor(
