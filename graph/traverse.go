@@ -188,6 +188,10 @@ func visitOne(
 	adjacent, err := v.Visit(ctx, node)
 	ts.mu.Lock()
 
+	if err != nil {
+		return
+	}
+
 	// Enqueue the adjacent nodes that we haven't already admitted.
 	for _, n := range adjacent {
 		if _, ok := ts.admitted[n]; !ok {
