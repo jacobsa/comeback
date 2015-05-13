@@ -207,8 +207,24 @@ func (t *DirsTest) UnknownEntryType() {
 	ExpectThat(err, Error(HasSubstr("17")))
 }
 
-func (t *DirsTest) ReturnsAppropriateNodeNames() {
-	AssertFalse(true, "TODO")
+func (t *DirsTest) ReturnsAppropriateAdjacentNodes() {
+	// Load
+	ExpectCall(t.blobStore, "Load")(Any()).
+		WillOnce(Return(t.contents, nil))
+
+	// Call
+	adjacent, err := t.visitor.Visit(t.ctx, t.node)
+	AssertEq(nil, err)
+
+	var expected []interface{}
+	for _, entry := range t.listing {
+		dir := entry.Type == fs.TypeDirectory
+		for _, score := range entry.Scores {
+			expected = append(expected, verify.FormatNodeName(dir, score))
+		}
+	}
+
+	ExpectThat(adjacent, ElementsAre(expected...))
 }
 
 ////////////////////////////////////////////////////////////////////////
