@@ -161,6 +161,17 @@ func (ts *traverseState) waitForSomethingToDo() {
 // Helpers
 ////////////////////////////////////////////////////////////////////////
 
+// REQUIRES: len(ts.toVisit) > 0
+//
+// LOCKS_REQUIRED(ts.mu)
+func visitOne(
+	ctx context.Context,
+	ts *traverseState,
+	v Visitor) (err error) {
+	err = errors.New("TODO")
+	return
+}
+
 // A single traverse worker.
 func traverse(
 	ctx context.Context,
@@ -170,13 +181,26 @@ func traverse(
 		// Wait for something to do.
 		ts.waitForSomethingToDo()
 
+		// Why were we awoken?
+		switch {
 		// Return immediately if cancelled.
-		if ts.cancelled {
+		case ts.cancelled:
 			err = errors.New("Cancelled")
-			return
-		}
 
-		panic("TODO")
+		// Otherwise, handle work if it exists.
+		case len(ts.toVisit) != 0:
+			err = visitOne(ctx, ts, v)
+			if err != nil {
+				return
+			}
+
+		// Otherwise, are we done?
+		case ts.busyWorkers == 0:
+			return
+
+		default:
+			panic("Unexpected wake-up")
+		}
 	}
 }
 
