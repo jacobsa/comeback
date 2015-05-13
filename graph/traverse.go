@@ -121,7 +121,7 @@ type traverseState struct {
 	// GUARDED_BY(mu)
 	busyWorkers int
 
-	// Signalled with mu held when any of the following state changes:
+	// Broadcasted to with mu held when any of the following state changes:
 	//
 	//  *  toVisit
 	//  *  cancelled
@@ -176,6 +176,7 @@ func visitOne(
 	l := len(ts.toVisit)
 	node := ts.toVisit[l-1]
 	ts.toVisit = ts.toVisit[:l-1]
+	ts.cond.Broadcast()
 
 	// Unlock while visiting.
 	ts.mu.Unlock()
@@ -187,6 +188,7 @@ func visitOne(
 		if _, ok := ts.admitted[n]; !ok {
 			ts.toVisit = append(ts.toVisit, n)
 			ts.admitted[n] = struct{}{}
+			ts.cond.Broadcast()
 		}
 	}
 
@@ -237,4 +239,5 @@ func watchForCancel(
 	ts.mu.Lock()
 	defer ts.mu.Unlock()
 	ts.cancelled = true
+	ts.cond.Broadcast()
 }
