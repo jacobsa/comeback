@@ -16,14 +16,17 @@
 package verify_test
 
 import (
+	"errors"
 	"testing"
 
 	"golang.org/x/net/context"
 
+	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/blob/mock"
 	"github.com/jacobsa/comeback/graph"
 	"github.com/jacobsa/comeback/verify"
 	. "github.com/jacobsa/oglematchers"
+	. "github.com/jacobsa/oglemock"
 	. "github.com/jacobsa/ogletest"
 )
 
@@ -78,6 +81,10 @@ func (t *CommonTest) InvalidNodeName() {
 
 type DirsTest struct {
 	superTest
+
+	contents []byte
+	score    blob.Score
+	node     string
 }
 
 var _ SetUpInterface = &DirsTest{}
@@ -86,10 +93,19 @@ func init() { RegisterTestSuite(&DirsTest{}) }
 
 func (t *DirsTest) SetUp(ti *TestInfo) {
 	t.superTest.setUp(ti, false)
+
+	t.contents = []byte("taco")
+	t.score = blob.ComputeScore(t.contents)
+	t.node = verify.FormatNodeName(true, t.score)
 }
 
 func (t *DirsTest) CallsBlobStore() {
-	AssertFalse(true, "TODO")
+	// Load
+	ExpectCall(t.blobStore, "Load")(t.score).
+		WillOnce(Return(nil, errors.New("")))
+
+	// Call
+	t.visitor.Visit(t.ctx, t.node)
 }
 
 func (t *DirsTest) BlobStoreReaderReturnsError() {
