@@ -28,7 +28,7 @@ import (
 // The visitor reads directory blobs, verifies their score, parses them, and
 // emits their children as adjacent nodes. For file nodes, the visitor verifies
 // that their score exists (according to allScores), and reads and verifies
-// their score if readFiles is true.
+// their score then ensures they can be decrypted if readFiles is true.
 func NewVisitor(
 	readFiles bool,
 	allScores []blob.Score,
