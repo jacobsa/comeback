@@ -107,11 +107,15 @@ type traverseState struct {
 	// GUARDED_BY(mu)
 	toVisit []string
 
-	// Set to true if the context has been cancelled. All workers should return
-	// when this happens.
+	// Set to the first error seen by a worker, if any. When non-nil, all workers
+	// should wake up and return.
+	//
+	// We must track this explicitly rather than just using syncutil.Bundle's
+	// support because we sleep on a condition variable, which can't be composed
+	// with receiving from the context's Done channel.
 	//
 	// GUARDED_BY(mu)
-	cancelled bool
+	firstErr error
 
 	// The number of workers that are doing something besides waiting on a node
 	// to visit. If this hits zero with toVisit empty, it means that there is
