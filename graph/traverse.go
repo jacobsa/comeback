@@ -168,7 +168,28 @@ func visitOne(
 	ctx context.Context,
 	ts *traverseState,
 	v Visitor) (err error) {
-	err = errors.New("TODO")
+	// Mark this worker as busy for the duration of this function.
+	ts.busyWorkers++
+	defer func() { ts.busyWorkers-- }()
+
+	// Extract the node to visit.
+	l := len(ts.toVisit)
+	node := ts.toVisit[l-1]
+	ts.toVisit = ts.toVisit[:l-1]
+
+	// Unlock while visiting.
+	ts.mu.Unlock()
+	adjacent, err := v.Visit(ctx, node)
+	ts.mu.Lock()
+
+	// Enqueue the adjacent nodes that we haven't already admitted.
+	for _, n := range adjacent {
+		if _, ok := ts.admitted[n]; !ok {
+			ts.toVisit = append(ts.toVisit, n)
+			ts.admitted[n] = struct{}{}
+		}
+	}
+
 	return
 }
 
