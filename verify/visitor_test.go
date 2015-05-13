@@ -117,6 +117,12 @@ func (t *DirsTest) SetUp(ti *TestInfo) {
 				blob.ComputeScore([]byte("2")),
 			},
 		},
+
+		&fs.DirectoryEntry{
+			Type:   fs.TypeSymlink,
+			Name:   "baz",
+			Target: "asdf",
+		},
 	}
 
 	var err error
@@ -169,7 +175,7 @@ func (t *DirsTest) UnknownEntryType() {
 	// Set up a listing with a junk entry type.
 	t.listing = []*fs.DirectoryEntry{
 		&fs.DirectoryEntry{
-			Type: fs.TypeSymlink,
+			Type: fs.TypeCharDevice,
 			Name: "foo",
 			Scores: []blob.Score{
 				blob.ComputeScore([]byte("0")),
@@ -192,7 +198,11 @@ func (t *DirsTest) UnknownEntryType() {
 	_, err = t.visitor.Visit(t.ctx, t.node)
 
 	ExpectThat(err, Error(HasSubstr("entry type")))
-	ExpectThat(err, Error(HasSubstr(fmt.Sprintf("%d", fs.TypeSymlink))))
+	ExpectThat(err, Error(HasSubstr(fmt.Sprintf("%d", fs.TypeCharDevice))))
+}
+
+func (t *DirsTest) SymlinkWithScores() {
+	AssertTrue(false, "TODO")
 }
 
 func (t *DirsTest) ReturnsAppropriateAdjacentNodes() {
