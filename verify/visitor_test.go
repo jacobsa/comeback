@@ -260,7 +260,11 @@ func (t *FilesLiteTest) ScoreNotInList() {
 }
 
 func (t *FilesLiteTest) ScoreIsInList() {
-	AssertFalse(true, "TODO")
+	// Call
+	adjacent, err := t.visitor.Visit(t.ctx, t.knownNode)
+
+	AssertEq(nil, err)
+	ExpectThat(adjacent, ElementsAre())
 }
 
 ////////////////////////////////////////////////////////////////////////
