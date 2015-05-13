@@ -26,7 +26,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"runtime"
@@ -38,6 +37,7 @@ import (
 	"github.com/jacobsa/comeback/verify"
 	"github.com/jacobsa/comeback/wiring"
 	"github.com/jacobsa/gcloud/gcs"
+	"github.com/jacobsa/gcloud/syncutil"
 	"golang.org/x/net/context"
 )
 
@@ -64,7 +64,31 @@ func listAllScores(
 	ctx context.Context,
 	bucket gcs.Bucket,
 	namePrefix string) (scores []blob.Score, err error) {
-	err = errors.New("TODO: listAllScores")
+	b := syncutil.NewBundle(context.Background())
+	defer func() { err = b.Join() }()
+
+	// List scores into a channel.
+	scoreChan := make(chan blob.Score, 100)
+	b.Add(func(ctx context.Context) (err error) {
+		defer close(scoreChan)
+		err = blob.ListScores(ctx, bucket, wiring.BlobObjectNamePrefix, scoreChan)
+		if err != nil {
+			err = fmt.Errorf("ListScores: %v", err)
+			return
+		}
+
+		return
+	})
+
+	// Accumulate into the slice.
+	b.Add(func(ctx context.Context) (err error) {
+		for score := range scoreChan {
+			scores = append(scores, score)
+		}
+
+		return
+	})
+
 	return
 }
 
