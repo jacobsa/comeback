@@ -20,42 +20,56 @@ import (
 
 	"golang.org/x/net/context"
 
-	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/blob/mock"
+	"github.com/jacobsa/comeback/graph"
+	"github.com/jacobsa/comeback/verify"
+	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
 )
 
 func TestVisitor(t *testing.T) { RunTests(t) }
 
 ////////////////////////////////////////////////////////////////////////
-// Common
+// Boilerplate
 ////////////////////////////////////////////////////////////////////////
 
 const namePrefix = "blobs/"
 
-type CommonTest struct {
+type superTest struct {
 	ctx       context.Context
-	allScores []blob.Score
 	blobStore mock_blob.MockStore
+	visitor   graph.Visitor
 }
 
-var _ SetUpInterface = &CommonTest{}
-
-func init() { RegisterTestSuite(&DirsTest{}) }
-
-func (t *CommonTest) setUp(
+func (t *superTest) setUp(
 	ti *TestInfo,
 	readFiles bool) {
 	t.ctx = ti.Ctx
 	t.blobStore = mock_blob.NewMockStore(ti.MockController, "blobStore")
+	t.visitor = verify.NewVisitor(readFiles, nil, t.blobStore)
 }
+
+////////////////////////////////////////////////////////////////////////
+// Common
+////////////////////////////////////////////////////////////////////////
+
+type CommonTest struct {
+	superTest
+}
+
+var _ SetUpInterface = &CommonTest{}
+
+func init() { RegisterTestSuite(&CommonTest{}) }
 
 func (t *CommonTest) SetUp(ti *TestInfo) {
-	t.setUp(ti, false)
+	t.superTest.setUp(ti, false)
 }
 
-func (t *CommonTest) UnknownNodeName() {
-	AssertFalse(true, "TODO")
+func (t *CommonTest) InvalidNodeName() {
+	_, err := t.visitor.Visit(t.ctx, "taco")
+
+	ExpectThat(err, Error(HasSubstr("ParseNodeName")))
+	ExpectThat(err, Error(HasSubstr("taco")))
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -63,7 +77,7 @@ func (t *CommonTest) UnknownNodeName() {
 ////////////////////////////////////////////////////////////////////////
 
 type DirsTest struct {
-	CommonTest
+	superTest
 }
 
 var _ SetUpInterface = &DirsTest{}
@@ -71,7 +85,7 @@ var _ SetUpInterface = &DirsTest{}
 func init() { RegisterTestSuite(&DirsTest{}) }
 
 func (t *DirsTest) SetUp(ti *TestInfo) {
-	t.CommonTest.setUp(ti, false)
+	t.superTest.setUp(ti, false)
 }
 
 func (t *DirsTest) CallsBlobStore() {
@@ -103,7 +117,7 @@ func (t *DirsTest) ReturnsAppropriateNodeNames() {
 ////////////////////////////////////////////////////////////////////////
 
 type FilesLiteTest struct {
-	CommonTest
+	superTest
 }
 
 var _ SetUpInterface = &FilesLiteTest{}
@@ -111,7 +125,7 @@ var _ SetUpInterface = &FilesLiteTest{}
 func init() { RegisterTestSuite(&FilesLiteTest{}) }
 
 func (t *FilesLiteTest) SetUp(ti *TestInfo) {
-	t.CommonTest.setUp(ti, false)
+	t.superTest.setUp(ti, false)
 }
 
 func (t *FilesLiteTest) DoesFoo() {
@@ -123,7 +137,7 @@ func (t *FilesLiteTest) DoesFoo() {
 ////////////////////////////////////////////////////////////////////////
 
 type FilesFullTest struct {
-	CommonTest
+	superTest
 }
 
 var _ SetUpInterface = &FilesFullTest{}
@@ -131,7 +145,7 @@ var _ SetUpInterface = &FilesFullTest{}
 func init() { RegisterTestSuite(&FilesFullTest{}) }
 
 func (t *FilesFullTest) SetUp(ti *TestInfo) {
-	t.CommonTest.setUp(ti, false)
+	t.superTest.setUp(ti, false)
 }
 
 func (t *FilesFullTest) DoesFoo() {
