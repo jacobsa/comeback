@@ -33,17 +33,29 @@ func TestVisitor(t *testing.T) { RunTests(t) }
 
 const namePrefix = "blobs/"
 
-type commonVisitorTest struct {
+type CommonTest struct {
 	ctx       context.Context
 	bucket    gcs.Bucket
 	allScores []blob.Score
 }
 
-func (t *commonVisitorTest) setUp(
+var _ SetUpInterface = &CommonTest{}
+
+func init() { RegisterTestSuite(&DirsTest{}) }
+
+func (t *CommonTest) setUp(
 	ti *TestInfo,
 	readFiles bool) {
 	t.ctx = ti.Ctx
 	panic("TODO")
+}
+
+func (t *CommonTest) SetUp(ti *TestInfo) {
+	t.setUp(ti, false)
+}
+
+func (t *CommonTest) UnknownNodeName() {
+	AssertFalse(true, "TODO")
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -51,7 +63,7 @@ func (t *commonVisitorTest) setUp(
 ////////////////////////////////////////////////////////////////////////
 
 type DirsTest struct {
-	commonVisitorTest
+	CommonTest
 }
 
 var _ SetUpInterface = &DirsTest{}
@@ -59,10 +71,42 @@ var _ SetUpInterface = &DirsTest{}
 func init() { RegisterTestSuite(&DirsTest{}) }
 
 func (t *DirsTest) SetUp(ti *TestInfo) {
-	t.commonVisitorTest.setUp(ti, false)
+	t.CommonTest.setUp(ti, false)
 }
 
-func (t *DirsTest) DoesFoo() {
+func (t *DirsTest) CallsNewReader() {
+	AssertFalse(true, "TODO")
+}
+
+func (t *DirsTest) NewReaderReturnsError() {
+	AssertFalse(true, "TODO")
+}
+
+func (t *DirsTest) ReadError() {
+	AssertFalse(true, "TODO")
+}
+
+func (t *DirsTest) CloseError() {
+	AssertFalse(true, "TODO")
+}
+
+func (t *DirsTest) CallsCrypter() {
+	AssertFalse(true, "TODO")
+}
+
+func (t *DirsTest) CrypterReturnsError() {
+	AssertFalse(true, "TODO")
+}
+
+func (t *DirsTest) CrypterReturnsJunk() {
+	AssertFalse(true, "TODO")
+}
+
+func (t *DirsTest) UnknownEntryType() {
+	AssertFalse(true, "TODO")
+}
+
+func (t *DirsTest) ReturnsAppropriateNodeNames() {
 	AssertFalse(true, "TODO")
 }
 
@@ -71,7 +115,7 @@ func (t *DirsTest) DoesFoo() {
 ////////////////////////////////////////////////////////////////////////
 
 type FilesLiteTest struct {
-	commonVisitorTest
+	CommonTest
 }
 
 var _ SetUpInterface = &FilesLiteTest{}
@@ -79,7 +123,7 @@ var _ SetUpInterface = &FilesLiteTest{}
 func init() { RegisterTestSuite(&FilesLiteTest{}) }
 
 func (t *FilesLiteTest) SetUp(ti *TestInfo) {
-	t.commonVisitorTest.setUp(ti, false)
+	t.CommonTest.setUp(ti, false)
 }
 
 func (t *FilesLiteTest) DoesFoo() {
@@ -91,7 +135,7 @@ func (t *FilesLiteTest) DoesFoo() {
 ////////////////////////////////////////////////////////////////////////
 
 type FilesFullTest struct {
-	commonVisitorTest
+	CommonTest
 }
 
 var _ SetUpInterface = &FilesFullTest{}
@@ -99,7 +143,7 @@ var _ SetUpInterface = &FilesFullTest{}
 func init() { RegisterTestSuite(&FilesFullTest{}) }
 
 func (t *FilesFullTest) SetUp(ti *TestInfo) {
-	t.commonVisitorTest.setUp(ti, false)
+	t.CommonTest.setUp(ti, false)
 }
 
 func (t *FilesFullTest) DoesFoo() {
