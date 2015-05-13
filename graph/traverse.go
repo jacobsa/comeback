@@ -127,7 +127,7 @@ type traverseState struct {
 	// Broadcasted to with mu held when any of the following state changes:
 	//
 	//  *  toVisit
-	//  *  cancelled
+	//  *  firstErr
 	//  *  busyWorkers
 	//
 	// GUARDED_BY(mu)
@@ -148,7 +148,7 @@ func (ts *traverseState) checkInvariants() {
 //
 // LOCKS_REQUIRED(ts.mu)
 func (ts *traverseState) shouldWake() bool {
-	return len(ts.toVisit) != 0 || ts.cancelled || ts.busyWorkers == 0
+	return len(ts.toVisit) != 0 || ts.firstErr != nil || ts.busyWorkers == 0
 }
 
 // Sleep until there's something interesting for a traverse worker.
@@ -229,8 +229,8 @@ func traverse(
 
 		// Why were we awoken?
 		switch {
-		// Return immediately if cancelled.
-		case ts.cancelled:
+		// Return immediately if another worker has seen an error.
+		case ts.firstErr != nil:
 			err = errors.New("Cancelled")
 			return
 
@@ -249,16 +249,4 @@ func traverse(
 			panic("Unexpected wake-up")
 		}
 	}
-}
-
-// Bridge context cancellation with traverseState.cancelled.
-func watchForCancel(
-	done <-chan struct{},
-	ts *traverseState) {
-	<-done
-
-	ts.mu.Lock()
-	defer ts.mu.Unlock()
-	ts.cancelled = true
-	ts.cond.Broadcast()
 }
