@@ -417,35 +417,3 @@ func (s *GCSStore) Load(
 
 	return
 }
-
-// List all of the blobs that are known to be durable in the bucket.
-func (s *GCSStore) List() (
-	ctx context.Context,
-	scores []Score, err error) {
-	b := syncutil.NewBundle(ctx)
-
-	// List into a channel.
-	scoreChan := make(chan Score, 100)
-	b.Add(func(ctx context.Context) (err error) {
-		defer close(scoreChan)
-		err = ListScores(ctx, s.bucket, s.namePrefix, scoreChan)
-		if err != nil {
-			err = fmt.Errorf("ListScores: %v", err)
-			return
-		}
-
-		return
-	})
-
-	// Accumulate into the slice.
-	b.Add(func(ctx context.Context) (err error) {
-		for score := range scoreChan {
-			scores = append(scores, score)
-		}
-
-		return
-	})
-
-	err = b.Join()
-	return
-}
