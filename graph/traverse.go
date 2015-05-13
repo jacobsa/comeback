@@ -64,8 +64,17 @@ func Traverse(
 		ts.toVisit = append(ts.toVisit, r)
 	}
 
-	// Ensure that ts.cancelled is set when the context is eventually cancelled.
-	go watchForCancel(ctx, ts)
+	// Ensure that ts.cancelled is set when the context is cancelled (or when we
+	// return from this function, if the context will never be cancelled).
+	done := ctx.Done()
+	if done == nil {
+		doneChan := make(chan struct{})
+		defer close(doneChan)
+
+		done = doneChan
+	}
+
+	go watchForCancel(done, ts)
 
 	// Run the appropriate number of workers.
 	for i := 0; i < parallelism; i++ {
@@ -139,7 +148,11 @@ func traverse(
 
 // Bridge context cancellation with traverseState.cancelled.
 func watchForCancel(
-	ctx context.Context,
+	done <-chan struct{},
 	ts *traverseState) {
-	panic("TODO")
+	<-done
+
+	ts.mu.Lock()
+	defer ts.mu.Unlock()
+	ts.cancelled = true
 }
