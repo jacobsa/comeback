@@ -41,12 +41,12 @@ var cmdVerify = &Command{
 	Name: "verify",
 }
 
-var fRoots = cmdScanBlobs.Flags.String(
+var fRoots = cmdVerify.Flags.String(
 	"roots",
 	"",
 	"Comma-separated list of backup root scores to verify.")
 
-var fFast = cmdScanBlobs.Flags.Bool(
+var fFast = cmdVerify.Flags.Bool(
 	"fast",
 	false,
 	"When set, don't verify file content.")
