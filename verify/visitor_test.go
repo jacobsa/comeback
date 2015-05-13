@@ -178,7 +178,33 @@ func (t *DirsTest) BlobIsJunk() {
 }
 
 func (t *DirsTest) UnknownEntryType() {
-	AssertFalse(true, "TODO")
+	// Set up a listing with a junk entry type.
+	t.listing = []*fs.DirectoryEntry{
+		&fs.DirectoryEntry{
+			Type: 17,
+			Name: "foo",
+			Scores: []blob.Score{
+				blob.ComputeScore([]byte("0")),
+			},
+		},
+	}
+
+	var err error
+	t.contents, err = repr.MarshalDir(t.listing)
+	AssertEq(nil, err)
+
+	t.score = blob.ComputeScore(t.contents)
+	t.node = verify.FormatNodeName(true, t.score)
+
+	// Load
+	ExpectCall(t.blobStore, "Load")(Any()).
+		WillOnce(Return(t.contents, nil))
+
+	// Call
+	_, err = t.visitor.Visit(t.ctx, t.node)
+
+	ExpectThat(err, Error(HasSubstr("entry type")))
+	ExpectThat(err, Error(HasSubstr("17")))
 }
 
 func (t *DirsTest) ReturnsAppropriateNodeNames() {
