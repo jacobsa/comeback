@@ -451,8 +451,10 @@ func (t *TraverseTest) VisitorReturnsError() {
 		"I": []string{"J", "K"},
 	}
 
-	// Operate as normal, except return an error on node C.
+	// Operate as normal, except return an error on node C and save the context
+	// we see.
 	expected := errors.New("taco")
+	var visitCtx context.Context
 	t.visit = func(
 		ctx context.Context,
 		node string) (adjacent []string, err error) {
@@ -461,12 +463,27 @@ func (t *TraverseTest) VisitorReturnsError() {
 			err = expected
 		}
 
+		if visitCtx == nil {
+			visitCtx = ctx
+		}
+
 		return
 	}
 
 	// Traverse. We should get the expected error.
 	err := t.traverse()
 	ExpectEq(expected, err)
+
+	// The context should have been cancelled.
+	AssertNe(nil, visitCtx)
+	done := visitCtx.Done()
+	AssertNe(nil, done)
+
+	select {
+	case <-done:
+	default:
+		AddFailure("Expected context to be cancelled")
+	}
 
 	// Nothing descending from C should have been visted.
 	ExpectThat(
