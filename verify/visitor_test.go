@@ -94,7 +94,7 @@ func init() { RegisterTestSuite(&DirsTest{}) }
 func (t *DirsTest) SetUp(ti *TestInfo) {
 	t.superTest.setUp(ti, false)
 
-	t.contents = []byte("taco")
+	t.contents = []byte("foobarbaz")
 	t.score = blob.ComputeScore(t.contents)
 	t.node = verify.FormatNodeName(true, t.score)
 }
@@ -109,11 +109,29 @@ func (t *DirsTest) CallsBlobStore() {
 }
 
 func (t *DirsTest) BlobStoreReaderReturnsError() {
-	AssertFalse(true, "TODO")
+	// Load
+	ExpectCall(t.blobStore, "Load")(Any()).
+		WillOnce(Return(nil, errors.New("taco")))
+
+	// Call
+	_, err := t.visitor.Visit(t.ctx, t.node)
+
+	ExpectThat(err, Error(HasSubstr("Load")))
+	ExpectThat(err, Error(HasSubstr("taco")))
 }
 
 func (t *DirsTest) IncorrectScore() {
-	AssertFalse(true, "TODO")
+	// Load
+	wrongContents := append(t.contents, 'a')
+	ExpectCall(t.blobStore, "Load")(Any()).
+		WillOnce(Return(wrongContents, nil))
+
+	// Call
+	_, err := t.visitor.Visit(t.ctx, t.node)
+
+	ExpectThat(err, Error(HasSubstr("score")))
+	ExpectThat(err, Error(HasSubstr(t.score.Hex())))
+	ExpectThat(err, Error(HasSubstr(blob.ComputeScore(wrongContents).Hex())))
 }
 
 func (t *DirsTest) BlobIsJunk() {
