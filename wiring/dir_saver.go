@@ -65,9 +65,9 @@ func MakeDirSaver(
 	}
 
 	// Wrap a blob store around the bucket. Tell it to encrypt using the crypter.
-	bs, err := makeBlobStore(bucket, crypter, existingScores)
+	bs, err := MakeBlobStore(bucket, crypter, existingScores)
 	if err != nil {
-		err = fmt.Errorf("makeBlobStore: %v", err)
+		err = fmt.Errorf("MakeBlobStore: %v", err)
 		return
 	}
 

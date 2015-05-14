@@ -44,7 +44,7 @@ func minInt(a, b int) int {
 //
 // existingScores must contain only scores that are known to exist in the
 // bucket, in hex form. It will be updated as the blob store is used.
-func makeBlobStore(
+func MakeBlobStore(
 	bucket gcs.Bucket,
 	crypter crypto.Crypter,
 	existingScores util.StringSet) (bs blob.Store, err error) {

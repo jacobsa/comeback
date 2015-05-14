@@ -117,6 +117,12 @@ func (t *DirsTest) SetUp(ti *TestInfo) {
 				blob.ComputeScore([]byte("2")),
 			},
 		},
+
+		&fs.DirectoryEntry{
+			Type:   fs.TypeSymlink,
+			Name:   "baz",
+			Target: "asdf",
+		},
 	}
 
 	var err error
@@ -129,7 +135,7 @@ func (t *DirsTest) SetUp(ti *TestInfo) {
 
 func (t *DirsTest) CallsBlobStore() {
 	// Load
-	ExpectCall(t.blobStore, "Load")(t.score).
+	ExpectCall(t.blobStore, "Load")(Any(), t.score).
 		WillOnce(Return(nil, errors.New("")))
 
 	// Call
@@ -138,7 +144,7 @@ func (t *DirsTest) CallsBlobStore() {
 
 func (t *DirsTest) BlobStoreReturnsError() {
 	// Load
-	ExpectCall(t.blobStore, "Load")(Any()).
+	ExpectCall(t.blobStore, "Load")(Any(), Any()).
 		WillOnce(Return(nil, errors.New("taco")))
 
 	// Call
@@ -155,7 +161,7 @@ func (t *DirsTest) BlobIsJunk() {
 	t.node = verify.FormatNodeName(true, t.score)
 
 	// Load
-	ExpectCall(t.blobStore, "Load")(Any()).
+	ExpectCall(t.blobStore, "Load")(Any(), Any()).
 		WillOnce(Return(t.contents, nil))
 
 	// Call
@@ -166,7 +172,37 @@ func (t *DirsTest) BlobIsJunk() {
 }
 
 func (t *DirsTest) UnknownEntryType() {
-	// Set up a listing with a junk entry type.
+	// Set up a listing with an unsupported entry type.
+	t.listing = []*fs.DirectoryEntry{
+		&fs.DirectoryEntry{
+			Type: fs.TypeCharDevice,
+			Name: "foo",
+			Scores: []blob.Score{
+				blob.ComputeScore([]byte("0")),
+			},
+		},
+	}
+
+	var err error
+	t.contents, err = repr.MarshalDir(t.listing)
+	AssertEq(nil, err)
+
+	t.score = blob.ComputeScore(t.contents)
+	t.node = verify.FormatNodeName(true, t.score)
+
+	// Load
+	ExpectCall(t.blobStore, "Load")(Any(), Any()).
+		WillOnce(Return(t.contents, nil))
+
+	// Call
+	_, err = t.visitor.Visit(t.ctx, t.node)
+
+	ExpectThat(err, Error(HasSubstr("entry type")))
+	ExpectThat(err, Error(HasSubstr(fmt.Sprintf("%d", fs.TypeCharDevice))))
+}
+
+func (t *DirsTest) SymlinkWithScores() {
+	// Set up a listing with a symlink that unexpectedly has associated scores.
 	t.listing = []*fs.DirectoryEntry{
 		&fs.DirectoryEntry{
 			Type: fs.TypeSymlink,
@@ -185,19 +221,20 @@ func (t *DirsTest) UnknownEntryType() {
 	t.node = verify.FormatNodeName(true, t.score)
 
 	// Load
-	ExpectCall(t.blobStore, "Load")(Any()).
+	ExpectCall(t.blobStore, "Load")(Any(), Any()).
 		WillOnce(Return(t.contents, nil))
 
 	// Call
 	_, err = t.visitor.Visit(t.ctx, t.node)
 
-	ExpectThat(err, Error(HasSubstr("entry type")))
-	ExpectThat(err, Error(HasSubstr(fmt.Sprintf("%d", fs.TypeSymlink))))
+	ExpectThat(err, Error(HasSubstr(t.score.Hex())))
+	ExpectThat(err, Error(HasSubstr("symlink")))
+	ExpectThat(err, Error(HasSubstr("scores")))
 }
 
 func (t *DirsTest) ReturnsAppropriateAdjacentNodes() {
 	// Load
-	ExpectCall(t.blobStore, "Load")(Any()).
+	ExpectCall(t.blobStore, "Load")(Any(), Any()).
 		WillOnce(Return(t.contents, nil))
 
 	// Call
@@ -290,7 +327,7 @@ func (t *FilesFullTest) SetUp(ti *TestInfo) {
 
 func (t *FilesFullTest) CallsBlobStore() {
 	// Load
-	ExpectCall(t.blobStore, "Load")(t.knownScore).
+	ExpectCall(t.blobStore, "Load")(Any(), t.knownScore).
 		WillOnce(Return(nil, errors.New("")))
 
 	// Call
@@ -299,7 +336,7 @@ func (t *FilesFullTest) CallsBlobStore() {
 
 func (t *FilesFullTest) BlobStoreReturnsError() {
 	// Load
-	ExpectCall(t.blobStore, "Load")(Any()).
+	ExpectCall(t.blobStore, "Load")(Any(), Any()).
 		WillOnce(Return(nil, errors.New("taco")))
 
 	// Call
@@ -311,7 +348,7 @@ func (t *FilesFullTest) BlobStoreReturnsError() {
 
 func (t *FilesFullTest) BlobStoreSucceeds() {
 	// Load
-	ExpectCall(t.blobStore, "Load")(Any()).
+	ExpectCall(t.blobStore, "Load")(Any(), Any()).
 		WillOnce(Return(t.contents, nil))
 
 	// Call

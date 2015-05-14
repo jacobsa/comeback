@@ -126,7 +126,7 @@ func (v *visitor) visitFile(
 
 	// Make sure we can load the blob contents. Presumably the blob store
 	// verifies the score (of the ciphertext) on the way through.
-	_, err = v.blobStore.Load(score)
+	_, err = v.blobStore.Load(ctx, score)
 	if err != nil {
 		err = fmt.Errorf("Load(%s): %v", score.Hex(), err)
 		return
@@ -139,7 +139,7 @@ func (v *visitor) visitDir(
 	ctx context.Context,
 	score blob.Score) (adjacent []string, err error) {
 	// Load the blob contents.
-	contents, err := v.blobStore.Load(score)
+	contents, err := v.blobStore.Load(ctx, score)
 	if err != nil {
 		err = fmt.Errorf("Load(%s): %v", score.Hex(), err)
 		return
@@ -162,6 +162,15 @@ func (v *visitor) visitDir(
 
 		case fs.TypeDirectory:
 			dir = true
+
+		case fs.TypeSymlink:
+			if len(entry.Scores) != 0 {
+				err = fmt.Errorf(
+					"Dir %s: symlink unexpectedly contains scores",
+					score.Hex())
+
+				return
+			}
 
 		default:
 			err = fmt.Errorf("Dir %s: unknown entry type %v", score.Hex(), entry.Type)
