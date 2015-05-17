@@ -111,10 +111,8 @@ func (t *FileSystemVisitorTest) VisitRootNode() {
 	AssertEq(nil, err)
 
 	// Visit the root.
-	adjacent, err := t.visitor.Visit(t.ctx, "")
-
+	_, err = t.visitor.Visit(t.ctx, "")
 	AssertEq(nil, err)
-	ExpectThat(sortNodes(adjacent), ElementsAre("bar", "foo"))
 
 	// Check the output.
 	output := t.sortOutput()
