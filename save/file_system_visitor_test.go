@@ -24,6 +24,7 @@ import (
 
 	"github.com/jacobsa/comeback/graph"
 	"github.com/jacobsa/comeback/save"
+	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
 )
 
@@ -77,7 +78,11 @@ func (t *FileSystemVisitorTest) TearDown() {
 ////////////////////////////////////////////////////////////////////////
 
 func (t *FileSystemVisitorTest) NonExistentPath() {
-	AssertFalse(true, "TODO")
+	const node = "foo/bar"
+
+	_, err := t.visitor.Visit(t.ctx, node)
+	ExpectThat(err, Error(HasSubstr(node)))
+	ExpectThat(err, Error(HasSubstr("not found")))
 }
 
 func (t *FileSystemVisitorTest) NotADirectory() {
