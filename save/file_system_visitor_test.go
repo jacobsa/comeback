@@ -203,7 +203,42 @@ func (t *FileSystemVisitorTest) Files() {
 }
 
 func (t *FileSystemVisitorTest) Directories() {
-	AssertFalse(true, "TODO")
+	var err error
+	var pfi save.PathAndFileInfo
+
+	// Make a sub-directory.
+	d := path.Join(t.dir, "dir")
+
+	err = os.MkdirAll(d, 0700)
+	AssertEq(nil, err)
+
+	// Create children.
+	err = os.Mkdir(path.Join(d, "foo"), 0400)
+	AssertEq(nil, err)
+
+	err = os.Mkdir(path.Join(d, "bar"), 0400)
+	AssertEq(nil, err)
+
+	// Visit.
+	adjacent, err := t.visitor.Visit(t.ctx, "dir")
+	sort.Strings(adjacent)
+
+	AssertEq(nil, err)
+	ExpectThat(adjacent, ElementsAre("dir/bar", "dir/foo"))
+
+	// Check the output.
+	output := t.sortOutput()
+	AssertEq(2, len(output))
+
+	pfi = output[0]
+	ExpectEq("dir/bar", pfi.Path)
+	ExpectEq("bar", pfi.Info.Name())
+	ExpectTrue(pfi.Info.IsDir())
+
+	pfi = output[1]
+	ExpectEq("dir/foo", pfi.Path)
+	ExpectEq("foo", pfi.Info.Name())
+	ExpectTrue(pfi.Info.IsDir())
 }
 
 func (t *FileSystemVisitorTest) Symlinks() {
