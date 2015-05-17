@@ -51,6 +51,50 @@ func (t *FileSystemVisitorTest) TearDown() {
 // Tests
 ////////////////////////////////////////////////////////////////////////
 
-func (t *FileSystemVisitorTest) DoesFoo() {
+func (t *FileSystemVisitorTest) NonExistentPath() {
+	AssertFalse(true, "TODO")
+}
+
+func (t *FileSystemVisitorTest) NotADirectory() {
+	AssertFalse(true, "TODO")
+}
+
+func (t *FileSystemVisitorTest) VisitRootNode() {
+	AssertFalse(true, "TODO")
+}
+
+func (t *FileSystemVisitorTest) VisitNonRootNode() {
+	AssertFalse(true, "TODO")
+}
+
+func (t *FileSystemVisitorTest) Files() {
+	AssertFalse(true, "TODO")
+}
+
+func (t *FileSystemVisitorTest) Directories() {
+	AssertFalse(true, "TODO")
+}
+
+func (t *FileSystemVisitorTest) Symlinks() {
+	AssertFalse(true, "TODO")
+}
+
+func (t *FileSystemVisitorTest) Devices() {
+	AssertFalse(true, "TODO")
+}
+
+func (t *FileSystemVisitorTest) CharDevices() {
+	AssertFalse(true, "TODO")
+}
+
+func (t *FileSystemVisitorTest) NamedPipes() {
+	AssertFalse(true, "TODO")
+}
+
+func (t *FileSystemVisitorTest) Sockets() {
+	AssertFalse(true, "TODO")
+}
+
+func (t *FileSystemVisitorTest) Exclusions() {
 	AssertFalse(true, "TODO")
 }
