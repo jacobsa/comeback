@@ -19,6 +19,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"sort"
 	"testing"
 
 	"golang.org/x/net/context"
@@ -30,6 +31,24 @@ import (
 )
 
 func TestFileSystemVisitor(t *testing.T) { RunTests(t) }
+
+////////////////////////////////////////////////////////////////////////
+// Helpers
+////////////////////////////////////////////////////////////////////////
+
+type PathAndFileInfoSlice []save.PathAndFileInfo
+
+func (p PathAndFileInfoSlice) Len() int {
+	return len(p)
+}
+
+func (p PathAndFileInfoSlice) Less(i, j int) bool {
+	return p[i].Path < p[j].Path
+}
+
+func (p PathAndFileInfoSlice) Swap(i, j int) {
+	p[i], p[j] = p[j], p[i]
+}
 
 ////////////////////////////////////////////////////////////////////////
 // Boilerplate
@@ -72,6 +91,16 @@ func (t *FileSystemVisitorTest) TearDown() {
 	// Clean up the junk we left in the file system.
 	err = os.RemoveAll(t.dir)
 	AssertEq(nil, err)
+}
+
+// Consume the output, returning a slice sorted by path.
+func (t *FileSystemVisitorTest) sortOutput() (output PathAndFileInfoSlice) {
+	for o := range t.output {
+		output = append(output, o)
+	}
+
+	sort.Sort(output)
+	return
 }
 
 ////////////////////////////////////////////////////////////////////////
