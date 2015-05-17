@@ -178,7 +178,35 @@ func (t *FileSystemVisitorTest) VisitNonRootNode() {
 }
 
 func (t *FileSystemVisitorTest) Files() {
-	AssertFalse(true, "TODO")
+	var err error
+	var pfi save.PathAndFileInfo
+
+	// Create two children.
+	err = ioutil.WriteFile(path.Join(t.dir, "foo"), []byte("taco"), 0400)
+	AssertEq(nil, err)
+
+	err = ioutil.WriteFile(path.Join(t.dir, "bar"), []byte("burrito"), 0400)
+	AssertEq(nil, err)
+
+	// Visit the root.
+	adjacent, err := t.visitor.Visit(t.ctx, "")
+
+	AssertEq(nil, err)
+	ExpectThat(adjacent, ElementsAre())
+
+	// Check the output.
+	output := t.sortOutput()
+	AssertEq(2, len(output))
+
+	pfi = output[0]
+	ExpectEq(path.Join(t.dir, "bar"), pfi.Path)
+	ExpectEq("bar", pfi.Info.Name())
+	ExpectEq(len("burrito"), pfi.Info.Size())
+
+	pfi = output[1]
+	ExpectEq(path.Join(t.dir, "foo"), pfi.Path)
+	ExpectEq("foo", pfi.Info.Name())
+	ExpectEq(len("taco"), pfi.Info.Size())
 }
 
 func (t *FileSystemVisitorTest) Directories() {
