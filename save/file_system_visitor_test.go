@@ -18,6 +18,7 @@ package save_test
 import (
 	"io/ioutil"
 	"os"
+	"path"
 	"testing"
 
 	"golang.org/x/net/context"
@@ -86,7 +87,17 @@ func (t *FileSystemVisitorTest) NonExistentPath() {
 }
 
 func (t *FileSystemVisitorTest) NotADirectory() {
-	AssertFalse(true, "TODO")
+	const node = "foo"
+	var err error
+
+	// Create a file.
+	err = ioutil.WriteFile(path.Join(t.dir, node), []byte{}, 0500)
+	AssertEq(nil, err)
+
+	// Attempt to visit it.
+	_, err = t.visitor.Visit(t.ctx, node)
+	ExpectThat(err, Error(HasSubstr(node)))
+	ExpectThat(err, Error(HasSubstr("TODO")))
 }
 
 func (t *FileSystemVisitorTest) VisitRootNode() {
