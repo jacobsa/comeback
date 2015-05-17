@@ -271,22 +271,6 @@ func (t *FileSystemVisitorTest) Symlinks() {
 	ExpectFalse(pfi.Info.IsDir())
 }
 
-func (t *FileSystemVisitorTest) Devices() {
-	AssertFalse(true, "TODO")
-}
-
-func (t *FileSystemVisitorTest) CharDevices() {
-	AssertFalse(true, "TODO")
-}
-
-func (t *FileSystemVisitorTest) NamedPipes() {
-	AssertFalse(true, "TODO")
-}
-
-func (t *FileSystemVisitorTest) Sockets() {
-	AssertFalse(true, "TODO")
-}
-
 func (t *FileSystemVisitorTest) Exclusions() {
 	AssertFalse(true, "TODO")
 }
