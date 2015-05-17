@@ -16,7 +16,10 @@
 package save
 
 import (
+	"errors"
 	"os"
+
+	"golang.org/x/net/context"
 
 	"github.com/jacobsa/comeback/graph"
 )
@@ -40,5 +43,26 @@ type PathAndFileInfo struct {
 func NewFileSystemVisitor(
 	basePath string,
 	output chan<- PathAndFileInfo) (v graph.Visitor) {
-	panic("TODO")
+	v = &fileSystemVisitor{
+		basePath: basePath,
+		output:   output,
+	}
+
+	return
+}
+
+////////////////////////////////////////////////////////////////////////
+// Implementation
+////////////////////////////////////////////////////////////////////////
+
+type fileSystemVisitor struct {
+	basePath string
+	output   chan<- PathAndFileInfo
+}
+
+func (fsv *fileSystemVisitor) Visit(
+	ctx context.Context,
+	node string) (adjacent []string, err error) {
+	err = errors.New("TODO")
+	return
 }
