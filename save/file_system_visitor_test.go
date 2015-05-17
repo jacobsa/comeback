@@ -133,8 +133,8 @@ func (t *FileSystemVisitorTest) VisitRootNode() {
 	// Check the output.
 	output := t.sortOutput()
 	AssertEq(2, len(output))
-	ExpectEq(path.Join(t.dir, "bar"), output[0].Path)
-	ExpectEq(path.Join(t.dir, "foo"), output[1].Path)
+	ExpectEq("bar", output[0].Path)
+	ExpectEq("foo", output[1].Path)
 }
 
 func (t *FileSystemVisitorTest) VisitNonRootNode() {
@@ -160,23 +160,29 @@ func (t *FileSystemVisitorTest) VisitNonRootNode() {
 	// Check the output.
 	output := t.sortOutput()
 	AssertEq(2, len(output))
-	ExpectEq(path.Join(d, "bar"), output[0].Path)
-	ExpectEq(path.Join(d, "foo"), output[1].Path)
+	ExpectEq("sub/dirs/bar", output[0].Path)
+	ExpectEq("sub/dirs/foo", output[1].Path)
 }
 
 func (t *FileSystemVisitorTest) Files() {
 	var err error
 	var pfi save.PathAndFileInfo
 
+	// Make a sub-directory.
+	d := path.Join(t.dir, "dir")
+
+	err = os.MkdirAll(d, 0700)
+	AssertEq(nil, err)
+
 	// Create two children.
-	err = ioutil.WriteFile(path.Join(t.dir, "foo"), []byte("taco"), 0400)
+	err = ioutil.WriteFile(path.Join(d, "foo"), []byte("taco"), 0400)
 	AssertEq(nil, err)
 
-	err = ioutil.WriteFile(path.Join(t.dir, "bar"), []byte("burrito"), 0400)
+	err = ioutil.WriteFile(path.Join(d, "bar"), []byte("burrito"), 0400)
 	AssertEq(nil, err)
 
-	// Visit the root.
-	adjacent, err := t.visitor.Visit(t.ctx, "")
+	// Visit.
+	adjacent, err := t.visitor.Visit(t.ctx, "dir")
 
 	AssertEq(nil, err)
 	ExpectThat(adjacent, ElementsAre())
@@ -186,12 +192,12 @@ func (t *FileSystemVisitorTest) Files() {
 	AssertEq(2, len(output))
 
 	pfi = output[0]
-	ExpectEq(path.Join(t.dir, "bar"), pfi.Path)
+	ExpectEq("dir/bar", pfi.Path)
 	ExpectEq("bar", pfi.Info.Name())
 	ExpectEq(len("burrito"), pfi.Info.Size())
 
 	pfi = output[1]
-	ExpectEq(path.Join(t.dir, "foo"), pfi.Path)
+	ExpectEq("dir/foo", pfi.Path)
 	ExpectEq("foo", pfi.Info.Name())
 	ExpectEq(len("taco"), pfi.Info.Size())
 }

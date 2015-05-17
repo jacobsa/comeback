@@ -26,7 +26,8 @@ import (
 )
 
 type PathAndFileInfo struct {
-	// The absolute path to the file (or directory, etc.).
+	// The path to the file (or directory, etc.), relative to the backup base
+	// path.
 	Path string
 
 	// Information about the file, as returned by os.Lstat.
@@ -83,7 +84,7 @@ func (fsv *fileSystemVisitor) Visit(
 	for _, fi := range entries {
 		// Send to the output channel.
 		pfi := PathAndFileInfo{
-			Path: path.Join(fsv.basePath, node, fi.Name()),
+			Path: path.Join(node, fi.Name()),
 			Info: fi,
 		}
 
