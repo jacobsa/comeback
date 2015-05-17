@@ -151,7 +151,30 @@ func (t *FileSystemVisitorTest) VisitRootNode() {
 }
 
 func (t *FileSystemVisitorTest) VisitNonRootNode() {
-	AssertFalse(true, "TODO")
+	var err error
+
+	// Make a few levels of sub-directories.
+	d := path.Join(t.dir, "sub/dirs")
+
+	err = os.MkdirAll(d, 0700)
+	AssertEq(nil, err)
+
+	// Create two children.
+	err = ioutil.WriteFile(path.Join(d, "foo"), []byte{}, 0500)
+	AssertEq(nil, err)
+
+	err = ioutil.WriteFile(path.Join(d, "bar"), []byte{}, 0500)
+	AssertEq(nil, err)
+
+	// Visit the root.
+	_, err = t.visitor.Visit(t.ctx, "sub/dirs")
+	AssertEq(nil, err)
+
+	// Check the output.
+	output := t.sortOutput()
+	AssertEq(2, len(output))
+	ExpectEq(path.Join(t.dir, "bar"), output[0].Path)
+	ExpectEq(path.Join(t.dir, "foo"), output[1].Path)
 }
 
 func (t *FileSystemVisitorTest) Files() {
