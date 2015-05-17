@@ -113,21 +113,7 @@ func (t *FileSystemVisitorTest) NonExistentPath() {
 
 	_, err := t.visitor.Visit(t.ctx, node)
 	ExpectThat(err, Error(HasSubstr(node)))
-	ExpectThat(err, Error(HasSubstr("not found")))
-}
-
-func (t *FileSystemVisitorTest) NotADirectory() {
-	const node = "foo"
-	var err error
-
-	// Create a file.
-	err = ioutil.WriteFile(path.Join(t.dir, node), []byte{}, 0500)
-	AssertEq(nil, err)
-
-	// Attempt to visit it.
-	_, err = t.visitor.Visit(t.ctx, node)
-	ExpectThat(err, Error(HasSubstr(node)))
-	ExpectThat(err, Error(HasSubstr("TODO")))
+	ExpectThat(err, Error(HasSubstr("no such file")))
 }
 
 func (t *FileSystemVisitorTest) VisitRootNode() {
@@ -174,8 +160,8 @@ func (t *FileSystemVisitorTest) VisitNonRootNode() {
 	// Check the output.
 	output := t.sortOutput()
 	AssertEq(2, len(output))
-	ExpectEq(path.Join(t.dir, "bar"), output[0].Path)
-	ExpectEq(path.Join(t.dir, "foo"), output[1].Path)
+	ExpectEq(path.Join(d, "bar"), output[0].Path)
+	ExpectEq(path.Join(d, "foo"), output[1].Path)
 }
 
 func (t *FileSystemVisitorTest) Files() {
