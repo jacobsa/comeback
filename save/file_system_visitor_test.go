@@ -95,6 +95,7 @@ func (t *FileSystemVisitorTest) TearDown() {
 
 // Consume the output, returning a slice sorted by path.
 func (t *FileSystemVisitorTest) sortOutput() (output PathAndFileInfoSlice) {
+	close(t.output)
 	for o := range t.output {
 		output = append(output, o)
 	}
