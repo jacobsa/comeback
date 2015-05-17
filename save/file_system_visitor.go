@@ -16,8 +16,9 @@
 package save
 
 import (
-	"errors"
+	"fmt"
 	"os"
+	"path"
 
 	"golang.org/x/net/context"
 
@@ -63,6 +64,43 @@ type fileSystemVisitor struct {
 func (fsv *fileSystemVisitor) Visit(
 	ctx context.Context,
 	node string) (adjacent []string, err error) {
-	err = errors.New("TODO")
+	// Open the directory for reading.
+	f, err := os.Open(path.Join(fsv.basePath, node))
+	if err != nil {
+		err = fmt.Errorf("Open: %v", err)
+		return
+	}
+
+	// Read all of the names in the directory and lstat them.
+	entries, err := f.Readdir(0)
+	if err != nil {
+		err = fmt.Errorf("Readdir: %v", err)
+		return
+	}
+
+	// Feed to the output channel, returning directories as adjacent nodes that
+	// need to be visited.
+	for _, fi := range entries {
+		// Send to the output channel.
+		pfi := PathAndFileInfo{
+			Path: path.Join(fsv.basePath, node, fi.Name()),
+			Info: fi,
+		}
+
+		select {
+		// Cancelled?
+		case <-ctx.Done():
+			err = ctx.Err()
+			return
+
+		case fsv.output <- pfi:
+		}
+
+		// Record child directories.
+		if fi.IsDir() {
+			adjacent = append(adjacent, path.Join(node, fi.Name()))
+		}
+	}
+
 	return
 }
