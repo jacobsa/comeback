@@ -41,4 +41,6 @@ type PathAndFileInfo struct {
 func NewFileSystemVisitor(
 	ctx context.Context,
 	basePath string,
-	output chan<- PathAndFileInfo) (v graph.Visitor)
+	output chan<- PathAndFileInfo) (v graph.Visitor) {
+	panic("TODO")
+}
