@@ -16,6 +16,8 @@
 package save_test
 
 import (
+	"io/ioutil"
+	"os"
 	"testing"
 
 	"golang.org/x/net/context"
@@ -31,6 +33,8 @@ func TestFileSystemVisitor(t *testing.T) { RunTests(t) }
 
 type FileSystemVisitorTest struct {
 	ctx context.Context
+
+	// A temporary directory that is cleaned up at the end of the test.
 	dir string
 }
 
@@ -40,11 +44,19 @@ var _ TearDownInterface = &FileSystemVisitorTest{}
 func init() { RegisterTestSuite(&FileSystemVisitorTest{}) }
 
 func (t *FileSystemVisitorTest) SetUp(ti *TestInfo) {
-	AssertFalse(true, "TODO")
+	t.ctx = ti.Ctx
+
+	// Create the temporary directory.
+	var err error
+	t.dir, err = ioutil.TempDir("", "file_system_visistor_test")
+	AssertEq(nil, err)
 }
 
 func (t *FileSystemVisitorTest) TearDown() {
-	AssertFalse(true, "TODO")
+	var err error
+
+	err = os.RemoveAll(t.dir)
+	AssertEq(nil, err)
 }
 
 ////////////////////////////////////////////////////////////////////////
