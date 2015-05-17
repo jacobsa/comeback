@@ -19,7 +19,6 @@ import (
 	"os"
 
 	"github.com/jacobsa/comeback/graph"
-	"golang.org/x/net/context"
 )
 
 type PathAndFileInfo struct {
@@ -39,7 +38,6 @@ type PathAndFileInfo struct {
 // It is expected that node names are paths relative to the supplied base path.
 // In particular, to walk the entire hierarchy, use "" as the traversal root.
 func NewFileSystemVisitor(
-	ctx context.Context,
 	basePath string,
 	output chan<- PathAndFileInfo) (v graph.Visitor) {
 	panic("TODO")

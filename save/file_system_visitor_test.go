@@ -22,6 +22,8 @@ import (
 
 	"golang.org/x/net/context"
 
+	"github.com/jacobsa/comeback/graph"
+	"github.com/jacobsa/comeback/save"
 	. "github.com/jacobsa/ogletest"
 )
 
@@ -34,8 +36,14 @@ func TestFileSystemVisitor(t *testing.T) { RunTests(t) }
 type FileSystemVisitorTest struct {
 	ctx context.Context
 
-	// A temporary directory that is cleaned up at the end of the test.
+	// A temporary directory that is cleaned up at the end of the test. This is
+	// the base path with which the visitor is configured.
 	dir string
+
+	// The channel into which the visitor writes. Configured with a large buffer.
+	output chan save.PathAndFileInfo
+
+	visitor graph.Visitor
 }
 
 var _ SetUpInterface = &FileSystemVisitorTest{}
@@ -45,16 +53,21 @@ func init() { RegisterTestSuite(&FileSystemVisitorTest{}) }
 
 func (t *FileSystemVisitorTest) SetUp(ti *TestInfo) {
 	t.ctx = ti.Ctx
+	t.output = make(chan save.PathAndFileInfo, 10e3)
 
-	// Create the temporary directory.
+	// Create the base directory.
 	var err error
 	t.dir, err = ioutil.TempDir("", "file_system_visistor_test")
 	AssertEq(nil, err)
+
+	// And the visitor.
+	t.visitor = save.NewFileSystemVisitor(t.dir, t.output)
 }
 
 func (t *FileSystemVisitorTest) TearDown() {
 	var err error
 
+	// Clean up the junk we left in the file system.
 	err = os.RemoveAll(t.dir)
 	AssertEq(nil, err)
 }
