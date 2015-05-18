@@ -19,6 +19,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"regexp"
 	"sort"
 	"testing"
 
@@ -64,6 +65,9 @@ type FileSystemVisitorTest struct {
 	// The channel into which the visitor writes. Configured with a large buffer.
 	output chan save.PathAndFileInfo
 
+	// The exclusions with which to configure the visitor.
+	exclusions []*regexp.Regexp
+
 	visitor graph.Visitor
 }
 
@@ -82,7 +86,7 @@ func (t *FileSystemVisitorTest) SetUp(ti *TestInfo) {
 	AssertEq(nil, err)
 
 	// And the visitor.
-	t.visitor = save.NewFileSystemVisitor(t.dir, t.output)
+	t.resetVisistor()
 }
 
 func (t *FileSystemVisitorTest) TearDown() {
@@ -91,6 +95,13 @@ func (t *FileSystemVisitorTest) TearDown() {
 	// Clean up the junk we left in the file system.
 	err = os.RemoveAll(t.dir)
 	AssertEq(nil, err)
+}
+
+func (t *FileSystemVisitorTest) resetVisistor() {
+	t.visitor = save.NewFileSystemVisitor(
+		t.dir,
+		t.output,
+		t.exclusions)
 }
 
 // Consume the output, returning a slice sorted by path.

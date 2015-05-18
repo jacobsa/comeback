@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"regexp"
 
 	"golang.org/x/net/context"
 
@@ -44,10 +45,12 @@ type PathAndFileInfo struct {
 // In particular, to walk the entire hierarchy, use "" as the traversal root.
 func NewFileSystemVisitor(
 	basePath string,
-	output chan<- PathAndFileInfo) (v graph.Visitor) {
+	output chan<- PathAndFileInfo,
+	exclusions []*regexp.Regexp) (v graph.Visitor) {
 	v = &fileSystemVisitor{
-		basePath: basePath,
-		output:   output,
+		basePath:   basePath,
+		output:     output,
+		exclusions: exclusions,
 	}
 
 	return
@@ -58,8 +61,9 @@ func NewFileSystemVisitor(
 ////////////////////////////////////////////////////////////////////////
 
 type fileSystemVisitor struct {
-	basePath string
-	output   chan<- PathAndFileInfo
+	basePath   string
+	output     chan<- PathAndFileInfo
+	exclusions []*regexp.Regexp
 }
 
 func (fsv *fileSystemVisitor) Visit(
