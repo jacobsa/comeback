@@ -21,20 +21,34 @@ import (
 	"runtime"
 	"time"
 
+	"golang.org/x/net/context"
+
+	"github.com/jacobsa/comeback/config"
+	"github.com/jacobsa/comeback/graph"
 	"github.com/jacobsa/comeback/registry"
+	"github.com/jacobsa/comeback/save"
+	"github.com/jacobsa/gcloud/syncutil"
 )
 
 var cmdSave = &Command{
 	Name: "save",
 }
 
-var g_jobName = cmdSave.Flags.String("job", "", "Job name within the config file.")
+var g_jobName = cmdSave.Flags.String(
+	"job",
+	"",
+	"Job name within the config file.")
 
 var g_discardScoreCache = cmdSave.Flags.Bool(
 	"discard_score_cache",
 	false,
 	"If set, always recompute file hashes; don't rely on stat info.",
 )
+
+var fListOnly = cmdSave.Flags.Bool(
+	"list_only",
+	false,
+	"If set, list the files that would be backed up but do nothing further.")
 
 func init() {
 	cmdSave.Run = runSave // Break flag-related dependency loop.
@@ -47,12 +61,49 @@ func saveStatePeriodically(c <-chan time.Time) {
 	}
 }
 
+func doList(job *config.Job) (err error) {
+	b := syncutil.NewBundle(context.Background())
+
+	// Create a visitor that writes file info to a channel.
+	entries := make(chan save.PathAndFileInfo)
+	visitor := save.NewFileSystemVisitor(
+		job.BasePath,
+		entries,
+		job.Excludes)
+
+	// Use it to traverse the graph of directories.
+	b.Add(func(ctx context.Context) (err error) {
+		defer close(entries)
+
+		const parallelism = 8
+		err = graph.Traverse(ctx, parallelism, []string{""}, visitor)
+		if err != nil {
+			err = fmt.Errorf("Traverse: %v", err)
+			return
+		}
+
+		return
+	})
+
+	// Print out info about each entry.
+	b.Add(func(ctx context.Context) (err error) {
+		for entry := range entries {
+			fmt.Printf("%s %d\n", entry.Path, entry.Info.Size())
+		}
+
+		return
+	})
+
+	err = b.Join()
+	return
+}
+
 func runSave(args []string) {
 	cfg := getConfig()
 
 	// Allow parallelism between e.g. scanning directories and writing out the
 	// state file.
-	runtime.GOMAXPROCS(2)
+	runtime.GOMAXPROCS(runtime.NumCPU())
 
 	// Look for the specified job.
 	if *g_jobName == "" {
@@ -62,6 +113,20 @@ func runSave(args []string) {
 	job, ok := cfg.Jobs[*g_jobName]
 	if !ok {
 		log.Fatalln("Unknown job:", *g_jobName)
+	}
+
+	// Special case: visit the file system only if --list_only is set.
+	//
+	// TODO(jacobsa): Integrate this into the pipeline when it exists. See issue
+	// #21.
+	if *fListOnly {
+		err := doList(job)
+		if err != nil {
+			log.Fatalf("doList: %v", err)
+			return
+		}
+
+		return
 	}
 
 	// Grab dependencies. Make sure to get the registry first, because otherwise

@@ -69,17 +69,10 @@ type fileSystemVisitor struct {
 func (fsv *fileSystemVisitor) Visit(
 	ctx context.Context,
 	node string) (adjacent []string, err error) {
-	// Open the directory for reading.
-	f, err := os.Open(path.Join(fsv.basePath, node))
+	// Read and lstat all of the names in the directory.
+	entries, err := fsv.readDir(node)
 	if err != nil {
-		err = fmt.Errorf("Open: %v", err)
-		return
-	}
-
-	// Read all of the names in the directory and lstat them.
-	entries, err := f.Readdir(0)
-	if err != nil {
-		err = fmt.Errorf("Readdir: %v", err)
+		err = fmt.Errorf("readDir: %v", err)
 		return
 	}
 
@@ -112,6 +105,33 @@ func (fsv *fileSystemVisitor) Visit(
 		if fi.IsDir() {
 			adjacent = append(adjacent, relPath)
 		}
+	}
+
+	return
+}
+
+// Read and lstat everything in the directory with the given relative path.
+func (fsv *fileSystemVisitor) readDir(
+	relPath string) (entries []os.FileInfo, err error) {
+	// Open the directory for reading.
+	f, err := os.Open(path.Join(fsv.basePath, relPath))
+	if err != nil {
+		err = fmt.Errorf("Open: %v", err)
+		return
+	}
+
+	defer func() {
+		closeErr := f.Close()
+		if err == nil && closeErr != nil {
+			err = fmt.Errorf("Close: %v", closeErr)
+		}
+	}()
+
+	// Read.
+	entries, err = f.Readdir(0)
+	if err != nil {
+		err = fmt.Errorf("Readdir: %v", err)
+		return
 	}
 
 	return
