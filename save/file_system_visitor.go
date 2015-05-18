@@ -86,9 +86,16 @@ func (fsv *fileSystemVisitor) Visit(
 	// Feed to the output channel, returning directories as adjacent nodes that
 	// need to be visited.
 	for _, fi := range entries {
+		relPath := path.Join(node, fi.Name())
+
+		// Skip exclusions.
+		if fsv.shouldSkip(relPath) {
+			continue
+		}
+
 		// Send to the output channel.
 		pfi := PathAndFileInfo{
-			Path: path.Join(node, fi.Name()),
+			Path: relPath,
 			Info: fi,
 		}
 
@@ -103,9 +110,19 @@ func (fsv *fileSystemVisitor) Visit(
 
 		// Record child directories.
 		if fi.IsDir() {
-			adjacent = append(adjacent, path.Join(node, fi.Name()))
+			adjacent = append(adjacent, relPath)
 		}
 	}
 
 	return
+}
+
+func (fsv *fileSystemVisitor) shouldSkip(relPath string) bool {
+	for _, re := range fsv.exclusions {
+		if re.MatchString(relPath) {
+			return true
+		}
+	}
+
+	return false
 }

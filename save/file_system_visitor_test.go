@@ -304,7 +304,7 @@ func (t *FileSystemVisitorTest) Exclusions() {
 	// Exclude all of them.
 	t.exclusions = []*regexp.Regexp{
 		regexp.MustCompile("dir/foo"),
-		regexp.MustCompile("dir/(bar|baz)"),
+		regexp.MustCompile("(bar|baz)"),
 	}
 
 	t.resetVisistor()
