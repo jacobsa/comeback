@@ -16,11 +16,13 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"runtime"
 	"time"
 
+	"github.com/jacobsa/comeback/config"
 	"github.com/jacobsa/comeback/registry"
 )
 
@@ -39,7 +41,7 @@ var g_discardScoreCache = cmdSave.Flags.Bool(
 	"If set, always recompute file hashes; don't rely on stat info.",
 )
 
-var gListOnly = cmdSave.Flags.Bool(
+var fListOnly = cmdSave.Flags.Bool(
 	"list_only",
 	false,
 	"If set, list the files that would be backed up but do nothing further.")
@@ -53,6 +55,11 @@ func saveStatePeriodically(c <-chan time.Time) {
 		log.Println("Writing out state file.")
 		saveState()
 	}
+}
+
+func doList(job *config.Job) (err error) {
+	err = errors.New("TODO: doList")
+	return
 }
 
 func runSave(args []string) {
@@ -70,6 +77,20 @@ func runSave(args []string) {
 	job, ok := cfg.Jobs[*g_jobName]
 	if !ok {
 		log.Fatalln("Unknown job:", *g_jobName)
+	}
+
+	// Special case: visit the file system only if --list_only is set.
+	//
+	// TODO(jacobsa): Integrate this into the pipeline when it exists. See issue
+	// #21.
+	if *fListOnly {
+		err := doList(job)
+		if err != nil {
+			log.Fatalf("doList: %v", err)
+			return
+		}
+
+		return
 	}
 
 	// Grab dependencies. Make sure to get the registry first, because otherwise
