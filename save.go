@@ -16,14 +16,18 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"runtime"
 	"time"
 
+	"golang.org/x/net/context"
+
 	"github.com/jacobsa/comeback/config"
+	"github.com/jacobsa/comeback/graph"
 	"github.com/jacobsa/comeback/registry"
+	"github.com/jacobsa/comeback/save"
+	"github.com/jacobsa/gcloud/syncutil"
 )
 
 var cmdSave = &Command{
@@ -58,7 +62,39 @@ func saveStatePeriodically(c <-chan time.Time) {
 }
 
 func doList(job *config.Job) (err error) {
-	err = errors.New("TODO: doList")
+	b := syncutil.NewBundle(context.Background())
+
+	// Create a visitor that writes file info to a channel.
+	entries := make(chan save.PathAndFileInfo)
+	visitor := save.NewFileSystemVisitor(
+		job.BasePath,
+		entries,
+		job.Excludes)
+
+	// Use it to traverse the graph of directories.
+	b.Add(func(ctx context.Context) (err error) {
+		defer close(entries)
+
+		const parallelism = 8
+		err = graph.Traverse(ctx, parallelism, []string{""}, visitor)
+		if err != nil {
+			err = fmt.Errorf("Traverse: %v", err)
+			return
+		}
+
+		return
+	})
+
+	// Print out info about each entry.
+	b.Add(func(ctx context.Context) (err error) {
+		for entry := range entries {
+			fmt.Printf("%s %d\n", entry.Path, entry.Info.Size())
+		}
+
+		return
+	})
+
+	err = b.Join()
 	return
 }
 
