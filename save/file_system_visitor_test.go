@@ -283,5 +283,36 @@ func (t *FileSystemVisitorTest) Symlinks() {
 }
 
 func (t *FileSystemVisitorTest) Exclusions() {
-	AssertFalse(true, "TODO")
+	var err error
+
+	// Make a sub-directory.
+	d := path.Join(t.dir, "dir")
+
+	err = os.MkdirAll(d, 0700)
+	AssertEq(nil, err)
+
+	// Create some children.
+	err = ioutil.WriteFile(path.Join(d, "foo"), []byte{}, 0700)
+	AssertEq(nil, err)
+
+	err = os.Mkdir(path.Join(d, "bar"), 0700)
+	AssertEq(nil, err)
+
+	err = os.Symlink("blah/blah", path.Join(d, "baz"))
+	AssertEq(nil, err)
+
+	// Exclude all of them.
+	t.exclusions = []*regexp.Regexp{
+		regexp.MustCompile("dir/foo"),
+		regexp.MustCompile("dir/(bar|baz)"),
+	}
+
+	t.resetVisistor()
+
+	// Visit.
+	adjacent, err := t.visitor.Visit(t.ctx, "dir")
+
+	AssertEq(nil, err)
+	ExpectThat(adjacent, ElementsAre())
+	ExpectThat(t.sortOutput(), ElementsAre())
 }
