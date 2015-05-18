@@ -60,7 +60,7 @@ func runSave(args []string) {
 
 	// Allow parallelism between e.g. scanning directories and writing out the
 	// state file.
-	runtime.GOMAXPROCS(2)
+	runtime.GOMAXPROCS(runtime.NumCPU())
 
 	// Look for the specified job.
 	if *g_jobName == "" {
