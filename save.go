@@ -28,7 +28,10 @@ var cmdSave = &Command{
 	Name: "save",
 }
 
-var g_jobName = cmdSave.Flags.String("job", "", "Job name within the config file.")
+var g_jobName = cmdSave.Flags.String(
+	"job",
+	"",
+	"Job name within the config file.")
 
 var g_discardScoreCache = cmdSave.Flags.Bool(
 	"discard_score_cache",
