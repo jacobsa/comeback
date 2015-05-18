@@ -39,6 +39,11 @@ var g_discardScoreCache = cmdSave.Flags.Bool(
 	"If set, always recompute file hashes; don't rely on stat info.",
 )
 
+var gListOnly = cmdSave.Flags.Bool(
+	"list_only",
+	false,
+	"If set, list the files that would be backed up but do nothing further.")
+
 func init() {
 	cmdSave.Run = runSave // Break flag-related dependency loop.
 }
