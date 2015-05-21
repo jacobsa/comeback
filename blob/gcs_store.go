@@ -184,7 +184,12 @@ func ParseObjectRecord(
 		return
 	}
 
-	if md5 != o.MD5 {
+	if o.MD5 == nil {
+		err = fmt.Errorf("MD5 missing for object %q", o.Name)
+		return
+	}
+
+	if md5 != *o.MD5 {
 		err = fmt.Errorf(
 			"MD5 mismatch for object %q: %s vs. %s",
 			o.Name,
@@ -367,7 +372,11 @@ func (s *GCSStore) Store(
 			crc32c))
 	}
 
-	if o.MD5 != md5 {
+	if o.MD5 == nil {
+		err = fmt.Errorf("MD5 missing for object %q", o.Name)
+	}
+
+	if *o.MD5 != md5 {
 		panic(fmt.Sprintf(
 			"MD5 mismatch for object %q: %s vs. %s",
 			o.Name,
