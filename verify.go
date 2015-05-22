@@ -54,6 +54,7 @@ import (
 	"log"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/graph"
@@ -89,6 +90,7 @@ func init() {
 ////////////////////////////////////////////////////////////////////////
 
 type snoopingVisitorRecord struct {
+	t        time.Time
 	node     string
 	adjacent []string
 }
@@ -111,6 +113,7 @@ func (v *snoopingVisitor) Visit(
 
 	// Write out a record.
 	r := snoopingVisitorRecord{
+		t:        time.Now(),
 		node:     node,
 		adjacent: adjacent,
 	}
@@ -164,15 +167,91 @@ func listAllScores(
 }
 
 // Print output based on the visitor results arriving on the supplied channel.
-// Exclude file nodes if readFiles is false (i.e. we are not reading file
-// content).
-func printOutput(
-	readFiles bool,
-	records <-chan snoopingVisitorRecord) (err error)
+func formatOutput(r snoopingVisitorRecord) (s string)
 
 ////////////////////////////////////////////////////////////////////////
 // Verify
 ////////////////////////////////////////////////////////////////////////
+
+// Run the verification pipeline. Return a count of the number of scores
+// verified. Exclude file nodes if readFiles is false.
+func verifyImpl(
+	ctx context.Context,
+	readFiles bool,
+	rootScores []blob.Score,
+	knownScores []blob.Score,
+	blobStore blob.Store) (nodesVerified uint64, err error) {
+	b := syncutil.NewBundle(ctx)
+
+	// Visit every node in the graph, snooping on the graph structure into a
+	// channel.
+	visitorRecords := make(chan snoopingVisitorRecord, 100)
+	b.Add(func(ctx context.Context) (err error) {
+		defer close(visitorRecords)
+
+		visitor := verify.NewVisitor(
+			readFiles,
+			knownScores,
+			blobStore)
+
+		visitor = &snoopingVisitor{
+			wrapped: visitor,
+			records: visitorRecords,
+		}
+
+		// Format root node names.
+		var roots []string
+		for _, score := range rootScores {
+			roots = append(roots, verify.FormatNodeName(true, score))
+		}
+
+		// Traverse starting at the specified roots. Use an "experimentally
+		// determined" parallelism, which in theory should depend on bandwidth-delay
+		// products but in practice comes down to when the OS gets cranky about open
+		// files.
+		const parallelism = 128
+
+		err = graph.Traverse(
+			context.Background(),
+			parallelism,
+			roots,
+			visitor)
+
+		if err != nil {
+			err = fmt.Errorf("Traverse: %v", err)
+			return
+		}
+
+		return
+	})
+
+	// Count and output the nodes visited, filtering out file nodes if we're not
+	// actually reading and verifying them.
+	b.Add(func(ctx context.Context) (err error) {
+		for r := range visitorRecords {
+			var dir bool
+			dir, _, err = verify.ParseNodeName(r.node)
+			if err != nil {
+				err = fmt.Errorf("ParseNodeName(%q): %v", r.node, err)
+				return
+			}
+
+			// Skip files if appropriate.
+			if !readFiles && !dir {
+				continue
+			}
+
+			// Increment the count and output the information.
+			nodesVerified++
+			fmt.Println(formatOutput(r))
+		}
+
+		return
+	})
+
+	err = b.Join()
+	return
+}
 
 func runVerify(args []string) {
 	// Allow parallelism.
