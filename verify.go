@@ -174,13 +174,13 @@ func formatOutput(r snoopingVisitorRecord) (s string)
 ////////////////////////////////////////////////////////////////////////
 
 // Run the verification pipeline. Return a count of the number of scores
-// verified. Exclude file nodes if readFiles is false.
+// verified and the number skipped due to readFiles being false.
 func verifyImpl(
 	ctx context.Context,
 	readFiles bool,
 	rootScores []blob.Score,
 	knownScores []blob.Score,
-	blobStore blob.Store) (nodesVerified uint64, err error) {
+	blobStore blob.Store) (nodesVerified uint64, nodesSkipped uint64, err error) {
 	b := syncutil.NewBundle(ctx)
 
 	// Visit every node in the graph, snooping on the graph structure into a
@@ -238,6 +238,7 @@ func verifyImpl(
 
 			// Skip files if appropriate.
 			if !readFiles && !dir {
+				nodesSkipped++
 				continue
 			}
 
@@ -274,7 +275,7 @@ func runVerify(args []string) {
 	}
 
 	rootHexScores := strings.Split(*fRoots, ",")
-	var roots []string
+	var rootScores []blob.Score
 	for _, hexScore := range rootHexScores {
 		var score blob.Score
 		score, err = blob.ParseHexScore(hexScore)
@@ -283,7 +284,7 @@ func runVerify(args []string) {
 			return
 		}
 
-		roots = append(roots, verify.FormatNodeName(true, score))
+		rootScores = append(rootScores, score)
 	}
 
 	// Grab dependencies.
@@ -316,36 +317,23 @@ func runVerify(args []string) {
 
 	log.Printf("Listed %d scores.", len(knownScores))
 
-	// Create a graph visitor that perform the verification.
-	visitor := verify.NewVisitor(
+	// Run the rest of the pipeline.
+	nodesVerified, nodesSkipped, err := verifyImpl(
+		context.Background(),
 		readFiles,
+		rootScores,
 		knownScores,
 		blobStore)
 
-	var nodesVisited uint64
-	visitor = &loggingVisitor{
-		count:   &nodesVisited,
-		wrapped: visitor,
-	}
-
-	// Traverse starting at the specified roots. Use an "experimentally
-	// determined" parallelism, which in theory should depend on bandwidth-delay
-	// products but in practice comes down to when the OS gets cranky about open
-	// files.
-	const parallelism = 128
-
-	err = graph.Traverse(
-		context.Background(),
-		parallelism,
-		roots,
-		visitor)
-
 	if err != nil {
-		err = fmt.Errorf("Traverse: %v", err)
+		err = fmt.Errorf("verifyImpl: %v", err)
 		return
 	}
 
-	log.Printf("Successfully visited %v nodes.", nodesVisited)
+	log.Printf(
+		"Successfully verified %d nodes (%d skipped due to fast mode).",
+		nodesVerified,
+		nodesSkipped)
 
 	return
 }
