@@ -26,7 +26,7 @@ var gPassword string
 var gPasswordOnce sync.Once
 
 func initPassword() {
-	gPassword = password.ReadPassword("Entry crypto password: ")
+	gPassword = password.ReadPassword("Enter crypto password: ")
 	if len(gPassword) == 0 {
 		log.Fatalln("You must enter a password.")
 	}
