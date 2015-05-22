@@ -163,6 +163,13 @@ func listAllScores(
 	return
 }
 
+// Print output based on the visitor results arriving on the supplied channel.
+// Exclude file nodes if readFiles is false (i.e. we are not reading file
+// content).
+func printOutput(
+	readFiles bool,
+	records <-chan snoopingVisitorRecord) (err error)
+
 ////////////////////////////////////////////////////////////////////////
 // Verify
 ////////////////////////////////////////////////////////////////////////
