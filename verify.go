@@ -22,6 +22,30 @@
 // not corrupt object metadata (where we store expected CRC32C and MD5) and
 // does correctly report the object's CRC32C and MD5 sums in listings,
 // verifying them periodically.
+//
+// Output is of the following form:
+//
+//     <timestamp> <node> [<child node> ...]
+//
+// where:
+//
+//  *  Timestamps are formatted according to time.RFC3339.
+//
+//  *  Node names have one of two forms:
+//
+//     *   Nodes of the form "d:<hex score>" represent the directory listing
+//         contained within the blob of the given score.
+//
+//     *   Nodes of the form "f:<hex score>" represent a piece of a file,
+//         contained within the blob of the given score.
+//
+// An output line for a directory node means that at the given timestamp we
+// certified that a piece of content with the given score was parseable as a
+// directory listing that referred to the given scores for its direct children.
+//
+// An output line for a file node means that at the given timestamp we
+// certified that a piece of content with the given score was parseable as a
+// piece of a file. File nodes never have children.
 
 package main
 
