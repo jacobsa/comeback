@@ -54,7 +54,6 @@ import (
 	"log"
 	"runtime"
 	"strings"
-	"sync/atomic"
 
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/graph"
@@ -89,12 +88,19 @@ func init() {
 // Visitor types
 ////////////////////////////////////////////////////////////////////////
 
-type loggingVisitor struct {
-	count   *uint64
+type snoopingVisitorRecord struct {
+	node     string
+	adjacent []string
+}
+
+// A visitor that writes the information it gleans from the wrapped visitor to
+// a channel.
+type snoopingVisitor struct {
+	records chan<- snoopingVisitorRecord
 	wrapped graph.Visitor
 }
 
-func (v *loggingVisitor) Visit(
+func (v *snoopingVisitor) Visit(
 	ctx context.Context,
 	node string) (adjacent []string, err error) {
 	// Call through.
@@ -103,13 +109,19 @@ func (v *loggingVisitor) Visit(
 		return
 	}
 
-	// Log.
-	newCount := atomic.AddUint64(v.count, 1)
-	log.Printf(
-		"(%v visited) %s -> %s",
-		newCount,
-		node,
-		strings.Join(adjacent, " "))
+	// Write out a record.
+	r := snoopingVisitorRecord{
+		node:     node,
+		adjacent: adjacent,
+	}
+
+	select {
+	case <-ctx.Done():
+		err = ctx.Err()
+		return
+
+	case v.records <- r:
+	}
 
 	return
 }
