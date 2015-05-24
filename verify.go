@@ -89,7 +89,7 @@ func init() {
 // Visitor types
 ////////////////////////////////////////////////////////////////////////
 
-type snoopingVisitorRecord struct {
+type verifyRecord struct {
 	t        time.Time
 	node     string
 	adjacent []string
@@ -98,7 +98,7 @@ type snoopingVisitorRecord struct {
 // A visitor that writes the information it gleans from the wrapped visitor to
 // a channel.
 type snoopingVisitor struct {
-	records chan<- snoopingVisitorRecord
+	records chan<- verifyRecord
 	wrapped graph.Visitor
 }
 
@@ -112,7 +112,7 @@ func (v *snoopingVisitor) Visit(
 	}
 
 	// Write out a record.
-	r := snoopingVisitorRecord{
+	r := verifyRecord{
 		t:        time.Now(),
 		node:     node,
 		adjacent: adjacent,
@@ -134,7 +134,7 @@ func (v *snoopingVisitor) Visit(
 ////////////////////////////////////////////////////////////////////////
 
 // Print output based on the visitor results arriving on the supplied channel.
-func formatVerifyOutput(r snoopingVisitorRecord) (s string) {
+func formatVerifyOutput(r verifyRecord) (s string) {
 	var extra string
 	if len(r.adjacent) != 0 {
 		extra = fmt.Sprintf(" %s", strings.Join(r.adjacent, " "))
@@ -202,7 +202,7 @@ func verifyImpl(
 
 	// Visit every node in the graph, snooping on the graph structure into a
 	// channel.
-	visitorRecords := make(chan snoopingVisitorRecord, 100)
+	visitorRecords := make(chan verifyRecord, 100)
 	b.Add(func(ctx context.Context) (err error) {
 		defer close(visitorRecords)
 
