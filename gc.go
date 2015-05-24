@@ -126,7 +126,29 @@ func filterToGarbage(
 	accessible []blob.Score,
 	allScores <-chan blob.Score,
 	garbageScores chan<- blob.Score) (err error) {
-	err = errors.New("TODO: filterToGarbage")
+	// Create a map indexing the accessible scores.
+	accessibleMap := make(map[blob.Score]struct{})
+	for _, score := range accessible {
+		accessibleMap[score] = struct{}{}
+	}
+
+	// Process each score.
+	for score := range allScores {
+		// Is this score accessible?
+		if _, ok := accessibleMap[score]; ok {
+			continue
+		}
+
+		// Send it down the garbage chute.
+		select {
+		case <-ctx.Done():
+			err = ctx.Err()
+			return
+
+		case garbageScores <- score:
+		}
+	}
+
 	return
 }
 
