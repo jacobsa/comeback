@@ -30,6 +30,7 @@ import (
 	"log"
 	"os"
 	"runtime"
+	"sync/atomic"
 	"time"
 
 	"github.com/jacobsa/comeback/blob"
@@ -152,15 +153,6 @@ func filterToGarbage(
 	return
 }
 
-// Count the scores that pass through.
-func countScores(
-	ctx context.Context,
-	in <-chan blob.Score,
-	out chan<- blob.Score) (count uint64, err error) {
-	err = errors.New("TODO: countScores")
-	return
-}
-
 // Clone garbage blobs into a new location. Pass on the names of the source
 // objects that were cloned.
 func cloneGarbage(
@@ -236,19 +228,35 @@ func runGC(args []string) {
 		return
 	})
 
-	// Count the total number of scores.
+	// Count the total number of scores, periodically printing status updates.
 	var allScoresCount uint64
+	var garbageScoresCount uint64
+
 	allScoresAfterCounting := make(chan blob.Score, 100)
 	b.Add(func(ctx context.Context) (err error) {
 		defer close(allScoresAfterCounting)
-		allScoresCount, err = countScores(
-			ctx,
-			allScores,
-			allScoresAfterCounting)
+		ticker := time.Tick(2 * time.Second)
 
-		if err != nil {
-			err = fmt.Errorf("countScores: %v", err)
-			return
+		for score := range allScores {
+			allScoresCount++
+
+			// Print a status update?
+			select {
+			case <-ticker:
+				g := atomic.LoadUint64(&garbageScoresCount)
+				log.Printf("%d scores seen; %d garbage so far.", allScoresCount, g)
+
+			default:
+			}
+
+			// Pass on the score.
+			select {
+			case <-ctx.Done():
+				err = ctx.Err()
+				return
+
+			case allScoresAfterCounting <- score:
+			}
 		}
 
 		return
@@ -273,18 +281,19 @@ func runGC(args []string) {
 	})
 
 	// Count the number of garbage scores.
-	var garbageScoresCount uint64
 	garbageScoresAfterCounting := make(chan blob.Score, 100)
 	b.Add(func(ctx context.Context) (err error) {
 		defer close(garbageScoresAfterCounting)
-		garbageScoresCount, err = countScores(
-			ctx,
-			garbageScores,
-			garbageScoresAfterCounting)
+		for score := range garbageScores {
+			atomic.AddUint64(&garbageScoresCount, 1)
 
-		if err != nil {
-			err = fmt.Errorf("countScores: %v", err)
-			return
+			select {
+			case <-ctx.Done():
+				err = ctx.Err()
+				return
+
+			case garbageScoresAfterCounting <- score:
+			}
 		}
 
 		return
