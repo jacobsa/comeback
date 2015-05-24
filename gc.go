@@ -23,12 +23,14 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
 	"log"
 	"os"
 	"runtime"
+	"time"
 
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/wiring"
@@ -57,7 +59,37 @@ func init() {
 // Parse the supplied input line, returning a list of all scores mentioned.
 func parseInputLine(
 	line []byte) (scores []blob.Score, err error) {
-	err = errors.New("TODO: parseInputLine")
+	// We expect space-separate components.
+	components := bytes.Split(line, []byte{' '})
+	if len(components) < 2 {
+		err = fmt.Errorf(
+			"Expected at least two components, got %d.",
+			len(components))
+
+		return
+	}
+
+	// The first should be the timestmap.
+	_, err = time.Parse(time.RFC3339, string(components[0]))
+	if err != nil {
+		err = fmt.Errorf("time.Parse(%q): %v", components[0], err)
+		return
+	}
+
+	// The rest are hex scores.
+	for i := 1; i < len(components); i++ {
+		hexScore := string(components[i])
+
+		var score blob.Score
+		score, err = blob.ParseHexScore(hexScore)
+		if err != nil {
+			err = fmt.Errorf("ParseHexScore(%q): %v", hexScore, err)
+			return
+		}
+
+		scores = append(scores, score)
+	}
+
 	return
 }
 
