@@ -160,7 +160,41 @@ func cloneGarbage(
 	bucket gcs.Bucket,
 	garbageScores <-chan blob.Score,
 	garbageObjects chan<- string) (err error) {
-	err = errors.New("TODO: cloneGarbage")
+	b := syncutil.NewBundle(ctx)
+
+	const parallelism = 128
+	for i := 0; i < parallelism; i++ {
+		b.Add(func(ctx context.Context) (err error) {
+			// Process each score.
+			for score := range garbageScores {
+				srcName := wiring.BlobObjectNamePrefix + score.Hex()
+
+				// Clone the object.
+				req := &gcs.CopyObjectRequest{
+					SrcName: srcName,
+					DstName: fmt.Sprintf("garbage/%s", score.Hex()),
+				}
+
+				_, err = bucket.CopyObject(ctx, req)
+				if err != nil {
+					err = fmt.Errorf("CopyObject: %v", err)
+					return
+				}
+
+				// Write out the name of the object to be deleted.
+				select {
+				case <-ctx.Done():
+					err = ctx.Err()
+
+				case garbageObjects <- srcName:
+				}
+			}
+
+			return
+		})
+	}
+
+	err = b.Join()
 	return
 }
 
