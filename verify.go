@@ -50,6 +50,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"runtime"
@@ -145,6 +146,50 @@ func formatVerifyOutput(r verifyRecord) (s string) {
 		r.t.Format(time.RFC3339),
 		r.node,
 		extra)
+
+	return
+}
+
+// Parse the supplied line (without line break) previously output by the verify
+// command.
+func parseVerifyRecord(line []byte) (r verifyRecord, err error) {
+	// We expect space-separate components.
+	components := bytes.Split(line, []byte{' '})
+	if len(components) < 2 {
+		err = fmt.Errorf(
+			"Expected at least two components, got %d.",
+			len(components))
+
+		return
+	}
+
+	// The first should be the timestmap.
+	r.t, err = time.Parse(time.RFC3339, string(components[0]))
+	if err != nil {
+		err = fmt.Errorf("time.Parse(%q): %v", components[0], err)
+		return
+	}
+
+	// The next should be the node name.
+	r.node = string(components[1])
+
+	// The rest should be adjacent node names.
+	for i := 2; i < len(components); i++ {
+		r.adjacent = append(r.adjacent, string(components[i]))
+	}
+
+	// Make sure all of the node names are legal.
+	allNodes := make([]string, 1+len(r.adjacent))
+	allNodes[0] = r.node
+	copy(allNodes[1:], r.adjacent)
+
+	for _, n := range allNodes {
+		_, _, err = verify.ParseNodeName(n)
+		if err != nil {
+			err = fmt.Errorf("ParseNodeName(%q): %v", n, err)
+			return
+		}
+	}
 
 	return
 }
