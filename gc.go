@@ -105,11 +105,10 @@ func parseInput(
 		var line []byte
 		line, err = reader.ReadBytes('\n')
 		if err == io.EOF {
+			err = nil
 			if len(line) == 0 {
 				break
 			}
-
-			err = nil
 		}
 
 		// Propagate other errors.
@@ -117,6 +116,9 @@ func parseInput(
 			err = fmt.Errorf("ReadBytes: %v", err)
 			return
 		}
+
+		// Trim the delimiter.
+		line = line[:len(line)-1]
 
 		// Parse the line.
 		var lineScores []blob.Score
