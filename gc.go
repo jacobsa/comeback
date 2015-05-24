@@ -22,6 +22,7 @@
 package main
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"io"
@@ -53,10 +54,36 @@ func init() {
 // Helpers
 ////////////////////////////////////////////////////////////////////////
 
+// Parse the supplied input line, returning a list of all scores mentioned.
+func parseInputLine(
+	line []byte) (scores []blob.Score, err error) {
+	err = errors.New("TODO: parseInputLine")
+	return
+}
+
 // Parse the verify output, returning a list of all scores encountered.
 func parseInput(
 	r io.Reader) (scores []blob.Score, err error) {
-	err = errors.New("TODO: parseInput")
+	scanner := bufio.NewScanner(r)
+	defer func() {
+		scanErr := scanner.Err()
+		if err == nil && scanErr != nil {
+			err = fmt.Errorf("Scanner: %v", scanErr)
+		}
+	}()
+
+	// Scan each line.
+	for scanner.Scan() {
+		var lineScores []blob.Score
+		lineScores, err = parseInputLine(scanner.Bytes())
+		if err != nil {
+			err = fmt.Errorf("parseInputLine(%q): %v", scanner.Text(), err)
+			return
+		}
+
+		scores = append(scores, lineScores...)
+	}
+
 	return
 }
 
