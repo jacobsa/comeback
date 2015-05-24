@@ -90,6 +90,8 @@ func init() {
 // Visitor types
 ////////////////////////////////////////////////////////////////////////
 
+// A record certifying something we confirmed about a node at a certain time.
+// See the notes at the top of verify.go for details.
 type verifyRecord struct {
 	t        time.Time
 	node     string
