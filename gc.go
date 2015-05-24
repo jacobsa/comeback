@@ -24,7 +24,6 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -203,7 +202,24 @@ func deleteObjects(
 	ctx context.Context,
 	bucket gcs.Bucket,
 	names <-chan string) (err error) {
-	err = errors.New("TODO: deleteObjects")
+	b := syncutil.NewBundle(ctx)
+
+	const parallelism = 128
+	for i := 0; i < parallelism; i++ {
+		b.Add(func(ctx context.Context) (err error) {
+			for name := range names {
+				err = bucket.DeleteObject(ctx, name)
+				if err != nil {
+					err = fmt.Errorf("DeleteObject(%q): %v", name, err)
+					return
+				}
+			}
+
+			return
+		})
+	}
+
+	err = b.Join()
 	return
 }
 
