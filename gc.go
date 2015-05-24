@@ -49,7 +49,11 @@ func init() {
 ////////////////////////////////////////////////////////////////////////
 
 // Parse the verify output, returning a list of all scores encountered.
-func parseInput(r io.Reader) (scores []blob.Score, err error)
+func parseInput(
+	r io.Reader) (scores []blob.Score, err error) {
+	err = errors.New("TODO: parseInput")
+	return
+}
 
 // Filter out scores that are in the list of non-garbage accessible scores,
 // passing on only garbage.
@@ -57,25 +61,37 @@ func filterToGarbage(
 	ctx context.Context,
 	accessible []blob.Score,
 	allScores <-chan blob.Score,
-	garbageScores chan<- blob.Score) (err error)
+	garbageScores chan<- blob.Score) (err error) {
+	err = errors.New("TODO: filterToGarbage")
+	return
+}
 
 // Count the scores that pass through.
 func countScores(
 	ctx context.Context,
 	in <-chan blob.Score,
-	out chan<- blob.Score) (count uint64, err error)
+	out chan<- blob.Score) (count uint64, err error) {
+	err = errors.New("TODO: countScores")
+	return
+}
 
 // Clone garbage blobs into a new location. Pass on the names of the source
 // objects that were cloned.
 func cloneGarbage(
 	ctx context.Context,
 	garbageScores <-chan blob.Score,
-	garbageObjects chan<- string) (err error)
+	garbageObjects chan<- string) (err error) {
+	err = errors.New("TODO: cloneGarbage")
+	return
+}
 
 // Delete all objects whose name come in on the supplied channel.
 func deleteObjects(
 	ctx context.Context,
-	names <-chan string) (err error)
+	names <-chan string) (err error) {
+	err = errors.New("TODO: deleteObjects")
+	return
+}
 
 ////////////////////////////////////////////////////////////////////////
 // GC
