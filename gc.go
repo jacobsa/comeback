@@ -22,8 +22,6 @@
 package main
 
 import (
-	"bufio"
-	"bytes"
 	"fmt"
 	"io"
 	"log"
@@ -33,7 +31,6 @@ import (
 	"time"
 
 	"github.com/jacobsa/comeback/blob"
-	"github.com/jacobsa/comeback/verify"
 	"github.com/jacobsa/comeback/wiring"
 	"github.com/jacobsa/gcloud/gcs"
 	"github.com/jacobsa/gcloud/syncutil"
@@ -57,80 +54,42 @@ func init() {
 // Helpers
 ////////////////////////////////////////////////////////////////////////
 
-// Parse the supplied input line, returning a list of all scores mentioned.
-func parseInputLine(
-	line []byte) (scores []blob.Score, err error) {
-	// We expect space-separate components.
-	components := bytes.Split(line, []byte{' '})
-	if len(components) < 2 {
-		err = fmt.Errorf(
-			"Expected at least two components, got %d.",
-			len(components))
-
-		return
-	}
-
-	// The first should be the timestmap.
-	_, err = time.Parse(time.RFC3339, string(components[0]))
-	if err != nil {
-		err = fmt.Errorf("time.Parse(%q): %v", components[0], err)
-		return
-	}
-
-	// The rest are node names understood by package verify.
-	for i := 1; i < len(components); i++ {
-		node := string(components[i])
-
-		var score blob.Score
-		_, score, err = verify.ParseNodeName(node)
-		if err != nil {
-			err = fmt.Errorf("ParseNodeName(%q): %v", node, err)
-			return
-		}
-
-		scores = append(scores, score)
-	}
-
-	return
-}
-
 // Parse the verify output, returning a list of all scores encountered.
-func parseInput(
+func parseGCInput(
+	ctx context.Context,
 	r io.Reader) (scores []blob.Score, err error) {
-	reader := bufio.NewReader(r)
+	b := syncutil.NewBundle(ctx)
 
-	for {
-		// Find the next line. EOF with no data means we are done; otherwise ignore
-		// EOF in case the file doesn't end with a newline.
-		var line []byte
-		line, err = reader.ReadBytes('\n')
-		if err == io.EOF {
-			err = nil
-			if len(line) == 0 {
-				break
+	// Parse the input, writing records into a channel.
+	verifyRecords := make(chan verifyRecord, 100)
+	b.Add(func(ctx context.Context) (err error) {
+		defer close(verifyRecords)
+		err = parseVerifyOutput(ctx, r, verifyRecords)
+		if err != nil {
+			err = fmt.Errorf("parseVerifyOutput: %v", err)
+			return
+		}
+
+		return
+	})
+
+	// Parse and save the scores from the records.
+	b.Add(func(ctx context.Context) (err error) {
+		for r := range verifyRecords {
+			var recordScores []blob.Score
+			recordScores, err = r.Scores()
+			if err != nil {
+				err = fmt.Errorf("Scores: %v", err)
+				return
 			}
+
+			scores = append(scores, recordScores...)
 		}
 
-		// Propagate other errors.
-		if err != nil {
-			err = fmt.Errorf("ReadBytes: %v", err)
-			return
-		}
+		return
+	})
 
-		// Trim the delimiter.
-		line = line[:len(line)-1]
-
-		// Parse the line.
-		var lineScores []blob.Score
-		lineScores, err = parseInputLine(line)
-		if err != nil {
-			err = fmt.Errorf("parseInputLine(%q): %v", line, err)
-			return
-		}
-
-		scores = append(scores, lineScores...)
-	}
-
+	err = b.Join()
 	return
 }
 
@@ -270,11 +229,11 @@ func runGC(args []string) {
 	}
 
 	// Parse it.
-	accessibleScores, err := parseInput(inputFile)
+	accessibleScores, err := parseGCInput(context.Background(), inputFile)
 	inputFile.Close()
 
 	if err != nil {
-		err = fmt.Errorf("parseInput: %v", err)
+		err = fmt.Errorf("parseGCInput: %v", err)
 		return
 	}
 
