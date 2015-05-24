@@ -23,11 +23,16 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"log"
+	"os"
 	"runtime"
 
 	"github.com/jacobsa/comeback/blob"
+	"github.com/jacobsa/comeback/wiring"
+	"github.com/jacobsa/gcloud/gcs"
+	"github.com/jacobsa/gcloud/syncutil"
 	"golang.org/x/net/context"
 )
 
@@ -79,6 +84,7 @@ func countScores(
 // objects that were cloned.
 func cloneGarbage(
 	ctx context.Context,
+	bucket gcs.Bucket,
 	garbageScores <-chan blob.Score,
 	garbageObjects chan<- string) (err error) {
 	err = errors.New("TODO: cloneGarbage")
@@ -88,6 +94,7 @@ func cloneGarbage(
 // Delete all objects whose name come in on the supplied channel.
 func deleteObjects(
 	ctx context.Context,
+	bucket gcs.Bucket,
 	names <-chan string) (err error) {
 	err = errors.New("TODO: deleteObjects")
 	return
@@ -109,5 +116,135 @@ func runGC(args []string) {
 		}
 	}()
 
-	err = errors.New("TODO: runGC")
+	// Grab dependencies.
+	bucket := getBucket()
+
+	// Open the input file.
+	if *fInput == "" {
+		err = fmt.Errorf("You must set --input.")
+		return
+	}
+
+	inputFile, err := os.Open(*fInput)
+	if err != nil {
+		err = fmt.Errorf("Open: %v", err)
+		return
+	}
+
+	// Parse it.
+	accessibleScores, err := parseInput(inputFile)
+	inputFile.Close()
+
+	if err != nil {
+		err = fmt.Errorf("parseInput: %v", err)
+		return
+	}
+
+	b := syncutil.NewBundle(context.Background())
+
+	// List all extant scores into a channel.
+	allScores := make(chan blob.Score, 100)
+	b.Add(func(ctx context.Context) (err error) {
+		defer close(allScores)
+		err = blob.ListScores(ctx, bucket, wiring.BlobObjectNamePrefix, allScores)
+		if err != nil {
+			err = fmt.Errorf("ListScores: %v", err)
+			return
+		}
+
+		return
+	})
+
+	// Count the total number of scores.
+	var allScoresCount uint64
+	allScoresAfterCounting := make(chan blob.Score, 100)
+	b.Add(func(ctx context.Context) (err error) {
+		defer close(allScoresAfterCounting)
+		allScoresCount, err = countScores(
+			ctx,
+			allScores,
+			allScoresAfterCounting)
+
+		if err != nil {
+			err = fmt.Errorf("countScores: %v", err)
+			return
+		}
+
+		return
+	})
+
+	// Filter to garbage scores.
+	garbageScores := make(chan blob.Score, 100)
+	b.Add(func(ctx context.Context) (err error) {
+		defer close(garbageScores)
+		err = filterToGarbage(
+			ctx,
+			accessibleScores,
+			allScoresAfterCounting,
+			garbageScores)
+
+		if err != nil {
+			err = fmt.Errorf("filterToGarbage: %v", err)
+			return
+		}
+
+		return
+	})
+
+	// Count the number of garbage scores.
+	var garbageScoresCount uint64
+	garbageScoresAfterCounting := make(chan blob.Score, 100)
+	b.Add(func(ctx context.Context) (err error) {
+		defer close(garbageScoresAfterCounting)
+		garbageScoresCount, err = countScores(
+			ctx,
+			garbageScores,
+			garbageScoresAfterCounting)
+
+		if err != nil {
+			err = fmt.Errorf("countScores: %v", err)
+			return
+		}
+
+		return
+	})
+
+	// Clone garbage blobs into a backup location.
+	toDelete := make(chan string, 100)
+	b.Add(func(ctx context.Context) (err error) {
+		defer close(toDelete)
+		err = cloneGarbage(
+			ctx,
+			bucket,
+			garbageScoresAfterCounting,
+			toDelete)
+		if err != nil {
+			err = fmt.Errorf("cloneGarbage: %v", err)
+			return
+		}
+
+		return
+	})
+
+	// Delete the original objects.
+	b.Add(func(ctx context.Context) (err error) {
+		err = deleteObjects(ctx, bucket, toDelete)
+		if err != nil {
+			err = fmt.Errorf("deleteObjects: %v", err)
+			return
+		}
+
+		return
+	})
+
+	err = b.Join()
+	if err != nil {
+		return
+	}
+
+	// Print a summary.
+	log.Printf(
+		"Deleted %d objects out of %d total.",
+		garbageScoresCount,
+		allScoresCount)
 }
