@@ -97,20 +97,32 @@ func parseInputLine(
 // Parse the verify output, returning a list of all scores encountered.
 func parseInput(
 	r io.Reader) (scores []blob.Score, err error) {
-	scanner := bufio.NewScanner(r)
-	defer func() {
-		scanErr := scanner.Err()
-		if err == nil && scanErr != nil {
-			err = fmt.Errorf("Scanner: %v", scanErr)
-		}
-	}()
+	reader := bufio.NewReader(r)
 
-	// Scan each line.
-	for scanner.Scan() {
-		var lineScores []blob.Score
-		lineScores, err = parseInputLine(scanner.Bytes())
+	for {
+		// Find the next line. EOF with no data means we are done; otherwise ignore
+		// EOF in case the file doesn't end with a newline.
+		var line []byte
+		line, err = reader.ReadBytes('\n')
+		if err == io.EOF {
+			if len(line) == 0 {
+				break
+			}
+
+			err = nil
+		}
+
+		// Propagate other errors.
 		if err != nil {
-			err = fmt.Errorf("parseInputLine(%q): %v", scanner.Text(), err)
+			err = fmt.Errorf("ReadBytes: %v", err)
+			return
+		}
+
+		// Parse the line.
+		var lineScores []blob.Score
+		lineScores, err = parseInputLine(line)
+		if err != nil {
+			err = fmt.Errorf("parseInputLine(%q): %v", line, err)
 			return
 		}
 
