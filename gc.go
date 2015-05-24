@@ -58,7 +58,7 @@ func init() {
 ////////////////////////////////////////////////////////////////////////
 
 // Parse the supplied input line, returning a list of all scores mentioned.
-func parseInputLine(
+func parseGCInputLine(
 	line []byte) (scores []blob.Score, err error) {
 	// We expect space-separate components.
 	components := bytes.Split(line, []byte{' '})
@@ -95,7 +95,7 @@ func parseInputLine(
 }
 
 // Parse the verify output, returning a list of all scores encountered.
-func parseInput(
+func parseGCInput(
 	r io.Reader) (scores []blob.Score, err error) {
 	reader := bufio.NewReader(r)
 
@@ -122,9 +122,9 @@ func parseInput(
 
 		// Parse the line.
 		var lineScores []blob.Score
-		lineScores, err = parseInputLine(line)
+		lineScores, err = parseGCInputLine(line)
 		if err != nil {
-			err = fmt.Errorf("parseInputLine(%q): %v", line, err)
+			err = fmt.Errorf("parseGCInputLine(%q): %v", line, err)
 			return
 		}
 
@@ -270,11 +270,11 @@ func runGC(args []string) {
 	}
 
 	// Parse it.
-	accessibleScores, err := parseInput(inputFile)
+	accessibleScores, err := parseGCInput(inputFile)
 	inputFile.Close()
 
 	if err != nil {
-		err = fmt.Errorf("parseInput: %v", err)
+		err = fmt.Errorf("parseGCInput: %v", err)
 		return
 	}
 

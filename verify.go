@@ -130,6 +130,26 @@ func (v *snoopingVisitor) Visit(
 }
 
 ////////////////////////////////////////////////////////////////////////
+// Output
+////////////////////////////////////////////////////////////////////////
+
+// Print output based on the visitor results arriving on the supplied channel.
+func formatVerifyOutput(r snoopingVisitorRecord) (s string) {
+	var extra string
+	if len(r.adjacent) != 0 {
+		extra = fmt.Sprintf(" %s", strings.Join(r.adjacent, " "))
+	}
+
+	s = fmt.Sprintf(
+		"%s %s%s",
+		r.t.Format(time.RFC3339),
+		r.node,
+		extra)
+
+	return
+}
+
+////////////////////////////////////////////////////////////////////////
 // Helpers
 ////////////////////////////////////////////////////////////////////////
 
@@ -162,22 +182,6 @@ func listAllScores(
 
 		return
 	})
-
-	return
-}
-
-// Print output based on the visitor results arriving on the supplied channel.
-func formatOutput(r snoopingVisitorRecord) (s string) {
-	var extra string
-	if len(r.adjacent) != 0 {
-		extra = fmt.Sprintf(" %s", strings.Join(r.adjacent, " "))
-	}
-
-	s = fmt.Sprintf(
-		"%s %s%s",
-		r.t.Format(time.RFC3339),
-		r.node,
-		extra)
 
 	return
 }
@@ -257,7 +261,7 @@ func verifyImpl(
 
 			// Increment the count and output the information.
 			nodesVerified++
-			fmt.Println(formatOutput(r))
+			fmt.Println(formatVerifyOutput(r))
 		}
 
 		return
