@@ -100,6 +100,37 @@ type verifyRecord struct {
 	adjacent []string
 }
 
+// Make sure that the record is well-formed.
+func (r *verifyRecord) Check() (err error) {
+	_, err = r.Scores()
+	if err != nil {
+		err = fmt.Errorf("Scores: %v", err)
+		return
+	}
+
+	return
+}
+
+// Parse node names and return the list of scores referenced by the record.
+func (r *verifyRecord) Scores() (scores []blob.Score, err error) {
+	allNodes := make([]string, 1+len(r.adjacent))
+	allNodes[0] = r.node
+	copy(allNodes[1:], r.adjacent)
+
+	for _, n := range allNodes {
+		var score blob.Score
+		_, score, err = verify.ParseNodeName(n)
+		if err != nil {
+			err = fmt.Errorf("ParseNodeName(%q): %v", n, err)
+			return
+		}
+
+		scores = append(scores, score)
+	}
+
+	return
+}
+
 // A visitor that writes the information it gleans from the wrapped visitor to
 // a channel.
 type snoopingVisitor struct {
@@ -182,17 +213,11 @@ func parseVerifyRecord(line []byte) (r verifyRecord, err error) {
 		r.adjacent = append(r.adjacent, string(components[i]))
 	}
 
-	// Make sure all of the node names are legal.
-	allNodes := make([]string, 1+len(r.adjacent))
-	allNodes[0] = r.node
-	copy(allNodes[1:], r.adjacent)
-
-	for _, n := range allNodes {
-		_, _, err = verify.ParseNodeName(n)
-		if err != nil {
-			err = fmt.Errorf("ParseNodeName(%q): %v", n, err)
-			return
-		}
+	// Make sure the record is legal.
+	err = r.Check()
+	if err != nil {
+		err = fmt.Errorf("Check: %v", err)
+		return
 	}
 
 	return
