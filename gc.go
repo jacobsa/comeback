@@ -33,6 +33,7 @@ import (
 	"time"
 
 	"github.com/jacobsa/comeback/blob"
+	"github.com/jacobsa/comeback/verify"
 	"github.com/jacobsa/comeback/wiring"
 	"github.com/jacobsa/gcloud/gcs"
 	"github.com/jacobsa/gcloud/syncutil"
@@ -76,14 +77,14 @@ func parseInputLine(
 		return
 	}
 
-	// The rest are hex scores.
+	// The rest are node names understood by package verify.
 	for i := 1; i < len(components); i++ {
-		hexScore := string(components[i])
+		node := string(components[i])
 
 		var score blob.Score
-		score, err = blob.ParseHexScore(hexScore)
+		_, score, err = verify.ParseNodeName(node)
 		if err != nil {
-			err = fmt.Errorf("ParseHexScore(%q): %v", hexScore, err)
+			err = fmt.Errorf("ParseNodeName(%q): %v", node, err)
 			return
 		}
 
