@@ -50,8 +50,10 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
+	"io"
 	"log"
 	"runtime"
 	"strings"
@@ -190,6 +192,56 @@ func parseVerifyRecord(line []byte) (r verifyRecord, err error) {
 		if err != nil {
 			err = fmt.Errorf("ParseNodeName(%q): %v", n, err)
 			return
+		}
+	}
+
+	return
+}
+
+// Parse the supplied output from a run of the verify command, writing records
+// into the supplied channel.
+func parseVerifyOutput(
+	ctx context.Context,
+	in io.Reader,
+	records chan<- verifyRecord) (err error) {
+	reader := bufio.NewReader(in)
+
+	for {
+		// Find the next line. EOF with no data means we are done; otherwise ignore
+		// EOF in case the file doesn't end with a newline.
+		var line []byte
+		line, err = reader.ReadBytes('\n')
+		if err == io.EOF {
+			err = nil
+			if len(line) == 0 {
+				break
+			}
+		}
+
+		// Propagate other errors.
+		if err != nil {
+			err = fmt.Errorf("ReadBytes: %v", err)
+			return
+		}
+
+		// Trim the delimiter.
+		line = line[:len(line)-1]
+
+		// Parse the line.
+		var r verifyRecord
+		r, err = parseVerifyRecord(line)
+		if err != nil {
+			err = fmt.Errorf("parseVerifyRecord(%q): %v", line, err)
+			return
+		}
+
+		// Write out the record.
+		select {
+		case <-ctx.Done():
+			err = ctx.Err()
+			return
+
+		case records <- r:
 		}
 	}
 
