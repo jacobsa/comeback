@@ -71,7 +71,8 @@ type superTest struct {
 func (t *superTest) setUp(
 	ti *TestInfo,
 	readFiles bool,
-	allScores []blob.Score) {
+	allScores []blob.Score,
+	knownStructure map[verify.Node][]verify.Node) {
 	t.ctx = ti.Ctx
 	t.records = make(chan verify.Record, 1000)
 	t.blobStore = mock_blob.NewMockStore(ti.MockController, "blobStore")
@@ -80,6 +81,7 @@ func (t *superTest) setUp(
 	t.visitor = verify.NewVisitor(
 		readFiles,
 		allScores,
+		knownStructure,
 		t.records,
 		&t.clock,
 		t.blobStore)
