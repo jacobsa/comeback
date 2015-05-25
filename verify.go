@@ -335,7 +335,12 @@ func verifyImpl(
 		// Format root node names.
 		var roots []string
 		for _, score := range rootScores {
-			roots = append(roots, verify.FormatNodeName(true, score))
+			root := verify.Node{
+				Score: score,
+				Dir:   true,
+			}
+
+			roots = append(roots, root.String())
 		}
 
 		// Traverse starting at the specified roots. Use an "experimentally
@@ -362,15 +367,8 @@ func verifyImpl(
 	// actually reading and verifying them.
 	b.Add(func(ctx context.Context) (err error) {
 		for r := range visitorRecords {
-			var dir bool
-			dir, _, err = verify.ParseNodeName(r.node)
-			if err != nil {
-				err = fmt.Errorf("ParseNodeName(%q): %v", r.node, err)
-				return
-			}
-
 			// Skip files if appropriate.
-			if !readFiles && !dir {
+			if !readFiles && !r.node.Dir {
 				nodesSkipped++
 				continue
 			}
