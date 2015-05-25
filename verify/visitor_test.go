@@ -300,7 +300,7 @@ func (t *DirsTest) ReturnsAppropriateAdjacentNodesAndRecords() {
 	var r verify.Record
 
 	r = records[0]
-	ExpectEq(t.clock.Now(), r.Time)
+	ExpectThat(r.Time, timeutil.TimeEq(t.clock.Now()))
 	ExpectTrue(r.Node.Dir)
 	ExpectEq(t.score, r.Node.Score)
 
@@ -426,7 +426,7 @@ func (t *FilesFullTest) BlobStoreSucceeds() {
 	AssertEq(1, len(records))
 
 	r := records[0]
-	ExpectEq(t.clock.Now(), r.Time)
+	ExpectThat(r.Time, timeutil.TimeEq(t.clock.Now()))
 	ExpectFalse(r.Node.Dir)
 	ExpectEq(t.knownScore, r.Node.Score)
 	ExpectThat(r.Children, ElementsAre())
