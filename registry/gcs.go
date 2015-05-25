@@ -155,7 +155,7 @@ func parseObjectAsJob(o *gcs.Object) (j CompletedJob, err error) {
 	return
 }
 
-func (r *gcsRegistry) ListRecentBackups() (jobs []CompletedJob, err error) {
+func (r *gcsRegistry) ListBackups() (jobs []CompletedJob, err error) {
 	// List all of the objects with the appropriate name prefix.
 	req := &gcs.ListObjectsRequest{
 		Prefix: gcsJobKeyPrefix,
