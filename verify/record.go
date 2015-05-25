@@ -18,6 +18,7 @@ package verify
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/jacobsa/comeback/blob"
 )
@@ -26,6 +27,25 @@ const (
 	filePrefix = "f:"
 	dirPrefix  = "d:"
 )
+
+// A record certifying that a node was verified at a particular time.
+type Record struct {
+	Time time.Time
+
+	// The node that was verified.
+	//
+	// For directory nodes, the record certifies that at Time we verified that a
+	// piece of content with the given score was parseable as a directory listing
+	// that referred to the given scores for its direct children.
+	//
+	// For file nodes, the record certifies that at Time we verified that a piece
+	// of content with the given score was parseable as a piece of a file or
+	// symlink. File nodes never have children.
+	Node Node
+
+	// Child nodes, present only for directories. See notes on Node above.
+	Children []Node
+}
 
 // A node in the DAG of blobs in the supplied bucket.
 type Node struct {
