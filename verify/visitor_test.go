@@ -214,7 +214,16 @@ func (t *DirsTest) NodeVisitedOnPastRun_ScoreAbsent() {
 }
 
 func (t *DirsTest) NodeVisitedOnPastRun_ScorePresent() {
-	AssertTrue(false, "TODO")
+	// Set up known children for the node whose score is in allScores.
+	t.knownStructure[t.knownNode] = []verify.Node{t.unknownNode}
+
+	// We should succeed without doing anything further. No new record should be
+	// minted.
+	adjacent, err := t.visit(t.knownNode.String())
+
+	AssertEq(nil, err)
+	ExpectThat(adjacent, ElementsAre(t.unknownNode.String()))
+	ExpectThat(t.getRecords(), ElementsAre())
 }
 
 func (t *DirsTest) CallsBlobStore() {
