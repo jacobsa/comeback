@@ -55,6 +55,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"os"
 	"runtime"
 	"strings"
 	"time"
@@ -321,7 +322,8 @@ func verifyImpl(
 	readFiles bool,
 	rootScores []blob.Score,
 	knownScores []blob.Score,
-	blobStore blob.Store) (nodesVerified uint64, nodesSkipped uint64, err error) {
+	blobStore blob.Store,
+	output io.Writer) (nodesVerified uint64, nodesSkipped uint64, err error) {
 	b := syncutil.NewBundle(ctx)
 
 	// Visit every node in the graph, snooping on the graph structure into a
@@ -383,9 +385,15 @@ func verifyImpl(
 				continue
 			}
 
-			// Increment the count and output the information.
+			// Increment the count.
 			nodesVerified++
-			fmt.Println(formatVerifyOutput(r))
+
+			// Output the information.
+			_, err = fmt.Fprintf(output, "%s\n", formatVerifyOutput(r))
+			if err != nil {
+				err = fmt.Errorf("Fprintf: %v", err)
+				return
+			}
 		}
 
 		return
@@ -464,7 +472,8 @@ func runVerify(args []string) {
 		readFiles,
 		rootScores,
 		knownScores,
-		blobStore)
+		blobStore,
+		os.Stdout)
 
 	if err != nil {
 		err = fmt.Errorf("verifyImpl: %v", err)
