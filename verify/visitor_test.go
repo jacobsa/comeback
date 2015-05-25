@@ -332,23 +332,25 @@ type filesCommonTest struct {
 
 	contents []byte
 
-	knownScore blob.Score
-	knownNode  string
-
-	unknownScore blob.Score
-	unknownNode  string
+	knownNode   verify.Node
+	unknownNode verify.Node
 }
 
 func (t *filesCommonTest) setUp(ti *TestInfo, readFiles bool) {
 	t.contents = []byte("foobarbaz")
 
-	t.knownScore = blob.ComputeScore(t.contents)
-	t.knownNode = makeNodeName(false, t.knownScore)
+	// Set up canned nodes.
+	t.knownNode = verify.Node{
+		Dir:   false,
+		Score: blob.ComputeScore(t.contents),
+	}
 
-	t.unknownScore = blob.ComputeScore(append(t.contents, 'a'))
-	t.unknownNode = makeNodeName(false, t.unknownScore)
+	t.unknownNode = verify.Node{
+		Dir:   false,
+		Score: blob.ComputeScore(append(t.contents, 'a')),
+	}
 
-	t.superTest.setUp(ti, readFiles, []blob.Score{t.knownScore})
+	t.superTest.setUp(ti, readFiles, []blob.Score{t.knownNode.Score})
 }
 
 type FilesLiteTest struct {
@@ -373,18 +375,18 @@ func (t *FilesLiteTest) NodeVisitedOnPastRun_ScorePresent() {
 
 func (t *FilesLiteTest) ScoreNotInList() {
 	// Call
-	_, err := t.visitor.Visit(t.ctx, t.unknownNode)
+	_, err := t.visitor.Visit(t.ctx, t.unknownNode.String())
 
 	ExpectThat(err, Error(HasSubstr("Unknown")))
 	ExpectThat(err, Error(HasSubstr("score")))
-	ExpectThat(err, Error(HasSubstr(t.unknownScore.Hex())))
+	ExpectThat(err, Error(HasSubstr(t.unknownNode.Score.Hex())))
 
 	ExpectThat(t.getRecords(), ElementsAre())
 }
 
 func (t *FilesLiteTest) ScoreIsInList() {
 	// Call
-	adjacent, err := t.visitor.Visit(t.ctx, t.knownNode)
+	adjacent, err := t.visitor.Visit(t.ctx, t.knownNode.String())
 
 	AssertEq(nil, err)
 	ExpectThat(adjacent, ElementsAre())
@@ -417,11 +419,11 @@ func (t *FilesFullTest) NodeVisitedOnPastRun_ScorePresent() {
 
 func (t *FilesFullTest) CallsBlobStore() {
 	// Load
-	ExpectCall(t.blobStore, "Load")(Any(), t.knownScore).
+	ExpectCall(t.blobStore, "Load")(Any(), t.knownNode.Score).
 		WillOnce(Return(nil, errors.New("")))
 
 	// Call
-	t.visitor.Visit(t.ctx, t.knownNode)
+	t.visitor.Visit(t.ctx, t.knownNode.String())
 }
 
 func (t *FilesFullTest) BlobStoreReturnsError() {
@@ -430,7 +432,7 @@ func (t *FilesFullTest) BlobStoreReturnsError() {
 		WillOnce(Return(nil, errors.New("taco")))
 
 	// Call
-	_, err := t.visitor.Visit(t.ctx, t.knownNode)
+	_, err := t.visitor.Visit(t.ctx, t.knownNode.String())
 
 	ExpectThat(err, Error(HasSubstr("Load")))
 	ExpectThat(err, Error(HasSubstr("taco")))
@@ -444,7 +446,7 @@ func (t *FilesFullTest) BlobStoreSucceeds() {
 		WillOnce(Return(t.contents, nil))
 
 	// Call
-	adjacent, err := t.visitor.Visit(t.ctx, t.knownNode)
+	adjacent, err := t.visitor.Visit(t.ctx, t.knownNode.String())
 
 	AssertEq(nil, err)
 	ExpectThat(adjacent, ElementsAre())
@@ -455,6 +457,6 @@ func (t *FilesFullTest) BlobStoreSucceeds() {
 	r := records[0]
 	ExpectThat(r.Time, timeutil.TimeEq(t.clock.Now()))
 	ExpectFalse(r.Node.Dir)
-	ExpectEq(t.knownScore, r.Node.Score)
+	ExpectEq(t.knownNode.Score, r.Node.Score)
 	ExpectThat(r.Children, ElementsAre())
 }
