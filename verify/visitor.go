@@ -132,7 +132,15 @@ func (v *visitor) visitDir(
 		return
 	}
 
-	// Return a node for each score in each entry.
+	// Build a record containing a child node for each score in each entry.
+	r := Record{
+		Time: v.clock.Now(),
+		Node: Node{
+			Score: score,
+			Dir:   true,
+		},
+	}
+
 	for _, entry := range listing {
 		var n Node
 
@@ -158,11 +166,25 @@ func (v *visitor) visitDir(
 			return
 		}
 
-		// Return a node for each score.
+		// Add a node for each score.
 		for _, score := range entry.Scores {
 			n.Score = score
-			adjacent = append(adjacent, n.String())
+			r.Children = append(r.Children, n)
 		}
+	}
+
+	// Certify that we verified the directory.
+	select {
+	case <-ctx.Done():
+		err = ctx.Err()
+		return
+
+	case v.records <- r:
+	}
+
+	// Return child node names.
+	for _, child := range r.Children {
+		adjacent = append(adjacent, child.String())
 	}
 
 	return
