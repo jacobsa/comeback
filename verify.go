@@ -23,7 +23,8 @@
 // does correctly report the object's CRC32C and MD5 sums in listings,
 // verifying them periodically.
 //
-// Output is of the following form:
+// Output of the following form is written to stdout and a file in the user's
+// home directory:
 //
 //     <timestamp> <node> [<child node> ...]
 //
