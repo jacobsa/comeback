@@ -52,6 +52,7 @@ func (t *MarshalTest) LeavesOutTargetForNonSymlinks() {
 	data, err := repr.MarshalDir(entries)
 	AssertEq(nil, err)
 
+	data = data[:len(data)-1]
 	listingProto := new(repr_proto.DirectoryListingProto)
 	err = proto.Unmarshal(data, listingProto)
 	AssertEq(nil, err)
@@ -72,6 +73,7 @@ func (t *MarshalTest) LeavesOutDeviceNumberForNonDevices() {
 	data, err := repr.MarshalDir(entries)
 	AssertEq(nil, err)
 
+	data = data[:len(data)-1]
 	listingProto := new(repr_proto.DirectoryListingProto)
 	err = proto.Unmarshal(data, listingProto)
 	AssertEq(nil, err)
