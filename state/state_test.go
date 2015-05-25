@@ -17,11 +17,15 @@ package state_test
 
 import (
 	"bytes"
+	"testing"
+	"time"
+
+	"github.com/googlecloudplatform/gcsfuse/timeutil"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/state"
+	"github.com/jacobsa/comeback/util"
 	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
-	"testing"
 )
 
 func TestState(t *testing.T) { RunTests(t) }
@@ -41,10 +45,10 @@ func init() { RegisterTestSuite(&StateTest{}) }
 ////////////////////////////////////////////////////////////////////////
 
 func (t *StateTest) RoundTrip() {
-	t.s.ExistingScores = state.NewStringSet()
+	t.s.ExistingScores = util.NewStringSet()
 	t.s.ExistingScores.Add("taco")
 	t.s.ExistingScores.Add("burrito")
-	t.s.ExistingScoresVersion = 17
+	t.s.RelistTime = time.Now()
 
 	t.s.ScoresForFiles = state.NewScoreMap()
 	key := state.ScoreMapKey{Path: "queso"}
@@ -62,7 +66,7 @@ func (t *StateTest) RoundTrip() {
 	ExpectTrue(loaded.ExistingScores.Contains("taco"))
 	ExpectTrue(loaded.ExistingScores.Contains("burrito"))
 	ExpectFalse(loaded.ExistingScores.Contains("enchilada"))
-	ExpectEq(17, loaded.ExistingScoresVersion)
+	ExpectThat(loaded.RelistTime, timeutil.TimeEq(t.s.RelistTime))
 
 	ExpectThat(loaded.ScoresForFiles.Get(key), DeepEquals(scores))
 }
