@@ -63,6 +63,7 @@ func (t *UnmarshalTest) JunkWireData() {
 	d := []byte("asdf")
 
 	// Call
+	d = append(d, magicByte_Dir)
 	_, err := repr.UnmarshalDir(d)
 
 	ExpectThat(err, Error(HasSubstr("Parsing data")))
@@ -84,6 +85,7 @@ func (t *UnmarshalTest) InvalidTypeValue() {
 	AssertEq(nil, err)
 
 	// Call
+	data = append(data, magicByte_Dir)
 	_, err = repr.UnmarshalDir(data)
 
 	ExpectThat(err, Error(HasSubstr("Unrecognized")))
@@ -107,6 +109,7 @@ func (t *UnmarshalTest) UnknownTypeValue() {
 	AssertEq(nil, err)
 
 	// Call
+	data = append(data, magicByte_Dir)
 	_, err = repr.UnmarshalDir(data)
 
 	ExpectThat(err, Error(HasSubstr("Unrecognized")))
@@ -137,6 +140,7 @@ func (t *UnmarshalTest) HashIsTooShort() {
 	AssertEq(nil, err)
 
 	// Call
+	data = append(data, magicByte_Dir)
 	_, err = repr.UnmarshalDir(data)
 
 	ExpectThat(err, Error(HasSubstr("hash length")))
@@ -166,6 +170,7 @@ func (t *UnmarshalTest) HashIsTooLong() {
 	AssertEq(nil, err)
 
 	// Call
+	data = append(data, magicByte_Dir)
 	_, err = repr.UnmarshalDir(data)
 
 	ExpectThat(err, Error(HasSubstr("hash length")))
@@ -197,9 +202,8 @@ func (t *UnmarshalTest) PermissionsRegressionTest() {
 	data, err := proto.Marshal(listingProto)
 	AssertEq(nil, err)
 
-	data = append(data, magicByte_Dir)
-
 	// Call
+	data = append(data, magicByte_Dir)
 	entries, err := repr.UnmarshalDir(data)
 	AssertEq(nil, err)
 
