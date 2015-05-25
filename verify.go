@@ -404,6 +404,9 @@ func verifyImpl(
 	return
 }
 
+// Open the file to which we log verify output.
+func openVerifyLog() (w io.WriteCloser, err error)
+
 func runVerify(args []string) {
 	// Allow parallelism.
 	runtime.GOMAXPROCS(runtime.NumCPU())
@@ -441,6 +444,15 @@ func runVerify(args []string) {
 	bucket := getBucket()
 	crypter := getCrypter()
 
+	// Open the log file.
+	logFile, err := openVerifyLog()
+	if err != nil {
+		err = fmt.Errorf("openVerifyLog: %v", err)
+		return
+	}
+
+	defer logFile.Close()
+
 	// Create a blob store.
 	blobStore, err := wiring.MakeBlobStore(
 		bucket,
@@ -474,7 +486,7 @@ func runVerify(args []string) {
 		rootScores,
 		knownScores,
 		blobStore,
-		os.Stdout)
+		io.MultiWriter(logFile, os.Stdout))
 
 	if err != nil {
 		err = fmt.Errorf("verifyImpl: %v", err)
