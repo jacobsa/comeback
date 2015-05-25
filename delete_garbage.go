@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/jacobsa/gcloud/gcs"
+	"github.com/jacobsa/gcloud/gcs/gcsutil"
 	"github.com/jacobsa/gcloud/syncutil"
 	"golang.org/x/net/context"
 )
@@ -33,17 +34,6 @@ var cmdDeleteGarbage = &Command{
 	Name: "delete_garbage",
 	Run:  runDeleteGarbage,
 }
-
-////////////////////////////////////////////////////////////////////////
-// Helpers
-////////////////////////////////////////////////////////////////////////
-
-// List object names matching the supplied prefix into the channel.
-func listObjectNames(
-	ctx context.Context,
-	bucket gcs.Bucket,
-	prefix string,
-	names chan<- string) (err error)
 
 ////////////////////////////////////////////////////////////////////////
 // Delete garbage
@@ -66,33 +56,34 @@ func runDeleteGarbage(args []string) {
 
 	b := syncutil.NewBundle(context.Background())
 
-	// List all garbage blobs.
-	names := make(chan string, 100)
+	// List all garbage objects.
+	objects := make(chan *gcs.Object, 100)
 	b.Add(func(ctx context.Context) (err error) {
-		defer close(names)
-		err = listObjectNames(ctx, bucket, garbagePrefix, names)
+		defer close(objects)
+		err = gcsutil.ListPrefix(ctx, bucket, garbagePrefix, objects)
 		if err != nil {
-			err = fmt.Errorf("listObjectNames: %v", err)
+			err = fmt.Errorf("ListPrefix: %v", err)
 			return
 		}
 
 		return
 	})
 
-	// Count the names passing through, periodically printing a status update.
-	var nameCount uint64
+	// Count the objects passing through, periodically printing a status update.
+	// Convert to names.
+	var count uint64
 	toDelete := make(chan string)
 	b.Add(func(ctx context.Context) (err error) {
 		defer close(toDelete)
 		ticker := time.Tick(2 * time.Second)
 
-		for name := range names {
-			nameCount++
+		for o := range objects {
+			count++
 
 			// Print a status update?
 			select {
 			case <-ticker:
-				log.Printf("%d names seen so far.", nameCount)
+				log.Printf("%d names seen so far.", count)
 
 			default:
 			}
@@ -103,7 +94,7 @@ func runDeleteGarbage(args []string) {
 				err = ctx.Err()
 				return
 
-			case toDelete <- name:
+			case toDelete <- o.Name:
 			}
 		}
 
@@ -127,5 +118,5 @@ func runDeleteGarbage(args []string) {
 	}
 
 	// Print a summary.
-	log.Printf("Deleted %d objects.", nameCount)
+	log.Printf("Deleted %d objects.", count)
 }
