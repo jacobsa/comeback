@@ -100,39 +100,8 @@ func init() {
 // See the notes at the top of verify.go for details.
 type verifyRecord struct {
 	t        time.Time
-	node     string
-	adjacent []string
-}
-
-// Make sure that the record is well-formed.
-func (r *verifyRecord) Check() (err error) {
-	_, err = r.Scores()
-	if err != nil {
-		err = fmt.Errorf("Scores: %v", err)
-		return
-	}
-
-	return
-}
-
-// Parse node names and return the list of scores referenced by the record.
-func (r *verifyRecord) Scores() (scores []blob.Score, err error) {
-	allNodes := make([]string, 1+len(r.adjacent))
-	allNodes[0] = r.node
-	copy(allNodes[1:], r.adjacent)
-
-	for _, n := range allNodes {
-		var score blob.Score
-		_, score, err = verify.ParseNodeName(n)
-		if err != nil {
-			err = fmt.Errorf("ParseNodeName(%q): %v", n, err)
-			return
-		}
-
-		scores = append(scores, score)
-	}
-
-	return
+	node     verify.Node
+	adjacent []verify.Node
 }
 
 // A visitor that writes the information it gleans from the wrapped visitor to
@@ -151,13 +120,29 @@ func (v *snoopingVisitor) Visit(
 		return
 	}
 
-	// Write out a record.
+	// Build a record.
 	r := verifyRecord{
-		t:        time.Now(),
-		node:     node,
-		adjacent: adjacent,
+		t: time.Now(),
 	}
 
+	r.node, err = verify.ParseNode(node)
+	if err != nil {
+		err = fmt.Errorf("ParseNode(%q): %v", node, err)
+		return
+	}
+
+	for _, a := range adjacent {
+		var adjacentNode verify.Node
+		adjacentNode, err = verify.ParseNode(a)
+		if err != nil {
+			err = fmt.Errorf("ParseNode(%q): %v", a, err)
+			return
+		}
+
+		r.adjacent = append(r.adjacent, adjacentNode)
+	}
+
+	// Write out the record.
 	select {
 	case <-ctx.Done():
 		err = ctx.Err()
