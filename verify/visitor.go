@@ -34,23 +34,30 @@ import (
 // (according to allScores), and verifies that the blob can be loaded if
 // readFiles is true.
 //
+// If work is to be preserved across runs, knownStructure should be filled in
+// with parenthood information from previously-generated records (for both file
+// and directories). Nodes that exist as keys will not be re-verified, except
+// to confirm that they still exist in allScores.
+//
 // A record is written to the supplied channel for every piece of information
-// that is certified.
+// that is verified.
 //
 // It is expected that the blob store's Load method does score verification for
 // us.
 func NewVisitor(
 	readFiles bool,
 	allScores []blob.Score,
+	knownStructure map[Node][]Node,
 	records chan<- Record,
 	clock timeutil.Clock,
 	bs blob.Store) (v graph.Visitor) {
 	typed := &visitor{
-		readFiles:   readFiles,
-		records:     records,
-		clock:       clock,
-		blobStore:   bs,
-		knownScores: make(map[blob.Score]struct{}),
+		readFiles:      readFiles,
+		records:        records,
+		clock:          clock,
+		blobStore:      bs,
+		knownScores:    make(map[blob.Score]struct{}),
+		knownStructure: knownStructure,
 	}
 
 	for _, score := range allScores {
@@ -66,42 +73,34 @@ func NewVisitor(
 ////////////////////////////////////////////////////////////////////////
 
 type visitor struct {
-	readFiles   bool
-	records     chan<- Record
-	clock       timeutil.Clock
-	blobStore   blob.Store
-	knownScores map[blob.Score]struct{}
+	readFiles      bool
+	records        chan<- Record
+	clock          timeutil.Clock
+	blobStore      blob.Store
+	knownScores    map[blob.Score]struct{}
+	knownStructure map[Node][]Node
 }
 
 func (v *visitor) visitFile(
 	ctx context.Context,
-	score blob.Score) (err error) {
-	// If reading files is disabled, simply check that the score is known.
+	n Node) (err error) {
+	// If reading files is disabled, there is nothing further to do.
 	if !v.readFiles {
-		_, ok := v.knownScores[score]
-		if !ok {
-			err = fmt.Errorf("Unknown file score: %s", score.Hex())
-			return
-		}
-
 		return
 	}
 
 	// Make sure we can load the blob contents. Presumably the blob store
 	// verifies the score (of the ciphertext) on the way through.
-	_, err = v.blobStore.Load(ctx, score)
+	_, err = v.blobStore.Load(ctx, n.Score)
 	if err != nil {
-		err = fmt.Errorf("Load(%s): %v", score.Hex(), err)
+		err = fmt.Errorf("Load(%s): %v", n.Score.Hex(), err)
 		return
 	}
 
 	// Certify that we verified the file piece.
 	r := Record{
 		Time: v.clock.Now(),
-		Node: Node{
-			Score: score,
-			Dir:   false,
-		},
+		Node: n,
 	}
 
 	select {
@@ -117,59 +116,60 @@ func (v *visitor) visitFile(
 
 func (v *visitor) visitDir(
 	ctx context.Context,
-	score blob.Score) (adjacent []string, err error) {
+	parent Node) (adjacent []string, err error) {
 	// Load the blob contents.
-	contents, err := v.blobStore.Load(ctx, score)
+	contents, err := v.blobStore.Load(ctx, parent.Score)
 	if err != nil {
-		err = fmt.Errorf("Load(%s): %v", score.Hex(), err)
+		err = fmt.Errorf("Load(%s): %v", parent.Score.Hex(), err)
 		return
 	}
 
 	// Parse the listing.
 	listing, err := repr.UnmarshalDir(contents)
 	if err != nil {
-		err = fmt.Errorf("UnmarshalDir(%s): %v", score.Hex(), err)
+		err = fmt.Errorf("UnmarshalDir(%s): %v", parent.Score.Hex(), err)
 		return
 	}
 
 	// Build a record containing a child node for each score in each entry.
 	r := Record{
 		Time: v.clock.Now(),
-		Node: Node{
-			Score: score,
-			Dir:   true,
-		},
+		Node: parent,
 	}
 
 	for _, entry := range listing {
-		var n Node
+		var child Node
 
 		// Is this a directory?
 		switch entry.Type {
 		case fs.TypeFile:
-			n.Dir = false
+			child.Dir = false
 
 		case fs.TypeDirectory:
-			n.Dir = true
+			child.Dir = true
 
 		case fs.TypeSymlink:
 			if len(entry.Scores) != 0 {
 				err = fmt.Errorf(
 					"Dir %s: symlink unexpectedly contains scores",
-					score.Hex())
+					parent.Score.Hex())
 
 				return
 			}
 
 		default:
-			err = fmt.Errorf("Dir %s: unknown entry type %v", score.Hex(), entry.Type)
+			err = fmt.Errorf(
+				"Dir %s: unknown entry type %v",
+				parent.Score.Hex(),
+				entry.Type)
+
 			return
 		}
 
 		// Add a node for each score.
 		for _, score := range entry.Scores {
-			n.Score = score
-			r.Children = append(r.Children, n)
+			child.Score = score
+			r.Children = append(r.Children, child)
 		}
 	}
 
@@ -200,11 +200,28 @@ func (v *visitor) Visit(
 		return
 	}
 
+	// Make sure the score actually exists.
+	if _, ok := v.knownScores[n.Score]; !ok {
+		err = fmt.Errorf("Unknown score for node: %s", n.String())
+		return
+	}
+
+	// If we have already verified this node, there is nothing further to verify.
+	// Return the appropriate adjacent node names.
+	if children, ok := v.knownStructure[n]; ok {
+		for _, child := range children {
+			adjacent = append(adjacent, child.String())
+		}
+
+		return
+	}
+
+	// Perform file or directory-specific logic.
 	if n.Dir {
-		adjacent, err = v.visitDir(ctx, n.Score)
+		adjacent, err = v.visitDir(ctx, n)
 		return
 	} else {
-		err = v.visitFile(ctx, n.Score)
+		err = v.visitFile(ctx, n)
 		return
 	}
 }
