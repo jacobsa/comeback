@@ -53,7 +53,7 @@ func (r *Record) String() (s string) {
 	s = fmt.Sprintf(
 		"%s %s",
 		r.Time.Format(time.RFC3339),
-		r.Node)
+		r.Node.String())
 
 	for _, child := range r.Children {
 		s += fmt.Sprintf(" %s", child.String())
