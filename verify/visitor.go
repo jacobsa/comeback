@@ -116,43 +116,43 @@ func (v *visitor) visitFile(
 
 func (v *visitor) visitDir(
 	ctx context.Context,
-	n Node) (adjacent []string, err error) {
+	parent Node) (adjacent []string, err error) {
 	// Load the blob contents.
-	contents, err := v.blobStore.Load(ctx, n.Score)
+	contents, err := v.blobStore.Load(ctx, parent.Score)
 	if err != nil {
-		err = fmt.Errorf("Load(%s): %v", n.Score.Hex(), err)
+		err = fmt.Errorf("Load(%s): %v", parent.Score.Hex(), err)
 		return
 	}
 
 	// Parse the listing.
 	listing, err := repr.UnmarshalDir(contents)
 	if err != nil {
-		err = fmt.Errorf("UnmarshalDir(%s): %v", n.Score.Hex(), err)
+		err = fmt.Errorf("UnmarshalDir(%s): %v", parent.Score.Hex(), err)
 		return
 	}
 
 	// Build a record containing a child node for each score in each entry.
 	r := Record{
 		Time: v.clock.Now(),
-		Node: n,
+		Node: parent,
 	}
 
 	for _, entry := range listing {
-		var n Node
+		var child Node
 
 		// Is this a directory?
 		switch entry.Type {
 		case fs.TypeFile:
-			n.Dir = false
+			child.Dir = false
 
 		case fs.TypeDirectory:
-			n.Dir = true
+			child.Dir = true
 
 		case fs.TypeSymlink:
 			if len(entry.Scores) != 0 {
 				err = fmt.Errorf(
 					"Dir %s: symlink unexpectedly contains scores",
-					n.Score.Hex())
+					parent.Score.Hex())
 
 				return
 			}
@@ -160,7 +160,7 @@ func (v *visitor) visitDir(
 		default:
 			err = fmt.Errorf(
 				"Dir %s: unknown entry type %v",
-				n.Score.Hex(),
+				parent.Score.Hex(),
 				entry.Type)
 
 			return
@@ -168,8 +168,8 @@ func (v *visitor) visitDir(
 
 		// Add a node for each score.
 		for _, score := range entry.Scores {
-			n.Score = score
-			r.Children = append(r.Children, n)
+			child.Score = score
+			r.Children = append(r.Children, child)
 		}
 	}
 
