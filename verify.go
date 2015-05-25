@@ -57,6 +57,8 @@ import (
 	"io"
 	"log"
 	"os"
+	"os/user"
+	"path"
 	"runtime"
 	"strings"
 	"time"
@@ -405,7 +407,27 @@ func verifyImpl(
 }
 
 // Open the file to which we log verify output.
-func openVerifyLog() (w io.WriteCloser, err error)
+func openVerifyLog() (w io.WriteCloser, err error) {
+	// Find the current user.
+	u, err := user.Current()
+	if err != nil {
+		err = fmt.Errorf("user.Current: %v", err)
+		return
+	}
+
+	// Put the file in her home directory. Append to whatever is already there.
+	w, err = os.OpenFile(
+		path.Join(u.HomeDir, ".comeback.verify.log"),
+		os.O_WRONLY|os.O_APPEND|os.O_CREATE,
+		0600)
+
+	if err != nil {
+		err = fmt.Errorf("OpenFile: %v", err)
+		return
+	}
+
+	return
+}
 
 func runVerify(args []string) {
 	// Allow parallelism.
