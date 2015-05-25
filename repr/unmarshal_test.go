@@ -29,6 +29,11 @@ import (
 
 func TestUnmarshalTest(t *testing.T) { RunTests(t) }
 
+const (
+	magicByte_Dir  byte = 'd'
+	magicByte_File byte = 'f'
+)
+
 ////////////////////////////////////////////////////////////////////////
 // Helpers
 ////////////////////////////////////////////////////////////////////////
@@ -39,7 +44,9 @@ func computeScoreSlice(b []byte) (score []byte) {
 }
 
 func makeLegalEntryProto() *repr_proto.DirectoryEntryProto {
-	return &repr_proto.DirectoryEntryProto{}
+	return &repr_proto.DirectoryEntryProto{
+		Type: repr_proto.DirectoryEntryProto_TYPE_FILE.Enum(),
+	}
 }
 
 type UnmarshalTest struct {
@@ -189,6 +196,8 @@ func (t *UnmarshalTest) PermissionsRegressionTest() {
 
 	data, err := proto.Marshal(listingProto)
 	AssertEq(nil, err)
+
+	data = append(data, magicByte_Dir)
 
 	// Call
 	entries, err := repr.UnmarshalDir(data)
