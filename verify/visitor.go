@@ -84,19 +84,8 @@ type visitor struct {
 func (v *visitor) visitFile(
 	ctx context.Context,
 	n Node) (err error) {
-	// Make sure the score actually exists.
-	if _, ok := v.knownScores[n.Score]; !ok {
-		err = fmt.Errorf("Unknown file score: %s", n.Score.Hex())
-		return
-	}
-
 	// If reading files is disabled, there is nothing further to do.
 	if !v.readFiles {
-		return
-	}
-
-	// If we have already verified this node, there is nothing further to do.
-	if _, ok := v.knownStructure[n]; ok {
 		return
 	}
 
@@ -127,28 +116,25 @@ func (v *visitor) visitFile(
 
 func (v *visitor) visitDir(
 	ctx context.Context,
-	score blob.Score) (adjacent []string, err error) {
+	n Node) (adjacent []string, err error) {
 	// Load the blob contents.
-	contents, err := v.blobStore.Load(ctx, score)
+	contents, err := v.blobStore.Load(ctx, n.Score)
 	if err != nil {
-		err = fmt.Errorf("Load(%s): %v", score.Hex(), err)
+		err = fmt.Errorf("Load(%s): %v", n.Score.Hex(), err)
 		return
 	}
 
 	// Parse the listing.
 	listing, err := repr.UnmarshalDir(contents)
 	if err != nil {
-		err = fmt.Errorf("UnmarshalDir(%s): %v", score.Hex(), err)
+		err = fmt.Errorf("UnmarshalDir(%s): %v", n.Score.Hex(), err)
 		return
 	}
 
 	// Build a record containing a child node for each score in each entry.
 	r := Record{
 		Time: v.clock.Now(),
-		Node: Node{
-			Score: score,
-			Dir:   true,
-		},
+		Node: n,
 	}
 
 	for _, entry := range listing {
@@ -166,13 +152,17 @@ func (v *visitor) visitDir(
 			if len(entry.Scores) != 0 {
 				err = fmt.Errorf(
 					"Dir %s: symlink unexpectedly contains scores",
-					score.Hex())
+					n.Score.Hex())
 
 				return
 			}
 
 		default:
-			err = fmt.Errorf("Dir %s: unknown entry type %v", score.Hex(), entry.Type)
+			err = fmt.Errorf(
+				"Dir %s: unknown entry type %v",
+				n.Score.Hex(),
+				entry.Type)
+
 			return
 		}
 
@@ -210,8 +200,20 @@ func (v *visitor) Visit(
 		return
 	}
 
+	// Make sure the score actually exists.
+	if _, ok := v.knownScores[n.Score]; !ok {
+		err = fmt.Errorf("Unknown score for node: %s", n.String())
+		return
+	}
+
+	// If we have already verified this node, there is nothing further to do.
+	if _, ok := v.knownStructure[n]; ok {
+		return
+	}
+
+	// Perform file or directory-specific logic.
 	if n.Dir {
-		adjacent, err = v.visitDir(ctx, n.Score)
+		adjacent, err = v.visitDir(ctx, n)
 		return
 	} else {
 		err = v.visitFile(ctx, n)
