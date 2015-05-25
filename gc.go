@@ -355,7 +355,7 @@ func runGC(args []string) {
 
 	// Print a summary.
 	log.Printf(
-		"Deleted %d objects out of %d total.",
+		"Moved %d objects to garbage/, out of %d total.",
 		garbageScoresCount,
 		allScoresCount)
 }
