@@ -217,6 +217,7 @@ func (t *DirsTest) BlobIsJunk() {
 	// Set up junk contents.
 	t.contents = append(t.contents, 'a')
 	t.score = blob.ComputeScore(t.contents)
+	t.allScores = append(t.allScores, t.score)
 	t.node = makeNodeName(true, t.score)
 
 	// Load
@@ -248,6 +249,7 @@ func (t *DirsTest) UnknownEntryType() {
 	AssertEq(nil, err)
 
 	t.score = blob.ComputeScore(t.contents)
+	t.allScores = append(t.allScores, t.score)
 	t.node = makeNodeName(true, t.score)
 
 	// Load
@@ -279,6 +281,7 @@ func (t *DirsTest) SymlinkWithScores() {
 	AssertEq(nil, err)
 
 	t.score = blob.ComputeScore(t.contents)
+	t.allScores = append(t.allScores, t.score)
 	t.node = makeNodeName(true, t.score)
 
 	// Load
