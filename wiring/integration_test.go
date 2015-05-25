@@ -757,7 +757,7 @@ func (t *SaveAndRestoreTest) IdenticalDirectoryContents() {
 	//  3. The contents of the (identical) files.
 	//
 	listReq := &gcs.ListObjectsRequest{Prefix: wiring.BlobObjectNamePrefix}
-	objects, _, err := gcsutil.List(t.ctx, t.bucket, listReq)
+	objects, _, err := gcsutil.ListAll(t.ctx, t.bucket, listReq)
 
 	AssertEq(nil, err)
 	AssertEq(3, len(objects))

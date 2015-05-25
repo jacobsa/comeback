@@ -161,9 +161,9 @@ func (r *gcsRegistry) ListBackups() (jobs []CompletedJob, err error) {
 		Prefix: gcsJobKeyPrefix,
 	}
 
-	objects, _, err := gcsutil.List(context.Background(), r.bucket, req)
+	objects, _, err := gcsutil.ListAll(context.Background(), r.bucket, req)
 	if err != nil {
-		err = fmt.Errorf("gcsutil.List: %v", err)
+		err = fmt.Errorf("gcsutil.ListAll: %v", err)
 		return
 	}
 
