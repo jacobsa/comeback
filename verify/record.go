@@ -47,6 +47,20 @@ type Record struct {
 	Children []Node
 }
 
+// Format the record in a manner that can later be parsed with ParseRecord.
+func (r *Record) String() (s string) {
+	s = fmt.Sprintf(
+		"%s %s",
+		r.Time.Format(time.RFC3339),
+		r.Node)
+
+	for _, child := range r.Children {
+		s += fmt.Sprintf(" %s", child.String())
+	}
+
+	return
+}
+
 // A node in the DAG of blobs in the supplied bucket.
 type Node struct {
 	Score blob.Score
