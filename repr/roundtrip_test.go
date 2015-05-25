@@ -16,14 +16,15 @@
 package repr_test
 
 import (
+	"os"
+	"testing"
+	"time"
+
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/fs"
 	"github.com/jacobsa/comeback/repr"
 	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
-	"os"
-	"testing"
-	"time"
 )
 
 func TestRoundtripTest(t *testing.T) { RunTests(t) }
@@ -52,12 +53,12 @@ func (t *RoundtripTest) NoEntries() {
 	in := []*fs.DirectoryEntry{}
 
 	// Marshal
-	d, err := repr.Marshal(in)
+	d, err := repr.MarshalDir(in)
 	AssertEq(nil, err)
 	AssertNe(nil, d)
 
 	// Unmarshal
-	out, err := repr.Unmarshal(d)
+	out, err := repr.UnmarshalDir(d)
 	AssertEq(nil, err)
 	AssertNe(nil, out)
 
@@ -76,7 +77,7 @@ func (t *RoundtripTest) UnknownType() {
 	in[1].Type = 17
 
 	// Marshal
-	_, err := repr.Marshal(in)
+	_, err := repr.MarshalDir(in)
 
 	ExpectThat(err, Error(HasSubstr("EntryType")))
 	ExpectThat(err, Error(HasSubstr("17")))
@@ -101,12 +102,12 @@ func (t *RoundtripTest) PreservesTypes() {
 	in[5].Type = fs.TypeNamedPipe
 
 	// Marshal
-	d, err := repr.Marshal(in)
+	d, err := repr.MarshalDir(in)
 	AssertEq(nil, err)
 	AssertNe(nil, d)
 
 	// Unmarshal
-	out, err := repr.Unmarshal(d)
+	out, err := repr.UnmarshalDir(d)
 	AssertEq(nil, err)
 	AssertNe(nil, out)
 
@@ -132,12 +133,12 @@ func (t *RoundtripTest) PreservesNames() {
 	in[1].Name = "burrito"
 
 	// Marshal
-	d, err := repr.Marshal(in)
+	d, err := repr.MarshalDir(in)
 	AssertEq(nil, err)
 	AssertNe(nil, d)
 
 	// Unmarshal
-	out, err := repr.Unmarshal(d)
+	out, err := repr.UnmarshalDir(d)
 	AssertEq(nil, err)
 	AssertNe(nil, out)
 
@@ -159,12 +160,12 @@ func (t *RoundtripTest) PreservesPermissions() {
 	in[1].Permissions = 0755 | os.ModeSetgid
 
 	// Marshal
-	d, err := repr.Marshal(in)
+	d, err := repr.MarshalDir(in)
 	AssertEq(nil, err)
 	AssertNe(nil, d)
 
 	// Unmarshal
-	out, err := repr.Unmarshal(d)
+	out, err := repr.UnmarshalDir(d)
 	AssertEq(nil, err)
 	AssertNe(nil, out)
 
@@ -186,12 +187,12 @@ func (t *RoundtripTest) PreservesUids() {
 	in[1].Uid = 19
 
 	// Marshal
-	d, err := repr.Marshal(in)
+	d, err := repr.MarshalDir(in)
 	AssertEq(nil, err)
 	AssertNe(nil, d)
 
 	// Unmarshal
-	out, err := repr.Unmarshal(d)
+	out, err := repr.UnmarshalDir(d)
 	AssertEq(nil, err)
 	AssertNe(nil, out)
 
@@ -213,12 +214,12 @@ func (t *RoundtripTest) PreservesUsernames() {
 	in[0].Username = &s
 
 	// Marshal
-	d, err := repr.Marshal(in)
+	d, err := repr.MarshalDir(in)
 	AssertEq(nil, err)
 	AssertNe(nil, d)
 
 	// Unmarshal
-	out, err := repr.Unmarshal(d)
+	out, err := repr.UnmarshalDir(d)
 	AssertEq(nil, err)
 	AssertNe(nil, out)
 
@@ -241,12 +242,12 @@ func (t *RoundtripTest) PreservesGids() {
 	in[1].Gid = 19
 
 	// Marshal
-	d, err := repr.Marshal(in)
+	d, err := repr.MarshalDir(in)
 	AssertEq(nil, err)
 	AssertNe(nil, d)
 
 	// Unmarshal
-	out, err := repr.Unmarshal(d)
+	out, err := repr.UnmarshalDir(d)
 	AssertEq(nil, err)
 	AssertNe(nil, out)
 
@@ -268,12 +269,12 @@ func (t *RoundtripTest) PreservesGroupnames() {
 	in[0].Groupname = &s
 
 	// Marshal
-	d, err := repr.Marshal(in)
+	d, err := repr.MarshalDir(in)
 	AssertEq(nil, err)
 	AssertNe(nil, d)
 
 	// Unmarshal
-	out, err := repr.Unmarshal(d)
+	out, err := repr.UnmarshalDir(d)
 	AssertEq(nil, err)
 	AssertNe(nil, out)
 
@@ -296,12 +297,12 @@ func (t *RoundtripTest) PreservesModTimes() {
 	in[1].MTime = time.Date(1985, time.March, 18, 15, 33, 0, 0, time.UTC)
 
 	// Marshal
-	d, err := repr.Marshal(in)
+	d, err := repr.MarshalDir(in)
 	AssertEq(nil, err)
 	AssertNe(nil, d)
 
 	// Unmarshal
-	out, err := repr.Unmarshal(d)
+	out, err := repr.UnmarshalDir(d)
 	AssertEq(nil, err)
 	AssertNe(nil, out)
 
@@ -327,12 +328,12 @@ func (t *RoundtripTest) PreservesScores() {
 	in[1].Scores = []blob.Score{score10}
 
 	// Marshal
-	d, err := repr.Marshal(in)
+	d, err := repr.MarshalDir(in)
 	AssertEq(nil, err)
 	AssertNe(nil, d)
 
 	// Unmarshal
-	out, err := repr.Unmarshal(d)
+	out, err := repr.UnmarshalDir(d)
 	AssertEq(nil, err)
 	AssertNe(nil, out)
 
@@ -358,12 +359,12 @@ func (t *RoundtripTest) PreservesHardLinkTargets() {
 	in[0].HardLinkTarget = &s
 
 	// Marshal
-	d, err := repr.Marshal(in)
+	d, err := repr.MarshalDir(in)
 	AssertEq(nil, err)
 	AssertNe(nil, d)
 
 	// Unmarshal
-	out, err := repr.Unmarshal(d)
+	out, err := repr.UnmarshalDir(d)
 	AssertEq(nil, err)
 	AssertNe(nil, out)
 
@@ -389,12 +390,12 @@ func (t *RoundtripTest) PreservesSymlinkTargets() {
 	in[1].Target = "burrito"
 
 	// Marshal
-	d, err := repr.Marshal(in)
+	d, err := repr.MarshalDir(in)
 	AssertEq(nil, err)
 	AssertNe(nil, d)
 
 	// Unmarshal
-	out, err := repr.Unmarshal(d)
+	out, err := repr.UnmarshalDir(d)
 	AssertEq(nil, err)
 	AssertNe(nil, out)
 
@@ -419,12 +420,12 @@ func (t *RoundtripTest) PreservesDeviceNumbers() {
 	in[1].DeviceNumber = 19
 
 	// Marshal
-	d, err := repr.Marshal(in)
+	d, err := repr.MarshalDir(in)
 	AssertEq(nil, err)
 	AssertNe(nil, d)
 
 	// Unmarshal
-	out, err := repr.Unmarshal(d)
+	out, err := repr.UnmarshalDir(d)
 	AssertEq(nil, err)
 	AssertNe(nil, out)
 
