@@ -215,14 +215,14 @@ func (t *DirsTest) NodeVisitedOnPastRun_ScoreAbsent() {
 
 func (t *DirsTest) NodeVisitedOnPastRun_ScorePresent() {
 	// Set up known children for the node whose score is in allScores.
-	t.knownStructure[t.knownNode] = []verify.Node{t.unknownNode}
+	t.knownStructure[t.knownNode] = []verify.Node{t.unknownNode, t.knownNode}
 
 	// We should succeed without doing anything further. No new record should be
 	// minted.
 	adjacent, err := t.visit(t.knownNode.String())
 
 	AssertEq(nil, err)
-	ExpectThat(adjacent, ElementsAre(t.unknownNode.String()))
+	ExpectThat(adjacent, ElementsAre(t.unknownNode.String(), t.knownNode.String()))
 	ExpectThat(t.getRecords(), ElementsAre())
 }
 
