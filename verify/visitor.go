@@ -107,14 +107,15 @@ func (v *visitor) visitDir(
 
 	// Return a node for each score in each entry.
 	for _, entry := range listing {
+		var n Node
+
 		// Is this a directory?
-		var dir bool
 		switch entry.Type {
 		case fs.TypeFile:
-			dir = false
+			n.Dir = false
 
 		case fs.TypeDirectory:
-			dir = true
+			n.Dir = true
 
 		case fs.TypeSymlink:
 			if len(entry.Scores) != 0 {
@@ -132,7 +133,8 @@ func (v *visitor) visitDir(
 
 		// Return a node for each score.
 		for _, score := range entry.Scores {
-			adjacent = append(adjacent, FormatNodeName(dir, score))
+			n.Score = score
+			adjacent = append(adjacent, n.String())
 		}
 	}
 
@@ -141,19 +143,19 @@ func (v *visitor) visitDir(
 
 func (v *visitor) Visit(
 	ctx context.Context,
-	node string) (adjacent []string, err error) {
+	nodeName string) (adjacent []string, err error) {
 	// Parse the node name.
-	dir, score, err := ParseNodeName(node)
+	n, err := ParseNode(nodeName)
 	if err != nil {
-		err = fmt.Errorf("ParseNodeName(%q): %v", node, err)
+		err = fmt.Errorf("ParseNode(%q): %v", nodeName, err)
 		return
 	}
 
-	if dir {
-		adjacent, err = v.visitDir(ctx, score)
+	if n.Dir {
+		adjacent, err = v.visitDir(ctx, n.Score)
 		return
 	} else {
-		err = v.visitFile(ctx, score)
+		err = v.visitFile(ctx, n.Score)
 		return
 	}
 }
