@@ -330,7 +330,7 @@ func openVerifyLog() (
 	// Put the file in her home directory. Append to whatever is already there.
 	f, err := os.OpenFile(
 		path.Join(u.HomeDir, ".comeback.verify.log"),
-		os.O_WRONLY|os.O_APPEND|os.O_CREATE,
+		os.O_RDWR|os.O_APPEND|os.O_CREATE,
 		0600)
 
 	if err != nil {
