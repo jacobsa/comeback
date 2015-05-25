@@ -425,14 +425,14 @@ func (t *FilesFullTest) NodeVisitedOnPastRun_ScoreAbsent() {
 
 func (t *FilesFullTest) NodeVisitedOnPastRun_ScorePresent() {
 	// Set up known children for the node whose score is in allScores.
-	t.knownStructure[t.knownNode] = []verify.Node{t.unknownNode}
+	t.knownStructure[t.knownNode] = []verify.Node{}
 
-	// We should get back the appropriate adjacent node names without doing
-	// anything further. No new record should be minted.
+	// We should succeed without doing anything further. No new record should be
+	// minted.
 	adjacent, err := t.visitor.Visit(t.ctx, t.knownNode.String())
 
 	AssertEq(nil, err)
-	ExpectThat(adjacent, ElementsAre(t.unknownNode.String()))
+	ExpectThat(adjacent, ElementsAre())
 	ExpectThat(t.getRecords(), ElementsAre())
 }
 
