@@ -16,17 +16,23 @@
 package repr_test
 
 import (
-	"code.google.com/p/goprotobuf/proto"
+	"os"
+	"testing"
+
+	"github.com/golang/protobuf/proto"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/repr"
 	"github.com/jacobsa/comeback/repr/proto"
 	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
-	"os"
-	"testing"
 )
 
 func TestUnmarshalTest(t *testing.T) { RunTests(t) }
+
+const (
+	magicByte_Dir  byte = 'd'
+	magicByte_File byte = 'f'
+)
 
 ////////////////////////////////////////////////////////////////////////
 // Helpers
@@ -38,7 +44,9 @@ func computeScoreSlice(b []byte) (score []byte) {
 }
 
 func makeLegalEntryProto() *repr_proto.DirectoryEntryProto {
-	return &repr_proto.DirectoryEntryProto{}
+	return &repr_proto.DirectoryEntryProto{
+		Type: repr_proto.DirectoryEntryProto_TYPE_FILE.Enum(),
+	}
 }
 
 type UnmarshalTest struct {
@@ -55,7 +63,8 @@ func (t *UnmarshalTest) JunkWireData() {
 	d := []byte("asdf")
 
 	// Call
-	_, err := repr.Unmarshal(d)
+	d = append(d, magicByte_Dir)
+	_, err := repr.UnmarshalDir(d)
 
 	ExpectThat(err, Error(HasSubstr("Parsing data")))
 }
@@ -76,7 +85,8 @@ func (t *UnmarshalTest) InvalidTypeValue() {
 	AssertEq(nil, err)
 
 	// Call
-	_, err = repr.Unmarshal(data)
+	data = append(data, magicByte_Dir)
+	_, err = repr.UnmarshalDir(data)
 
 	ExpectThat(err, Error(HasSubstr("Unrecognized")))
 	ExpectThat(err, Error(HasSubstr("DirectoryEntryProto_Type")))
@@ -99,7 +109,8 @@ func (t *UnmarshalTest) UnknownTypeValue() {
 	AssertEq(nil, err)
 
 	// Call
-	_, err = repr.Unmarshal(data)
+	data = append(data, magicByte_Dir)
+	_, err = repr.UnmarshalDir(data)
 
 	ExpectThat(err, Error(HasSubstr("Unrecognized")))
 	ExpectThat(err, Error(HasSubstr("DirectoryEntryProto_Type")))
@@ -129,7 +140,8 @@ func (t *UnmarshalTest) HashIsTooShort() {
 	AssertEq(nil, err)
 
 	// Call
-	_, err = repr.Unmarshal(data)
+	data = append(data, magicByte_Dir)
+	_, err = repr.UnmarshalDir(data)
 
 	ExpectThat(err, Error(HasSubstr("hash length")))
 	ExpectThat(err, Error(HasSubstr("19")))
@@ -158,7 +170,8 @@ func (t *UnmarshalTest) HashIsTooLong() {
 	AssertEq(nil, err)
 
 	// Call
-	_, err = repr.Unmarshal(data)
+	data = append(data, magicByte_Dir)
+	_, err = repr.UnmarshalDir(data)
 
 	ExpectThat(err, Error(HasSubstr("hash length")))
 	ExpectThat(err, Error(HasSubstr("21")))
@@ -190,7 +203,8 @@ func (t *UnmarshalTest) PermissionsRegressionTest() {
 	AssertEq(nil, err)
 
 	// Call
-	entries, err := repr.Unmarshal(data)
+	data = append(data, magicByte_Dir)
+	entries, err := repr.UnmarshalDir(data)
 	AssertEq(nil, err)
 
 	AssertThat(entries, ElementsAre(Any(), Any(), Any()))

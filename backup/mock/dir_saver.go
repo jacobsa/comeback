@@ -43,6 +43,30 @@ func (m *mockDirectorySaver) Oglemock_Description() string {
 	return m.description
 }
 
+func (m *mockDirectorySaver) Flush() (o0 error) {
+	// Get a file name and line number for the caller.
+	_, file, line, _ := runtime.Caller(1)
+
+	// Hand the call off to the controller, which does most of the work.
+	retVals := m.controller.HandleMethodCall(
+		m,
+		"Flush",
+		file,
+		line,
+		[]interface{}{})
+
+	if len(retVals) != 1 {
+		panic(fmt.Sprintf("mockDirectorySaver.Flush: invalid return values: %v", retVals))
+	}
+
+	// o0 error
+	if retVals[0] != nil {
+		o0 = retVals[0].(error)
+	}
+
+	return
+}
+
 func (m *mockDirectorySaver) Save(p0 string, p1 string, p2 []*regexp.Regexp) (o0 blob.Score, o1 error) {
 	// Get a file name and line number for the caller.
 	_, file, line, _ := runtime.Caller(1)

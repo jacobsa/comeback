@@ -21,7 +21,8 @@ import (
 	"path"
 )
 
-func (fs *fileSystem) ReadDir(dirpath string) (entries []*DirectoryEntry, err error) {
+func (fs *fileSystem) ReadDir(
+	dirpath string) (entries []*DirectoryEntry, err error) {
 	// Call ioutil.
 	fileInfos, err := ioutil.ReadDir(dirpath)
 	if err != nil {

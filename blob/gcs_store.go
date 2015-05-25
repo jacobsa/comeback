@@ -201,49 +201,6 @@ func ParseObjectRecord(
 	return
 }
 
-// An implementation detail of ListBlobObjects that doesn't recurse.
-func listBlobObjects(
-	ctx context.Context,
-	bucket gcs.Bucket,
-	namePrefix string,
-	objects chan<- *gcs.Object) (err error) {
-	req := &gcs.ListObjectsRequest{
-		Prefix: namePrefix,
-	}
-
-	// List until we run out.
-	for {
-		// Fetch the next batch.
-		var listing *gcs.Listing
-		listing, err = bucket.ListObjects(ctx, req)
-		if err != nil {
-			err = fmt.Errorf("ListObjects: %v", err)
-			return
-		}
-
-		// Pass on each object.
-		for _, o := range listing.Objects {
-			select {
-			case objects <- o:
-
-				// Cancelled?
-			case <-ctx.Done():
-				err = ctx.Err()
-				return
-			}
-		}
-
-		// Are we done?
-		if listing.ContinuationToken == "" {
-			break
-		}
-
-		req.ContinuationToken = listing.ContinuationToken
-	}
-
-	return
-}
-
 // Write object records for all of the blob objects in the supplied bucket into
 // the given channel, without closing it. The order of records is undefined.
 // The caller will likely want to call ParseObjectRecord for each record.
@@ -259,7 +216,7 @@ func ListBlobObjects(
 	for i := 0; i < len(hexDigits); i++ {
 		digit := hexDigits[i]
 		b.Add(func(ctx context.Context) (err error) {
-			err = listBlobObjects(ctx, bucket, namePrefix+string(digit), objects)
+			err = gcsutil.ListPrefix(ctx, bucket, namePrefix+string(digit), objects)
 			return
 		})
 	}

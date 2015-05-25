@@ -16,13 +16,14 @@
 package repr_test
 
 import (
-	"code.google.com/p/goprotobuf/proto"
+	"testing"
+
+	"github.com/golang/protobuf/proto"
 	"github.com/jacobsa/comeback/fs"
 	"github.com/jacobsa/comeback/repr"
 	"github.com/jacobsa/comeback/repr/proto"
 	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
-	"testing"
 )
 
 func TestMarshalTest(t *testing.T) { RunTests(t) }
@@ -48,9 +49,10 @@ func (t *MarshalTest) LeavesOutTargetForNonSymlinks() {
 	}
 
 	// Call
-	data, err := repr.Marshal(entries)
+	data, err := repr.MarshalDir(entries)
 	AssertEq(nil, err)
 
+	data = data[:len(data)-1]
 	listingProto := new(repr_proto.DirectoryListingProto)
 	err = proto.Unmarshal(data, listingProto)
 	AssertEq(nil, err)
@@ -68,9 +70,10 @@ func (t *MarshalTest) LeavesOutDeviceNumberForNonDevices() {
 	}
 
 	// Call
-	data, err := repr.Marshal(entries)
+	data, err := repr.MarshalDir(entries)
 	AssertEq(nil, err)
 
+	data = data[:len(data)-1]
 	listingProto := new(repr_proto.DirectoryListingProto)
 	err = proto.Unmarshal(data, listingProto)
 	AssertEq(nil, err)
