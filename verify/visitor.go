@@ -34,6 +34,10 @@ import (
 // (according to allScores), and verifies that the blob can be loaded if
 // readFiles is true.
 //
+// Nodes that exist as keys in knownStructure will not be re-verified, except
+// to confirm that they still exist in allScores. This lets the user preserve
+// work across runs of this function, if interrupted part way through.
+//
 // A record is written to the supplied channel for every piece of information
 // that is certified.
 //
@@ -42,6 +46,7 @@ import (
 func NewVisitor(
 	readFiles bool,
 	allScores []blob.Score,
+	knownStructure map[Node][]Node,
 	records chan<- Record,
 	clock timeutil.Clock,
 	bs blob.Store) (v graph.Visitor) {
