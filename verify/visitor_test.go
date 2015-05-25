@@ -36,6 +36,22 @@ import (
 func TestVisitor(t *testing.T) { RunTests(t) }
 
 ////////////////////////////////////////////////////////////////////////
+// Helpers
+////////////////////////////////////////////////////////////////////////
+
+func makeNodeName(
+	dir bool,
+	score blob.Score) (s string) {
+	n := verify.Node{
+		Dir:   dir,
+		Score: score,
+	}
+
+	s = n.String()
+	return
+}
+
+////////////////////////////////////////////////////////////////////////
 // Boilerplate
 ////////////////////////////////////////////////////////////////////////
 
@@ -75,7 +91,7 @@ func (t *CommonTest) SetUp(ti *TestInfo) {
 func (t *CommonTest) InvalidNodeName() {
 	_, err := t.visitor.Visit(t.ctx, "taco")
 
-	ExpectThat(err, Error(HasSubstr("ParseNodeName")))
+	ExpectThat(err, Error(HasSubstr("ParseNode")))
 	ExpectThat(err, Error(HasSubstr("taco")))
 }
 
@@ -130,7 +146,7 @@ func (t *DirsTest) SetUp(ti *TestInfo) {
 	AssertEq(nil, err)
 
 	t.score = blob.ComputeScore(t.contents)
-	t.node = verify.FormatNodeName(true, t.score)
+	t.node = makeNodeName(true, t.score)
 }
 
 func (t *DirsTest) CallsBlobStore() {
@@ -158,7 +174,7 @@ func (t *DirsTest) BlobIsJunk() {
 	// Set up junk contents.
 	t.contents = append(t.contents, 'a')
 	t.score = blob.ComputeScore(t.contents)
-	t.node = verify.FormatNodeName(true, t.score)
+	t.node = makeNodeName(true, t.score)
 
 	// Load
 	ExpectCall(t.blobStore, "Load")(Any(), Any()).
@@ -188,7 +204,7 @@ func (t *DirsTest) UnknownEntryType() {
 	AssertEq(nil, err)
 
 	t.score = blob.ComputeScore(t.contents)
-	t.node = verify.FormatNodeName(true, t.score)
+	t.node = makeNodeName(true, t.score)
 
 	// Load
 	ExpectCall(t.blobStore, "Load")(Any(), Any()).
@@ -218,7 +234,7 @@ func (t *DirsTest) SymlinkWithScores() {
 	AssertEq(nil, err)
 
 	t.score = blob.ComputeScore(t.contents)
-	t.node = verify.FormatNodeName(true, t.score)
+	t.node = makeNodeName(true, t.score)
 
 	// Load
 	ExpectCall(t.blobStore, "Load")(Any(), Any()).
@@ -245,7 +261,7 @@ func (t *DirsTest) ReturnsAppropriateAdjacentNodes() {
 	for _, entry := range t.listing {
 		dir := entry.Type == fs.TypeDirectory
 		for _, score := range entry.Scores {
-			expected = append(expected, verify.FormatNodeName(dir, score))
+			expected = append(expected, makeNodeName(dir, score))
 		}
 	}
 
@@ -272,10 +288,10 @@ func (t *filesCommonTest) setUp(ti *TestInfo, readFiles bool) {
 	t.contents = []byte("foobarbaz")
 
 	t.knownScore = blob.ComputeScore(t.contents)
-	t.knownNode = verify.FormatNodeName(false, t.knownScore)
+	t.knownNode = makeNodeName(false, t.knownScore)
 
 	t.unknownScore = blob.ComputeScore(append(t.contents, 'a'))
-	t.unknownNode = verify.FormatNodeName(false, t.unknownScore)
+	t.unknownNode = makeNodeName(false, t.unknownScore)
 
 	t.superTest.setUp(ti, readFiles, []blob.Score{t.knownScore})
 }
