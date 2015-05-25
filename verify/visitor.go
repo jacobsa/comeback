@@ -206,8 +206,13 @@ func (v *visitor) Visit(
 		return
 	}
 
-	// If we have already verified this node, there is nothing further to do.
-	if _, ok := v.knownStructure[n]; ok {
+	// If we have already verified this node, there is nothing further to verify.
+	// Return the appropriate adjacent node names.
+	if children, ok := v.knownStructure[n]; ok {
+		for _, child := range children {
+			adjacent = append(adjacent, child.String())
+		}
+
 		return
 	}
 
