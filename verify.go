@@ -192,20 +192,24 @@ func parseVerifyRecord(line []byte) (r verifyRecord, err error) {
 		return
 	}
 
-	// The next should be the node name.
-	r.node = string(components[1])
+	// The rest are node names.
+	var nodes []verify.Node
+	for i := 1; i < len(components); i++ {
+		c := components[i]
 
-	// The rest should be adjacent node names.
-	for i := 2; i < len(components); i++ {
-		r.adjacent = append(r.adjacent, string(components[i]))
+		var node verify.Node
+		node, err = verify.ParseNode(string(c))
+		if err != nil {
+			err = fmt.Errorf("ParseNode(%q): %v", c, err)
+			return
+		}
+
+		nodes = append(nodes, node)
 	}
 
-	// Make sure the record is legal.
-	err = r.Check()
-	if err != nil {
-		err = fmt.Errorf("Check: %v", err)
-		return
-	}
+	// Apportion nodes.
+	r.node = nodes[0]
+	r.adjacent = nodes[1:]
 
 	return
 }
