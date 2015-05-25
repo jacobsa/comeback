@@ -381,7 +381,7 @@ func (t *FilesLiteTest) SetUp(ti *TestInfo) {
 
 func (t *FilesLiteTest) NodeVisitedOnPastRun_ScoreAbsent() {
 	// Set up known children for the node whose score is not in allScores.
-	t.knownStructure[t.unknownNode] = []verify.Node{t.knownNode}
+	t.knownStructure[t.unknownNode] = []verify.Node{}
 
 	// We should receive an error, and no records.
 	_, err := t.visit(t.unknownNode.String())
@@ -444,7 +444,7 @@ func (t *FilesFullTest) SetUp(ti *TestInfo) {
 
 func (t *FilesFullTest) NodeVisitedOnPastRun_ScoreAbsent() {
 	// Set up known children for the node whose score is not in allScores.
-	t.knownStructure[t.unknownNode] = []verify.Node{t.knownNode}
+	t.knownStructure[t.unknownNode] = []verify.Node{}
 
 	// We should receive an error, and no records.
 	_, err := t.visit(t.unknownNode.String())
