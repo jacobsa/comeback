@@ -18,6 +18,7 @@ package verify
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/jacobsa/comeback/blob"
 )
@@ -26,6 +27,81 @@ const (
 	filePrefix = "f:"
 	dirPrefix  = "d:"
 )
+
+// A record certifying that a node was verified at a particular time.
+type Record struct {
+	Time time.Time
+
+	// The node that was verified.
+	//
+	// For directory nodes, the record certifies that at Time we verified that a
+	// piece of content with the given score was parseable as a directory listing
+	// that referred to the given scores for its direct children.
+	//
+	// For file nodes, the record certifies that at Time we verified that a piece
+	// of content with the given score was parseable as a piece of a file or
+	// symlink. File nodes never have children.
+	Node Node
+
+	// Child nodes, present only for directories. See notes on Node above.
+	Children []Node
+}
+
+// Format the record in a manner that can later be parsed with ParseRecord.
+// Guaranteed to not contain newlines.
+func (r *Record) String() (s string) {
+	s = fmt.Sprintf(
+		"%s %s",
+		r.Time.Format(time.RFC3339),
+		r.Node)
+
+	for _, child := range r.Children {
+		s += fmt.Sprintf(" %s", child.String())
+	}
+
+	return
+}
+
+// Parse the output of Record.String.
+func ParseRecord(s string) (r Record, err error) {
+	// We expect space-separated components.
+	components := strings.Split(s, " ")
+	if len(components) < 2 {
+		err = fmt.Errorf(
+			"Expected at least two components, got %d.",
+			len(components))
+
+		return
+	}
+
+	// The first should be the timestmap.
+	r.Time, err = time.Parse(time.RFC3339, components[0])
+	if err != nil {
+		err = fmt.Errorf("time.Parse(%q): %v", components[0], err)
+		return
+	}
+
+	// The rest are node names.
+	var nodes []Node
+	for i := 1; i < len(components); i++ {
+		c := components[i]
+
+		var node Node
+		node, err = ParseNode(string(c))
+		if err != nil {
+			err = fmt.Errorf("ParseNode(%q): %v", c, err)
+			return
+		}
+
+		nodes = append(nodes, node)
+	}
+
+	// Apportion nodes.
+	r.Node = nodes[0]
+	r.Children = nodes[1:]
+
+	return
+}
 
 // A node in the DAG of blobs in the supplied bucket.
 type Node struct {

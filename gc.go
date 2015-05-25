@@ -31,6 +31,7 @@ import (
 	"time"
 
 	"github.com/jacobsa/comeback/blob"
+	"github.com/jacobsa/comeback/verify"
 	"github.com/jacobsa/comeback/wiring"
 	"github.com/jacobsa/gcloud/gcs"
 	"github.com/jacobsa/gcloud/syncutil"
@@ -61,7 +62,7 @@ func parseGCInput(
 	b := syncutil.NewBundle(ctx)
 
 	// Parse the input, writing records into a channel.
-	verifyRecords := make(chan verifyRecord, 100)
+	verifyRecords := make(chan verify.Record, 100)
 	b.Add(func(ctx context.Context) (err error) {
 		defer close(verifyRecords)
 		err = parseVerifyOutput(ctx, r, verifyRecords)
@@ -76,9 +77,9 @@ func parseGCInput(
 	// Save the scores from the records.
 	b.Add(func(ctx context.Context) (err error) {
 		for r := range verifyRecords {
-			scores = append(scores, r.node.Score)
-			for _, a := range r.adjacent {
-				scores = append(scores, a.Score)
+			scores = append(scores, r.Node.Score)
+			for _, child := range r.Children {
+				scores = append(scores, child.Score)
 			}
 		}
 

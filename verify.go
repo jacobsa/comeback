@@ -52,7 +52,6 @@ package main
 
 import (
 	"bufio"
-	"bytes"
 	"fmt"
 	"io"
 	"log"
@@ -96,18 +95,10 @@ func init() {
 // Visitor types
 ////////////////////////////////////////////////////////////////////////
 
-// A record certifying something we confirmed about a node at a certain time.
-// See the notes at the top of verify.go for details.
-type verifyRecord struct {
-	t        time.Time
-	node     verify.Node
-	adjacent []verify.Node
-}
-
 // A visitor that writes the information it gleans from the wrapped visitor to
 // a channel.
 type snoopingVisitor struct {
-	records chan<- verifyRecord
+	records chan<- verify.Record
 	wrapped graph.Visitor
 }
 
@@ -121,11 +112,11 @@ func (v *snoopingVisitor) Visit(
 	}
 
 	// Build a record.
-	r := verifyRecord{
-		t: time.Now(),
+	r := verify.Record{
+		Time: time.Now(),
 	}
 
-	r.node, err = verify.ParseNode(node)
+	r.Node, err = verify.ParseNode(node)
 	if err != nil {
 		err = fmt.Errorf("ParseNode(%q): %v", node, err)
 		return
@@ -139,7 +130,7 @@ func (v *snoopingVisitor) Visit(
 			return
 		}
 
-		r.adjacent = append(r.adjacent, adjacentNode)
+		r.Children = append(r.Children, adjacentNode)
 	}
 
 	// Write out the record.
@@ -158,68 +149,12 @@ func (v *snoopingVisitor) Visit(
 // Output
 ////////////////////////////////////////////////////////////////////////
 
-// Print output based on the visitor results arriving on the supplied channel.
-func formatVerifyOutput(r verifyRecord) (s string) {
-	s = fmt.Sprintf(
-		"%s %s",
-		r.t.Format(time.RFC3339),
-		r.node)
-
-	for _, a := range r.adjacent {
-		s += fmt.Sprintf(" %s", a.String())
-	}
-
-	return
-}
-
-// Parse the supplied line (without line break) previously output by the verify
-// command.
-func parseVerifyRecord(line []byte) (r verifyRecord, err error) {
-	// We expect space-separate components.
-	components := bytes.Split(line, []byte{' '})
-	if len(components) < 2 {
-		err = fmt.Errorf(
-			"Expected at least two components, got %d.",
-			len(components))
-
-		return
-	}
-
-	// The first should be the timestmap.
-	r.t, err = time.Parse(time.RFC3339, string(components[0]))
-	if err != nil {
-		err = fmt.Errorf("time.Parse(%q): %v", components[0], err)
-		return
-	}
-
-	// The rest are node names.
-	var nodes []verify.Node
-	for i := 1; i < len(components); i++ {
-		c := components[i]
-
-		var node verify.Node
-		node, err = verify.ParseNode(string(c))
-		if err != nil {
-			err = fmt.Errorf("ParseNode(%q): %v", c, err)
-			return
-		}
-
-		nodes = append(nodes, node)
-	}
-
-	// Apportion nodes.
-	r.node = nodes[0]
-	r.adjacent = nodes[1:]
-
-	return
-}
-
 // Parse the supplied output from a run of the verify command, writing records
 // into the supplied channel.
 func parseVerifyOutput(
 	ctx context.Context,
 	in io.Reader,
-	records chan<- verifyRecord) (err error) {
+	records chan<- verify.Record) (err error) {
 	reader := bufio.NewReader(in)
 
 	for {
@@ -244,8 +179,8 @@ func parseVerifyOutput(
 		line = line[:len(line)-1]
 
 		// Parse the line.
-		var r verifyRecord
-		r, err = parseVerifyRecord(line)
+		var r verify.Record
+		r, err = verify.ParseRecord(string(line))
 		if err != nil {
 			err = fmt.Errorf("parseVerifyRecord(%q): %v", line, err)
 			return
@@ -318,7 +253,7 @@ func verifyImpl(
 
 	// Visit every node in the graph, snooping on the graph structure into a
 	// channel.
-	visitorRecords := make(chan verifyRecord, 100)
+	visitorRecords := make(chan verify.Record, 100)
 	b.Add(func(ctx context.Context) (err error) {
 		defer close(visitorRecords)
 
@@ -368,7 +303,7 @@ func verifyImpl(
 	b.Add(func(ctx context.Context) (err error) {
 		for r := range visitorRecords {
 			// Skip files if appropriate.
-			if !readFiles && !r.node.Dir {
+			if !readFiles && !r.Node.Dir {
 				nodesSkipped++
 				continue
 			}
@@ -377,7 +312,7 @@ func verifyImpl(
 			nodesVerified++
 
 			// Output the information.
-			_, err = fmt.Fprintf(output, "%s\n", formatVerifyOutput(r))
+			_, err = fmt.Fprintf(output, "%s\n", r.String())
 			if err != nil {
 				err = fmt.Errorf("Fprintf: %v", err)
 				return
