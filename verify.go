@@ -23,7 +23,8 @@
 // does correctly report the object's CRC32C and MD5 sums in listings,
 // verifying them periodically.
 //
-// Output is of the following form:
+// Output of the following form is written to stdout and a file in the user's
+// home directory:
 //
 //     <timestamp> <node> [<child node> ...]
 //
@@ -50,8 +51,14 @@
 package main
 
 import (
+	"bufio"
+	"bytes"
 	"fmt"
+	"io"
 	"log"
+	"os"
+	"os/user"
+	"path"
 	"runtime"
 	"strings"
 	"time"
@@ -89,16 +96,49 @@ func init() {
 // Visitor types
 ////////////////////////////////////////////////////////////////////////
 
-type snoopingVisitorRecord struct {
+// A record certifying something we confirmed about a node at a certain time.
+// See the notes at the top of verify.go for details.
+type verifyRecord struct {
 	t        time.Time
 	node     string
 	adjacent []string
 }
 
+// Make sure that the record is well-formed.
+func (r *verifyRecord) Check() (err error) {
+	_, err = r.Scores()
+	if err != nil {
+		err = fmt.Errorf("Scores: %v", err)
+		return
+	}
+
+	return
+}
+
+// Parse node names and return the list of scores referenced by the record.
+func (r *verifyRecord) Scores() (scores []blob.Score, err error) {
+	allNodes := make([]string, 1+len(r.adjacent))
+	allNodes[0] = r.node
+	copy(allNodes[1:], r.adjacent)
+
+	for _, n := range allNodes {
+		var score blob.Score
+		_, score, err = verify.ParseNodeName(n)
+		if err != nil {
+			err = fmt.Errorf("ParseNodeName(%q): %v", n, err)
+			return
+		}
+
+		scores = append(scores, score)
+	}
+
+	return
+}
+
 // A visitor that writes the information it gleans from the wrapped visitor to
 // a channel.
 type snoopingVisitor struct {
-	records chan<- snoopingVisitorRecord
+	records chan<- verifyRecord
 	wrapped graph.Visitor
 }
 
@@ -112,7 +152,7 @@ func (v *snoopingVisitor) Visit(
 	}
 
 	// Write out a record.
-	r := snoopingVisitorRecord{
+	r := verifyRecord{
 		t:        time.Now(),
 		node:     node,
 		adjacent: adjacent,
@@ -124,6 +164,114 @@ func (v *snoopingVisitor) Visit(
 		return
 
 	case v.records <- r:
+	}
+
+	return
+}
+
+////////////////////////////////////////////////////////////////////////
+// Output
+////////////////////////////////////////////////////////////////////////
+
+// Print output based on the visitor results arriving on the supplied channel.
+func formatVerifyOutput(r verifyRecord) (s string) {
+	var extra string
+	if len(r.adjacent) != 0 {
+		extra = fmt.Sprintf(" %s", strings.Join(r.adjacent, " "))
+	}
+
+	s = fmt.Sprintf(
+		"%s %s%s",
+		r.t.Format(time.RFC3339),
+		r.node,
+		extra)
+
+	return
+}
+
+// Parse the supplied line (without line break) previously output by the verify
+// command.
+func parseVerifyRecord(line []byte) (r verifyRecord, err error) {
+	// We expect space-separate components.
+	components := bytes.Split(line, []byte{' '})
+	if len(components) < 2 {
+		err = fmt.Errorf(
+			"Expected at least two components, got %d.",
+			len(components))
+
+		return
+	}
+
+	// The first should be the timestmap.
+	r.t, err = time.Parse(time.RFC3339, string(components[0]))
+	if err != nil {
+		err = fmt.Errorf("time.Parse(%q): %v", components[0], err)
+		return
+	}
+
+	// The next should be the node name.
+	r.node = string(components[1])
+
+	// The rest should be adjacent node names.
+	for i := 2; i < len(components); i++ {
+		r.adjacent = append(r.adjacent, string(components[i]))
+	}
+
+	// Make sure the record is legal.
+	err = r.Check()
+	if err != nil {
+		err = fmt.Errorf("Check: %v", err)
+		return
+	}
+
+	return
+}
+
+// Parse the supplied output from a run of the verify command, writing records
+// into the supplied channel.
+func parseVerifyOutput(
+	ctx context.Context,
+	in io.Reader,
+	records chan<- verifyRecord) (err error) {
+	reader := bufio.NewReader(in)
+
+	for {
+		// Find the next line. EOF with no data means we are done; otherwise ignore
+		// EOF in case the file doesn't end with a newline.
+		var line []byte
+		line, err = reader.ReadBytes('\n')
+		if err == io.EOF {
+			err = nil
+			if len(line) == 0 {
+				break
+			}
+		}
+
+		// Propagate other errors.
+		if err != nil {
+			err = fmt.Errorf("ReadBytes: %v", err)
+			return
+		}
+
+		// Trim the delimiter.
+		line = line[:len(line)-1]
+
+		// Parse the line.
+		var r verifyRecord
+		r, err = parseVerifyRecord(line)
+		if err != nil {
+			err = fmt.Errorf("parseVerifyRecord(%q): %v", line, err)
+			return
+		}
+
+		// Write out the record.
+		select {
+		case <-ctx.Done():
+			err = ctx.Err()
+			return
+
+		case records <- r:
+		}
 	}
 
 	return
@@ -166,22 +314,6 @@ func listAllScores(
 	return
 }
 
-// Print output based on the visitor results arriving on the supplied channel.
-func formatOutput(r snoopingVisitorRecord) (s string) {
-	var extra string
-	if len(r.adjacent) != 0 {
-		extra = fmt.Sprintf(" %s", strings.Join(r.adjacent, " "))
-	}
-
-	s = fmt.Sprintf(
-		"%s %s%s",
-		r.t.Format(time.RFC3339),
-		r.node,
-		extra)
-
-	return
-}
-
 ////////////////////////////////////////////////////////////////////////
 // Verify
 ////////////////////////////////////////////////////////////////////////
@@ -193,12 +325,13 @@ func verifyImpl(
 	readFiles bool,
 	rootScores []blob.Score,
 	knownScores []blob.Score,
-	blobStore blob.Store) (nodesVerified uint64, nodesSkipped uint64, err error) {
+	blobStore blob.Store,
+	output io.Writer) (nodesVerified uint64, nodesSkipped uint64, err error) {
 	b := syncutil.NewBundle(ctx)
 
 	// Visit every node in the graph, snooping on the graph structure into a
 	// channel.
-	visitorRecords := make(chan snoopingVisitorRecord, 100)
+	visitorRecords := make(chan verifyRecord, 100)
 	b.Add(func(ctx context.Context) (err error) {
 		defer close(visitorRecords)
 
@@ -255,15 +388,44 @@ func verifyImpl(
 				continue
 			}
 
-			// Increment the count and output the information.
+			// Increment the count.
 			nodesVerified++
-			fmt.Println(formatOutput(r))
+
+			// Output the information.
+			_, err = fmt.Fprintf(output, "%s\n", formatVerifyOutput(r))
+			if err != nil {
+				err = fmt.Errorf("Fprintf: %v", err)
+				return
+			}
 		}
 
 		return
 	})
 
 	err = b.Join()
+	return
+}
+
+// Open the file to which we log verify output.
+func openVerifyLog() (w io.WriteCloser, err error) {
+	// Find the current user.
+	u, err := user.Current()
+	if err != nil {
+		err = fmt.Errorf("user.Current: %v", err)
+		return
+	}
+
+	// Put the file in her home directory. Append to whatever is already there.
+	w, err = os.OpenFile(
+		path.Join(u.HomeDir, ".comeback.verify.log"),
+		os.O_WRONLY|os.O_APPEND|os.O_CREATE,
+		0600)
+
+	if err != nil {
+		err = fmt.Errorf("OpenFile: %v", err)
+		return
+	}
+
 	return
 }
 
@@ -304,6 +466,15 @@ func runVerify(args []string) {
 	bucket := getBucket()
 	crypter := getCrypter()
 
+	// Open the log file.
+	logFile, err := openVerifyLog()
+	if err != nil {
+		err = fmt.Errorf("openVerifyLog: %v", err)
+		return
+	}
+
+	defer logFile.Close()
+
 	// Create a blob store.
 	blobStore, err := wiring.MakeBlobStore(
 		bucket,
@@ -336,7 +507,8 @@ func runVerify(args []string) {
 		readFiles,
 		rootScores,
 		knownScores,
-		blobStore)
+		blobStore,
+		io.MultiWriter(logFile, os.Stdout))
 
 	if err != nil {
 		err = fmt.Errorf("verifyImpl: %v", err)
