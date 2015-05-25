@@ -28,15 +28,15 @@ var cmdList = &Command{
 func runList(args []string) {
 	// Ask the registry for a list.
 	registry := getRegistry()
-	jobs, err := registry.ListRecentBackups()
+	jobs, err := registry.ListBackups()
 	if err != nil {
-		log.Fatalln("Listing recent backups:", err)
+		log.Fatalln("Listing previous backups:", err)
 	}
 
 	// Print each.
 	log.Println("")
 	log.Println("")
-	log.Println("Recent backups:")
+	log.Println("Previous backups:")
 	log.Println("")
 	log.Printf(
 		"  %-38s   %-40s   %s\n",
