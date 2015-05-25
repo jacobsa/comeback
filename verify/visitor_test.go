@@ -173,6 +173,14 @@ func (t *DirsTest) SetUp(ti *TestInfo) {
 	t.node = makeNodeName(true, t.score)
 }
 
+func (t *DirsTest) NodeVisitedOnPastRun_ScoreAbsent() {
+	AssertTrue(false, "TODO")
+}
+
+func (t *DirsTest) NodeVisitedOnPastRun_ScorePresent() {
+	AssertTrue(false, "TODO")
+}
+
 func (t *DirsTest) CallsBlobStore() {
 	// Load
 	ExpectCall(t.blobStore, "Load")(Any(), t.score).
@@ -354,6 +362,14 @@ func (t *FilesLiteTest) SetUp(ti *TestInfo) {
 	t.filesCommonTest.setUp(ti, false)
 }
 
+func (t *FilesLiteTest) NodeVisitedOnPastRun_ScoreAbsent() {
+	AssertTrue(false, "TODO")
+}
+
+func (t *FilesLiteTest) NodeVisitedOnPastRun_ScorePresent() {
+	AssertTrue(false, "TODO")
+}
+
 func (t *FilesLiteTest) ScoreNotInList() {
 	// Call
 	_, err := t.visitor.Visit(t.ctx, t.unknownNode)
@@ -388,6 +404,14 @@ func init() { RegisterTestSuite(&FilesFullTest{}) }
 
 func (t *FilesFullTest) SetUp(ti *TestInfo) {
 	t.filesCommonTest.setUp(ti, true)
+}
+
+func (t *FilesFullTest) NodeVisitedOnPastRun_ScoreAbsent() {
+	AssertTrue(false, "TODO")
+}
+
+func (t *FilesFullTest) NodeVisitedOnPastRun_ScorePresent() {
+	AssertTrue(false, "TODO")
 }
 
 func (t *FilesFullTest) CallsBlobStore() {
