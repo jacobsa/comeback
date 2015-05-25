@@ -59,7 +59,6 @@ import (
 	"os/user"
 	"path"
 	"runtime"
-	"strings"
 	"time"
 
 	"github.com/googlecloudplatform/gcsfuse/timeutil"
@@ -76,12 +75,6 @@ import (
 var cmdVerify = &Command{
 	Name: "verify",
 }
-
-// TODO(jacobsa): Get these automatically from the registry.
-var fRoots = cmdVerify.Flags.String(
-	"roots",
-	"",
-	"Comma-separated list of backup root scores to verify.")
 
 var fFast = cmdVerify.Flags.Bool(
 	"fast",
@@ -358,6 +351,8 @@ func openVerifyLog() (
 }
 
 func runVerify(args []string) {
+	readFiles := !*fFast
+
 	// Allow parallelism.
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
@@ -369,39 +364,10 @@ func runVerify(args []string) {
 		}
 	}()
 
-	// Read flags.
-	readFiles := !*fFast
-
-	if *fRoots == "" {
-		err = fmt.Errorf("You must set --roots.")
-		return
-	}
-
-	rootHexScores := strings.Split(*fRoots, ",")
-	var rootScores []blob.Score
-	for _, hexScore := range rootHexScores {
-		var score blob.Score
-		score, err = blob.ParseHexScore(hexScore)
-		if err != nil {
-			err = fmt.Errorf("Invalid root %q: %v", hexScore, err)
-			return
-		}
-
-		rootScores = append(rootScores, score)
-	}
-
 	// Grab dependencies.
 	bucket := getBucket()
 	crypter := getCrypter()
-
-	// Open the log file.
-	logFile, knownStructure, err := openVerifyLog()
-	if err != nil {
-		err = fmt.Errorf("openVerifyLog: %v", err)
-		return
-	}
-
-	defer logFile.Close()
+	registry := getRegistry()
 
 	// Create a blob store.
 	blobStore, err := wiring.MakeBlobStore(
@@ -412,6 +378,29 @@ func runVerify(args []string) {
 	if err != nil {
 		err = fmt.Errorf("MakeBlobStore: %v", err)
 		return
+	}
+
+	// Open the log file.
+	logFile, knownStructure, err := openVerifyLog()
+	if err != nil {
+		err = fmt.Errorf("openVerifyLog: %v", err)
+		return
+	}
+
+	defer logFile.Close()
+
+	// Find the root scores to be verified.
+	jobs, err := registry.ListBackups()
+	if err != nil {
+		err = fmt.Errorf("ListBackups: %v", err)
+		return
+	}
+
+	var rootScores []blob.Score
+	log.Println("Root scores to be verified:")
+	for _, j := range jobs {
+		rootScores = append(rootScores, j.Score)
+		log.Printf("  %s", j.Score.Hex())
 	}
 
 	// List all scores in the bucket, verifying the object record metadata in the
