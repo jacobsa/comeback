@@ -193,6 +193,7 @@ func verifyImpl(
 	readFiles bool,
 	rootScores []blob.Score,
 	knownScores []blob.Score,
+	knownStructure map[verify.Node][]verify.Node,
 	blobStore blob.Store,
 	output io.Writer) (nodesVerified uint64, nodesSkipped uint64, err error) {
 	b := syncutil.NewBundle(ctx)
@@ -206,6 +207,7 @@ func verifyImpl(
 		visitor := verify.NewVisitor(
 			readFiles,
 			knownScores,
+			knownStructure,
 			visitorRecords,
 			timeutil.RealClock(),
 			blobStore)
@@ -269,8 +271,18 @@ func verifyImpl(
 	return
 }
 
-// Open the file to which we log verify output.
-func openVerifyLog() (w io.WriteCloser, err error) {
+// Parse the contents of the verify log into a known structure map as accepted
+// by verify.NewVisitor.
+func parseVerifyLog(
+	r io.Reader) (knownStructure map[verify.Node][]verify.Node, err error)
+
+// Open the file to which we log verify output. Read its current contents,
+// filtering out entries that are too old, and return a writer that can be used
+// to append to it.
+func openVerifyLog() (
+	w io.WriteCloser,
+	knownStructure map[verify.Node][]verify.Node,
+	err error) {
 	// Find the current user.
 	u, err := user.Current()
 	if err != nil {
@@ -279,7 +291,7 @@ func openVerifyLog() (w io.WriteCloser, err error) {
 	}
 
 	// Put the file in her home directory. Append to whatever is already there.
-	w, err = os.OpenFile(
+	f, err := os.OpenFile(
 		path.Join(u.HomeDir, ".comeback.verify.log"),
 		os.O_WRONLY|os.O_APPEND|os.O_CREATE,
 		0600)
@@ -289,6 +301,22 @@ func openVerifyLog() (w io.WriteCloser, err error) {
 		return
 	}
 
+	// Seek to the beginning and parse.
+	_, err = f.Seek(0, 0)
+	if err != nil {
+		f.Close()
+		err = fmt.Errorf("Seek: %v", err)
+		return
+	}
+
+	knownStructure, err = parseVerifyLog(f)
+	if err != nil {
+		f.Close()
+		err = fmt.Errorf("parseVerifyLog: %v", err)
+		return
+	}
+
+	w = f
 	return
 }
 
@@ -330,7 +358,7 @@ func runVerify(args []string) {
 	crypter := getCrypter()
 
 	// Open the log file.
-	logFile, err := openVerifyLog()
+	logFile, knownStructure, err := openVerifyLog()
 	if err != nil {
 		err = fmt.Errorf("openVerifyLog: %v", err)
 		return
@@ -370,6 +398,7 @@ func runVerify(args []string) {
 		readFiles,
 		rootScores,
 		knownScores,
+		knownStructure,
 		blobStore,
 		io.MultiWriter(logFile, os.Stdout))
 
