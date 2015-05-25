@@ -34,9 +34,10 @@ import (
 // (according to allScores), and verifies that the blob can be loaded if
 // readFiles is true.
 //
-// Nodes that exist as keys in knownStructure will not be re-verified, except
-// to confirm that they still exist in allScores. This lets the user preserve
-// work across runs of this function, if interrupted part way through.
+// If work is to be preserved across runs, knownStructure should be filled in
+// with parenthood information from previously-generated records (for both file
+// and directories). Nodes that exist as keys will not be re-verified, except
+// to confirm that they still exist in allScores.
 //
 // A record is written to the supplied channel for every piece of information
 // that is verified.
@@ -51,11 +52,12 @@ func NewVisitor(
 	clock timeutil.Clock,
 	bs blob.Store) (v graph.Visitor) {
 	typed := &visitor{
-		readFiles:   readFiles,
-		records:     records,
-		clock:       clock,
-		blobStore:   bs,
-		knownScores: make(map[blob.Score]struct{}),
+		readFiles:      readFiles,
+		records:        records,
+		clock:          clock,
+		blobStore:      bs,
+		knownScores:    make(map[blob.Score]struct{}),
+		knownStructure: knownStructure,
 	}
 
 	for _, score := range allScores {
@@ -71,42 +73,45 @@ func NewVisitor(
 ////////////////////////////////////////////////////////////////////////
 
 type visitor struct {
-	readFiles   bool
-	records     chan<- Record
-	clock       timeutil.Clock
-	blobStore   blob.Store
-	knownScores map[blob.Score]struct{}
+	readFiles      bool
+	records        chan<- Record
+	clock          timeutil.Clock
+	blobStore      blob.Store
+	knownScores    map[blob.Score]struct{}
+	knownStructure map[Node][]Node
 }
 
 func (v *visitor) visitFile(
 	ctx context.Context,
-	score blob.Score) (err error) {
-	// If reading files is disabled, simply check that the score is known.
-	if !v.readFiles {
-		_, ok := v.knownScores[score]
-		if !ok {
-			err = fmt.Errorf("Unknown file score: %s", score.Hex())
-			return
-		}
+	n Node) (err error) {
+	// Make sure the score actually exists.
+	if _, ok := v.knownScores[n.Score]; !ok {
+		err = fmt.Errorf("Unknown file score: %s", n.Score.Hex())
+		return
+	}
 
+	// If reading files is disabled, there is nothing further to do.
+	if !v.readFiles {
+		return
+	}
+
+	// If we have already verified this node, there is nothing further to do.
+	if _, ok := v.knownStructure[n]; ok {
 		return
 	}
 
 	// Make sure we can load the blob contents. Presumably the blob store
 	// verifies the score (of the ciphertext) on the way through.
-	_, err = v.blobStore.Load(ctx, score)
+	_, err = v.blobStore.Load(ctx, n.Score)
 	if err != nil {
-		err = fmt.Errorf("Load(%s): %v", score.Hex(), err)
+		err = fmt.Errorf("Load(%s): %v", n.Score.Hex(), err)
 		return
 	}
 
 	// Certify that we verified the file piece.
 	r := Record{
 		Time: v.clock.Now(),
-		Node: Node{
-			Score: score,
-			Dir:   false,
-		},
+		Node: n,
 	}
 
 	select {
@@ -209,7 +214,7 @@ func (v *visitor) Visit(
 		adjacent, err = v.visitDir(ctx, n.Score)
 		return
 	} else {
-		err = v.visitFile(ctx, n.Score)
+		err = v.visitFile(ctx, n)
 		return
 	}
 }
