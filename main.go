@@ -23,6 +23,7 @@ import (
 
 // The set of commands supported by the tool.
 var commands = []*Command{
+	cmdDeleteGarbage,
 	cmdGC,
 	cmdList,
 	cmdRestore,
