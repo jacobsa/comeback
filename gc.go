@@ -51,6 +51,8 @@ func init() {
 	cmdGC.Run = runGC // Break flag-related dependency loop.
 }
 
+const garbagePrefix = "garbage/"
+
 ////////////////////////////////////////////////////////////////////////
 // Helpers
 ////////////////////////////////////////////////////////////////////////
@@ -142,7 +144,7 @@ func cloneGarbage(
 				// Clone the object.
 				req := &gcs.CopyObjectRequest{
 					SrcName: srcName,
-					DstName: fmt.Sprintf("garbage/%s", score.Hex()),
+					DstName: garbagePrefix + score.Hex(),
 				}
 
 				_, err = bucket.CopyObject(ctx, req)
