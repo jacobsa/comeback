@@ -23,7 +23,8 @@
 // does correctly report the object's CRC32C and MD5 sums in listings,
 // verifying them periodically.
 //
-// Output is of the following form:
+// Output of the following form is written to stdout and a file in the user's
+// home directory:
 //
 //     <timestamp> <node> [<child node> ...]
 //
@@ -55,6 +56,9 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"os"
+	"os/user"
+	"path"
 	"runtime"
 	"strings"
 	"time"
@@ -321,7 +325,8 @@ func verifyImpl(
 	readFiles bool,
 	rootScores []blob.Score,
 	knownScores []blob.Score,
-	blobStore blob.Store) (nodesVerified uint64, nodesSkipped uint64, err error) {
+	blobStore blob.Store,
+	output io.Writer) (nodesVerified uint64, nodesSkipped uint64, err error) {
 	b := syncutil.NewBundle(ctx)
 
 	// Visit every node in the graph, snooping on the graph structure into a
@@ -383,15 +388,44 @@ func verifyImpl(
 				continue
 			}
 
-			// Increment the count and output the information.
+			// Increment the count.
 			nodesVerified++
-			fmt.Println(formatVerifyOutput(r))
+
+			// Output the information.
+			_, err = fmt.Fprintf(output, "%s\n", formatVerifyOutput(r))
+			if err != nil {
+				err = fmt.Errorf("Fprintf: %v", err)
+				return
+			}
 		}
 
 		return
 	})
 
 	err = b.Join()
+	return
+}
+
+// Open the file to which we log verify output.
+func openVerifyLog() (w io.WriteCloser, err error) {
+	// Find the current user.
+	u, err := user.Current()
+	if err != nil {
+		err = fmt.Errorf("user.Current: %v", err)
+		return
+	}
+
+	// Put the file in her home directory. Append to whatever is already there.
+	w, err = os.OpenFile(
+		path.Join(u.HomeDir, ".comeback.verify.log"),
+		os.O_WRONLY|os.O_APPEND|os.O_CREATE,
+		0600)
+
+	if err != nil {
+		err = fmt.Errorf("OpenFile: %v", err)
+		return
+	}
+
 	return
 }
 
@@ -432,6 +466,15 @@ func runVerify(args []string) {
 	bucket := getBucket()
 	crypter := getCrypter()
 
+	// Open the log file.
+	logFile, err := openVerifyLog()
+	if err != nil {
+		err = fmt.Errorf("openVerifyLog: %v", err)
+		return
+	}
+
+	defer logFile.Close()
+
 	// Create a blob store.
 	blobStore, err := wiring.MakeBlobStore(
 		bucket,
@@ -464,7 +507,8 @@ func runVerify(args []string) {
 		readFiles,
 		rootScores,
 		knownScores,
-		blobStore)
+		blobStore,
+		io.MultiWriter(logFile, os.Stdout))
 
 	if err != nil {
 		err = fmt.Errorf("verifyImpl: %v", err)
