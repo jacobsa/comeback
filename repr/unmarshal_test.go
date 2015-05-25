@@ -56,7 +56,7 @@ func (t *UnmarshalTest) JunkWireData() {
 	d := []byte("asdf")
 
 	// Call
-	_, err := repr.Unmarshal(d)
+	_, err := repr.UnmarshalDir(d)
 
 	ExpectThat(err, Error(HasSubstr("Parsing data")))
 }
@@ -77,7 +77,7 @@ func (t *UnmarshalTest) InvalidTypeValue() {
 	AssertEq(nil, err)
 
 	// Call
-	_, err = repr.Unmarshal(data)
+	_, err = repr.UnmarshalDir(data)
 
 	ExpectThat(err, Error(HasSubstr("Unrecognized")))
 	ExpectThat(err, Error(HasSubstr("DirectoryEntryProto_Type")))
@@ -100,7 +100,7 @@ func (t *UnmarshalTest) UnknownTypeValue() {
 	AssertEq(nil, err)
 
 	// Call
-	_, err = repr.Unmarshal(data)
+	_, err = repr.UnmarshalDir(data)
 
 	ExpectThat(err, Error(HasSubstr("Unrecognized")))
 	ExpectThat(err, Error(HasSubstr("DirectoryEntryProto_Type")))
@@ -130,7 +130,7 @@ func (t *UnmarshalTest) HashIsTooShort() {
 	AssertEq(nil, err)
 
 	// Call
-	_, err = repr.Unmarshal(data)
+	_, err = repr.UnmarshalDir(data)
 
 	ExpectThat(err, Error(HasSubstr("hash length")))
 	ExpectThat(err, Error(HasSubstr("19")))
@@ -159,7 +159,7 @@ func (t *UnmarshalTest) HashIsTooLong() {
 	AssertEq(nil, err)
 
 	// Call
-	_, err = repr.Unmarshal(data)
+	_, err = repr.UnmarshalDir(data)
 
 	ExpectThat(err, Error(HasSubstr("hash length")))
 	ExpectThat(err, Error(HasSubstr("21")))
@@ -191,7 +191,7 @@ func (t *UnmarshalTest) PermissionsRegressionTest() {
 	AssertEq(nil, err)
 
 	// Call
-	entries, err := repr.Unmarshal(data)
+	entries, err := repr.UnmarshalDir(data)
 	AssertEq(nil, err)
 
 	AssertThat(entries, ElementsAre(Any(), Any(), Any()))

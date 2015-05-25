@@ -49,7 +49,7 @@ func (t *MarshalTest) LeavesOutTargetForNonSymlinks() {
 	}
 
 	// Call
-	data, err := repr.Marshal(entries)
+	data, err := repr.MarshalDir(entries)
 	AssertEq(nil, err)
 
 	listingProto := new(repr_proto.DirectoryListingProto)
@@ -69,7 +69,7 @@ func (t *MarshalTest) LeavesOutDeviceNumberForNonDevices() {
 	}
 
 	// Call
-	data, err := repr.Marshal(entries)
+	data, err := repr.MarshalDir(entries)
 	AssertEq(nil, err)
 
 	listingProto := new(repr_proto.DirectoryListingProto)
