@@ -16,14 +16,15 @@
 package repr_test
 
 import (
-	"code.google.com/p/goprotobuf/proto"
+	"os"
+	"testing"
+
+	"github.com/golang/protobuf/proto"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/repr"
 	"github.com/jacobsa/comeback/repr/proto"
 	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
-	"os"
-	"testing"
 )
 
 func TestUnmarshalTest(t *testing.T) { RunTests(t) }
