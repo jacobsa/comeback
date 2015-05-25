@@ -134,6 +134,9 @@ func (t *CommonTest) InvalidNodeName() {
 type DirsTest struct {
 	superTest
 
+	knownNode   verify.Node
+	unknownNode verify.Node
+
 	listing  []*fs.DirectoryEntry
 	contents []byte
 	score    blob.Score
@@ -179,12 +182,35 @@ func (t *DirsTest) SetUp(ti *TestInfo) {
 	t.node = makeNodeName(true, t.score)
 	t.allScores = append(t.allScores, t.score)
 
+	// Set up canned nodes.
+	t.knownNode = verify.Node{
+		Dir:   true,
+		Score: blob.ComputeScore([]byte("knownNode")),
+	}
+
+	t.unknownNode = verify.Node{
+		Dir:   true,
+		Score: blob.ComputeScore([]byte("unknownNode")),
+	}
+
+	t.allScores = append(t.allScores, t.knownNode.Score)
+
 	// Call through.
 	t.superTest.setUp(ti, false)
 }
 
 func (t *DirsTest) NodeVisitedOnPastRun_ScoreAbsent() {
-	AssertTrue(false, "TODO")
+	// Set up known children for the node whose score is not in allScores.
+	t.knownStructure[t.unknownNode] = []verify.Node{t.knownNode}
+
+	// We should receive an error, and no records.
+	_, err := t.visit(t.unknownNode.String())
+
+	ExpectThat(err, Error(HasSubstr("Unknown")))
+	ExpectThat(err, Error(HasSubstr("score")))
+	ExpectThat(err, Error(HasSubstr(t.unknownNode.Score.Hex())))
+
+	ExpectThat(t.getRecords(), ElementsAre())
 }
 
 func (t *DirsTest) NodeVisitedOnPastRun_ScorePresent() {
