@@ -61,6 +61,7 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/googlecloudplatform/gcsfuse/timeutil"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/graph"
 	"github.com/jacobsa/comeback/util"
@@ -205,12 +206,9 @@ func verifyImpl(
 		visitor := verify.NewVisitor(
 			readFiles,
 			knownScores,
+			visitorRecords,
+			timeutil.RealClock(),
 			blobStore)
-
-		visitor = &snoopingVisitor{
-			wrapped: visitor,
-			records: visitorRecords,
-		}
 
 		// Format root node names.
 		var roots []string
