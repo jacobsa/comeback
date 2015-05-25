@@ -410,7 +410,17 @@ func (t *FilesFullTest) SetUp(ti *TestInfo) {
 }
 
 func (t *FilesFullTest) NodeVisitedOnPastRun_ScoreAbsent() {
-	AssertTrue(false, "TODO")
+	// Set up known children for the node whose score is not in allScores.
+	t.knownStructure[t.unknownNode] = []verify.Node{t.knownNode}
+
+	// We should receive an error, and no records.
+	_, err := t.visitor.Visit(t.ctx, t.unknownNode.String())
+
+	ExpectThat(err, Error(HasSubstr("Unknown")))
+	ExpectThat(err, Error(HasSubstr("score")))
+	ExpectThat(err, Error(HasSubstr(t.unknownNode.Score.Hex())))
+
+	ExpectThat(t.getRecords(), ElementsAre())
 }
 
 func (t *FilesFullTest) NodeVisitedOnPastRun_ScorePresent() {
