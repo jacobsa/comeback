@@ -296,7 +296,7 @@ func (t *DirsTest) ReturnsAppropriateAdjacentNodesAndRecords() {
 
 	r = records[0]
 	ExpectEq(t.clock.Now(), r.Time)
-	ExpectTrue(r.Node.Score)
+	ExpectTrue(r.Node.Dir)
 	ExpectEq(t.score, r.Node.Score)
 
 	var childNames []string
@@ -354,6 +354,8 @@ func (t *FilesLiteTest) ScoreNotInList() {
 	ExpectThat(err, Error(HasSubstr("Unknown")))
 	ExpectThat(err, Error(HasSubstr("score")))
 	ExpectThat(err, Error(HasSubstr(t.unknownScore.Hex())))
+
+	ExpectThat(t.getRecords(), ElementsAre())
 }
 
 func (t *FilesLiteTest) ScoreIsInList() {
@@ -362,6 +364,7 @@ func (t *FilesLiteTest) ScoreIsInList() {
 
 	AssertEq(nil, err)
 	ExpectThat(adjacent, ElementsAre())
+	ExpectThat(t.getRecords(), ElementsAre())
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -399,6 +402,8 @@ func (t *FilesFullTest) BlobStoreReturnsError() {
 
 	ExpectThat(err, Error(HasSubstr("Load")))
 	ExpectThat(err, Error(HasSubstr("taco")))
+
+	ExpectThat(t.getRecords(), ElementsAre())
 }
 
 func (t *FilesFullTest) BlobStoreSucceeds() {
@@ -411,4 +416,13 @@ func (t *FilesFullTest) BlobStoreSucceeds() {
 
 	AssertEq(nil, err)
 	ExpectThat(adjacent, ElementsAre())
+
+	records := t.getRecords()
+	AssertEq(1, len(records))
+
+	r := records[0]
+	ExpectEq(t.clock.Now(), r.Time)
+	ExpectFalse(r.Node.Dir)
+	ExpectEq(t.knownScore, r.Node.Score)
+	ExpectThat(r.Children, ElementsAre())
 }
