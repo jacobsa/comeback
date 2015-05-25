@@ -77,7 +77,12 @@ func (t *superTest) setUp(
 	t.blobStore = mock_blob.NewMockStore(ti.MockController, "blobStore")
 	t.clock.SetTime(time.Date(2012, 8, 15, 22, 56, 0, 0, time.Local))
 
-	t.visitor = verify.NewVisitor(readFiles, allScores, t.records, t.blobStore)
+	t.visitor = verify.NewVisitor(
+		readFiles,
+		allScores,
+		t.records,
+		&t.clock,
+		t.blobStore)
 }
 
 func (t *superTest) getRecords() (records []verify.Record) {

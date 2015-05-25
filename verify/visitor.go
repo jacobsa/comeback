@@ -18,6 +18,7 @@ package verify
 import (
 	"fmt"
 
+	"github.com/googlecloudplatform/gcsfuse/timeutil"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/fs"
 	"github.com/jacobsa/comeback/graph"
@@ -42,10 +43,12 @@ func NewVisitor(
 	readFiles bool,
 	allScores []blob.Score,
 	records chan<- Record,
+	clock timeutil.Clock,
 	bs blob.Store) (v graph.Visitor) {
 	typed := &visitor{
 		readFiles:   readFiles,
 		records:     records,
+		clock:       clock,
 		blobStore:   bs,
 		knownScores: make(map[blob.Score]struct{}),
 	}
@@ -65,6 +68,7 @@ func NewVisitor(
 type visitor struct {
 	readFiles   bool
 	records     chan<- Record
+	clock       timeutil.Clock
 	blobStore   blob.Store
 	knownScores map[blob.Score]struct{}
 }
