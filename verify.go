@@ -96,14 +96,6 @@ func init() {
 // Visitor types
 ////////////////////////////////////////////////////////////////////////
 
-// A record certifying something we confirmed about a node at a certain time.
-// See the notes at the top of verify.go for details.
-type verifyRecord struct {
-	t        time.Time
-	node     verify.Node
-	adjacent []verify.Node
-}
-
 // A visitor that writes the information it gleans from the wrapped visitor to
 // a channel.
 type snoopingVisitor struct {
