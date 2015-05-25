@@ -39,7 +39,7 @@ import (
 // work across runs of this function, if interrupted part way through.
 //
 // A record is written to the supplied channel for every piece of information
-// that is certified.
+// that is verified.
 //
 // It is expected that the blob store's Load method does score verification for
 // us.

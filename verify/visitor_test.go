@@ -424,7 +424,16 @@ func (t *FilesFullTest) NodeVisitedOnPastRun_ScoreAbsent() {
 }
 
 func (t *FilesFullTest) NodeVisitedOnPastRun_ScorePresent() {
-	AssertTrue(false, "TODO")
+	// Set up known children for the node whose score is in allScores.
+	t.knownStructure[t.knownNode] = []verify.Node{t.unknownNode}
+
+	// We should get back the appropriate adjacent node names without doing
+	// anything further. No new record should be minted.
+	adjacent, err := t.visitor.Visit(t.ctx, t.knownNode.String())
+
+	AssertEq(nil, err)
+	ExpectThat(adjacent, ElementsAre(t.unknownNode.String()))
+	ExpectThat(t.getRecords(), ElementsAre())
 }
 
 func (t *FilesFullTest) CallsBlobStore() {
