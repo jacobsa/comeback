@@ -17,18 +17,20 @@ package fs_test
 
 import (
 	"errors"
+	"io/ioutil"
+	"log"
+	"os"
+	"path"
+	"syscall"
+	"testing"
+	"time"
+
 	"github.com/jacobsa/comeback/fs"
 	"github.com/jacobsa/comeback/sys"
 	"github.com/jacobsa/comeback/sys/mock"
 	. "github.com/jacobsa/oglematchers"
 	"github.com/jacobsa/oglemock"
 	. "github.com/jacobsa/ogletest"
-	"io/ioutil"
-	"os"
-	"path"
-	"syscall"
-	"testing"
-	"time"
 )
 
 func TestReadDir(t *testing.T) { RunTests(t) }
@@ -119,6 +121,11 @@ func (t *ReadDirTest) NonExistentPath() {
 }
 
 func (t *ReadDirTest) NotADirectory() {
+	// TODO(jacobsa): Re-enable this test when commit a35181b
+	// (https://goo.gl/Zzm6g4) makes it into a Go release.
+	log.Println("Skipping this test. See the attached TODO.")
+	return
+
 	dirpath := path.Join(t.baseDir, "foo.txt")
 	err := ioutil.WriteFile(dirpath, []byte("foo"), 0400)
 	AssertEq(nil, err)
