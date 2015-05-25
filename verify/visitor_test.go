@@ -138,8 +138,6 @@ var _ SetUpInterface = &DirsTest{}
 func init() { RegisterTestSuite(&DirsTest{}) }
 
 func (t *DirsTest) SetUp(ti *TestInfo) {
-	t.superTest.setUp(ti, false, nil)
-
 	// Set up canned data for a valid listing.
 	t.listing = []*fs.DirectoryEntry{
 		&fs.DirectoryEntry{
@@ -172,6 +170,9 @@ func (t *DirsTest) SetUp(ti *TestInfo) {
 
 	t.score = blob.ComputeScore(t.contents)
 	t.node = makeNodeName(true, t.score)
+
+	// Call through.
+	t.superTest.setUp(ti, false, []blob.Score{t.score})
 }
 
 func (t *DirsTest) NodeVisitedOnPastRun_ScoreAbsent() {
