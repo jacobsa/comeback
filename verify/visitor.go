@@ -95,6 +95,23 @@ func (v *visitor) visitFile(
 		return
 	}
 
+	// Certify that we verified the file piece.
+	r := Record{
+		Time: v.clock.Now(),
+		Node: Node{
+			Score: score,
+			Dir:   false,
+		},
+	}
+
+	select {
+	case <-ctx.Done():
+		err = ctx.Err()
+		return
+
+	case v.records <- r:
+	}
+
 	return
 }
 
