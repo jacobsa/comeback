@@ -19,9 +19,11 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+	"time"
 
 	"golang.org/x/net/context"
 
+	"github.com/googlecloudplatform/gcsfuse/timeutil"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/blob/mock"
 	"github.com/jacobsa/comeback/fs"
@@ -61,7 +63,9 @@ type superTest struct {
 	ctx       context.Context
 	records   chan verify.Record
 	blobStore mock_blob.MockStore
-	visitor   graph.Visitor
+	clock     timeutil.SimulatedClock
+
+	visitor graph.Visitor
 }
 
 func (t *superTest) setUp(
@@ -71,6 +75,8 @@ func (t *superTest) setUp(
 	t.ctx = ti.Ctx
 	t.records = make(chan verify.Record, 1000)
 	t.blobStore = mock_blob.NewMockStore(ti.MockController, "blobStore")
+	t.clock.SetTime(time.Date(2012, 8, 15, 22, 56, 0, 0, time.Local))
+
 	t.visitor = verify.NewVisitor(readFiles, allScores, t.records, t.blobStore)
 }
 
@@ -179,6 +185,7 @@ func (t *DirsTest) BlobStoreReturnsError() {
 
 	ExpectThat(err, Error(HasSubstr("Load")))
 	ExpectThat(err, Error(HasSubstr("taco")))
+	ExpectThat(t.getRecords(), ElementsAre())
 }
 
 func (t *DirsTest) BlobIsJunk() {
@@ -196,6 +203,7 @@ func (t *DirsTest) BlobIsJunk() {
 
 	ExpectThat(err, Error(HasSubstr(t.score.Hex())))
 	ExpectThat(err, Error(HasSubstr("UnmarshalDir")))
+	ExpectThat(t.getRecords(), ElementsAre())
 }
 
 func (t *DirsTest) UnknownEntryType() {
@@ -226,6 +234,7 @@ func (t *DirsTest) UnknownEntryType() {
 
 	ExpectThat(err, Error(HasSubstr("entry type")))
 	ExpectThat(err, Error(HasSubstr(fmt.Sprintf("%d", fs.TypeCharDevice))))
+	ExpectThat(t.getRecords(), ElementsAre())
 }
 
 func (t *DirsTest) SymlinkWithScores() {
@@ -257,9 +266,10 @@ func (t *DirsTest) SymlinkWithScores() {
 	ExpectThat(err, Error(HasSubstr(t.score.Hex())))
 	ExpectThat(err, Error(HasSubstr("symlink")))
 	ExpectThat(err, Error(HasSubstr("scores")))
+	ExpectThat(t.getRecords(), ElementsAre())
 }
 
-func (t *DirsTest) ReturnsAppropriateAdjacentNodes() {
+func (t *DirsTest) ReturnsAppropriateAdjacentNodesAndRecords() {
 	// Load
 	ExpectCall(t.blobStore, "Load")(Any(), Any()).
 		WillOnce(Return(t.contents, nil))
@@ -276,7 +286,25 @@ func (t *DirsTest) ReturnsAppropriateAdjacentNodes() {
 		}
 	}
 
+	// Check adjacent.
 	ExpectThat(adjacent, ElementsAre(expected...))
+
+	// Check records.
+	records := t.getRecords()
+	AssertEq(1, len(records))
+	var r verify.Record
+
+	r = records[0]
+	ExpectEq(t.clock.Now(), r.Time)
+	ExpectTrue(r.Node.Score)
+	ExpectEq(t.score, r.Node.Score)
+
+	var childNames []string
+	for _, child := range r.Children {
+		childNames = append(childNames, child.String())
+	}
+
+	ExpectThat(childNames, ElementsAre(expected...))
 }
 
 ////////////////////////////////////////////////////////////////////////
