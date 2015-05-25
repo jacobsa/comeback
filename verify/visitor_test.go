@@ -72,6 +72,7 @@ func (t *superTest) setUp(
 	ti *TestInfo,
 	readFiles bool) {
 	t.ctx = ti.Ctx
+	t.readFiles = readFiles
 	t.records = make(chan verify.Record, 1000)
 	t.knownStructure = make(map[verify.Node][]verify.Node)
 	t.blobStore = mock_blob.NewMockStore(ti.MockController, "blobStore")
