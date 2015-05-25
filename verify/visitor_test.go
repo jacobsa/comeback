@@ -60,10 +60,11 @@ func makeNodeName(
 const namePrefix = "blobs/"
 
 type superTest struct {
-	ctx       context.Context
-	records   chan verify.Record
-	blobStore mock_blob.MockStore
-	clock     timeutil.SimulatedClock
+	ctx            context.Context
+	records        chan verify.Record
+	knownStructure map[verify.Node][]verify.Node
+	blobStore      mock_blob.MockStore
+	clock          timeutil.SimulatedClock
 
 	visitor graph.Visitor
 }
@@ -71,17 +72,17 @@ type superTest struct {
 func (t *superTest) setUp(
 	ti *TestInfo,
 	readFiles bool,
-	allScores []blob.Score,
-	knownStructure map[verify.Node][]verify.Node) {
+	allScores []blob.Score) {
 	t.ctx = ti.Ctx
 	t.records = make(chan verify.Record, 1000)
+	t.knownStructure = make(map[verify.Node][]verify.Node)
 	t.blobStore = mock_blob.NewMockStore(ti.MockController, "blobStore")
 	t.clock.SetTime(time.Date(2012, 8, 15, 22, 56, 0, 0, time.Local))
 
 	t.visitor = verify.NewVisitor(
 		readFiles,
 		allScores,
-		knownStructure,
+		t.knownStructure,
 		t.records,
 		&t.clock,
 		t.blobStore)
