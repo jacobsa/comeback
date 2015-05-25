@@ -73,17 +73,13 @@ func parseGCInput(
 		return
 	})
 
-	// Parse and save the scores from the records.
+	// Save the scores from the records.
 	b.Add(func(ctx context.Context) (err error) {
 		for r := range verifyRecords {
-			var recordScores []blob.Score
-			recordScores, err = r.Scores()
-			if err != nil {
-				err = fmt.Errorf("Scores: %v", err)
-				return
+			scores = append(scores, r.node.Score)
+			for _, a := range r.adjacent {
+				scores = append(scores, a.Score)
 			}
-
-			scores = append(scores, recordScores...)
 		}
 
 		return
