@@ -19,9 +19,11 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+	"time"
 
 	"golang.org/x/net/context"
 
+	"github.com/googlecloudplatform/gcsfuse/timeutil"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/blob/mock"
 	"github.com/jacobsa/comeback/fs"
@@ -59,8 +61,11 @@ const namePrefix = "blobs/"
 
 type superTest struct {
 	ctx       context.Context
+	records   chan verify.Record
 	blobStore mock_blob.MockStore
-	visitor   graph.Visitor
+	clock     timeutil.SimulatedClock
+
+	visitor graph.Visitor
 }
 
 func (t *superTest) setUp(
@@ -68,8 +73,25 @@ func (t *superTest) setUp(
 	readFiles bool,
 	allScores []blob.Score) {
 	t.ctx = ti.Ctx
+	t.records = make(chan verify.Record, 1000)
 	t.blobStore = mock_blob.NewMockStore(ti.MockController, "blobStore")
-	t.visitor = verify.NewVisitor(readFiles, allScores, t.blobStore)
+	t.clock.SetTime(time.Date(2012, 8, 15, 22, 56, 0, 0, time.Local))
+
+	t.visitor = verify.NewVisitor(
+		readFiles,
+		allScores,
+		t.records,
+		&t.clock,
+		t.blobStore)
+}
+
+func (t *superTest) getRecords() (records []verify.Record) {
+	close(t.records)
+	for r := range t.records {
+		records = append(records, r)
+	}
+
+	return
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -168,6 +190,7 @@ func (t *DirsTest) BlobStoreReturnsError() {
 
 	ExpectThat(err, Error(HasSubstr("Load")))
 	ExpectThat(err, Error(HasSubstr("taco")))
+	ExpectThat(t.getRecords(), ElementsAre())
 }
 
 func (t *DirsTest) BlobIsJunk() {
@@ -185,6 +208,7 @@ func (t *DirsTest) BlobIsJunk() {
 
 	ExpectThat(err, Error(HasSubstr(t.score.Hex())))
 	ExpectThat(err, Error(HasSubstr("UnmarshalDir")))
+	ExpectThat(t.getRecords(), ElementsAre())
 }
 
 func (t *DirsTest) UnknownEntryType() {
@@ -215,6 +239,7 @@ func (t *DirsTest) UnknownEntryType() {
 
 	ExpectThat(err, Error(HasSubstr("entry type")))
 	ExpectThat(err, Error(HasSubstr(fmt.Sprintf("%d", fs.TypeCharDevice))))
+	ExpectThat(t.getRecords(), ElementsAre())
 }
 
 func (t *DirsTest) SymlinkWithScores() {
@@ -246,9 +271,10 @@ func (t *DirsTest) SymlinkWithScores() {
 	ExpectThat(err, Error(HasSubstr(t.score.Hex())))
 	ExpectThat(err, Error(HasSubstr("symlink")))
 	ExpectThat(err, Error(HasSubstr("scores")))
+	ExpectThat(t.getRecords(), ElementsAre())
 }
 
-func (t *DirsTest) ReturnsAppropriateAdjacentNodes() {
+func (t *DirsTest) ReturnsAppropriateAdjacentNodesAndRecords() {
 	// Load
 	ExpectCall(t.blobStore, "Load")(Any(), Any()).
 		WillOnce(Return(t.contents, nil))
@@ -265,7 +291,25 @@ func (t *DirsTest) ReturnsAppropriateAdjacentNodes() {
 		}
 	}
 
+	// Check adjacent.
 	ExpectThat(adjacent, ElementsAre(expected...))
+
+	// Check records.
+	records := t.getRecords()
+	AssertEq(1, len(records))
+	var r verify.Record
+
+	r = records[0]
+	ExpectThat(r.Time, timeutil.TimeEq(t.clock.Now()))
+	ExpectTrue(r.Node.Dir)
+	ExpectEq(t.score, r.Node.Score)
+
+	var childNames []string
+	for _, child := range r.Children {
+		childNames = append(childNames, child.String())
+	}
+
+	ExpectThat(childNames, ElementsAre(expected...))
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -315,6 +359,8 @@ func (t *FilesLiteTest) ScoreNotInList() {
 	ExpectThat(err, Error(HasSubstr("Unknown")))
 	ExpectThat(err, Error(HasSubstr("score")))
 	ExpectThat(err, Error(HasSubstr(t.unknownScore.Hex())))
+
+	ExpectThat(t.getRecords(), ElementsAre())
 }
 
 func (t *FilesLiteTest) ScoreIsInList() {
@@ -323,6 +369,7 @@ func (t *FilesLiteTest) ScoreIsInList() {
 
 	AssertEq(nil, err)
 	ExpectThat(adjacent, ElementsAre())
+	ExpectThat(t.getRecords(), ElementsAre())
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -360,6 +407,8 @@ func (t *FilesFullTest) BlobStoreReturnsError() {
 
 	ExpectThat(err, Error(HasSubstr("Load")))
 	ExpectThat(err, Error(HasSubstr("taco")))
+
+	ExpectThat(t.getRecords(), ElementsAre())
 }
 
 func (t *FilesFullTest) BlobStoreSucceeds() {
@@ -372,4 +421,13 @@ func (t *FilesFullTest) BlobStoreSucceeds() {
 
 	AssertEq(nil, err)
 	ExpectThat(adjacent, ElementsAre())
+
+	records := t.getRecords()
+	AssertEq(1, len(records))
+
+	r := records[0]
+	ExpectThat(r.Time, timeutil.TimeEq(t.clock.Now()))
+	ExpectFalse(r.Node.Dir)
+	ExpectEq(t.knownScore, r.Node.Score)
+	ExpectThat(r.Children, ElementsAre())
 }

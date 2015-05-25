@@ -18,6 +18,7 @@ package verify
 import (
 	"fmt"
 
+	"github.com/googlecloudplatform/gcsfuse/timeutil"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/fs"
 	"github.com/jacobsa/comeback/graph"
@@ -33,14 +34,21 @@ import (
 // (according to allScores), and verifies that the blob can be loaded if
 // readFiles is true.
 //
+// A record is written to the supplied channel for every piece of information
+// that is certified.
+//
 // It is expected that the blob store's Load method does score verification for
 // us.
 func NewVisitor(
 	readFiles bool,
 	allScores []blob.Score,
+	records chan<- Record,
+	clock timeutil.Clock,
 	bs blob.Store) (v graph.Visitor) {
 	typed := &visitor{
 		readFiles:   readFiles,
+		records:     records,
+		clock:       clock,
 		blobStore:   bs,
 		knownScores: make(map[blob.Score]struct{}),
 	}
@@ -59,6 +67,8 @@ func NewVisitor(
 
 type visitor struct {
 	readFiles   bool
+	records     chan<- Record
+	clock       timeutil.Clock
 	blobStore   blob.Store
 	knownScores map[blob.Score]struct{}
 }
@@ -85,6 +95,23 @@ func (v *visitor) visitFile(
 		return
 	}
 
+	// Certify that we verified the file piece.
+	r := Record{
+		Time: v.clock.Now(),
+		Node: Node{
+			Score: score,
+			Dir:   false,
+		},
+	}
+
+	select {
+	case <-ctx.Done():
+		err = ctx.Err()
+		return
+
+	case v.records <- r:
+	}
+
 	return
 }
 
@@ -105,7 +132,15 @@ func (v *visitor) visitDir(
 		return
 	}
 
-	// Return a node for each score in each entry.
+	// Build a record containing a child node for each score in each entry.
+	r := Record{
+		Time: v.clock.Now(),
+		Node: Node{
+			Score: score,
+			Dir:   true,
+		},
+	}
+
 	for _, entry := range listing {
 		var n Node
 
@@ -131,11 +166,25 @@ func (v *visitor) visitDir(
 			return
 		}
 
-		// Return a node for each score.
+		// Add a node for each score.
 		for _, score := range entry.Scores {
 			n.Score = score
-			adjacent = append(adjacent, n.String())
+			r.Children = append(r.Children, n)
 		}
+	}
+
+	// Certify that we verified the directory.
+	select {
+	case <-ctx.Done():
+		err = ctx.Err()
+		return
+
+	case v.records <- r:
+	}
+
+	// Return child node names.
+	for _, child := range r.Children {
+		adjacent = append(adjacent, child.String())
 	}
 
 	return

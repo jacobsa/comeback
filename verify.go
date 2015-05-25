@@ -60,8 +60,8 @@ import (
 	"path"
 	"runtime"
 	"strings"
-	"time"
 
+	"github.com/googlecloudplatform/gcsfuse/timeutil"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/graph"
 	"github.com/jacobsa/comeback/util"
@@ -89,60 +89,6 @@ var fFast = cmdVerify.Flags.Bool(
 
 func init() {
 	cmdVerify.Run = runVerify // Break flag-related dependency loop.
-}
-
-////////////////////////////////////////////////////////////////////////
-// Visitor types
-////////////////////////////////////////////////////////////////////////
-
-// A visitor that writes the information it gleans from the wrapped visitor to
-// a channel.
-type snoopingVisitor struct {
-	records chan<- verify.Record
-	wrapped graph.Visitor
-}
-
-func (v *snoopingVisitor) Visit(
-	ctx context.Context,
-	node string) (adjacent []string, err error) {
-	// Call through.
-	adjacent, err = v.wrapped.Visit(ctx, node)
-	if err != nil {
-		return
-	}
-
-	// Build a record.
-	r := verify.Record{
-		Time: time.Now(),
-	}
-
-	r.Node, err = verify.ParseNode(node)
-	if err != nil {
-		err = fmt.Errorf("ParseNode(%q): %v", node, err)
-		return
-	}
-
-	for _, a := range adjacent {
-		var adjacentNode verify.Node
-		adjacentNode, err = verify.ParseNode(a)
-		if err != nil {
-			err = fmt.Errorf("ParseNode(%q): %v", a, err)
-			return
-		}
-
-		r.Children = append(r.Children, adjacentNode)
-	}
-
-	// Write out the record.
-	select {
-	case <-ctx.Done():
-		err = ctx.Err()
-		return
-
-	case v.records <- r:
-	}
-
-	return
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -260,12 +206,9 @@ func verifyImpl(
 		visitor := verify.NewVisitor(
 			readFiles,
 			knownScores,
+			visitorRecords,
+			timeutil.RealClock(),
 			blobStore)
-
-		visitor = &snoopingVisitor{
-			wrapped: visitor,
-			records: visitorRecords,
-		}
 
 		// Format root node names.
 		var roots []string
