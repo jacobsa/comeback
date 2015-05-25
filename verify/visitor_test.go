@@ -59,6 +59,7 @@ const namePrefix = "blobs/"
 
 type superTest struct {
 	ctx       context.Context
+	records   chan verify.Record
 	blobStore mock_blob.MockStore
 	visitor   graph.Visitor
 }
@@ -68,8 +69,18 @@ func (t *superTest) setUp(
 	readFiles bool,
 	allScores []blob.Score) {
 	t.ctx = ti.Ctx
+	t.records = make(chan verify.Record, 1000)
 	t.blobStore = mock_blob.NewMockStore(ti.MockController, "blobStore")
-	t.visitor = verify.NewVisitor(readFiles, allScores, t.blobStore)
+	t.visitor = verify.NewVisitor(readFiles, allScores, t.records, t.blobStore)
+}
+
+func (t *superTest) getRecords() (records []verify.Record) {
+	close(t.records)
+	for r := range t.records {
+		records = append(records, r)
+	}
+
+	return
 }
 
 ////////////////////////////////////////////////////////////////////////
