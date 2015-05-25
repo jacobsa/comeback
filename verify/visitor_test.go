@@ -380,7 +380,16 @@ func (t *FilesLiteTest) NodeVisitedOnPastRun_ScoreAbsent() {
 }
 
 func (t *FilesLiteTest) NodeVisitedOnPastRun_ScorePresent() {
-	AssertTrue(false, "TODO")
+	// Set up known children for the node whose score is in allScores.
+	t.knownStructure[t.knownNode] = []verify.Node{}
+
+	// We should succeed without doing anything further. No new record should be
+	// minted.
+	adjacent, err := t.visitor.Visit(t.ctx, t.knownNode.String())
+
+	AssertEq(nil, err)
+	ExpectThat(adjacent, ElementsAre())
+	ExpectThat(t.getRecords(), ElementsAre())
 }
 
 func (t *FilesLiteTest) ScoreNotInList() {
