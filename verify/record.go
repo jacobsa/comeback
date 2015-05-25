@@ -48,6 +48,7 @@ type Record struct {
 }
 
 // Format the record in a manner that can later be parsed with ParseRecord.
+// Guaranteed to not contain newlines.
 func (r *Record) String() (s string) {
 	s = fmt.Sprintf(
 		"%s %s",
@@ -57,6 +58,47 @@ func (r *Record) String() (s string) {
 	for _, child := range r.Children {
 		s += fmt.Sprintf(" %s", child.String())
 	}
+
+	return
+}
+
+// Parse the output of Record.String.
+func ParseRecord(s string) (r Record, err error) {
+	// We expect space-separated components.
+	components := strings.Split(s, " ")
+	if len(components) < 2 {
+		err = fmt.Errorf(
+			"Expected at least two components, got %d.",
+			len(components))
+
+		return
+	}
+
+	// The first should be the timestmap.
+	r.Time, err = time.Parse(time.RFC3339, components[0])
+	if err != nil {
+		err = fmt.Errorf("time.Parse(%q): %v", components[0], err)
+		return
+	}
+
+	// The rest are node names.
+	var nodes []Node
+	for i := 1; i < len(components); i++ {
+		c := components[i]
+
+		var node Node
+		node, err = ParseNode(string(c))
+		if err != nil {
+			err = fmt.Errorf("ParseNode(%q): %v", c, err)
+			return
+		}
+
+		nodes = append(nodes, node)
+	}
+
+	// Apportion nodes.
+	r.Node = nodes[0]
+	r.Children = nodes[1:]
 
 	return
 }
