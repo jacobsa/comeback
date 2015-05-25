@@ -60,6 +60,7 @@ import (
 	"path"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/googlecloudplatform/gcsfuse/timeutil"
 	"github.com/jacobsa/comeback/blob"
@@ -273,8 +274,44 @@ func verifyImpl(
 
 // Parse the contents of the verify log into a known structure map as accepted
 // by verify.NewVisitor.
-func parseVerifyLog(
-	r io.Reader) (knownStructure map[verify.Node][]verify.Node, err error)
+func parseKnownStructure(
+	ctx context.Context,
+	r io.Reader) (knownStructure map[verify.Node][]verify.Node, err error) {
+	const stalenessThreshold = 90 * 24 * time.Hour
+	b := syncutil.NewBundle(ctx)
+
+	// Parse records into a channel.
+	records := make(chan verify.Record, 100)
+	b.Add(func(ctx context.Context) (err error) {
+		defer close(records)
+		err = parseVerifyOutput(ctx, r, records)
+		if err != nil {
+			err = fmt.Errorf("parseVerifyOutput: %v", err)
+			return
+		}
+
+		return
+	})
+
+	// Accumulate into the map.
+	knownStructure = make(map[verify.Node][]verify.Node)
+	b.Add(func(ctx context.Context) (err error) {
+		now := time.Now()
+		for r := range records {
+			// Skip stale records.
+			if now.Sub(r.Time) > stalenessThreshold {
+				continue
+			}
+
+			knownStructure[r.Node] = r.Children
+		}
+
+		return
+	})
+
+	err = b.Join()
+	return
+}
 
 // Open the file to which we log verify output. Read its current contents,
 // filtering out entries that are too old, and return a writer that can be used
@@ -309,7 +346,7 @@ func openVerifyLog() (
 		return
 	}
 
-	knownStructure, err = parseVerifyLog(f)
+	knownStructure, err = parseKnownStructure(context.Background(), f)
 	if err != nil {
 		f.Close()
 		err = fmt.Errorf("parseVerifyLog: %v", err)
