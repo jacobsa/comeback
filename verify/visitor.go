@@ -33,14 +33,19 @@ import (
 // (according to allScores), and verifies that the blob can be loaded if
 // readFiles is true.
 //
+// A record is written to the supplied channel for every piece of information
+// that is certified.
+//
 // It is expected that the blob store's Load method does score verification for
 // us.
 func NewVisitor(
 	readFiles bool,
 	allScores []blob.Score,
+	records chan<- Record,
 	bs blob.Store) (v graph.Visitor) {
 	typed := &visitor{
 		readFiles:   readFiles,
+		records:     records,
 		blobStore:   bs,
 		knownScores: make(map[blob.Score]struct{}),
 	}
@@ -59,6 +64,7 @@ func NewVisitor(
 
 type visitor struct {
 	readFiles   bool
+	records     chan<- Record
 	blobStore   blob.Store
 	knownScores map[blob.Score]struct{}
 }
