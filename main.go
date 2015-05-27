@@ -17,6 +17,7 @@ package main
 
 import (
 	"flag"
+	"io"
 	"log"
 	"os"
 	"path"
@@ -57,6 +58,21 @@ func main() {
 		gcsLog,
 		"",
 		log.LstdFlags|log.Lmicroseconds|log.Lshortfile))
+
+	// Set up saving of default logging output.
+	logLog, err := os.OpenFile(
+		path.Join("/Users/jacobsa/.comeback.log.log"),
+		os.O_RDWR|os.O_APPEND|os.O_CREATE,
+		0600)
+
+	if err != nil {
+		log.Fatalf("OpenFile: %v", err)
+		return
+	}
+
+	defer logLog.Close()
+
+	log.SetOutput(io.MultiWriter(os.Stderr, logLog))
 
 	// We get the command name.
 	args := flag.Args()
