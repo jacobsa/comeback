@@ -19,6 +19,9 @@ import (
 	"flag"
 	"log"
 	"os"
+	"path"
+
+	"github.com/jacobsa/gcloud/gcs"
 )
 
 // The set of commands supported by the tool.
@@ -36,6 +39,24 @@ func main() {
 
 	// Set up bare logging output.
 	log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds)
+
+	// Set up the GCS log.
+	gcsLog, err := os.OpenFile(
+		path.Join("/Users/jacobsa/.comeback.gcs.log"),
+		os.O_RDWR|os.O_APPEND|os.O_CREATE,
+		0600)
+
+	if err != nil {
+		log.Fatalf("OpenFile: %v", err)
+		return
+	}
+
+	defer gcsLog.Close()
+
+	gcs.SetLogger(log.New(
+		gcsLog,
+		"",
+		log.LstdFlags|log.Lmicroseconds|log.Lshortfile))
 
 	// We get the command name.
 	args := flag.Args()
