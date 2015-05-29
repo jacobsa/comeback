@@ -16,27 +16,45 @@
 package main
 
 import (
-	"flag"
+	"fmt"
 	"io/ioutil"
 	"log"
+	"os/user"
+	"path"
 	"sync"
 
 	"github.com/jacobsa/comeback/config"
 )
 
-var g_configFile = flag.String("config", "", "Path to config file.")
-
 var g_configOnce sync.Once
 var g_config *config.Config
 
+func getConfigFilePath() (p string, err error) {
+	// Find the user.
+	u, err := user.Current()
+	if err != nil {
+		err = fmt.Errorf("user.Current: %v", err)
+		return
+	}
+
+	// Use the file within her homedir.
+	p = path.Join(u.HomeDir, ".comeback.json")
+
+	return
+}
+
 func initConfig() {
-	// Check the flag.
-	if *g_configFile == "" {
-		log.Fatalln("You must set the -config flag.")
+	var err error
+
+	// Find the file's path.
+	filename, err := getConfigFilePath()
+	if err != nil {
+		log.Fatalf("getConfigFilePath: %v", err)
+		return
 	}
 
 	// Read the file.
-	configData, err := ioutil.ReadFile(*g_configFile)
+	configData, err := ioutil.ReadFile(filename)
 	if err != nil {
 		log.Fatalln("Error reading config file:", err)
 	}
