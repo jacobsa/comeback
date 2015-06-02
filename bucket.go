@@ -17,27 +17,50 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"sync"
 	"time"
 
+	"golang.org/x/net/context"
+	"golang.org/x/oauth2/google"
+
 	"github.com/jacobsa/gcloud/gcs"
-	"github.com/jacobsa/gcloud/oauthutil"
-	"google.golang.org/cloud/storage"
 )
 
 var g_bucketOnce sync.Once
 var g_bucket gcs.Bucket
 
+func makeHTTPClient() (c *http.Client, err error) {
+	cfg := getConfig()
+
+	// Attempt to read the JSON file.
+	contents, err := ioutil.ReadFile(cfg.KeyFile)
+	if err != nil {
+		err = fmt.Errorf("ReadFile(%q): %v", cfg.KeyFile, err)
+		return
+	}
+
+	// Create a config struct based on its contents.
+	jwtConfig, err := google.JWTConfigFromJSON(contents, gcs.Scope_FullControl)
+	if err != nil {
+		err = fmt.Errorf("JWTConfigFromJSON: %v", err)
+		return
+	}
+
+	// Create the HTTP client.
+	c = jwtConfig.Client(context.Background())
+
+	return
+}
+
 func makeBucket() (bucket gcs.Bucket, err error) {
 	cfg := getConfig()
 
 	// Create an authenticated HTTP client.
-	httpClient, err := oauthutil.NewJWTHttpClient(
-		cfg.KeyFile,
-		[]string{storage.ScopeFullControl})
-
+	httpClient, err := makeHTTPClient()
 	if err != nil {
-		err = fmt.Errorf("NewJWTHttpClient: %v", err)
+		err = fmt.Errorf("makeHTTPClient: %v", err)
 		return
 	}
 
