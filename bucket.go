@@ -18,11 +18,11 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
-	"net/http"
 	"sync"
 	"time"
 
 	"golang.org/x/net/context"
+	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 
 	"github.com/jacobsa/gcloud/gcs"
@@ -31,7 +31,7 @@ import (
 var g_bucketOnce sync.Once
 var g_bucket gcs.Bucket
 
-func makeHTTPClient() (c *http.Client, err error) {
+func makeTokenSource() (ts oauth2.TokenSource, err error) {
 	cfg := getConfig()
 
 	// Attempt to read the JSON file.
@@ -48,8 +48,8 @@ func makeHTTPClient() (c *http.Client, err error) {
 		return
 	}
 
-	// Create the HTTP client.
-	c = jwtConfig.Client(context.Background())
+	// Create the token source.
+	ts = jwtConfig.TokenSource(context.Background())
 
 	return
 }
@@ -57,16 +57,16 @@ func makeHTTPClient() (c *http.Client, err error) {
 func makeBucket() (bucket gcs.Bucket, err error) {
 	cfg := getConfig()
 
-	// Create an authenticated HTTP client.
-	httpClient, err := makeHTTPClient()
+	// Create an oauth2 token source.
+	tokenSrc, err := makeTokenSource()
 	if err != nil {
-		err = fmt.Errorf("makeHTTPClient: %v", err)
+		err = fmt.Errorf("makeTokenSource: %v", err)
 		return
 	}
 
 	// Turn that into a connection.
 	connCfg := &gcs.ConnConfig{
-		HTTPClient:      httpClient,
+		TokenSource:     tokenSrc,
 		MaxBackoffSleep: time.Minute,
 	}
 
@@ -77,7 +77,14 @@ func makeBucket() (bucket gcs.Bucket, err error) {
 	}
 
 	// Grab the bucket.
-	bucket = conn.GetBucket(cfg.BucketName)
+	bucket, err = conn.OpenBucket(
+		context.Background(),
+		cfg.BucketName)
+
+	if err != nil {
+		err = fmt.Errorf("OpenBucket: %v", err)
+		return
+	}
 
 	return
 }
