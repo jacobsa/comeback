@@ -61,7 +61,6 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/googlecloudplatform/gcsfuse/timeutil"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/graph"
 	"github.com/jacobsa/comeback/util"
@@ -69,6 +68,7 @@ import (
 	"github.com/jacobsa/comeback/wiring"
 	"github.com/jacobsa/gcloud/gcs"
 	"github.com/jacobsa/gcloud/syncutil"
+	"github.com/jacobsa/timeutil"
 	"golang.org/x/net/context"
 )
 

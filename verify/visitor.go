@@ -18,11 +18,11 @@ package verify
 import (
 	"fmt"
 
-	"github.com/googlecloudplatform/gcsfuse/timeutil"
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/fs"
 	"github.com/jacobsa/comeback/graph"
 	"github.com/jacobsa/comeback/repr"
+	"github.com/jacobsa/timeutil"
 	"golang.org/x/net/context"
 )
 
