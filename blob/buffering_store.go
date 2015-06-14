@@ -19,9 +19,9 @@ import (
 	"fmt"
 	"sync"
 
-	"golang.org/x/net/context"
+	"github.com/jacobsa/syncutil"
 
-	"github.com/jacobsa/gcloud/syncutil"
+	"golang.org/x/net/context"
 )
 
 // Return a blob store whose Store method buffers around a wrapped store,

@@ -18,7 +18,7 @@ package cache
 import (
 	"encoding/gob"
 
-	"github.com/jacobsa/gcloud/syncutil"
+	"github.com/jacobsa/syncutil"
 	"github.com/jacobsa/util/lrucache"
 )
 

@@ -27,7 +27,7 @@ import (
 	"github.com/jacobsa/comeback/graph"
 	"github.com/jacobsa/comeback/registry"
 	"github.com/jacobsa/comeback/save"
-	"github.com/jacobsa/gcloud/syncutil"
+	"github.com/jacobsa/syncutil"
 )
 
 var cmdSave = &Command{
