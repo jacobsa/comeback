@@ -675,7 +675,10 @@ func (t *SaveAndRestoreTest) ExistingScoreCaching() {
 	// Delete the underlying object, then attempt to save again. We should get
 	// the same score.
 	objectName := wiring.BlobObjectNamePrefix + score.Hex()
-	err = t.bucket.DeleteObject(t.ctx, objectName)
+	err = t.bucket.DeleteObject(
+		t.ctx,
+		&gcs.DeleteObjectRequest{Name: objectName})
+
 	AssertEq(nil, err)
 
 	newScore, err := t.save()

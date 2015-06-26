@@ -181,7 +181,12 @@ func deleteObjects(
 	for i := 0; i < parallelism; i++ {
 		b.Add(func(ctx context.Context) (err error) {
 			for name := range names {
-				err = bucket.DeleteObject(ctx, name)
+				err = bucket.DeleteObject(
+					ctx,
+					&gcs.DeleteObjectRequest{
+						Name: name,
+					})
+
 				if err != nil {
 					err = fmt.Errorf("DeleteObject(%q): %v", name, err)
 					return
