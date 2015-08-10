@@ -28,7 +28,16 @@ import (
 
 func newDirHandle(
 	score blob.Score,
-	blobStore blob.Store) (dh *dirHandle)
+	blobStore blob.Store) (dh *dirHandle) {
+	dh = &dirHandle{
+		score:     score,
+		blobStore: blobStore,
+	}
+
+	dh.mu = syncutil.NewInvariantMutex(dh.checkInvariants)
+
+	return
+}
 
 ////////////////////////////////////////////////////////////////////////
 // Internal
