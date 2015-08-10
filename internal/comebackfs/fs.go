@@ -390,6 +390,34 @@ func (fs *fileSystem) ReadDir(
 }
 
 // LOCKS_EXCLUDED(fs)
+func (fs *fileSystem) OpenFile(
+	ctx context.Context,
+	op *fuseops.OpenFileOp) (err error) {
+	fs.Lock()
+	defer fs.Unlock()
+
+	// Find the inode.
+	rec, _ := fs.inodes[op.Inode]
+	if rec == nil {
+		log.Fatalf("Inode %d not found", op.Inode)
+	}
+
+	f := rec.in.(*fileInode)
+
+	// Create the handle.
+	fh := newFileHandle(f.Scores(), fs.blobStore)
+
+	op.Handle = fs.nextHandleID
+	fs.nextHandleID++
+	fs.fileHandles[op.Handle] = fh
+
+	// Allow the kernel to cache file contents.
+	op.KeepPageCache = true
+
+	return
+}
+
+// LOCKS_EXCLUDED(fs)
 func (fs *fileSystem) ReleaseFileHandle(
 	ctx context.Context,
 	op *fuseops.ReleaseFileHandleOp) (err error) {
