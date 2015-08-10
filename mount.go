@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
 
 	"golang.org/x/net/context"
 
@@ -38,6 +39,28 @@ var cmdMount = &Command{
 
 func init() {
 	cmdMount.Run = runMount // Break flag-related dependency loop.
+}
+
+func registerSIGINTHandler(mountPoint string) {
+	// Register for SIGINT.
+	signalChan := make(chan os.Signal, 1)
+	signal.Notify(signalChan, os.Interrupt)
+
+	// Start a goroutine that will unmount when the signal is received.
+	go func() {
+		for {
+			<-signalChan
+			log.Println("Received SIGINT, attempting to unmount...")
+
+			err := fuse.Unmount(mountPoint)
+			if err != nil {
+				log.Printf("Failed to unmount in response to SIGINT: %v", err)
+			} else {
+				log.Printf("Successfully unmounted in response to SIGINT.")
+				return
+			}
+		}
+	}()
 }
 
 func doMount(args []string) (err error) {
@@ -127,6 +150,9 @@ func doMount(args []string) (err error) {
 		err = fmt.Errorf("Mount: %v", err)
 		return
 	}
+
+	// Watch for SIGINT.
+	registerSIGINTHandler(mountPoint)
 
 	// Wait for unmount.
 	err = mfs.Join(context.Background())
