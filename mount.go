@@ -208,6 +208,8 @@ func doMount(args []string) (err error) {
 		return
 	}
 
+	log.Println("File system mounted.")
+
 	// Watch for SIGINT.
 	registerSIGINTHandler(mountPoint)
 
