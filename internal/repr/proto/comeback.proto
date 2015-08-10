@@ -80,6 +80,9 @@ message DirectoryEntryProto {
 
   // The inode number. This may not be present in old backups.
   optional uint64 inode = 13;
+
+  // The size in bytes. This may not be present in old backups.
+  optional uint64 size = 14;
 }
 
 message DirectoryListingProto {

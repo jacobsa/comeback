@@ -83,7 +83,7 @@ func (t *RoundtripTest) UnknownType() {
 	ExpectThat(err, Error(HasSubstr("17")))
 }
 
-func (t *RoundtripTest) PreservesInodes() {
+func (t *RoundtripTest) PreservesInode() {
 	// Input
 	in := []*fs.DirectoryEntry{
 		makeLegalEntry(),
@@ -108,6 +108,33 @@ func (t *RoundtripTest) PreservesInodes() {
 
 	ExpectEq(in[0].Inode, out[0].Inode)
 	ExpectEq(in[1].Inode, out[1].Inode)
+}
+
+func (t *RoundtripTest) PreservesSize() {
+	// Input
+	in := []*fs.DirectoryEntry{
+		makeLegalEntry(),
+		makeLegalEntry(),
+	}
+
+	in[0].Size = 17
+	in[1].Size = 19
+
+	// Marshal
+	d, err := repr.MarshalDir(in)
+	AssertEq(nil, err)
+	AssertNe(nil, d)
+
+	// Unmarshal
+	out, err := repr.UnmarshalDir(d)
+	AssertEq(nil, err)
+	AssertNe(nil, out)
+
+	// Output
+	AssertEq(2, len(out))
+
+	ExpectEq(in[0].Size, out[0].Size)
+	ExpectEq(in[1].Size, out[1].Size)
 }
 
 func (t *RoundtripTest) PreservesTypes() {
