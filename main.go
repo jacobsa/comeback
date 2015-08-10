@@ -26,6 +26,7 @@ var commands = []*Command{
 	cmdDeleteGarbage,
 	cmdGC,
 	cmdList,
+	cmdMount,
 	cmdRestore,
 	cmdSave,
 	cmdVerify,
@@ -35,7 +36,7 @@ func main() {
 	flag.Parse()
 
 	// Set up bare logging output.
-	log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds)
+	log.SetFlags(log.Lmicroseconds | log.Lshortfile)
 
 	// We get the command name.
 	args := flag.Args()

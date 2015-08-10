@@ -52,6 +52,48 @@
 			"revisionTime": "2015-05-26T09:02:12+10:00"
 		},
 		{
+			"canonical": "github.com/jacobsa/fuse",
+			"comment": "",
+			"local": "vendor/github.com/jacobsa/fuse",
+			"revision": "9a7512aac0fb7769d3475200e8b766cf85c15f49",
+			"revisionTime": "2015-08-06T16:25:43+10:00"
+		},
+		{
+			"canonical": "github.com/jacobsa/fuse/fuseops",
+			"comment": "",
+			"local": "vendor/github.com/jacobsa/fuse/fuseops",
+			"revision": "9a7512aac0fb7769d3475200e8b766cf85c15f49",
+			"revisionTime": "2015-08-06T16:25:43+10:00"
+		},
+		{
+			"canonical": "github.com/jacobsa/fuse/fuseutil",
+			"comment": "",
+			"local": "vendor/github.com/jacobsa/fuse/fuseutil",
+			"revision": "9a7512aac0fb7769d3475200e8b766cf85c15f49",
+			"revisionTime": "2015-08-06T16:25:43+10:00"
+		},
+		{
+			"canonical": "github.com/jacobsa/fuse/internal/buffer",
+			"comment": "",
+			"local": "vendor/github.com/jacobsa/fuse/internal/buffer",
+			"revision": "9a7512aac0fb7769d3475200e8b766cf85c15f49",
+			"revisionTime": "2015-08-06T16:25:43+10:00"
+		},
+		{
+			"canonical": "github.com/jacobsa/fuse/internal/freelist",
+			"comment": "",
+			"local": "vendor/github.com/jacobsa/fuse/internal/freelist",
+			"revision": "9a7512aac0fb7769d3475200e8b766cf85c15f49",
+			"revisionTime": "2015-08-06T16:25:43+10:00"
+		},
+		{
+			"canonical": "github.com/jacobsa/fuse/internal/fusekernel",
+			"comment": "",
+			"local": "vendor/github.com/jacobsa/fuse/internal/fusekernel",
+			"revision": "9a7512aac0fb7769d3475200e8b766cf85c15f49",
+			"revisionTime": "2015-08-06T16:25:43+10:00"
+		},
+		{
 			"canonical": "github.com/jacobsa/gcloud/gcs",
 			"comment": "",
 			"local": "vendor/github.com/jacobsa/gcloud/gcs",
@@ -146,8 +188,8 @@
 			"canonical": "github.com/jacobsa/util/password",
 			"comment": "",
 			"local": "vendor/github.com/jacobsa/util/password",
-			"revision": "459ffc8a6aae5c79645c04b6b78a6a4d7b194897",
-			"revisionTime": "2015-07-20T10:05:42+10:00"
+			"revision": "976a6f4de67efb102394e2f91f43ec6f2579fe2f",
+			"revisionTime": "2015-08-10T14:08:48+10:00"
 		},
 		{
 			"canonical": "golang.org/x/crypto/pbkdf2",
