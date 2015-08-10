@@ -69,6 +69,10 @@ func (dh *dirHandle) checkInvariants() {
 //
 // LOCKS_REQUIRED(dh)
 func (dh *dirHandle) ensureListing(ctx context.Context) (err error) {
+	if dh.listing != nil {
+		return
+	}
+
 	// Read the blob.
 	contents, err := dh.blobStore.Load(ctx, dh.score)
 	if err != nil {
