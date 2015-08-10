@@ -23,8 +23,10 @@ import (
 )
 
 // Create a read-only file system for browsing the backup rooted by the
-// supplied score.
+// supplied score. All inodes will be owned by the supplied UID/GID pair.
 func NewFileSystem(
+	uid uint32,
+	gid uint32,
 	rootScore blob.Score,
 	blobStore blob.Store) (fs fuseutil.FileSystem, err error) {
 	// Create the file system.
@@ -41,7 +43,16 @@ func NewFileSystem(
 	defer typed.Unlock()
 
 	// Set up the root inode.
-	root := newDirInode(rootAttrs, rootScore, blobStore)
+	root := newDirInode(
+		fuseops.InodeAttributes{
+			Nlink: 1,
+			Mode:  0500,
+			Uid:   uid,
+			Gid:   gid,
+		},
+		rootScore,
+		blobStore)
+
 	typed.registerInode(root)
 
 	return
