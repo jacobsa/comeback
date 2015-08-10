@@ -1,0 +1,237 @@
+{
+	"comment": "",
+	"ignore": "",
+	"package": [
+		{
+			"canonical": "github.com/golang/protobuf/proto",
+			"comment": "",
+			"local": "vendor/github.com/golang/protobuf/proto",
+			"revision": "68c687dc49948540b356a6b47931c9be4fcd0245",
+			"revisionTime": "2015-07-27T19:06:00+10:00"
+		},
+		{
+			"canonical": "github.com/golang/protobuf/proto/proto3_proto",
+			"comment": "",
+			"local": "vendor/github.com/golang/protobuf/proto/proto3_proto",
+			"revision": "68c687dc49948540b356a6b47931c9be4fcd0245",
+			"revisionTime": "2015-07-27T19:06:00+10:00"
+		},
+		{
+			"canonical": "github.com/golang/protobuf/proto/testdata",
+			"comment": "",
+			"local": "vendor/github.com/golang/protobuf/proto/testdata",
+			"revision": "68c687dc49948540b356a6b47931c9be4fcd0245",
+			"revisionTime": "2015-07-27T19:06:00+10:00"
+		},
+		{
+			"canonical": "github.com/jacobsa/crypto/cmac",
+			"comment": "",
+			"local": "vendor/github.com/jacobsa/crypto/cmac",
+			"revision": "662882df7bd06026c0d69dd12a572020d556c59e",
+			"revisionTime": "2015-05-26T09:02:12+10:00"
+		},
+		{
+			"canonical": "github.com/jacobsa/crypto/common",
+			"comment": "",
+			"local": "vendor/github.com/jacobsa/crypto/common",
+			"revision": "662882df7bd06026c0d69dd12a572020d556c59e",
+			"revisionTime": "2015-05-26T09:02:12+10:00"
+		},
+		{
+			"canonical": "github.com/jacobsa/crypto/siv",
+			"comment": "",
+			"local": "vendor/github.com/jacobsa/crypto/siv",
+			"revision": "662882df7bd06026c0d69dd12a572020d556c59e",
+			"revisionTime": "2015-05-26T09:02:12+10:00"
+		},
+		{
+			"canonical": "github.com/jacobsa/crypto/testing",
+			"comment": "",
+			"local": "vendor/github.com/jacobsa/crypto/testing",
+			"revision": "662882df7bd06026c0d69dd12a572020d556c59e",
+			"revisionTime": "2015-05-26T09:02:12+10:00"
+		},
+		{
+			"canonical": "github.com/jacobsa/gcloud/gcs",
+			"comment": "",
+			"local": "vendor/github.com/jacobsa/gcloud/gcs",
+			"revision": "acc256f3e729b9704653b94ab90e326147b8feb2",
+			"revisionTime": "2015-08-05T16:28:48+10:00"
+		},
+		{
+			"canonical": "github.com/jacobsa/gcloud/gcs/gcsfake",
+			"comment": "",
+			"local": "vendor/github.com/jacobsa/gcloud/gcs/gcsfake",
+			"revision": "acc256f3e729b9704653b94ab90e326147b8feb2",
+			"revisionTime": "2015-08-05T16:28:48+10:00"
+		},
+		{
+			"canonical": "github.com/jacobsa/gcloud/gcs/gcsutil",
+			"comment": "",
+			"local": "vendor/github.com/jacobsa/gcloud/gcs/gcsutil",
+			"revision": "acc256f3e729b9704653b94ab90e326147b8feb2",
+			"revisionTime": "2015-08-05T16:28:48+10:00"
+		},
+		{
+			"canonical": "github.com/jacobsa/gcloud/httputil",
+			"comment": "",
+			"local": "vendor/github.com/jacobsa/gcloud/httputil",
+			"revision": "acc256f3e729b9704653b94ab90e326147b8feb2",
+			"revisionTime": "2015-08-05T16:28:48+10:00"
+		},
+		{
+			"canonical": "github.com/jacobsa/oglematchers",
+			"comment": "",
+			"local": "vendor/github.com/jacobsa/oglematchers",
+			"revision": "141901ea67cd4769c6800aa7bfdfc558fa22bda5",
+			"revisionTime": "2015-07-20T10:07:06+10:00"
+		},
+		{
+			"canonical": "github.com/jacobsa/oglemock",
+			"comment": "",
+			"local": "vendor/github.com/jacobsa/oglemock",
+			"revision": "b320e9d68125bec1159ac587792648ff06eaa2cc",
+			"revisionTime": "2015-07-20T10:07:30+10:00"
+		},
+		{
+			"canonical": "github.com/jacobsa/oglemock/sample/mock_io",
+			"comment": "",
+			"local": "vendor/github.com/jacobsa/oglemock/sample/mock_io",
+			"revision": "b320e9d68125bec1159ac587792648ff06eaa2cc",
+			"revisionTime": "2015-07-20T10:07:30+10:00"
+		},
+		{
+			"canonical": "github.com/jacobsa/ogletest",
+			"comment": "",
+			"local": "vendor/github.com/jacobsa/ogletest",
+			"revision": "4e03a8595ea739995b62c031bf15e228fd1ee4ed",
+			"revisionTime": "2015-07-20T10:06:19+10:00"
+		},
+		{
+			"canonical": "github.com/jacobsa/ogletest/srcutil",
+			"comment": "",
+			"local": "vendor/github.com/jacobsa/ogletest/srcutil",
+			"revision": "4e03a8595ea739995b62c031bf15e228fd1ee4ed",
+			"revisionTime": "2015-07-20T10:06:19+10:00"
+		},
+		{
+			"canonical": "github.com/jacobsa/reqtrace",
+			"comment": "",
+			"local": "vendor/github.com/jacobsa/reqtrace",
+			"revision": "245c9e0234cb2ad542483a336324e982f1a22934",
+			"revisionTime": "2015-05-05T14:38:53+10:00"
+		},
+		{
+			"canonical": "github.com/jacobsa/syncutil",
+			"comment": "",
+			"local": "vendor/github.com/jacobsa/syncutil",
+			"revision": "bcec119027cd5d9dba5061cc3180e382f608ef47",
+			"revisionTime": "2015-07-20T10:07:43+10:00"
+		},
+		{
+			"canonical": "github.com/jacobsa/timeutil",
+			"comment": "",
+			"local": "vendor/github.com/jacobsa/timeutil",
+			"revision": "1999930e87ddbd73a184f26ed202ec52d5a7c4aa",
+			"revisionTime": "2015-07-20T10:05:28+10:00"
+		},
+		{
+			"canonical": "github.com/jacobsa/util/lrucache",
+			"comment": "",
+			"local": "vendor/github.com/jacobsa/util/lrucache",
+			"revision": "459ffc8a6aae5c79645c04b6b78a6a4d7b194897",
+			"revisionTime": "2015-07-20T10:05:42+10:00"
+		},
+		{
+			"canonical": "github.com/jacobsa/util/password",
+			"comment": "",
+			"local": "vendor/github.com/jacobsa/util/password",
+			"revision": "459ffc8a6aae5c79645c04b6b78a6a4d7b194897",
+			"revisionTime": "2015-07-20T10:05:42+10:00"
+		},
+		{
+			"canonical": "golang.org/x/crypto/pbkdf2",
+			"comment": "",
+			"local": "vendor/golang.org/x/crypto/pbkdf2",
+			"revision": "83f1503f771a82af8a31f358eb825e9efb5dae6c",
+			"revisionTime": "2015-08-07T17:38:44-04:00"
+		},
+		{
+			"canonical": "golang.org/x/net/context",
+			"comment": "",
+			"local": "vendor/golang.org/x/net/context",
+			"revision": "1bc0720082d79ce7ffc6ef6e523d00d46b0dee45",
+			"revisionTime": "2015-07-28T17:02:49+10:00"
+		},
+		{
+			"canonical": "golang.org/x/oauth2",
+			"comment": "",
+			"local": "vendor/golang.org/x/oauth2",
+			"revision": "8914e5017ca260f2a3a1575b1e6868874050d95e",
+			"revisionTime": "2015-07-01T13:53:18+02:00"
+		},
+		{
+			"canonical": "golang.org/x/oauth2/google",
+			"comment": "",
+			"local": "vendor/golang.org/x/oauth2/google",
+			"revision": "8914e5017ca260f2a3a1575b1e6868874050d95e",
+			"revisionTime": "2015-07-01T13:53:18+02:00"
+		},
+		{
+			"canonical": "golang.org/x/oauth2/internal",
+			"comment": "",
+			"local": "vendor/golang.org/x/oauth2/internal",
+			"revision": "8914e5017ca260f2a3a1575b1e6868874050d95e",
+			"revisionTime": "2015-07-01T13:53:18+02:00"
+		},
+		{
+			"canonical": "golang.org/x/oauth2/jws",
+			"comment": "",
+			"local": "vendor/golang.org/x/oauth2/jws",
+			"revision": "8914e5017ca260f2a3a1575b1e6868874050d95e",
+			"revisionTime": "2015-07-01T13:53:18+02:00"
+		},
+		{
+			"canonical": "golang.org/x/oauth2/jwt",
+			"comment": "",
+			"local": "vendor/golang.org/x/oauth2/jwt",
+			"revision": "8914e5017ca260f2a3a1575b1e6868874050d95e",
+			"revisionTime": "2015-07-01T13:53:18+02:00"
+		},
+		{
+			"canonical": "google.golang.org/api/googleapi",
+			"comment": "",
+			"local": "vendor/google.golang.org/api/googleapi",
+			"revision": "0a735f7ec81c85ce7ec31bf7a67e125ef62266ec",
+			"revisionTime": "2015-01-18T15:16:46-08:00"
+		},
+		{
+			"canonical": "google.golang.org/api/googleapi/internal/uritemplates",
+			"comment": "",
+			"local": "vendor/google.golang.org/api/googleapi/internal/uritemplates",
+			"revision": "0a735f7ec81c85ce7ec31bf7a67e125ef62266ec",
+			"revisionTime": "2015-01-18T15:16:46-08:00"
+		},
+		{
+			"canonical": "google.golang.org/api/storage/v1",
+			"comment": "",
+			"local": "vendor/google.golang.org/api/storage/v1",
+			"revision": "0a735f7ec81c85ce7ec31bf7a67e125ef62266ec",
+			"revisionTime": "2015-01-18T15:16:46-08:00"
+		},
+		{
+			"canonical": "google.golang.org/cloud/compute/metadata",
+			"comment": "",
+			"local": "vendor/google.golang.org/cloud/compute/metadata",
+			"revision": "e34a32f9b0ecbc0784865fb2d47f3818c09521d4",
+			"revisionTime": "2015-07-29T23:39:00-07:00"
+		},
+		{
+			"canonical": "google.golang.org/cloud/internal",
+			"comment": "",
+			"local": "vendor/google.golang.org/cloud/internal",
+			"revision": "e34a32f9b0ecbc0784865fb2d47f3818c09521d4",
+			"revisionTime": "2015-07-29T23:39:00-07:00"
+		}
+	]
+}
