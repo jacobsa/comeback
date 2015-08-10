@@ -71,14 +71,26 @@ func (fh *fileHandle) checkInvariants() {
 // Public interface
 ////////////////////////////////////////////////////////////////////////
 
-// LOCKS_EXCLUDED(f)
+// LOCKS_EXCLUDED(fh)
 func (fh *fileHandle) Lock() {
-	f.mu.Lock()
+	fh.mu.Lock()
 }
 
-// LOCKS_REQUIRED(f)
+// LOCKS_REQUIRED(fh)
 func (fh *fileHandle) Unlock() {
-	f.mu.Unlock()
+	fh.mu.Unlock()
+}
+
+// Destroy any local state. The handle must not be used again.
+//
+// LOCKS_EXCLUDED(fh)
+func (fh *fileHandle) Destroy() {
+	// Close the (anonymous) file, which will have the effect of deleting its
+	// content.
+	if fh.file != nil {
+		fh.file.Close()
+		fh.file = nil
+	}
 }
 
 // Like io.ReaderAt, but with context support.

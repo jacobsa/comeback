@@ -41,10 +41,11 @@ func NewFileSystem(
 	blobStore blob.Store) (fs fuseutil.FileSystem, err error) {
 	// Create the file system.
 	typed := &fileSystem{
-		uid:       uid,
-		gid:       gid,
-		blobStore: blobStore,
-		inodes:    make(map[fuseops.InodeID]*inodeRecord),
+		uid:         uid,
+		gid:         gid,
+		blobStore:   blobStore,
+		inodes:      make(map[fuseops.InodeID]*inodeRecord),
+		fileHandles: make(map[fuseops.HandleID]*fileHandle),
 	}
 
 	fs = typed
@@ -92,16 +93,17 @@ type fileSystem struct {
 	// Let FS be the file system. Define a strict partial ordering < by:
 	//
 	// *   For any inode I,  I < FS.
+	// *   For any handle H,  H < FS.
 	//
 	// and follow the rule "acquire B while holding A only if A < B".
 	//
 	// In other words:
 	//
-	// *   Don't hold more than one inode lock at a time.
-	// *   Don't acquire an inode lock before the file system lock.
+	// *   Don't hold more than one inode or handle lock at a time.
+	// *   Don't acquire an inode or handle lock before the file system lock.
 	//
-	// The intuition is that inode locks are held for long operations, but the
-	// file system lock is lightweight and must not be.
+	// The intuition is that inode and handle locks are held for long operations,
+	// but the file system lock is lightweight and must not be.
 	mu syncutil.InvariantMutex
 
 	// The inodes we currently know, along with the lookup counts. The inode IDs
@@ -111,6 +113,18 @@ type fileSystem struct {
 	//
 	// GUARDED_BY(mu)
 	inodes map[fuseops.InodeID]*inodeRecord
+
+	// The next handle ID that we will assign.
+	//
+	// GUARDED_BY(mu)
+	nextHandleID fuseops.HandleID
+
+	// In-flight file handles.
+	//
+	// INVARIANT: For each k, k < nextHandleID
+	//
+	// GUARDED_BY(mu)
+	fileHandles map[fuseops.HandleID]*fileHandle
 }
 
 // An inode and its lookup count.
@@ -125,6 +139,13 @@ func (fs *fileSystem) checkInvariants() {
 	for k, v := range fs.inodes {
 		if !(v.lookupCount > 0) {
 			log.Fatalf("Inode %d has invalid lookupCount %d", k, v.lookupCount)
+		}
+	}
+
+	// INVARIANT: For each k, k < nextHandleID
+	for k, _ := range fs.fileHandles {
+		if !(k < fs.nextHandleID) {
+			log.Fatalf("Unexpected handle ID: %d", k)
 		}
 	}
 }
@@ -364,6 +385,20 @@ func (fs *fileSystem) ReadDir(
 	d.Lock()
 	err = d.Read(ctx, op)
 	d.Unlock()
+
+	return
+}
+
+// LOCKS_EXCLUDED(fs)
+func (fs *fileSystem) ReleaseFileHandle(
+	ctx context.Context,
+	op *fuseops.ReleaseFileHandleOp) (err error) {
+	fs.Lock()
+	defer fs.Unlock()
+
+	fh := fs.fileHandles[op.Handle]
+	fh.Destroy()
+	delete(fs.fileHandles, op.Handle)
 
 	return
 }
