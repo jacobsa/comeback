@@ -52,14 +52,14 @@ func (dh *dirHandle) checkInvariants() {
 // Public interface
 ////////////////////////////////////////////////////////////////////////
 
-// LOCKS_EXCLUDED(d)
+// LOCKS_EXCLUDED(dh)
 func (dh *dirHandle) Lock() {
-	d.mu.Lock()
+	dh.mu.Lock()
 }
 
-// LOCKS_REQUIRED(d)
+// LOCKS_REQUIRED(dh)
 func (dh *dirHandle) Unlock() {
-	d.mu.Unlock()
+	dh.mu.Unlock()
 }
 
 // Throw away any local state. The handle must not be used again.
