@@ -26,6 +26,7 @@ var commands = []*Command{
 	cmdDeleteGarbage,
 	cmdGC,
 	cmdList,
+	cmdMount,
 	cmdRestore,
 	cmdSave,
 	cmdVerify,
