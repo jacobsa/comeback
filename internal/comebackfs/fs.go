@@ -16,6 +16,8 @@
 package comebackfs
 
 import (
+	"errors"
+	"fmt"
 	"log"
 	"os"
 	"time"
@@ -23,6 +25,8 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/jacobsa/comeback/internal/blob"
+	"github.com/jacobsa/comeback/internal/fs"
+	"github.com/jacobsa/fuse"
 	"github.com/jacobsa/fuse/fuseops"
 	"github.com/jacobsa/fuse/fuseutil"
 	"github.com/jacobsa/syncutil"
@@ -137,19 +141,19 @@ func (fs *fileSystem) checkInvariants() {
 	}
 }
 
-// Register the supplied inode, returning its ID. Set the initial lookup count
-// to one.
+// Given a directory entry within the file system, look up an inode for the
+// entry if it already exists. If not, create and register one. In either case,
+// increment the lookup count.
 //
 // LOCKS_REQUIRED(fs)
-func (fs *fileSystem) registerInode(in inode) (id fuseops.InodeID) {
-	id = fs.nextInodeID
-	fs.nextInodeID++
+func (fs *fileSystem) lookUpOrCreateInode(e *fs.DirectoryEntry) (
+	in inode,
+	err error) {
+}
 
-	fs.inodes[id] = &inodeRecord{
-		lookupCount: 1,
-		in:          in,
-	}
-
+// Create an inode for the supplied directory entry.
+func createInode(e fs.DirectoryEntry) (in inode, err error) {
+	err = errors.New("TODO")
 	return
 }
 
@@ -188,6 +192,58 @@ func (fs *fileSystem) GetInodeAttributes(
 	// we are immutable.
 	op.Attributes = in.Attributes()
 	op.AttributesExpiration = time.Now().Add(24 * time.Hour)
+
+	return
+}
+
+// LOCKS_EXCLUDED(fs)
+func (fs *fileSystem) LookUpInode(
+	ctx context.Context,
+	op *fuseops.LookUpInodeOp) (err error) {
+	// Find the parent.
+	fs.Lock()
+	parentRec, _ := fs.inodes[op.Parent]
+	fs.Unlock()
+
+	if parentRec == nil {
+		log.Fatalf("Inode %d not found", op.Parent)
+	}
+
+	parent := rec.in.(*dirInode)
+
+	// Find an entry for the child within it.
+	parent.Lock()
+	e, err := parent.LookUpChild(ctx, op.Name)
+	parent.Unlock()
+
+	if err != nil {
+		err = fmt.Errorf("LookUpChild: %v", err)
+		return
+	}
+
+	if e == nil {
+		err = fuse.ENOENT
+		return
+	}
+
+	// Find or create the inode.
+	fs.Lock()
+	in, err := fs.lookUpOrCreateInode(e)
+	fs.Unlock()
+
+	if err != nil {
+		err = fmt.Errorf("lookUpOrCreateInode: %v", err)
+		return
+	}
+
+	// Fill out the response.
+	in.Lock()
+	defer in.Unlock()
+
+	op.Entry.Child = e.Inode
+	op.Entry.Attributes = in.Attributes()
+	op.AttributesExpiration = time.Now().Add(24 * time.Hour)
+	op.EntryExpiration = time.Now().Add(24 * time.Hour)
 
 	return
 }

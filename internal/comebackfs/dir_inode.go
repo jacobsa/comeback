@@ -205,3 +205,14 @@ func (d *dirInode) Read(
 
 	return
 }
+
+// Look up the supplied child name, returning an entry if found. If not found,
+// return nil.
+//
+// LOCKS_REQUIRED(d)
+func (d *dirInode) LookUpChild(
+	ctx context.Context,
+	name string) (e *fs.DirectoryEntry, err error) {
+	err = errors.New("TODO")
+	return
+}
