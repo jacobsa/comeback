@@ -21,11 +21,15 @@ import (
 	"log"
 	"os"
 
+	"golang.org/x/net/context"
+
 	"github.com/jacobsa/comeback/internal/blob"
 	"github.com/jacobsa/comeback/internal/comebackfs"
 	"github.com/jacobsa/comeback/internal/registry"
 	"github.com/jacobsa/comeback/internal/util"
 	"github.com/jacobsa/comeback/internal/wiring"
+	"github.com/jacobsa/fuse"
+	"github.com/jacobsa/fuse/fuseutil"
 )
 
 var cmdMount = &Command{
@@ -42,17 +46,24 @@ func doMount(args []string) (err error) {
 	crypter := getCrypter()
 
 	// Check usage.
-	if len(args) > 1 {
-		err = fmt.Errorf("Usage: %s [score]", os.Args[0])
+	if len(args) < 1 || len(args) > 2 {
+		err = fmt.Errorf("Usage: %s mount_point [score]", os.Args[0])
 		return
+	}
+
+	mountPoint := args[0]
+
+	var hexScore string
+	if len(args) > 1 {
+		hexScore = args[1]
 	}
 
 	// Figure out which score to mount.
 	var score blob.Score
-	if len(args) > 0 {
-		score, err = blob.ParseHexScore(args[0])
+	if hexScore != "" {
+		score, err = blob.ParseHexScore(hexScore)
 		if err != nil {
-			err = fmt.Errorf("ParseHexScore(%q): %v", args[0], err)
+			err = fmt.Errorf("ParseHexScore(%q): %v", hexScore, err)
 			return
 		}
 	} else {
@@ -91,13 +102,40 @@ func doMount(args []string) (err error) {
 		util.NewStringSet())
 
 	// Create the file system.
-	_, err = comebackfs.NewFileSystem(score, blobStore)
+	fs, err := comebackfs.NewFileSystem(score, blobStore)
 	if err != nil {
 		err = fmt.Errorf("NewFileSystem: %v", err)
 		return
 	}
 
-	err = errors.New("TODO")
+	// Mount it.
+	cfg := &fuse.MountConfig{
+		FSName:      fmt.Sprintf("comeback-%s", score.Hex()),
+		ReadOnly:    true,
+		ErrorLogger: log.New(os.Stderr, "fuse: ", log.Flags()),
+
+		// Everything is immutable, so let the kernel cache to its heart's content.
+		EnableVnodeCaching: true,
+	}
+
+	mfs, err := fuse.Mount(
+		mountPoint,
+		fuseutil.NewFileSystemServer(fs),
+		cfg)
+
+	if err != nil {
+		err = fmt.Errorf("Mount: %v", err)
+		return
+	}
+
+	// Wait for unmount.
+	err = mfs.Join(context.Background())
+	if err != nil {
+		err = fmt.Errorf("Join: %v", err)
+		return
+	}
+
+	log.Println("Exiting successfully.")
 	return
 }
 
