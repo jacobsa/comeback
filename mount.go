@@ -82,6 +82,8 @@ func doMount(args []string) (err error) {
 		score = j.Score
 	}
 
+	log.Printf("Mounting score %s.", score.Hex())
+
 	// Create the blob store.
 	blobStore, err := wiring.MakeBlobStore(
 		bucket,
