@@ -406,6 +406,15 @@ func (fs *fileSystem) ReadDir(
 }
 
 // LOCKS_EXCLUDED(fs)
+func (fs *fileSystem) ReleaseDirHandle(
+	ctx context.Context,
+	op *fuseops.ReleaseDirHandleOp) (err error) {
+	// Nothing to do. We implement this only to suppress "not implemented" errors
+	// in the error log.
+	return
+}
+
+// LOCKS_EXCLUDED(fs)
 func (fs *fileSystem) OpenFile(
 	ctx context.Context,
 	op *fuseops.OpenFileOp) (err error) {
