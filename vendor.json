@@ -66,13 +66,6 @@
 			"revisionTime": "2015-08-05T16:28:48+10:00"
 		},
 		{
-			"canonical": "github.com/jacobsa/gcloud/gcs/gcstesting",
-			"comment": "",
-			"local": "vendor/github.com/jacobsa/gcloud/gcs/gcstesting",
-			"revision": "acc256f3e729b9704653b94ab90e326147b8feb2",
-			"revisionTime": "2015-08-05T16:28:48+10:00"
-		},
-		{
 			"canonical": "github.com/jacobsa/gcloud/gcs/gcsutil",
 			"comment": "",
 			"local": "vendor/github.com/jacobsa/gcloud/gcs/gcsutil",
