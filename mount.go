@@ -21,6 +21,8 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"os/user"
+	"strconv"
 
 	"golang.org/x/net/context"
 
@@ -47,6 +49,10 @@ func init() {
 	cmdMount.Run = runMount // Break flag-related dependency loop.
 }
 
+////////////////////////////////////////////////////////////////////////
+// Helpers
+////////////////////////////////////////////////////////////////////////
+
 func registerSIGINTHandler(mountPoint string) {
 	// Register for SIGINT.
 	signalChan := make(chan os.Signal, 1)
@@ -68,6 +74,37 @@ func registerSIGINTHandler(mountPoint string) {
 		}
 	}()
 }
+
+// Return the UID and GID of the current process.
+func currentUser() (uid uint32, gid uint32, err error) {
+	user, err := user.Current()
+	if err != nil {
+		panic(err)
+	}
+
+	// Parse the UID.
+	uid64, err := strconv.ParseUint(user.Uid, 10, 32)
+	if err != nil {
+		err = fmt.Errorf("Parsing UID (%s): %v", user.Uid, err)
+		return
+	}
+
+	// Parse the GID.
+	gid64, err := strconv.ParseUint(user.Gid, 10, 32)
+	if err != nil {
+		err = fmt.Errorf("Parsing GID (%s): %v", user.Gid, err)
+		return
+	}
+
+	uid = uint32(uid64)
+	gid = uint32(gid64)
+
+	return
+}
+
+////////////////////////////////////////////////////////////////////////
+// Command
+////////////////////////////////////////////////////////////////////////
 
 func doMount(args []string) (err error) {
 	// Enable invariant checking for the file system.
@@ -133,8 +170,15 @@ func doMount(args []string) (err error) {
 		crypter,
 		util.NewStringSet())
 
+	// Choose permission settings.
+	uid, gid, err := currentUser()
+	if err != nil {
+		err = fmt.Errorf("currentUser: %v", err)
+		return
+	}
+
 	// Create the file system.
-	fs, err := comebackfs.NewFileSystem(score, blobStore)
+	fs, err := comebackfs.NewFileSystem(uid, gid, score, blobStore)
 	if err != nil {
 		err = fmt.Errorf("NewFileSystem: %v", err)
 		return
