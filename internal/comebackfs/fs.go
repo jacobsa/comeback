@@ -18,6 +18,8 @@ package comebackfs
 import (
 	"log"
 
+	"golang.org/x/net/context"
+
 	"github.com/jacobsa/comeback/internal/blob"
 	"github.com/jacobsa/fuse/fuseops"
 	"github.com/jacobsa/fuse/fuseutil"
@@ -158,4 +160,31 @@ func (fs *fileSystem) Lock() {
 // LOCKS_REQUIRED(fs)
 func (fs *fileSystem) Unlock() {
 	fs.mu.Unlock()
+}
+
+// LOCKS_EXCLUDED(fs)
+func (fs *fileSystem) ForgetInode(
+	ctx context.Context,
+	op *fuseops.ForgetInodeOp) (err error) {
+	// Find the inode.
+	rec := &fs.inodes[op.Inode]
+	if rec.inode == nil {
+		log.Fatalf("Inode %d not found", op.Inode)
+	}
+
+	// Decrement its lookup count.
+	if rec.lookupCount < op.N {
+		log.Fatalf(
+			"Inode %d has lookup count %d, decrementing by %d",
+			op.Inode,
+			rec.lookupCount,
+			op.N)
+	}
+
+	rec.lookupCount -= op.N
+	if rec.lookupCount == 0 {
+		delete(fs.inodes, op.Inode)
+	}
+
+	return
 }
