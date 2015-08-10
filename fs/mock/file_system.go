@@ -8,13 +8,14 @@ package mock_fs
 
 import (
 	fmt "fmt"
-	fs "github.com/jacobsa/comeback/fs"
-	oglemock "github.com/jacobsa/oglemock"
 	io "io"
 	os "os"
 	runtime "runtime"
 	time "time"
 	unsafe "unsafe"
+
+	fs "github.com/jacobsa/comeback/fs"
+	oglemock "github.com/jacobsa/oglemock"
 )
 
 type MockFileSystem interface {

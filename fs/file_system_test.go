@@ -16,11 +16,6 @@
 package fs_test
 
 import (
-	"github.com/jacobsa/comeback/fs"
-	"github.com/jacobsa/comeback/sys"
-	"github.com/jacobsa/comeback/sys/group"
-	"github.com/jacobsa/oglemock"
-	. "github.com/jacobsa/ogletest"
 	"io/ioutil"
 	"log"
 	"os"
@@ -28,6 +23,12 @@ import (
 	"strconv"
 	"syscall"
 	"testing"
+
+	"github.com/jacobsa/comeback/fs"
+	"github.com/jacobsa/comeback/sys"
+	"github.com/jacobsa/comeback/sys/group"
+	"github.com/jacobsa/oglemock"
+	. "github.com/jacobsa/ogletest"
 )
 
 func TestFileSystemTest(t *testing.T) { RunTests(t) }

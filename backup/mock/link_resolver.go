@@ -8,10 +8,11 @@ package mock_backup
 
 import (
 	fmt "fmt"
-	backup "github.com/jacobsa/comeback/backup"
-	oglemock "github.com/jacobsa/oglemock"
 	runtime "runtime"
 	unsafe "unsafe"
+
+	backup "github.com/jacobsa/comeback/backup"
+	oglemock "github.com/jacobsa/oglemock"
 )
 
 type MockLinkResolver interface {

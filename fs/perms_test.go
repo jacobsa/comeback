@@ -16,13 +16,14 @@
 package fs_test
 
 import (
-	"github.com/jacobsa/comeback/fs"
-	. "github.com/jacobsa/oglematchers"
-	. "github.com/jacobsa/ogletest"
 	"io/ioutil"
 	"os"
 	"path"
 	"testing"
+
+	"github.com/jacobsa/comeback/fs"
+	. "github.com/jacobsa/oglematchers"
+	. "github.com/jacobsa/ogletest"
 )
 
 func TestPerms(t *testing.T) { RunTests(t) }

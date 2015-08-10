@@ -15,8 +15,6 @@
 
 package cache
 
-import ()
-
 const KeyLength = 16
 
 type Key [KeyLength]byte

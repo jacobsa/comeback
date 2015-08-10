@@ -19,11 +19,12 @@ import (
 	"crypto/md5"
 	"encoding/gob"
 	"fmt"
+	"os"
+	"time"
+
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/cache"
 	"github.com/jacobsa/comeback/sys"
-	"os"
-	"time"
 )
 
 // A map from stat info for a file to a set of scores that represented that

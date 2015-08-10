@@ -16,10 +16,11 @@
 package crypto_test
 
 import (
+	"testing"
+
 	"github.com/jacobsa/comeback/crypto"
 	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
-	"testing"
 )
 
 func TestCrypter(t *testing.T) { RunTests(t) }

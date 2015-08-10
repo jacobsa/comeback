@@ -16,12 +16,13 @@
 package fs_test
 
 import (
-	. "github.com/jacobsa/oglematchers"
-	. "github.com/jacobsa/ogletest"
 	"io/ioutil"
 	"os"
 	"path"
 	"testing"
+
+	. "github.com/jacobsa/oglematchers"
+	. "github.com/jacobsa/ogletest"
 )
 
 func TestWrite(t *testing.T) { RunTests(t) }

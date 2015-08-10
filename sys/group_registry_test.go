@@ -16,13 +16,14 @@
 package sys_test
 
 import (
+	"log"
+	"strconv"
+	"testing"
+
 	"github.com/jacobsa/comeback/sys"
 	"github.com/jacobsa/comeback/sys/group"
 	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
-	"log"
-	"strconv"
-	"testing"
 )
 
 func TestGroupRegistry(t *testing.T) { RunTests(t) }

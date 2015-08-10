@@ -8,10 +8,11 @@ package mock_io
 
 import (
 	fmt "fmt"
-	oglemock "github.com/jacobsa/oglemock"
 	io "io"
 	runtime "runtime"
 	unsafe "unsafe"
+
+	oglemock "github.com/jacobsa/oglemock"
 )
 
 type MockReader interface {

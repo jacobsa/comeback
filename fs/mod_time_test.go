@@ -16,14 +16,15 @@
 package fs_test
 
 import (
-	"github.com/jacobsa/comeback/fs"
-	. "github.com/jacobsa/oglematchers"
-	. "github.com/jacobsa/ogletest"
 	"io/ioutil"
 	"os"
 	"path"
 	"testing"
 	"time"
+
+	"github.com/jacobsa/comeback/fs"
+	. "github.com/jacobsa/oglematchers"
+	. "github.com/jacobsa/ogletest"
 )
 
 func TestModTime(t *testing.T) { RunTests(t) }

@@ -16,10 +16,11 @@
 package fs
 
 import (
-	"github.com/jacobsa/comeback/sys"
 	"io"
 	"os"
 	"time"
+
+	"github.com/jacobsa/comeback/sys"
 )
 
 // FileSystem represents operations performed on a real file system, but is an

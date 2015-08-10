@@ -8,10 +8,11 @@ package mock_crypto
 
 import (
 	fmt "fmt"
-	crypto "github.com/jacobsa/comeback/crypto"
-	oglemock "github.com/jacobsa/oglemock"
 	runtime "runtime"
 	unsafe "unsafe"
+
+	crypto "github.com/jacobsa/comeback/crypto"
+	oglemock "github.com/jacobsa/oglemock"
 )
 
 type MockKeyDeriver interface {

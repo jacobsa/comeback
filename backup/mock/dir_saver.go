@@ -8,12 +8,13 @@ package mock_backup
 
 import (
 	fmt "fmt"
-	backup "github.com/jacobsa/comeback/backup"
-	blob "github.com/jacobsa/comeback/blob"
-	oglemock "github.com/jacobsa/oglemock"
 	regexp "regexp"
 	runtime "runtime"
 	unsafe "unsafe"
+
+	backup "github.com/jacobsa/comeback/backup"
+	blob "github.com/jacobsa/comeback/blob"
+	oglemock "github.com/jacobsa/oglemock"
 )
 
 type MockDirectorySaver interface {

@@ -17,9 +17,10 @@ package fs
 
 import (
 	"fmt"
-	"github.com/jacobsa/comeback/sys"
 	"os"
 	"syscall"
+
+	"github.com/jacobsa/comeback/sys"
 )
 
 const (

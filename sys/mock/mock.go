@@ -8,10 +8,11 @@ package mock_sys
 
 import (
 	fmt "fmt"
-	sys "github.com/jacobsa/comeback/sys"
-	oglemock "github.com/jacobsa/oglemock"
 	runtime "runtime"
 	unsafe "unsafe"
+
+	sys "github.com/jacobsa/comeback/sys"
+	oglemock "github.com/jacobsa/oglemock"
 )
 
 type MockUserRegistry interface {

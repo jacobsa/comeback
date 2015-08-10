@@ -19,8 +19,9 @@ package sys
 
 import (
 	"fmt"
-	"github.com/jacobsa/comeback/sys/group"
 	"strconv"
+
+	"github.com/jacobsa/comeback/sys/group"
 )
 
 // A system group ID, aka GID.

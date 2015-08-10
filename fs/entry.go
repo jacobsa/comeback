@@ -16,10 +16,11 @@
 package fs
 
 import (
-	"github.com/jacobsa/comeback/blob"
-	"github.com/jacobsa/comeback/sys"
 	"os"
 	"time"
+
+	"github.com/jacobsa/comeback/blob"
+	"github.com/jacobsa/comeback/sys"
 )
 
 type EntryType uint32

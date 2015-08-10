@@ -16,13 +16,14 @@
 package sys_test
 
 import (
-	"github.com/jacobsa/comeback/sys"
-	. "github.com/jacobsa/oglematchers"
-	. "github.com/jacobsa/ogletest"
 	"log"
 	"os/user"
 	"strconv"
 	"testing"
+
+	"github.com/jacobsa/comeback/sys"
+	. "github.com/jacobsa/oglematchers"
+	. "github.com/jacobsa/ogletest"
 )
 
 func TestUserRegistry(t *testing.T) { RunTests(t) }

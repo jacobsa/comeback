@@ -18,11 +18,12 @@ package state_test
 import (
 	"bytes"
 	"encoding/gob"
+	"testing"
+
 	"github.com/jacobsa/comeback/blob"
 	"github.com/jacobsa/comeback/state"
 	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
-	"testing"
 )
 
 func TestScoreMap(t *testing.T) { RunTests(t) }

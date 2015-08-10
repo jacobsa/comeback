@@ -19,13 +19,14 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
-	"github.com/jacobsa/comeback/cache"
-	. "github.com/jacobsa/oglematchers"
-	. "github.com/jacobsa/ogletest"
 	"runtime"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/jacobsa/comeback/cache"
+	. "github.com/jacobsa/oglematchers"
+	. "github.com/jacobsa/ogletest"
 )
 
 const cacheCapacity = 3

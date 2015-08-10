@@ -17,12 +17,6 @@ package fs_test
 
 import (
 	"errors"
-	"github.com/jacobsa/comeback/fs"
-	"github.com/jacobsa/comeback/sys"
-	"github.com/jacobsa/comeback/sys/mock"
-	. "github.com/jacobsa/oglematchers"
-	"github.com/jacobsa/oglemock"
-	. "github.com/jacobsa/ogletest"
 	"io/ioutil"
 	"net"
 	"os"
@@ -30,6 +24,13 @@ import (
 	"syscall"
 	"testing"
 	"time"
+
+	"github.com/jacobsa/comeback/fs"
+	"github.com/jacobsa/comeback/sys"
+	"github.com/jacobsa/comeback/sys/mock"
+	. "github.com/jacobsa/oglematchers"
+	"github.com/jacobsa/oglemock"
+	. "github.com/jacobsa/ogletest"
 )
 
 func TestStat(t *testing.T) { RunTests(t) }

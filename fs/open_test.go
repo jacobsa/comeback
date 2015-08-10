@@ -16,11 +16,12 @@
 package fs_test
 
 import (
-	. "github.com/jacobsa/oglematchers"
-	. "github.com/jacobsa/ogletest"
 	"io/ioutil"
 	"path"
 	"testing"
+
+	. "github.com/jacobsa/oglematchers"
+	. "github.com/jacobsa/ogletest"
 )
 
 func TestOpenForReading(t *testing.T) { RunTests(t) }

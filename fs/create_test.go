@@ -16,14 +16,15 @@
 package fs_test
 
 import (
-	"github.com/jacobsa/comeback/fs"
-	. "github.com/jacobsa/oglematchers"
-	. "github.com/jacobsa/ogletest"
 	"io"
 	"io/ioutil"
 	"os"
 	"path"
 	"testing"
+
+	"github.com/jacobsa/comeback/fs"
+	. "github.com/jacobsa/oglematchers"
+	. "github.com/jacobsa/ogletest"
 )
 
 func TestCreate(t *testing.T) { RunTests(t) }
