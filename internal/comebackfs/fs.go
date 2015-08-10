@@ -193,6 +193,22 @@ func createInode(
 
 		return
 
+	case fs.TypeFile:
+		in = newFileInode(
+			fuseops.InodeAttributes{
+				Size:  e.Size,
+				Nlink: 1,
+				Mode:  e.Permissions,
+				Mtime: e.MTime,
+				Ctime: e.MTime,
+				Uid:   uid,
+				Gid:   gid,
+			},
+			e.Scores,
+			blobStore)
+
+		return
+
 	default:
 		err = fmt.Errorf("Don't know how to handle type %d", e.Type)
 		return
