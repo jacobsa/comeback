@@ -37,8 +37,8 @@ func newDirInode(
 	score blob.Score,
 	blobStore blob.Store) (d *dirInode) {
 	d = &dirInode{
-		score:     score,
 		blobStore: blobStore,
+		score:     score,
 		attrs:     attrs,
 	}
 
@@ -52,13 +52,13 @@ func newDirInode(
 ////////////////////////////////////////////////////////////////////////
 
 type dirInode struct {
-	score     blob.Score
 	blobStore blob.Store
 
 	/////////////////////////
 	// Constant data
 	/////////////////////////
 
+	score blob.Score
 	attrs fuseops.InodeAttributes
 
 	/////////////////////////
