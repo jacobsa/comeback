@@ -67,6 +67,7 @@ func makeEntryProto(
 			Second:     proto.Int64(entry.MTime.Unix()),
 			Nanosecond: proto.Uint32(uint32(entry.MTime.Nanosecond())),
 		},
+		Size:  proto.Uint64(entry.Size),
 		Inode: proto.Uint64(entry.Inode),
 		Blob:  blobs,
 	}

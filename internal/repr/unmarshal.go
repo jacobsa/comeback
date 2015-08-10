@@ -75,6 +75,7 @@ func convertEntryProto(
 	entry.Username = entryProto.Username
 	entry.Gid = sys.GroupId(entryProto.GetGid())
 	entry.Groupname = entryProto.Groupname
+	entry.Size = entryProto.GetSize()
 	entry.Inode = entryProto.GetInode()
 	entry.HardLinkTarget = entryProto.HardLinkTarget
 
