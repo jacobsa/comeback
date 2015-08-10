@@ -525,18 +525,23 @@ func (t *SaveAndRestoreTest) HardLinks() {
 	err = t.restore(score)
 	AssertEq(nil, err)
 
-	// Check.
+	// The files should have the same contents.
 	b, err := ioutil.ReadFile(path.Join(t.dst, "foo"))
 	AssertEq(nil, err)
 	ExpectEq(contents, string(b))
 
+	b, err = ioutil.ReadFile(path.Join(t.dst, "bar"))
+	AssertEq(nil, err)
+	ExpectEq(contents, string(b))
+
+	// But they should be independent.
 	fi0, err := os.Stat(path.Join(t.dst, "foo"))
 	AssertEq(nil, err)
 
 	fi1, err := os.Stat(path.Join(t.dst, "bar"))
 	AssertEq(nil, err)
 
-	ExpectTrue(os.SameFile(fi0, fi1))
+	ExpectFalse(os.SameFile(fi0, fi1))
 }
 
 func (t *SaveAndRestoreTest) Symlinks() {
