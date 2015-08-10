@@ -745,21 +745,27 @@ func (t *SaveAndRestoreTest) IdenticalDirectoryContents() {
 	var fi os.FileInfo
 	var err error
 
-	// Create two directories with identical contents.
 	names := []string{"dir0", "dir1"}
 	mtime := time.Date(2015, 4, 5, 2, 15, 0, 0, time.Local)
 
-	for _, name := range names {
-		err = os.Mkdir(path.Join(t.src, name), 0700)
-		AssertEq(nil, err)
+	// Create the first directory and populate it.
+	err = os.Mkdir(path.Join(t.src, names[0]), 0700)
+	AssertEq(nil, err)
 
-		filePath := path.Join(t.src, name, "foo")
-		err = ioutil.WriteFile(filePath, []byte("blah"), 0400)
-		AssertEq(nil, err)
+	file0 := path.Join(t.src, names[0], "foo")
+	err = ioutil.WriteFile(file0, []byte("blah"), 0400)
+	AssertEq(nil, err)
 
-		err = os.Chtimes(filePath, mtime, mtime)
-		AssertEq(nil, err)
-	}
+	err = os.Chtimes(file0, mtime, mtime)
+	AssertEq(nil, err)
+
+	// Create the second directory and stick a hard link to the same file in it.
+	err = os.Mkdir(path.Join(t.src, names[1]), 0700)
+	AssertEq(nil, err)
+
+	file1 := path.Join(t.src, names[1], "foo")
+	err = os.Link(file0, file1)
+	AssertEq(nil, err)
 
 	// Save.
 	score, err := t.save()

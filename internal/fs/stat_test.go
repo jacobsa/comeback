@@ -221,6 +221,11 @@ func (t *StatTest) Directory() {
 	err = setModTime(t.path, mtime)
 	AssertEq(nil, err)
 
+	fi, err := os.Stat(t.path)
+	AssertEq(nil, err)
+	stat := fi.Sys().(*syscall.Stat_t)
+	AssertNe(0, stat.Ino)
+
 	// Call
 	t.call()
 
@@ -236,6 +241,9 @@ func (t *StatTest) Directory() {
 	ExpectEq(t.myGid, t.entry.Gid)
 	ExpectThat(t.entry.Groupname, Pointee(Equals(t.myGroupname)))
 	ExpectTrue(t.entry.MTime.Equal(mtime), "%v", t.entry.MTime)
+	ExpectEq(stat.Size, t.entry.Size)
+	ExpectEq(stat.Dev, t.entry.ContainingDevice)
+	ExpectEq(stat.Ino, t.entry.Inode)
 	ExpectThat(t.entry.Scores, ElementsAre())
 }
 

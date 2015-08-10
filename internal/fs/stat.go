@@ -35,13 +35,20 @@ func (fs *fileSystem) convertFileInfo(fi os.FileInfo) (entry *DirectoryEntry, er
 		return nil, fmt.Errorf("Unexpected sys value: %v", fi.Sys())
 	}
 
+	if statT.Size < 0 {
+		panic(fmt.Sprintf("Unexpected size: %d", statT.Size))
+	}
+
 	// Create the basic entry.
 	entry = &DirectoryEntry{
-		Permissions: fi.Mode() & permissionBits,
-		Name:        fi.Name(),
-		MTime:       fi.ModTime(),
-		Uid:         sys.UserId(statT.Uid),
-		Gid:         sys.GroupId(statT.Gid),
+		Name:             fi.Name(),
+		Permissions:      fi.Mode() & permissionBits,
+		Uid:              sys.UserId(statT.Uid),
+		Gid:              sys.GroupId(statT.Gid),
+		MTime:            fi.ModTime(),
+		Size:             uint64(statT.Size),
+		ContainingDevice: statT.Dev,
+		Inode:            statT.Ino,
 	}
 
 	// Attempt to look up user info.
@@ -71,15 +78,6 @@ func (fs *fileSystem) convertFileInfo(fi os.FileInfo) (entry *DirectoryEntry, er
 	switch typeBits {
 	case 0:
 		entry.Type = TypeFile
-		entry.ContainingDevice = statT.Dev
-		entry.Inode = statT.Ino
-
-		if statT.Size < 0 {
-			panic(fmt.Sprintf("Unexpected size: %d", statT.Size))
-		}
-
-		entry.Size = uint64(statT.Size)
-
 	case os.ModeDir:
 		entry.Type = TypeDirectory
 	case os.ModeSymlink:
