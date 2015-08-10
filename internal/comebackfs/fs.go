@@ -17,6 +17,7 @@ package comebackfs
 
 import (
 	"log"
+	"time"
 
 	"golang.org/x/net/context"
 
@@ -164,6 +165,31 @@ func (fs *fileSystem) Lock() {
 // LOCKS_REQUIRED(fs)
 func (fs *fileSystem) Unlock() {
 	fs.mu.Unlock()
+}
+
+// LOCKS_EXCLUDED(fs)
+func (fs *fileSystem) GetInodeAttributes(
+	ctx context.Context,
+	op *fuseops.GetInodeAttributesOp) (err error) {
+	// Find the inode.
+	fs.Lock()
+	rec := fs.inodes[op.Inode]
+	fs.Unlock()
+
+	if rec == nil {
+		log.Fatalf("Inode %d not found", op.Inode)
+	}
+
+	in := rec.in
+	in.Lock()
+	defer in.Unlock()
+
+	// Get its attributes. We don't care how long the kernel caches them, because
+	// we are immutable.
+	op.Attributes = in.Attributes()
+	op.AttributesExpiration = time.Now().Add(24 * time.Hour)
+
+	return
 }
 
 // LOCKS_EXCLUDED(fs)
