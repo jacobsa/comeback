@@ -17,6 +17,7 @@ package comebackfs
 
 import (
 	"errors"
+	"fmt"
 	"os"
 
 	"golang.org/x/net/context"
@@ -64,7 +65,14 @@ type fileHandle struct {
 	file *os.File
 }
 
+// LOCKS_REQUIRED(fh)
 func (fh *fileHandle) checkInvariants() {
+}
+
+// LOCKS_REQUIRED(fh)
+func (fh *fileHandle) ensureFile(ctx context.Context) (err error) {
+	err = errors.New("TODO")
+	return
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -100,6 +108,15 @@ func (fh *fileHandle) ReadAt(
 	ctx context.Context,
 	p []byte,
 	offset int64) (n int, err error) {
-	err = errors.New("TODO")
+	// Make sure the local file is present.
+	err = fh.ensureFile(ctx)
+	if err != nil {
+		err = fmt.Errorf("ensureFile: %v", err)
+		return
+	}
+
+	// Defer to it.
+	n, err = fh.file.ReadAt(p, offset)
+
 	return
 }
