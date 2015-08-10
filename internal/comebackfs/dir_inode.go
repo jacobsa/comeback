@@ -195,7 +195,7 @@ func (d *dirInode) Read(
 			Type:   convertEntryType(e.Type),
 		}
 
-		n := fuseutil.WriteDirent(op.Dst, de)
+		n := fuseutil.WriteDirent(op.Dst[op.BytesRead:], de)
 		if n == 0 {
 			break
 		}
