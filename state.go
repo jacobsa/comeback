@@ -25,9 +25,9 @@ import (
 
 	"golang.org/x/net/context"
 
-	"github.com/jacobsa/comeback/state"
-	"github.com/jacobsa/comeback/util"
-	"github.com/jacobsa/comeback/wiring"
+	"github.com/jacobsa/comeback/internal/state"
+	"github.com/jacobsa/comeback/internal/util"
+	"github.com/jacobsa/comeback/internal/wiring"
 	"github.com/jacobsa/gcloud/gcs"
 )
 

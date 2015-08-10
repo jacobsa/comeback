@@ -20,9 +20,9 @@ import (
 	"log"
 	"sync"
 
-	"github.com/jacobsa/comeback/crypto"
-	"github.com/jacobsa/comeback/registry"
-	"github.com/jacobsa/comeback/wiring"
+	"github.com/jacobsa/comeback/internal/crypto"
+	"github.com/jacobsa/comeback/internal/registry"
+	"github.com/jacobsa/comeback/internal/wiring"
 )
 
 var gRegistryAndCrypterOnce sync.Once

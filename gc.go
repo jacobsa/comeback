@@ -30,9 +30,9 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/jacobsa/comeback/blob"
-	"github.com/jacobsa/comeback/verify"
-	"github.com/jacobsa/comeback/wiring"
+	"github.com/jacobsa/comeback/internal/blob"
+	"github.com/jacobsa/comeback/internal/verify"
+	"github.com/jacobsa/comeback/internal/wiring"
 	"github.com/jacobsa/gcloud/gcs"
 	"github.com/jacobsa/syncutil"
 	"golang.org/x/net/context"

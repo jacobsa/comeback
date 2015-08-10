@@ -23,10 +23,10 @@ import (
 
 	"golang.org/x/net/context"
 
-	"github.com/jacobsa/comeback/config"
-	"github.com/jacobsa/comeback/graph"
-	"github.com/jacobsa/comeback/registry"
-	"github.com/jacobsa/comeback/save"
+	"github.com/jacobsa/comeback/internal/config"
+	"github.com/jacobsa/comeback/internal/graph"
+	"github.com/jacobsa/comeback/internal/registry"
+	"github.com/jacobsa/comeback/internal/save"
 	"github.com/jacobsa/syncutil"
 )
 
