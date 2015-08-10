@@ -76,6 +76,11 @@ func (d *dirInode) Unlock() {
 	d.mu.Unlock()
 }
 
+// Return the score backing the inode's listing's contents. No lock required.
+func (d *dirInode) Score() blob.Score {
+	return d.score
+}
+
 // LOCKS_REQUIRED(d)
 func (d *dirInode) Attributes() (attrs fuseops.InodeAttributes) {
 	attrs = d.attrs

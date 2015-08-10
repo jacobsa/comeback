@@ -254,6 +254,32 @@ func (fs *fileSystem) ForgetInode(
 }
 
 // LOCKS_EXCLUDED(fs)
+func (fs *fileSystem) OpenDir(
+	ctx context.Context,
+	op *fuseops.OpenDirOp) (err error) {
+	fs.Lock()
+	defer fs.mu.Unlock()
+
+	// Find the inode and extract its score.
+	rec, _ := fs.inodes[op.Inode]
+	if rec == nil {
+		log.Fatalf("Inode %d not found", op.Inode)
+	}
+
+	in := rec.in.(*dirInode)
+	score := in.Score()
+
+	// Create and stash the handle.
+	op.Handle = fs.nextHandleID
+	fs.nextHandleID++
+
+	dh := newDirHandle(score, fs.blobStore)
+	fs.handles[op.Handle] = dh
+
+	return
+}
+
+// LOCKS_EXCLUDED(fs)
 func (fs *fileSystem) ReleaseDirHandle(
 	ctx context.Context,
 	op *fuseops.ReleaseDirHandleOp) (err error) {
