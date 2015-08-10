@@ -181,6 +181,7 @@ func createInode(
 		// Create the inode.
 		in = newDirInode(
 			fuseops.InodeAttributes{
+				Size:  e.Size,
 				Nlink: 1,
 				Mode:  e.Permissions | os.ModeDir,
 				Mtime: e.MTime,
