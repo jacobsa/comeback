@@ -95,12 +95,16 @@ type fileSystem struct {
 	// The next inode ID we will hand out.
 	//
 	// INVARIANT: nextInodeID >= fuseops.RootInodeID
+	//
+	// GUARDED_BY(mu)
 	nextInodeID fuseops.InodeID
 
 	// The inodes we currently know.
 	//
 	// INVARIANT: For all k, k < nextInodeID
 	// INVARIANT: For all v, v.lookupCount > 0
+	//
+	// GUARDED_BY(mu)
 	inodes map[fuseops.InodeID]*inodeRecord
 }
 
@@ -166,6 +170,9 @@ func (fs *fileSystem) Unlock() {
 func (fs *fileSystem) ForgetInode(
 	ctx context.Context,
 	op *fuseops.ForgetInodeOp) (err error) {
+	fs.Lock()
+	defer fs.Unlock()
+
 	// Find the inode.
 	rec := fs.inodes[op.Inode]
 	if rec == nil {
