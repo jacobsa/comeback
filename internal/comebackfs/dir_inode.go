@@ -67,29 +67,41 @@ type dirInode struct {
 
 	mu syncutil.InvariantMutex
 
-	// A list of entries in the directory, or nil if we haven't yet read the
-	// blob.
+	// The children of the directory, or nil if we haven't yet read the blob.
 	//
+	// INVARIANT: For each k, v, v.Name == k
 	// INVARIANT: For each v, v.HardLinkTarget == nil
 	//
 	// GUARDED_BY(mu)
-	entries []*fs.DirectoryEntry
+	children map[string]*fs.DirectoryEntry
+
+	// A listing for the directory, valid when children != nil.
+	//
+	// GUARDED_BY(mu)
+	listing []fuseutil.Dirent
 }
 
 func (d *dirInode) checkInvariants() {
+	// INVARIANT: For each k, v, v.Name == k
+	for k, v := range d.children {
+		if v.Name != k {
+			log.Fatalf("Name mismatch: %q, %q", v.Name, k)
+		}
+	}
+
 	// INVARIANT: For each v, v.HardLinkTarget == nil
-	for _, v := range d.entries {
+	for _, v := range d.children {
 		if v.HardLinkTarget != nil {
 			log.Fatalf("Found a hard link for name %q", v.Name)
 		}
 	}
 }
 
-// Ensure that d.entries is non-nil.
+// Ensure that d.children is non-nil.
 //
 // LOCKS_REQUIRED(d)
-func (d *dirInode) ensureEntries(ctx context.Context) (err error) {
-	if d.entries != nil {
+func (d *dirInode) ensureChildren(ctx context.Context) (err error) {
+	if d.children != nil {
 		return
 	}
 
@@ -107,21 +119,39 @@ func (d *dirInode) ensureEntries(ctx context.Context) (err error) {
 		return
 	}
 
-	// We cound on nil being a sentinel, so don't let a nil slice above (for an
-	// empty lit of entries) escape.
-	if entries == nil {
-		entries = make([]*fs.DirectoryEntry, 0, 1)
-	}
-
-	// We don't support hard links.
+	// Index the entries by name.
+	children := make(map[string]*fs.DirectoryEntry)
 	for _, e := range entries {
 		if e.HardLinkTarget != nil {
 			err = errors.New("Hard link enountered.")
 			return
 		}
+
+		if _, ok := children[e.Name]; ok {
+			err = fmt.Errorf("Duplicate name: %q", e.Name)
+			return
+		}
+
+		children[e.Name] = e
 	}
 
-	d.entries = entries
+	// Also create a listing.
+	var listing []fuseutil.Dirent
+	for i, e := range entries {
+		de := fuseutil.Dirent{
+			Offset: fuseops.DirOffset(i + 1),
+			Inode:  fuseops.InodeID(e.Inode),
+			Name:   e.Name,
+			Type:   convertEntryType(e.Type),
+		}
+
+		listing = append(listing, de)
+	}
+
+	// Update state.
+	d.children = children
+	d.listing = listing
+
 	return
 }
 
@@ -172,29 +202,21 @@ func (d *dirInode) Attributes() (attrs fuseops.InodeAttributes) {
 func (d *dirInode) Read(
 	ctx context.Context,
 	op *fuseops.ReadDirOp) (err error) {
-	// Make sure the list of entries is present.
-	err = d.ensureEntries(ctx)
+	// Make sure the listing is present.
+	err = d.ensureChildren(ctx)
 	if err != nil {
-		err = fmt.Errorf("ensureEntries: %v", err)
+		err = fmt.Errorf("ensureChildren: %v", err)
 		return
 	}
 
 	// Check that the offset is in range.
-	if op.Offset > fuseops.DirOffset(len(d.entries)) {
+	if op.Offset > fuseops.DirOffset(len(d.listing)) {
 		err = fmt.Errorf("Out of range offset: %d", op.Offset)
 		return
 	}
 
 	// Write out the entries in range.
-	for i := op.Offset; i < fuseops.DirOffset(len(d.entries)); i++ {
-		e := d.entries[i]
-		de := fuseutil.Dirent{
-			Offset: i + 1,
-			Inode:  fuseops.InodeID(e.Inode),
-			Name:   e.Name,
-			Type:   convertEntryType(e.Type),
-		}
-
+	for _, de := range d.listing[op.Offset:] {
 		n := fuseutil.WriteDirent(op.Dst[op.BytesRead:], de)
 		if n == 0 {
 			break
@@ -213,22 +235,15 @@ func (d *dirInode) Read(
 func (d *dirInode) LookUpChild(
 	ctx context.Context,
 	name string) (e *fs.DirectoryEntry, err error) {
-	// Make sure the list of entries is present.
-	err = d.ensureEntries(ctx)
+	// Make sure the index of children is present.
+	err = d.ensureChildren(ctx)
 	if err != nil {
-		err = fmt.Errorf("ensureEntries: %v", err)
+		err = fmt.Errorf("ensureChildren: %v", err)
 		return
 	}
 
-	// Find the appropriate entry, if any.
-	//
-	// TODO(jacobsa): Make this efficient.
-	for _, candidate := range d.entries {
-		if candidate.Name == name {
-			e = candidate
-			return
-		}
-	}
+	// Find the appropriate child, if any.
+	e = d.children[name]
 
 	return
 }
