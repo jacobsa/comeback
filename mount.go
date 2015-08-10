@@ -37,6 +37,11 @@ var cmdMount = &Command{
 	Name: "mount",
 }
 
+var fDebugFuse = cmdMount.Flags.Bool(
+	"debug_fuse",
+	false,
+	"Enable fuse debug logging.")
+
 func init() {
 	cmdMount.Run = runMount // Break flag-related dependency loop.
 }
@@ -139,6 +144,10 @@ func doMount(args []string) (err error) {
 
 		// Everything is immutable, so let the kernel cache to its heart's content.
 		EnableVnodeCaching: true,
+	}
+
+	if *fDebugFuse {
+		cfg.DebugLogger = log.New(os.Stderr, "debug_fuse: ", log.Flags())
 	}
 
 	mfs, err := fuse.Mount(
