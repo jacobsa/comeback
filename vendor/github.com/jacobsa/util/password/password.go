@@ -48,13 +48,14 @@ func setTermSettings(settings C.struct_termios) {
 }
 
 // A handler for SIGINT that calls the supplied function before terminating.
+// Returns if the channel is closed.
 func handleInterrupt(c <-chan os.Signal, f func()) {
-	// Wait for a signal.
-	<-c
-	f()
+	for range c {
+		f()
 
-	// c.f. http://stackoverflow.com/questions/1101957/are-there-any-standard-exit-status-codes-in-linux
-	os.Exit(-1)
+		// c.f. http://stackoverflow.com/questions/1101957/are-there-any-standard-exit-status-codes-in-linux
+		os.Exit(-1)
+	}
 }
 
 // Read a password from the terminal without echoing it. No space is added
@@ -80,8 +81,12 @@ func ReadPassword(prompt string) string {
 	// we're done because there is no way to re-enable the default signal
 	// handler.
 	signalChan := make(chan os.Signal)
+	defer close(signalChan)
+
 	go handleInterrupt(signalChan, restore)
+
 	signal.Notify(signalChan, os.Interrupt)
+	defer signal.Stop(signalChan)
 
 	// Disable echoing.
 	newTermSettings := origTermSettings
