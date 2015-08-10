@@ -2,6 +2,7 @@
 # Cf. http://docs.travis-ci.com/user/languages/go/
 
 language: go
+os: osx
 
 # We don't use `sudo`, so opt in to Travis's faster container-based infrastructure.
 # Cf. http://docs.travis-ci.com/user/migrating-from-legacy/
