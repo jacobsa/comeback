@@ -40,7 +40,6 @@ func NewFileSystem(
 		blobStore:   blobStore,
 		nextInodeID: fuseops.RootInodeID,
 		inodes:      make(map[fuseops.InodeID]*inodeRecord),
-		handles:     make(map[fuseops.HandleID]interface{}),
 	}
 
 	fs = typed
@@ -82,17 +81,16 @@ type fileSystem struct {
 	// Let FS be the file system. Define a strict partial ordering < by:
 	//
 	// *   For any inode I,  I < FS.
-	// *   For any handle H, H < FS.
 	//
 	// and follow the rule "acquire B while holding A only if A < B".
 	//
 	// In other words:
 	//
-	// *   Don't hold more than one inode or handle lock at a time.
-	// *   Don't acquire an inode or handle lock before the file system lock.
+	// *   Don't hold more than one inode lock at a time.
+	// *   Don't acquire an inode lock before the file system lock.
 	//
-	// The intuition is that inode and handle locks are held for long operations,
-	// but the file system lock is lightweight and must not be.
+	// The intuition is that inode locks are held for long operations, but the
+	// file system lock is lightweight and must not be.
 	mu syncutil.InvariantMutex
 
 	// The next inode ID we will hand out.
@@ -109,19 +107,6 @@ type fileSystem struct {
 	//
 	// GUARDED_BY(mu)
 	inodes map[fuseops.InodeID]*inodeRecord
-
-	// The next handle ID we will hand out.
-	//
-	// GUARDED_BY(mu)
-	nextHandleID fuseops.HandleID
-
-	// The handles that are currently in flight.
-	//
-	// INVARIANT: For all k, k < nextHandleID
-	// INVARIANT: For all v, v is *dirHandle
-	//
-	// GUARDED_BY(mu)
-	handles map[fuseops.HandleID]interface{}
 }
 
 // An inode and its lookup count.
@@ -148,23 +133,6 @@ func (fs *fileSystem) checkInvariants() {
 	for k, v := range fs.inodes {
 		if !(v.lookupCount > 0) {
 			log.Fatalf("Inode %d has invalid lookupCount %d", k, v.lookupCount)
-		}
-	}
-
-	// INVARIANT: For all k, k < nextHandleID
-	for k, _ := range fs.handles {
-		if !(k < fs.nextHandleID) {
-			log.Fatalf(
-				"Handle ID %d not less than nextHandleID %d",
-				k,
-				fs.nextHandleID)
-		}
-	}
-
-	// INVARIANT: For all v, v is *dirHandle
-	for k, v := range fs.handles {
-		if _, ok := v.(*dirHandle); !ok {
-			log.Fatalf("Handle ID %d is of type %T", k, v)
 		}
 	}
 }
@@ -258,25 +226,7 @@ func (fs *fileSystem) ForgetInode(
 func (fs *fileSystem) OpenDir(
 	ctx context.Context,
 	op *fuseops.OpenDirOp) (err error) {
-	fs.Lock()
-	defer fs.Unlock()
-
-	// Find the inode and extract its score.
-	rec, _ := fs.inodes[op.Inode]
-	if rec == nil {
-		log.Fatalf("Inode %d not found", op.Inode)
-	}
-
-	in := rec.in.(*dirInode)
-	score := in.Score()
-
-	// Create and stash the handle.
-	op.Handle = fs.nextHandleID
-	fs.nextHandleID++
-
-	dh := newDirHandle(score, fs.blobStore)
-	fs.handles[op.Handle] = dh
-
+	// Nothing interesting to do since we don't use directory handles.
 	return
 }
 
@@ -284,32 +234,21 @@ func (fs *fileSystem) OpenDir(
 func (fs *fileSystem) ReadDir(
 	ctx context.Context,
 	op *fuseops.ReadDirOp) (err error) {
-	// Find the handle.
+	// Find the inode.
 	fs.Lock()
-	h, _ := fs.handles[op.Handle]
+	rec, _ := fs.inodes[op.Inode]
 	fs.Unlock()
 
-	if h == nil {
-		log.Fatalf("Handle %d not found", op.Handle)
+	if rec == nil {
+		log.Fatalf("Inode %d not found", op.Inode)
 	}
 
-	dh := h.(*dirHandle)
+	d := rec.in.(*dirInode)
 
 	// Read.
-	dh.Lock()
-	err = dh.Read(ctx, op)
-	dh.Unlock()
-
-	return
-}
-
-// LOCKS_EXCLUDED(fs)
-func (fs *fileSystem) ReleaseDirHandle(
-	ctx context.Context,
-	op *fuseops.ReleaseDirHandleOp) (err error) {
-	fs.Lock()
-	delete(fs.handles, op.Handle)
-	fs.Unlock()
+	d.Lock()
+	err = d.Read(ctx, op)
+	d.Unlock()
 
 	return
 }
