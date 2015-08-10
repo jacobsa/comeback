@@ -281,6 +281,28 @@ func (fs *fileSystem) OpenDir(
 }
 
 // LOCKS_EXCLUDED(fs)
+func (fs *fileSystem) ReadDir(
+	ctx context.Context,
+	op *fuseops.ReadDirOp) (err error) {
+	// Find the handle.
+	h, _ := fs.handles[op.Handle]
+	fs.mu.Unlock()
+
+	if h == nil {
+		log.Fatalf("Handle %d not found", op.Handle)
+	}
+
+	dh := h.(*dirHandle)
+
+	// Read.
+	dh.mu.Lock()
+	err = dh.Read(ctx, op)
+	dh.mu.Unlock()
+
+	return
+}
+
+// LOCKS_EXCLUDED(fs)
 func (fs *fileSystem) ReleaseDirHandle(
 	ctx context.Context,
 	op *fuseops.ReleaseDirHandleOp) (err error) {
