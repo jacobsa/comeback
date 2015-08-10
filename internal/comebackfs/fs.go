@@ -16,9 +16,9 @@
 package comebackfs
 
 import (
-	"errors"
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	"golang.org/x/net/context"
@@ -26,7 +26,6 @@ import (
 	"github.com/jacobsa/comeback/internal/blob"
 	"github.com/jacobsa/comeback/internal/fs"
 	pkgfs "github.com/jacobsa/comeback/internal/fs"
-	"github.com/jacobsa/comeback/internal/sys"
 	"github.com/jacobsa/fuse"
 	"github.com/jacobsa/fuse/fuseops"
 	"github.com/jacobsa/fuse/fuseutil"
@@ -42,6 +41,8 @@ func NewFileSystem(
 	blobStore blob.Store) (fs fuseutil.FileSystem, err error) {
 	// Create the file system.
 	typed := &fileSystem{
+		uid:       uid,
+		gid:       gid,
 		blobStore: blobStore,
 		inodes:    make(map[fuseops.InodeID]*inodeRecord),
 	}
@@ -57,8 +58,6 @@ func NewFileSystem(
 		Type:        pkgfs.TypeDirectory,
 		Name:        "",
 		Permissions: 0500,
-		Uid:         sys.UserId(uid),
-		Gid:         sys.GroupId(gid),
 		Inode:       fuseops.RootInodeID,
 		Scores:      []blob.Score{rootScore},
 	}
@@ -78,6 +77,10 @@ func NewFileSystem(
 
 type fileSystem struct {
 	fuseutil.NotImplementedFileSystem
+
+	uid uint32
+	gid uint32
+
 	blobStore blob.Store
 
 	/////////////////////////
@@ -144,7 +147,7 @@ func (fs *fileSystem) lookUpOrCreateInode(e *fs.DirectoryEntry) (
 	}
 
 	// Create and register one.
-	in, err = createInode(e)
+	in, err = createInode(e, fs.uid, fs.gid, fs.blobStore)
 	if err != nil {
 		err = fmt.Errorf("createInode: %v", err)
 		return
@@ -158,10 +161,42 @@ func (fs *fileSystem) lookUpOrCreateInode(e *fs.DirectoryEntry) (
 	return
 }
 
-// Create an inode for the supplied directory entry.
-func createInode(e *fs.DirectoryEntry) (in inode, err error) {
-	err = errors.New("TODO")
-	return
+// Create an inode for the supplied directory entry. The UID and GID are
+// ignored in favor of the the supplied values.
+func createInode(
+	e *fs.DirectoryEntry,
+	uid uint32,
+	gid uint32,
+	blobStore blob.Store) (in inode, err error) {
+	switch e.Type {
+	case fs.TypeDirectory:
+		// Check the score count.
+		if len(e.Scores) != 1 {
+			err = fmt.Errorf(
+				"Unexpected score count for directory: %d",
+				len(e.Scores))
+			return
+		}
+
+		// Create the inode.
+		in = newDirInode(
+			fuseops.InodeAttributes{
+				Nlink: 1,
+				Mode:  e.Permissions | os.ModeDir,
+				Mtime: e.MTime,
+				Ctime: e.MTime,
+				Uid:   uid,
+				Gid:   gid,
+			},
+			e.Scores[0],
+			blobStore)
+
+		return
+
+	default:
+		err = fmt.Errorf("Don't know how to handle type %d", e.Type)
+		return
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////
