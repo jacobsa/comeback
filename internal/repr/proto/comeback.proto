@@ -77,6 +77,9 @@ message DirectoryEntryProto {
 
   // The device number in a system-dependent format, if this is a device.
   optional int32 device_number = 12;
+
+  // The inode number.
+  optional uint64 inode = 13;
 }
 
 message DirectoryListingProto {

@@ -143,8 +143,10 @@ type DirectoryEntryProto struct {
 	// The target, if this is a symlink.
 	Target *string `protobuf:"bytes,11,opt,name=target" json:"target,omitempty"`
 	// The device number in a system-dependent format, if this is a device.
-	DeviceNumber     *int32 `protobuf:"varint,12,opt,name=device_number" json:"device_number,omitempty"`
-	XXX_unrecognized []byte `json:"-"`
+	DeviceNumber *int32 `protobuf:"varint,12,opt,name=device_number" json:"device_number,omitempty"`
+	// The inode number.
+	Inode            *uint64 `protobuf:"varint,13,opt,name=inode" json:"inode,omitempty"`
+	XXX_unrecognized []byte  `json:"-"`
 }
 
 func (m *DirectoryEntryProto) Reset()         { *m = DirectoryEntryProto{} }
@@ -231,6 +233,13 @@ func (m *DirectoryEntryProto) GetTarget() string {
 func (m *DirectoryEntryProto) GetDeviceNumber() int32 {
 	if m != nil && m.DeviceNumber != nil {
 		return *m.DeviceNumber
+	}
+	return 0
+}
+
+func (m *DirectoryEntryProto) GetInode() uint64 {
+	if m != nil && m.Inode != nil {
+		return *m.Inode
 	}
 	return 0
 }
