@@ -232,6 +232,21 @@ func createInode(
 
 		return
 
+	case fs.TypeSymlink:
+		in = newSymlinkInode(
+			fuseops.InodeAttributes{
+				Size:  e.Size,
+				Nlink: 1,
+				Mode:  e.Permissions | os.ModeSymlink,
+				Mtime: e.MTime,
+				Ctime: e.MTime,
+				Uid:   uid,
+				Gid:   gid,
+			},
+			e.Target)
+
+		return
+
 	default:
 		err = fmt.Errorf("Don't know how to handle type %d", e.Type)
 		return
@@ -454,6 +469,29 @@ func (fs *fileSystem) ReleaseFileHandle(
 	fh := fs.fileHandles[op.Handle]
 	fh.Destroy()
 	delete(fs.fileHandles, op.Handle)
+
+	return
+}
+
+// LOCKS_EXCLUDED(fs)
+func (fs *fileSystem) ReadSymlink(
+	ctx context.Context,
+	op *fuseops.ReadSymlinkOp) (err error) {
+	// Find the inode.
+	fs.Lock()
+	rec, ok := fs.inodes[op.Inode]
+	fs.Unlock()
+
+	if !ok {
+		log.Fatalf("Inode %d not found", op.Inode)
+	}
+
+	in := rec.in.(*symlinkInode)
+
+	// Read from it.
+	in.Lock()
+	op.Target = in.Target()
+	in.Unlock()
 
 	return
 }
