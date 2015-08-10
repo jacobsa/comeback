@@ -37,7 +37,7 @@ func NewFileSystem(
 	typed := &fileSystem{
 		blobStore:   blobStore,
 		nextInodeID: fuseops.RootInodeID,
-		inodes:      make(map[fuseops.InodeID]inodeRecord),
+		inodes:      make(map[fuseops.InodeID]*inodeRecord),
 	}
 
 	fs = typed
@@ -101,7 +101,7 @@ type fileSystem struct {
 	//
 	// INVARIANT: For all k, k < nextInodeID
 	// INVARIANT: For all v, v.lookupCount > 0
-	inodes map[fuseops.InodeID]inodeRecord
+	inodes map[fuseops.InodeID]*inodeRecord
 }
 
 // An inode and its lookup count.
@@ -140,7 +140,7 @@ func (fs *fileSystem) registerInode(in inode) (id fuseops.InodeID) {
 	id = fs.nextInodeID
 	fs.nextInodeID++
 
-	fs.inodes[id] = inodeRecord{
+	fs.inodes[id] = &inodeRecord{
 		lookupCount: 1,
 		in:          in,
 	}
@@ -167,8 +167,8 @@ func (fs *fileSystem) ForgetInode(
 	ctx context.Context,
 	op *fuseops.ForgetInodeOp) (err error) {
 	// Find the inode.
-	rec := &fs.inodes[op.Inode]
-	if rec.inode == nil {
+	rec := fs.inodes[op.Inode]
+	if rec == nil {
 		log.Fatalf("Inode %d not found", op.Inode)
 	}
 
