@@ -472,3 +472,26 @@ func (fs *fileSystem) ReleaseFileHandle(
 
 	return
 }
+
+// LOCKS_EXCLUDED(fs)
+func (fs *fileSystem) ReadSymlink(
+	ctx context.Context,
+	op *fuseops.ReadSymlinkOp) (err error) {
+	// Find the inode.
+	fs.Lock()
+	rec, ok := fs.inodes[op.Inode]
+	fs.Unlock()
+
+	if !ok {
+		log.Fatalf("Inode %d not found", op.Inode)
+	}
+
+	in := rec.in.(*symlinkInode)
+
+	// Read from it.
+	in.Lock()
+	op.Target = in.Target()
+	in.Unlock()
+
+	return
+}
