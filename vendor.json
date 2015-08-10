@@ -59,6 +59,13 @@
 			"revisionTime": "2015-08-06T16:25:43+10:00"
 		},
 		{
+			"canonical": "github.com/jacobsa/fuse/fsutil",
+			"comment": "",
+			"local": "vendor/github.com/jacobsa/fuse/fsutil",
+			"revision": "9a7512aac0fb7769d3475200e8b766cf85c15f49",
+			"revisionTime": "2015-08-06T16:25:43+10:00"
+		},
+		{
 			"canonical": "github.com/jacobsa/fuse/fuseops",
 			"comment": "",
 			"local": "vendor/github.com/jacobsa/fuse/fuseops",
