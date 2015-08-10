@@ -48,11 +48,11 @@ message DirectoryEntryProto {
   // fs.DirectoryEntry, with values as in the golang os package.
   optional uint32 permissions = 2;
 
-	// The owning user's UID, and their username if known.
+  // The owning user's UID, and their username if known.
   optional uint32 uid = 3;
   optional string username = 4;
 
-	// The owning user's GID, and their groupname if known.
+  // The owning user's GID, and their groupname if known.
   optional uint32 gid = 5;
   optional string groupname = 6;
 
@@ -70,7 +70,7 @@ message DirectoryEntryProto {
   // If this entry belongs to a backup containing another file to which it is
   // hard linked, this is the target of the hard link relative to the root of
   // the backup.
-	optional string hard_link_target = 10;
+  optional string hard_link_target = 10;
 
   // The target, if this is a symlink.
   optional string target = 11;
