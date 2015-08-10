@@ -75,14 +75,12 @@ func NewDirectorySaver(
 	fileSystem fs.FileSystem,
 	fileSaver FileSaver,
 	logger *log.Logger) (DirectorySaver, error) {
-	linkResolver := NewLinkResolver()
 	createSaver := func(wrapped DirectorySaver) DirectorySaver {
 		saver, err := NewNonRecursiveDirectorySaver(
 			blobStore,
 			fileSystem,
 			fileSaver,
 			wrapped,
-			linkResolver,
 			logger)
 
 		if err != nil {
@@ -96,32 +94,28 @@ func NewDirectorySaver(
 }
 
 // Equivalent to NewDirectorySaver, but with an injectable wrapped directory
-// saver and link resolver to aid with testability. You should not use this
-// function.
+// saver to aid with testability. You should not use this function.
 func NewNonRecursiveDirectorySaver(
 	store blob.Store,
 	fileSystem fs.FileSystem,
 	fileSaver FileSaver,
 	wrapped DirectorySaver,
-	linkResolver LinkResolver,
 	logger *log.Logger) (DirectorySaver, error) {
 	return &dirSaver{
-		blobStore:    store,
-		fileSystem:   fileSystem,
-		fileSaver:    fileSaver,
-		wrapped:      wrapped,
-		linkResolver: linkResolver,
-		logger:       logger,
+		blobStore:  store,
+		fileSystem: fileSystem,
+		fileSaver:  fileSaver,
+		wrapped:    wrapped,
+		logger:     logger,
 	}, nil
 }
 
 type dirSaver struct {
-	blobStore    blob.Store
-	fileSystem   fs.FileSystem
-	fileSaver    FileSaver
-	wrapped      DirectorySaver
-	linkResolver LinkResolver
-	logger       *log.Logger
+	blobStore  blob.Store
+	fileSystem fs.FileSystem
+	fileSaver  FileSaver
+	wrapped    DirectorySaver
+	logger     *log.Logger
 }
 
 func (s *dirSaver) Flush() (err error) {
@@ -203,18 +197,11 @@ func (s *dirSaver) Save(
 		// Call the appropriate method based on this entry's type.
 		switch entry.Type {
 		case fs.TypeFile:
-			// Make sure this isn't a hard link to something we've already saved.
-			entry.HardLinkTarget = s.linkResolver.Register(
-				entry.ContainingDevice,
-				entry.Inode,
-				path.Join(relPath, entry.Name))
-
-			if entry.HardLinkTarget == nil {
-				entry.Scores, err = s.saveFile(dirpath, entry)
-			}
+			entry.Scores, err = s.saveFile(dirpath, entry)
 
 		case fs.TypeDirectory:
 			entry.Scores, err = s.saveDir(basePath, relPath, exclusions, entry)
+
 		case fs.TypeSymlink:
 		case fs.TypeBlockDevice:
 		case fs.TypeCharDevice:

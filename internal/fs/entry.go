@@ -74,6 +74,10 @@ type DirectoryEntry struct {
 	// Scores are present only if HardLinkTarget is not present.
 	Scores []blob.Score
 
+	// DEPRECATED: Newer versions of comeback do not set this field. They must
+	// still check it for being non-nil however, because in that case scores are
+	// not present and the file would otherwise look like a plain old empty file.
+	//
 	// If this regular file belongs to a backup containing another regular file
 	// to which it is hard linked, this is the target of the hard link relative
 	// to the root of the backup.
