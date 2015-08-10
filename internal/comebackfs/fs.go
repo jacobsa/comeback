@@ -39,6 +39,7 @@ func NewFileSystem(
 		blobStore:   blobStore,
 		nextInodeID: fuseops.RootInodeID,
 		inodes:      make(map[fuseops.InodeID]*inodeRecord),
+		handles:     make(map[fuseops.HandleID]interface{}),
 	}
 
 	fs = typed
@@ -107,6 +108,19 @@ type fileSystem struct {
 	//
 	// GUARDED_BY(mu)
 	inodes map[fuseops.InodeID]*inodeRecord
+
+	// The next handle ID we will hand out.
+	//
+	// GUARDED_BY(mu)
+	nextHandleID fuseops.HandleID
+
+	// The handles that are currently in flight.
+	//
+	// INVARIANT: For all k, k < nextHandleID
+	// INVARIANT: For all v, v is *dirHandle
+	//
+	// GUARDED_BY(mu)
+	handles map[fuseops.HandleID]interface{}
 }
 
 // An inode and its lookup count.
@@ -133,6 +147,23 @@ func (fs *fileSystem) checkInvariants() {
 	for k, v := range fs.inodes {
 		if !(v.lookupCount > 0) {
 			log.Fatalf("Inode %d has invalid lookupCount %d", k, v.lookupCount)
+		}
+	}
+
+	// INVARIANT: For all k, k < nextHandleID
+	for k, _ := range fs.handles {
+		if !(k < fs.nextHandleID) {
+			log.Fatalf(
+				"Handle ID %d not less than nextHandleID %d",
+				k,
+				fs.nextHandleID)
+		}
+	}
+
+	// INVARIANT: For all v, v is *dirHandle
+	for k, v := range fs.handles {
+		if _, ok := v.(*dirHandle); !ok {
+			log.Fatalf("Handle ID %d is of type %T", k, v)
 		}
 	}
 }
@@ -218,6 +249,27 @@ func (fs *fileSystem) ForgetInode(
 	if rec.lookupCount == 0 {
 		delete(fs.inodes, op.Inode)
 	}
+
+	return
+}
+
+// LOCKS_EXCLUDED(fs)
+func (fs *fileSystem) ReleaseDirHandle(
+	ctx context.Context,
+	op *fuseops.ReleaseDirHandleOp) (err error) {
+	// Find the handle.
+	fs.Lock()
+	h, _ := fs.handles[op.Handle]
+	fs.mu.Unlock()
+
+	if h == nil {
+		log.Fatalf("Handle %d not found", op.Handle)
+	}
+
+	dh := h.(*dirHandle)
+
+	// Destroy it.
+	dh.Destroy()
 
 	return
 }
