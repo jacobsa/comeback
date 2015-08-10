@@ -159,6 +159,28 @@ func (dh *dirHandle) Destroy() {
 func (dh *dirHandle) Read(
 	ctx context.Context,
 	op *fuseops.ReadDirOp) (err error) {
-	err = errors.New("TODO")
+	// Make sure the listing is present.
+	err = dh.ensureListing(ctx)
+	if err != nil {
+		err = fmt.Errorf("ensureListing: %v", err)
+		return
+	}
+
+	// Check that the offset is in range.
+	if op.Offset > fuseops.DirOffset(len(dh.listing)) {
+		err = fmt.Errorf("Out of range offset: %d", op.Offset)
+		return
+	}
+
+	// Write out the results.
+	for _, de := range dh.listing[op.Offset:] {
+		n := fuseutil.WriteDirent(op.Dst, de)
+		if n == 0 {
+			break
+		}
+
+		op.BytesRead += n
+	}
+
 	return
 }
