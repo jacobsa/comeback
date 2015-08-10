@@ -571,7 +571,7 @@ func (t *SaveAndRestoreTest) Permissions() {
 	// within it.
 	//
 	// TODO(jacobsa): Re-enable this test when issue #21 is fixed.
-	log.Println("DISABLING TEST DUE TO KNOWN BUG")
+	log.Println("SKIPPING TEST DUE TO KNOWN BUG")
 	return
 
 	const contents = "taco"
