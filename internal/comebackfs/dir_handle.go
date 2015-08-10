@@ -147,12 +147,6 @@ func (dh *dirHandle) Unlock() {
 	dh.mu.Unlock()
 }
 
-// Throw away any local state. The handle must not be used again.
-//
-// LOCKS_EXCLUDED(dh)
-func (dh *dirHandle) Destroy() {
-}
-
 // Serve the supplied read dir op.
 //
 // LOCKS_REQUIRED(dh)

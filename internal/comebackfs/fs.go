@@ -284,19 +284,9 @@ func (fs *fileSystem) OpenDir(
 func (fs *fileSystem) ReleaseDirHandle(
 	ctx context.Context,
 	op *fuseops.ReleaseDirHandleOp) (err error) {
-	// Find the handle.
 	fs.Lock()
-	h, _ := fs.handles[op.Handle]
+	delete(fs.handles, op.Handle)
 	fs.mu.Unlock()
-
-	if h == nil {
-		log.Fatalf("Handle %d not found", op.Handle)
-	}
-
-	dh := h.(*dirHandle)
-
-	// Destroy it.
-	dh.Destroy()
 
 	return
 }
