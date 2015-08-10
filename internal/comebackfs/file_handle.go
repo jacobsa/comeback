@@ -94,6 +94,8 @@ func (fh *fileHandle) Destroy() {
 }
 
 // Like io.ReaderAt, but with context support.
+//
+// LOCKS_REQUIRED(fh)
 func (fh *fileHandle) ReadAt(
 	ctx context.Context,
 	p []byte,

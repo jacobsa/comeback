@@ -17,6 +17,7 @@ package comebackfs
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"time"
@@ -413,6 +414,32 @@ func (fs *fileSystem) OpenFile(
 
 	// Allow the kernel to cache file contents.
 	op.KeepPageCache = true
+
+	return
+}
+
+// LOCKS_EXCLUDED(fs)
+func (fs *fileSystem) ReadFile(
+	ctx context.Context,
+	op *fuseops.ReadFileOp) (err error) {
+	// Find the handle.
+	fs.Lock()
+	fh, ok := fs.fileHandles[op.Handle]
+	fs.Unlock()
+
+	if !ok {
+		log.Fatalf("Handle %d not found", op.Handle)
+	}
+
+	// Read from it.
+	fh.Lock()
+	op.BytesRead, err = fh.ReadAt(ctx, op.Dst, op.Offset)
+	fh.Unlock()
+
+	// We're not supposed to return io.EOF.
+	if err == io.EOF {
+		err = nil
+	}
 
 	return
 }
