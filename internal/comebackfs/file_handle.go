@@ -16,13 +16,13 @@
 package comebackfs
 
 import (
-	"errors"
 	"fmt"
 	"os"
 
 	"golang.org/x/net/context"
 
 	"github.com/jacobsa/comeback/internal/blob"
+	"github.com/jacobsa/fuse/fsutil"
 	"github.com/jacobsa/syncutil"
 )
 
@@ -71,7 +71,43 @@ func (fh *fileHandle) checkInvariants() {
 
 // LOCKS_REQUIRED(fh)
 func (fh *fileHandle) ensureFile(ctx context.Context) (err error) {
-	err = errors.New("TODO")
+	// Is the file already present?
+	if fh.file != nil {
+		return
+	}
+
+	// Create a file.
+	f, err := fsutil.AnonymousFile("")
+	if err != nil {
+		err = fmt.Errorf("AnonymousFile: %v", err)
+		return
+	}
+
+	defer func() {
+		if err != nil {
+			f.Close()
+		}
+	}()
+
+	// Copy in the contents.
+	for _, s := range fh.scores {
+		var p []byte
+		p, err = fh.blobStore.Load(ctx, s)
+		if err != nil {
+			err = fmt.Errorf("Load(%s): %v", s.Hex(), err)
+			return
+		}
+
+		_, err = f.Write(p)
+		if err != nil {
+			err = fmt.Errorf("Write: %v", err)
+			return
+		}
+	}
+
+	// Update state.
+	fh.file = f
+
 	return
 }
 
