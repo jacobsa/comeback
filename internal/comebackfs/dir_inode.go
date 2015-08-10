@@ -32,6 +32,8 @@ func newDirInode(
 		blobStore: blobStore,
 		attrs:     attrs,
 	}
+
+	return
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -72,4 +74,5 @@ func (d *dirInode) Unlock() {
 // LOCKS_REQUIRED(d)
 func (d *dirInode) Attributes() (attrs fuseops.InodeAttributes) {
 	attrs = d.attrs
+	return
 }
