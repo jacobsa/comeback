@@ -16,41 +16,27 @@
 package comebackfs
 
 import (
+	"errors"
+	"log"
+
+	"golang.org/x/net/context"
+
 	"github.com/jacobsa/comeback/internal/blob"
 	"github.com/jacobsa/fuse/fuseops"
 	"github.com/jacobsa/syncutil"
 )
 
-// Create an inode with the supplied attributes. The supplied score should
-// contain the inode's listing.
-func newDirInode(
-	attrs fuseops.InodeAttributes,
+func newDirHandle(
 	score blob.Score,
-	blobStore blob.Store) (d *dirInode) {
-	d = &dirInode{
-		score:     score,
-		blobStore: blobStore,
-		attrs:     attrs,
-	}
-
-	d.mu = syncutil.NewInvariantMutex(d.checkInvariants)
-
-	return
-}
+	blobStore blob.Store) (dh *dirHandle)
 
 ////////////////////////////////////////////////////////////////////////
 // Internal
 ////////////////////////////////////////////////////////////////////////
 
-type dirInode struct {
+type dirHandle struct {
 	score     blob.Score
 	blobStore blob.Store
-
-	/////////////////////////
-	// Constant data
-	/////////////////////////
-
-	attrs fuseops.InodeAttributes
 
 	/////////////////////////
 	// Mutable data
@@ -59,22 +45,36 @@ type dirInode struct {
 	mu syncutil.InvariantMutex
 }
 
+func (dh *dirHandle) checkInvariants() {
+}
+
 ////////////////////////////////////////////////////////////////////////
 // Public interface
 ////////////////////////////////////////////////////////////////////////
 
 // LOCKS_EXCLUDED(d)
-func (d *dirInode) Lock() {
+func (dh *dirHandle) Lock() {
 	d.mu.Lock()
 }
 
 // LOCKS_REQUIRED(d)
-func (d *dirInode) Unlock() {
+func (dh *dirHandle) Unlock() {
 	d.mu.Unlock()
 }
 
-// LOCKS_REQUIRED(d)
-func (d *dirInode) Attributes() (attrs fuseops.InodeAttributes) {
-	attrs = d.attrs
+// Throw away any local state. The handle must not be used again.
+//
+// LOCKS_EXCLUDED(dh)
+func (dh *dirHandle) Destroy() {
+	log.Fatalln("TODO")
+}
+
+// Serve the supplied read dir op.
+//
+// LOCKS_REQUIRED(dh)
+func (dh *dirHandle) Read(
+	ctx context.Context,
+	op *fuseops.ReadDirOp) (err error) {
+	err = errors.New("TODO")
 	return
 }
