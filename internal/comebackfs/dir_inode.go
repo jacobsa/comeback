@@ -213,6 +213,22 @@ func (d *dirInode) Read(
 func (d *dirInode) LookUpChild(
 	ctx context.Context,
 	name string) (e *fs.DirectoryEntry, err error) {
-	err = errors.New("TODO")
+	// Make sure the list of entries is present.
+	err = d.ensureEntries(ctx)
+	if err != nil {
+		err = fmt.Errorf("ensureEntries: %v", err)
+		return
+	}
+
+	// Find the appropriate entry, if any.
+	//
+	// TODO(jacobsa): Make this efficient.
+	for _, candidate := range d.entries {
+		if candidate.Name == name {
+			e = candidate
+			return
+		}
+	}
+
 	return
 }
