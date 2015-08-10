@@ -16,8 +16,6 @@
 package comebackfs
 
 import (
-	"errors"
-
 	"github.com/jacobsa/comeback/internal/blob"
 	"github.com/jacobsa/fuse/fuseutil"
 )
@@ -27,6 +25,18 @@ import (
 func NewFileSystem(
 	score blob.Score,
 	blobStore blob.Store) (fs fuseutil.FileSystem, err error) {
-	err = errors.New("TODO")
+	fs = &fileSystem{}
 	return
 }
+
+////////////////////////////////////////////////////////////////////////
+// Internal
+////////////////////////////////////////////////////////////////////////
+
+type fileSystem struct {
+	fuseutil.NotImplementedFileSystem
+}
+
+////////////////////////////////////////////////////////////////////////
+// Public interface
+////////////////////////////////////////////////////////////////////////
