@@ -99,14 +99,13 @@ type fileSystem struct {
 	//
 	// INVARIANT: For all k, k < nextInodeID
 	// INVARIANT: For all v, v.lookupCount > 0
-	// INVARIANT: For all v, v.inode is *dirInode
 	inodes map[fuseops.InodeID]inodeRecord
 }
 
 // An inode and its lookup count.
 type inodeRecord struct {
 	lookupCount uint64
-	inode       interface{}
+	in          inode
 }
 
 // LOCKS_REQUIRED(fs)
@@ -129,26 +128,19 @@ func (fs *fileSystem) checkInvariants() {
 			log.Fatalf("Inode %d has invalid lookupCount %d", k, v.lookupCount)
 		}
 	}
-
-	// INVARIANT: For all v, v.inode is *dirInode
-	for k, v := range fs.inodes {
-		if _, ok := v.inode.(*dirInode); !ok {
-			log.Fatalf("Inode %d has type %T", k, v.inode)
-		}
-	}
 }
 
 // Register the supplied inode, returning its ID. Set the initial lookup count
 // to one.
 //
 // LOCKS_REQUIRED(fs)
-func (fs *fileSystem) registerInode(d *dirInode) (id fuseops.InodeID) {
+func (fs *fileSystem) registerInode(in inode) (id fuseops.InodeID) {
 	id = fs.nextInodeID
 	fs.nextInodeID++
 
 	fs.inodes[id] = inodeRecord{
 		lookupCount: 1,
-		inode:       d,
+		in:          in,
 	}
 
 	return
