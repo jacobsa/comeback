@@ -142,7 +142,17 @@ func (fs *fileSystem) checkInvariants() {
 // to one.
 //
 // LOCKS_REQUIRED(fs)
-func (fs *fileSystem) registerInode(d *dirInode) (id fuseops.InodeID)
+func (fs *fileSystem) registerInode(d *dirInode) (id fuseops.InodeID) {
+	id = fs.nextInodeID
+	fs.nextInodeID++
+
+	fs.inodes[id] = inodeRecord{
+		lookupCount: 1,
+		inode:       d,
+	}
+
+	return
+}
 
 ////////////////////////////////////////////////////////////////////////
 // Public interface
