@@ -49,10 +49,10 @@ func NewFileSystem(
 	fs = typed
 	typed.mu = syncutil.NewInvariantMutex(typed.checkInvariants)
 
+	// Set up the root inode.
 	typed.Lock()
 	defer typed.Unlock()
 
-	// Set up the root inode.
 	rootEntry := &pkgfs.DirectoryEntry{
 		Type:        pkgfs.TypeDirectory,
 		Name:        "",
@@ -134,12 +134,32 @@ func (fs *fileSystem) checkInvariants() {
 func (fs *fileSystem) lookUpOrCreateInode(e *fs.DirectoryEntry) (
 	in inode,
 	err error) {
-	err = errors.New("TODO")
+	id := fuseops.InodeID(e.Inode)
+
+	// Do we already have an inode with the given ID?
+	if rec, ok := fs.inodes[id]; ok {
+		in = rec.in
+		rec.lookupCount++
+		return
+	}
+
+	// Create and register one.
+	in, err = createInode(e)
+	if err != nil {
+		err = fmt.Errorf("createInode: %v", err)
+		return
+	}
+
+	fs.inodes[id] = &inodeRecord{
+		lookupCount: 1,
+		in:          in,
+	}
+
 	return
 }
 
 // Create an inode for the supplied directory entry.
-func createInode(e fs.DirectoryEntry) (in inode, err error) {
+func createInode(e *fs.DirectoryEntry) (in inode, err error) {
 	err = errors.New("TODO")
 	return
 }
