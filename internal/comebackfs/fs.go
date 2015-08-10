@@ -19,13 +19,14 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"os"
 	"time"
 
 	"golang.org/x/net/context"
 
 	"github.com/jacobsa/comeback/internal/blob"
 	"github.com/jacobsa/comeback/internal/fs"
+	pkgfs "github.com/jacobsa/comeback/internal/fs"
+	"github.com/jacobsa/comeback/internal/sys"
 	"github.com/jacobsa/fuse"
 	"github.com/jacobsa/fuse/fuseops"
 	"github.com/jacobsa/fuse/fuseutil"
@@ -41,9 +42,8 @@ func NewFileSystem(
 	blobStore blob.Store) (fs fuseutil.FileSystem, err error) {
 	// Create the file system.
 	typed := &fileSystem{
-		blobStore:   blobStore,
-		nextInodeID: fuseops.RootInodeID,
-		inodes:      make(map[fuseops.InodeID]*inodeRecord),
+		blobStore: blobStore,
+		inodes:    make(map[fuseops.InodeID]*inodeRecord),
 	}
 
 	fs = typed
@@ -53,17 +53,21 @@ func NewFileSystem(
 	defer typed.Unlock()
 
 	// Set up the root inode.
-	root := newDirInode(
-		fuseops.InodeAttributes{
-			Nlink: 1,
-			Mode:  0500 | os.ModeDir,
-			Uid:   uid,
-			Gid:   gid,
-		},
-		rootScore,
-		blobStore)
+	rootEntry := &pkgfs.DirectoryEntry{
+		Type:        pkgfs.TypeDirectory,
+		Name:        "",
+		Permissions: 0500,
+		Uid:         sys.UserId(uid),
+		Gid:         sys.GroupId(gid),
+		Inode:       fuseops.RootInodeID,
+		Scores:      []blob.Score{rootScore},
+	}
 
-	typed.registerInode(root)
+	_, err = typed.lookUpOrCreateInode(rootEntry)
+	if err != nil {
+		err = fmt.Errorf("Creating root inode: %v", err)
+		return
+	}
 
 	return
 }
@@ -97,16 +101,9 @@ type fileSystem struct {
 	// file system lock is lightweight and must not be.
 	mu syncutil.InvariantMutex
 
-	// The next inode ID we will hand out.
+	// The inodes we currently know, along with the lookup counts. The inode IDs
+	// come from the directory listings stored in GCS.
 	//
-	// INVARIANT: nextInodeID >= fuseops.RootInodeID
-	//
-	// GUARDED_BY(mu)
-	nextInodeID fuseops.InodeID
-
-	// The inodes we currently know.
-	//
-	// INVARIANT: For all k, k < nextInodeID
 	// INVARIANT: For all v, v.lookupCount > 0
 	//
 	// GUARDED_BY(mu)
@@ -121,18 +118,6 @@ type inodeRecord struct {
 
 // LOCKS_REQUIRED(fs)
 func (fs *fileSystem) checkInvariants() {
-	// INVARIANT: nextInodeID >= fuseops.RootInodeID
-	if !(fs.nextInodeID >= fuseops.RootInodeID) {
-		log.Fatalf("Unexpected nextInodeID: %d", fs.nextInodeID)
-	}
-
-	// INVARIANT: For all k, k < nextInodeID
-	for k, _ := range fs.inodes {
-		if !(k < fs.nextInodeID) {
-			log.Fatalf("ID %d not less than nextInodeID %d", k, fs.nextInodeID)
-		}
-	}
-
 	// INVARIANT: For all v, v.lookupCount > 0
 	for k, v := range fs.inodes {
 		if !(v.lookupCount > 0) {
@@ -149,6 +134,8 @@ func (fs *fileSystem) checkInvariants() {
 func (fs *fileSystem) lookUpOrCreateInode(e *fs.DirectoryEntry) (
 	in inode,
 	err error) {
+	err = errors.New("TODO")
+	return
 }
 
 // Create an inode for the supplied directory entry.
@@ -209,7 +196,7 @@ func (fs *fileSystem) LookUpInode(
 		log.Fatalf("Inode %d not found", op.Parent)
 	}
 
-	parent := rec.in.(*dirInode)
+	parent := parentRec.in.(*dirInode)
 
 	// Find an entry for the child within it.
 	parent.Lock()
@@ -240,10 +227,10 @@ func (fs *fileSystem) LookUpInode(
 	in.Lock()
 	defer in.Unlock()
 
-	op.Entry.Child = e.Inode
+	op.Entry.Child = fuseops.InodeID(e.Inode)
 	op.Entry.Attributes = in.Attributes()
-	op.AttributesExpiration = time.Now().Add(24 * time.Hour)
-	op.EntryExpiration = time.Now().Add(24 * time.Hour)
+	op.Entry.AttributesExpiration = time.Now().Add(24 * time.Hour)
+	op.Entry.EntryExpiration = time.Now().Add(24 * time.Hour)
 
 	return
 }
