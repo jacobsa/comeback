@@ -16,6 +16,8 @@
 package comebackfs
 
 import (
+	"log"
+
 	"github.com/jacobsa/comeback/internal/blob"
 	"github.com/jacobsa/fuse/fuseops"
 	"github.com/jacobsa/fuse/fuseutil"
@@ -108,7 +110,33 @@ type inodeRecord struct {
 }
 
 // LOCKS_REQUIRED(fs)
-func (fs *fileSystem) checkInvariants()
+func (fs *fileSystem) checkInvariants() {
+	// INVARIANT: nextInodeID >= fuseops.RootInodeID
+	if !(fs.nextInodeID >= fuseops.RootInodeID) {
+		log.Fatalf("Unexpected nextInodeID: %d", fs.nextInodeID)
+	}
+
+	// INVARIANT: For all k, k < nextInodeID
+	for k, _ := range fs.inodes {
+		if !(k < fs.nextInodeID) {
+			log.Fatalf("ID %d not less than nextInodeID %d", k, fs.nextInodeID)
+		}
+	}
+
+	// INVARIANT: For all v, v.lookupCount > 0
+	for k, v := range fs.inodes {
+		if !(v.lookupCount > 0) {
+			log.Fatalf("Inode %d has invalid lookupCount %d", k, v.lookupCount)
+		}
+	}
+
+	// INVARIANT: For all v, v.inode is *dirInode
+	for k, v := range fs.inodes {
+		if _, ok := v.inode.(*dirInode); !ok {
+			log.Fatalf("Inode %d has type %T", k, v.inode)
+		}
+	}
+}
 
 // Register the supplied inode, returning its ID. Set the initial lookup count
 // to one.
