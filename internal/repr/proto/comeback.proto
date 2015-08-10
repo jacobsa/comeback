@@ -78,7 +78,7 @@ message DirectoryEntryProto {
   // The device number in a system-dependent format, if this is a device.
   optional int32 device_number = 12;
 
-  // The inode number.
+  // The inode number. This may not be present in old backups.
   optional uint64 inode = 13;
 }
 
