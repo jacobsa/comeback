@@ -1,0 +1,20 @@
+# Cf. http://docs.travis-ci.com/user/getting-started/
+# Cf. http://docs.travis-ci.com/user/languages/go/
+
+language: go
+
+# We can't build with 1.4.2 (the default as of 2015-07-27), because it doesn't
+# support vendoring.
+go:
+  - tip
+
+# Ensure that we get vendoring support in `go test`.
+env:
+  - GO15VENDOREXPERIMENT=1
+
+# All of our dependencies are in the repo, so we don't need to run `go get`. In
+# fact we actively don't want to do so, because this will help us diagnose
+# accidentally unvendored dependencies.
+#
+# So use the `true` command to do nothing for the install step.
+install: true
