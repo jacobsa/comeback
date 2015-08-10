@@ -17,6 +17,7 @@ package comebackfs
 
 import (
 	"log"
+	"os"
 	"time"
 
 	"golang.org/x/net/context"
@@ -52,7 +53,7 @@ func NewFileSystem(
 	root := newDirInode(
 		fuseops.InodeAttributes{
 			Nlink: 1,
-			Mode:  0500,
+			Mode:  0500 | os.ModeDir,
 			Uid:   uid,
 			Gid:   gid,
 		},
