@@ -31,6 +31,7 @@ import (
 	"github.com/jacobsa/comeback/internal/wiring"
 	"github.com/jacobsa/fuse"
 	"github.com/jacobsa/fuse/fuseutil"
+	"github.com/jacobsa/syncutil"
 )
 
 var cmdMount = &Command{
@@ -69,6 +70,9 @@ func registerSIGINTHandler(mountPoint string) {
 }
 
 func doMount(args []string) (err error) {
+	// Enable invariant checking for the file system.
+	syncutil.EnableInvariantChecking()
+
 	// Grab dependencies.
 	bucket := getBucket()
 	crypter := getCrypter()
