@@ -67,7 +67,8 @@ func makeEntryProto(
 			Second:     proto.Int64(entry.MTime.Unix()),
 			Nanosecond: proto.Uint32(uint32(entry.MTime.Nanosecond())),
 		},
-		Blob: blobs,
+		Inode: proto.Uint64(entry.Inode),
+		Blob:  blobs,
 	}
 
 	// Handle symlink targets.
@@ -97,8 +98,8 @@ const (
 )
 
 // MarshalDir turns a list of directory entries into bytes that can later be
-// used with IsDir and UnmarshalDir. Note that ContainingDevice and Inode
-// fields are lost.
+// used with IsDir and UnmarshalDir. Note that ContainingDevice fields are
+// lost.
 //
 // The input array may be modified.
 func MarshalDir(entries []*fs.DirectoryEntry) (d []byte, err error) {
