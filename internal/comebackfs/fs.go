@@ -259,7 +259,7 @@ func (fs *fileSystem) OpenDir(
 	ctx context.Context,
 	op *fuseops.OpenDirOp) (err error) {
 	fs.Lock()
-	defer fs.mu.Unlock()
+	defer fs.Unlock()
 
 	// Find the inode and extract its score.
 	rec, _ := fs.inodes[op.Inode]
@@ -285,8 +285,9 @@ func (fs *fileSystem) ReadDir(
 	ctx context.Context,
 	op *fuseops.ReadDirOp) (err error) {
 	// Find the handle.
+	fs.Lock()
 	h, _ := fs.handles[op.Handle]
-	fs.mu.Unlock()
+	fs.Unlock()
 
 	if h == nil {
 		log.Fatalf("Handle %d not found", op.Handle)
@@ -295,9 +296,9 @@ func (fs *fileSystem) ReadDir(
 	dh := h.(*dirHandle)
 
 	// Read.
-	dh.mu.Lock()
+	dh.Lock()
 	err = dh.Read(ctx, op)
-	dh.mu.Unlock()
+	dh.Unlock()
 
 	return
 }
@@ -308,7 +309,7 @@ func (fs *fileSystem) ReleaseDirHandle(
 	op *fuseops.ReleaseDirHandleOp) (err error) {
 	fs.Lock()
 	delete(fs.handles, op.Handle)
-	fs.mu.Unlock()
+	fs.Unlock()
 
 	return
 }
