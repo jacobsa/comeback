@@ -17,7 +17,6 @@ package comebackfs
 
 import (
 	"errors"
-	"log"
 
 	"golang.org/x/net/context"
 
@@ -75,7 +74,6 @@ func (dh *dirHandle) Unlock() {
 //
 // LOCKS_EXCLUDED(dh)
 func (dh *dirHandle) Destroy() {
-	log.Fatalln("TODO")
 }
 
 // Serve the supplied read dir op.
