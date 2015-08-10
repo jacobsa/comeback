@@ -18,8 +18,8 @@ package wiring
 import (
 	"fmt"
 
-	"github.com/jacobsa/comeback/fs"
-	"github.com/jacobsa/comeback/sys"
+	"github.com/jacobsa/comeback/internal/fs"
+	"github.com/jacobsa/comeback/internal/sys"
 )
 
 // Create a FileSystem that writes to the real file system.

@@ -24,7 +24,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jacobsa/comeback/cache"
+	"github.com/jacobsa/comeback/internal/cache"
 	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
 )

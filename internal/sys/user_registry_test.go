@@ -21,7 +21,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/jacobsa/comeback/sys"
+	"github.com/jacobsa/comeback/internal/sys"
 	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
 )

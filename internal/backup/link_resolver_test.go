@@ -18,7 +18,7 @@ package backup_test
 import (
 	"testing"
 
-	"github.com/jacobsa/comeback/backup"
+	"github.com/jacobsa/comeback/internal/backup"
 	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
 )

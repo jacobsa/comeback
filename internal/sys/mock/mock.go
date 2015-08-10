@@ -11,7 +11,7 @@ import (
 	runtime "runtime"
 	unsafe "unsafe"
 
-	sys "github.com/jacobsa/comeback/sys"
+	sys "github.com/jacobsa/comeback/internal/sys"
 	oglemock "github.com/jacobsa/oglemock"
 )
 

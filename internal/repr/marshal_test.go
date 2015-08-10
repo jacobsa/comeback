@@ -19,9 +19,9 @@ import (
 	"testing"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/jacobsa/comeback/fs"
-	"github.com/jacobsa/comeback/repr"
-	"github.com/jacobsa/comeback/repr/proto"
+	"github.com/jacobsa/comeback/internal/fs"
+	"github.com/jacobsa/comeback/internal/repr"
+	"github.com/jacobsa/comeback/internal/repr/proto"
 	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
 )

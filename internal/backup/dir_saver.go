@@ -24,9 +24,9 @@ import (
 
 	"golang.org/x/net/context"
 
-	"github.com/jacobsa/comeback/blob"
-	"github.com/jacobsa/comeback/fs"
-	"github.com/jacobsa/comeback/repr"
+	"github.com/jacobsa/comeback/internal/blob"
+	"github.com/jacobsa/comeback/internal/fs"
+	"github.com/jacobsa/comeback/internal/repr"
 )
 
 // An object that knows how to save directories to some underlying storage.

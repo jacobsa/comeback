@@ -24,9 +24,9 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/jacobsa/comeback/fs"
-	"github.com/jacobsa/comeback/sys"
-	"github.com/jacobsa/comeback/sys/group"
+	"github.com/jacobsa/comeback/internal/fs"
+	"github.com/jacobsa/comeback/internal/sys"
+	"github.com/jacobsa/comeback/internal/sys/group"
 	"github.com/jacobsa/oglemock"
 	. "github.com/jacobsa/ogletest"
 )

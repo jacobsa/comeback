@@ -20,7 +20,7 @@ import (
 
 	"golang.org/x/net/context"
 
-	"github.com/jacobsa/comeback/crypto"
+	"github.com/jacobsa/comeback/internal/crypto"
 )
 
 // Return a blob store that wraps the supplied one, encrypting and decrypting

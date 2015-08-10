@@ -20,7 +20,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jacobsa/comeback/blob"
+	"github.com/jacobsa/comeback/internal/blob"
 )
 
 const (

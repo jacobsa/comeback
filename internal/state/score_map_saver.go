@@ -21,9 +21,9 @@ import (
 
 	"golang.org/x/net/context"
 
-	"github.com/jacobsa/comeback/backup"
-	"github.com/jacobsa/comeback/blob"
-	"github.com/jacobsa/comeback/fs"
+	"github.com/jacobsa/comeback/internal/backup"
+	"github.com/jacobsa/comeback/internal/blob"
+	"github.com/jacobsa/comeback/internal/fs"
 )
 
 // Create a file saver that first attempts to read scores from the supplied

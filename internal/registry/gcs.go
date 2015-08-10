@@ -23,8 +23,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jacobsa/comeback/blob"
-	"github.com/jacobsa/comeback/crypto"
+	"github.com/jacobsa/comeback/internal/blob"
+	"github.com/jacobsa/comeback/internal/crypto"
 	"github.com/jacobsa/gcloud/gcs"
 	"github.com/jacobsa/gcloud/gcs/gcsutil"
 	"golang.org/x/net/context"

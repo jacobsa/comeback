@@ -16,9 +16,9 @@
 package wiring
 
 import (
-	"github.com/jacobsa/comeback/blob"
-	"github.com/jacobsa/comeback/crypto"
-	"github.com/jacobsa/comeback/util"
+	"github.com/jacobsa/comeback/internal/blob"
+	"github.com/jacobsa/comeback/internal/crypto"
+	"github.com/jacobsa/comeback/internal/util"
 	"github.com/jacobsa/gcloud/gcs"
 )
 

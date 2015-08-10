@@ -11,7 +11,7 @@ import (
 	runtime "runtime"
 	unsafe "unsafe"
 
-	backup "github.com/jacobsa/comeback/backup"
+	backup "github.com/jacobsa/comeback/internal/backup"
 	oglemock "github.com/jacobsa/oglemock"
 )
 

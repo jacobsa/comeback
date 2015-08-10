@@ -22,9 +22,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/jacobsa/comeback/blob"
-	"github.com/jacobsa/comeback/cache"
-	"github.com/jacobsa/comeback/sys"
+	"github.com/jacobsa/comeback/internal/blob"
+	"github.com/jacobsa/comeback/internal/cache"
+	"github.com/jacobsa/comeback/internal/sys"
 )
 
 // A map from stat info for a file to a set of scores that represented that

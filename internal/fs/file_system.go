@@ -20,7 +20,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/jacobsa/comeback/sys"
+	"github.com/jacobsa/comeback/internal/sys"
 )
 
 // FileSystem represents operations performed on a real file system, but is an

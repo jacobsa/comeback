@@ -20,7 +20,7 @@ import (
 	"os"
 	"syscall"
 
-	"github.com/jacobsa/comeback/sys"
+	"github.com/jacobsa/comeback/internal/sys"
 )
 
 const (

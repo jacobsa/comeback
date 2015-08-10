@@ -21,7 +21,7 @@ import (
 	"path"
 	"testing"
 
-	"github.com/jacobsa/comeback/fs"
+	"github.com/jacobsa/comeback/internal/fs"
 	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
 )

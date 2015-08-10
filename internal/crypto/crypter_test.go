@@ -18,7 +18,7 @@ package crypto_test
 import (
 	"testing"
 
-	"github.com/jacobsa/comeback/crypto"
+	"github.com/jacobsa/comeback/internal/crypto"
 	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
 )

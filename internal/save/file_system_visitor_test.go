@@ -25,8 +25,8 @@ import (
 
 	"golang.org/x/net/context"
 
-	"github.com/jacobsa/comeback/graph"
-	"github.com/jacobsa/comeback/save"
+	"github.com/jacobsa/comeback/internal/graph"
+	"github.com/jacobsa/comeback/internal/save"
 	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
 )

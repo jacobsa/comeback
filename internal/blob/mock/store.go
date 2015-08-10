@@ -11,7 +11,7 @@ import (
 	runtime "runtime"
 	unsafe "unsafe"
 
-	blob "github.com/jacobsa/comeback/blob"
+	blob "github.com/jacobsa/comeback/internal/blob"
 	oglemock "github.com/jacobsa/oglemock"
 	context "golang.org/x/net/context"
 )

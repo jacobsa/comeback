@@ -18,9 +18,9 @@ package wiring
 import (
 	"fmt"
 
-	"github.com/jacobsa/comeback/backup"
-	"github.com/jacobsa/comeback/blob"
-	"github.com/jacobsa/comeback/fs"
+	"github.com/jacobsa/comeback/internal/backup"
+	"github.com/jacobsa/comeback/internal/blob"
+	"github.com/jacobsa/comeback/internal/fs"
 )
 
 // Create a file restorer that uses the supplied file system and blob store.

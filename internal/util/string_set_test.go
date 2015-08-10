@@ -20,7 +20,7 @@ import (
 	"encoding/gob"
 	"testing"
 
-	"github.com/jacobsa/comeback/util"
+	"github.com/jacobsa/comeback/internal/util"
 	. "github.com/jacobsa/ogletest"
 )
 

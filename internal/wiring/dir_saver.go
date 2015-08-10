@@ -19,9 +19,9 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/jacobsa/comeback/backup"
-	"github.com/jacobsa/comeback/state"
-	"github.com/jacobsa/comeback/util"
+	"github.com/jacobsa/comeback/internal/backup"
+	"github.com/jacobsa/comeback/internal/state"
+	"github.com/jacobsa/comeback/internal/util"
 	"github.com/jacobsa/gcloud/gcs"
 )
 

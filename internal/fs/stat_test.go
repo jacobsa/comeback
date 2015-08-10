@@ -25,9 +25,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jacobsa/comeback/fs"
-	"github.com/jacobsa/comeback/sys"
-	"github.com/jacobsa/comeback/sys/mock"
+	"github.com/jacobsa/comeback/internal/fs"
+	"github.com/jacobsa/comeback/internal/sys"
+	"github.com/jacobsa/comeback/internal/sys/mock"
 	. "github.com/jacobsa/oglematchers"
 	"github.com/jacobsa/oglemock"
 	. "github.com/jacobsa/ogletest"

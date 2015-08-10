@@ -18,8 +18,8 @@ package wiring
 import (
 	"fmt"
 
-	"github.com/jacobsa/comeback/backup"
-	"github.com/jacobsa/comeback/util"
+	"github.com/jacobsa/comeback/internal/backup"
+	"github.com/jacobsa/comeback/internal/util"
 	"github.com/jacobsa/gcloud/gcs"
 )
 

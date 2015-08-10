@@ -11,7 +11,7 @@ import (
 	runtime "runtime"
 	unsafe "unsafe"
 
-	crypto "github.com/jacobsa/comeback/crypto"
+	crypto "github.com/jacobsa/comeback/internal/crypto"
 	oglemock "github.com/jacobsa/oglemock"
 )
 

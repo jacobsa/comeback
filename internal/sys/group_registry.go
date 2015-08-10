@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/jacobsa/comeback/sys/group"
+	"github.com/jacobsa/comeback/internal/sys/group"
 )
 
 // A system group ID, aka GID.

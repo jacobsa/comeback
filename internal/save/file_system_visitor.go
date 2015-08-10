@@ -23,7 +23,7 @@ import (
 
 	"golang.org/x/net/context"
 
-	"github.com/jacobsa/comeback/graph"
+	"github.com/jacobsa/comeback/internal/graph"
 )
 
 type PathAndFileInfo struct {

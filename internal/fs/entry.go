@@ -19,8 +19,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/jacobsa/comeback/blob"
-	"github.com/jacobsa/comeback/sys"
+	"github.com/jacobsa/comeback/internal/blob"
+	"github.com/jacobsa/comeback/internal/sys"
 )
 
 type EntryType uint32

@@ -23,7 +23,7 @@ import (
 	"path"
 	"sync"
 
-	"github.com/jacobsa/comeback/config"
+	"github.com/jacobsa/comeback/internal/config"
 )
 
 var g_configOnce sync.Once

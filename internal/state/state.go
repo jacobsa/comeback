@@ -20,7 +20,7 @@ import (
 	"io"
 	"time"
 
-	"github.com/jacobsa/comeback/util"
+	"github.com/jacobsa/comeback/internal/util"
 )
 
 // State that should be saved between runs of the program.

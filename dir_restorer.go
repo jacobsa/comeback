@@ -19,8 +19,8 @@ import (
 	"log"
 	"sync"
 
-	"github.com/jacobsa/comeback/backup"
-	"github.com/jacobsa/comeback/wiring"
+	"github.com/jacobsa/comeback/internal/backup"
+	"github.com/jacobsa/comeback/internal/wiring"
 )
 
 var gDirRestorer backup.DirectoryRestorer

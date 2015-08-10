@@ -18,10 +18,10 @@ package wiring
 import (
 	"fmt"
 
-	"github.com/jacobsa/comeback/backup"
-	"github.com/jacobsa/comeback/blob"
-	"github.com/jacobsa/comeback/fs"
-	"github.com/jacobsa/comeback/state"
+	"github.com/jacobsa/comeback/internal/backup"
+	"github.com/jacobsa/comeback/internal/blob"
+	"github.com/jacobsa/comeback/internal/fs"
+	"github.com/jacobsa/comeback/internal/state"
 )
 
 // Create a file saver that uses the supplied file system and blob store.

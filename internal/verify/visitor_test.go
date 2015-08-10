@@ -23,11 +23,11 @@ import (
 
 	"golang.org/x/net/context"
 
-	"github.com/jacobsa/comeback/blob"
-	"github.com/jacobsa/comeback/blob/mock"
-	"github.com/jacobsa/comeback/fs"
-	"github.com/jacobsa/comeback/repr"
-	"github.com/jacobsa/comeback/verify"
+	"github.com/jacobsa/comeback/internal/blob"
+	"github.com/jacobsa/comeback/internal/blob/mock"
+	"github.com/jacobsa/comeback/internal/fs"
+	"github.com/jacobsa/comeback/internal/repr"
+	"github.com/jacobsa/comeback/internal/verify"
 	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/oglemock"
 	. "github.com/jacobsa/ogletest"

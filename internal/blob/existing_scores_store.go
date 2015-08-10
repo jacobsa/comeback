@@ -16,7 +16,7 @@
 package blob
 
 import (
-	"github.com/jacobsa/comeback/util"
+	"github.com/jacobsa/comeback/internal/util"
 	"golang.org/x/net/context"
 )
 

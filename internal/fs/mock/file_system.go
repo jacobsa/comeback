@@ -14,7 +14,7 @@ import (
 	time "time"
 	unsafe "unsafe"
 
-	fs "github.com/jacobsa/comeback/fs"
+	fs "github.com/jacobsa/comeback/internal/fs"
 	oglemock "github.com/jacobsa/oglemock"
 )
 

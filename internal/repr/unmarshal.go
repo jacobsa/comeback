@@ -22,10 +22,10 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/jacobsa/comeback/blob"
-	"github.com/jacobsa/comeback/fs"
-	"github.com/jacobsa/comeback/repr/proto"
-	"github.com/jacobsa/comeback/sys"
+	"github.com/jacobsa/comeback/internal/blob"
+	"github.com/jacobsa/comeback/internal/fs"
+	"github.com/jacobsa/comeback/internal/repr/proto"
+	"github.com/jacobsa/comeback/internal/sys"
 )
 
 func convertProtoType(
