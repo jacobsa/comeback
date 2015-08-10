@@ -232,6 +232,21 @@ func createInode(
 
 		return
 
+	case fs.TypeSymlink:
+		in = newSymlinkInode(
+			fuseops.InodeAttributes{
+				Size:  e.Size,
+				Nlink: 1,
+				Mode:  e.Permissions | os.ModeSymlink,
+				Mtime: e.MTime,
+				Ctime: e.MTime,
+				Uid:   uid,
+				Gid:   gid,
+			},
+			e.Target)
+
+		return
+
 	default:
 		err = fmt.Errorf("Don't know how to handle type %d", e.Type)
 		return
