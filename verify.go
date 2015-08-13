@@ -181,7 +181,7 @@ func listAllScores(
 ////////////////////////////////////////////////////////////////////////
 
 // Run the verification pipeline. Return a count of the number of scores
-// verified and the number skipped due to readFiles being false.
+// verified.
 func verifyImpl(
 	ctx context.Context,
 	readFiles bool,
@@ -189,7 +189,7 @@ func verifyImpl(
 	knownScores []blob.Score,
 	knownStructure map[verify.Node][]verify.Node,
 	blobStore blob.Store,
-	output io.Writer) (nodesVerified uint64, nodesSkipped uint64, err error) {
+	output io.Writer) (nodesVerified uint64, err error) {
 	b := syncutil.NewBundle(ctx)
 
 	// Visit every node in the graph, snooping on the graph structure into a
@@ -237,16 +237,9 @@ func verifyImpl(
 		return
 	})
 
-	// Count and output the nodes visited, filtering out file nodes if we're not
-	// actually reading and verifying them.
+	// Count and output the nodes visited.
 	b.Add(func(ctx context.Context) (err error) {
 		for r := range visitorRecords {
-			// Skip files if appropriate.
-			if !readFiles && !r.Node.Dir {
-				nodesSkipped++
-				continue
-			}
-
 			// Increment the count.
 			nodesVerified++
 
@@ -419,7 +412,7 @@ func runVerify(args []string) {
 	log.Printf("Listed %d scores.", len(knownScores))
 
 	// Run the rest of the pipeline.
-	nodesVerified, nodesSkipped, err := verifyImpl(
+	nodesVerified, err := verifyImpl(
 		context.Background(),
 		readFiles,
 		rootScores,
@@ -433,10 +426,6 @@ func runVerify(args []string) {
 		return
 	}
 
-	log.Printf(
-		"Successfully verified %d nodes (%d skipped due to fast mode).",
-		nodesVerified,
-		nodesSkipped)
-
+	log.Printf("Successfully verified %d nodes.", nodesVerified)
 	return
 }
