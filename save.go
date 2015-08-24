@@ -63,31 +63,48 @@ func saveStatePeriodically(c <-chan time.Time) {
 func doList(job *config.Job) (err error) {
 	b := syncutil.NewBundle(context.Background())
 
-	// Create a visitor that writes file info to a channel.
-	entries := make(chan save.PathAndFileInfo)
-	visitor := save.NewFileSystemVisitor(
-		job.BasePath,
-		entries,
-		job.Excludes)
-
-	// Use it to traverse the graph of directories.
+	// Explore the file system graph, writing all non-excluded nodes into a
+	// channel.
+	//
+	// TODO(jacobsa): Hide the use of the graph package in the unexported
+	// implementation details of package save.
+	graphNodes := make(chan graph.Node, 100)
+	rootNode := &save.PathAndFileInfo{}
 	b.Add(func(ctx context.Context) (err error) {
-		defer close(entries)
+		defer close(graphNodes)
+		sf := save.NewFileSystemVisitor(job.BasePath, job.Excludes)
 
 		const parallelism = 8
-		err = graph.Traverse(ctx, parallelism, []string{""}, visitor)
+		err = graph.ExploreDirectedGraph(
+			ctx,
+			sf,
+			[]graph.Node{rootNode},
+			graphNodes,
+			parallelism)
+
 		if err != nil {
-			err = fmt.Errorf("Traverse: %v", err)
+			err = fmt.Errorf("ExploreDirectedGraph: %v", err)
 			return
 		}
 
 		return
 	})
 
-	// Print out info about each entry.
+	// Print out info about each node.
 	b.Add(func(ctx context.Context) (err error) {
-		for entry := range entries {
-			fmt.Printf("%s %d\n", entry.Path, entry.Info.Size())
+		for n := range graphNodes {
+			pfi, ok := n.(*save.PathAndFileInfo)
+			if !ok {
+				err = fmt.Errorf("Unexpected node type: %T", n)
+				return
+			}
+
+			// Skip the root node that we synthesized above.
+			if pfi == rootNode {
+				continue
+			}
+
+			fmt.Printf("%s %d\n", pfi.Path, pfi.Info.Size())
 		}
 
 		return
