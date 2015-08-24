@@ -37,7 +37,7 @@ func TestFSSuccessorFinder(t *testing.T) { RunTests(t) }
 // Helpers
 ////////////////////////////////////////////////////////////////////////
 
-type PathAndFileInfoSlice []*PathAndFileInfo
+type PathAndFileInfoSlice []*pathAndFileInfo
 
 func (p PathAndFileInfoSlice) Len() int {
 	return len(p)
@@ -53,7 +53,7 @@ func (p PathAndFileInfoSlice) Swap(i, j int) {
 
 func sortNodes(nodes []graph.Node) (pfis PathAndFileInfoSlice) {
 	for _, n := range nodes {
-		pfis = append(pfis, n.(*PathAndFileInfo))
+		pfis = append(pfis, n.(*pathAndFileInfo))
 	}
 
 	sort.Sort(pfis)
@@ -122,7 +122,7 @@ func (t *FSSuccessorFinderTest) resetVisistor() {
 ////////////////////////////////////////////////////////////////////////
 
 func (t *FSSuccessorFinderTest) NonExistentPath() {
-	node := &PathAndFileInfo{
+	node := &pathAndFileInfo{
 		Path: "foo/bar",
 		Info: gDirInfo,
 	}
@@ -143,7 +143,7 @@ func (t *FSSuccessorFinderTest) VisitRootNode() {
 	AssertEq(nil, err)
 
 	// Visit the root.
-	node := &PathAndFileInfo{
+	node := &pathAndFileInfo{
 		Path: "",
 		Info: gDirInfo,
 	}
@@ -175,7 +175,7 @@ func (t *FSSuccessorFinderTest) VisitNonRootNode() {
 	AssertEq(nil, err)
 
 	// Visit the directory.
-	node := &PathAndFileInfo{
+	node := &pathAndFileInfo{
 		Path: "sub/dirs",
 		Info: gDirInfo,
 	}
@@ -202,7 +202,7 @@ func (t *FSSuccessorFinderTest) VisitFileNode() {
 	AssertEq(nil, err)
 
 	// Visit it.
-	node := &PathAndFileInfo{
+	node := &pathAndFileInfo{
 		Path: "foo",
 		Info: fi,
 	}
@@ -215,7 +215,7 @@ func (t *FSSuccessorFinderTest) VisitFileNode() {
 
 func (t *FSSuccessorFinderTest) Files() {
 	var err error
-	var pfi *PathAndFileInfo
+	var pfi *pathAndFileInfo
 
 	// Make a sub-directory.
 	d := path.Join(t.dir, "dir")
@@ -231,7 +231,7 @@ func (t *FSSuccessorFinderTest) Files() {
 	AssertEq(nil, err)
 
 	// Visit.
-	node := &PathAndFileInfo{
+	node := &pathAndFileInfo{
 		Path: "dir",
 		Info: gDirInfo,
 	}
@@ -256,7 +256,7 @@ func (t *FSSuccessorFinderTest) Files() {
 
 func (t *FSSuccessorFinderTest) Directories() {
 	var err error
-	var pfi *PathAndFileInfo
+	var pfi *pathAndFileInfo
 
 	// Make a sub-directory.
 	d := path.Join(t.dir, "dir")
@@ -272,7 +272,7 @@ func (t *FSSuccessorFinderTest) Directories() {
 	AssertEq(nil, err)
 
 	// Visit.
-	node := &PathAndFileInfo{
+	node := &pathAndFileInfo{
 		Path: "dir",
 		Info: gDirInfo,
 	}
@@ -297,7 +297,7 @@ func (t *FSSuccessorFinderTest) Directories() {
 
 func (t *FSSuccessorFinderTest) Symlinks() {
 	var err error
-	var pfi *PathAndFileInfo
+	var pfi *pathAndFileInfo
 
 	// Make a sub-directory.
 	d := path.Join(t.dir, "dir")
@@ -310,7 +310,7 @@ func (t *FSSuccessorFinderTest) Symlinks() {
 	AssertEq(nil, err)
 
 	// Visit.
-	node := &PathAndFileInfo{
+	node := &pathAndFileInfo{
 		Path: "dir",
 		Info: gDirInfo,
 	}
@@ -356,7 +356,7 @@ func (t *FSSuccessorFinderTest) Exclusions() {
 	t.resetVisistor()
 
 	// Visit.
-	node := &PathAndFileInfo{
+	node := &pathAndFileInfo{
 		Path: "dir",
 		Info: gDirInfo,
 	}

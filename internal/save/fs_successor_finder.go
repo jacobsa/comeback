@@ -26,7 +26,7 @@ import (
 	"github.com/jacobsa/comeback/internal/graph"
 )
 
-type PathAndFileInfo struct {
+type pathAndFileInfo struct {
 	// The path to the file (or directory, etc.), relative to the backup base
 	// path.
 	Path string
@@ -39,8 +39,8 @@ type PathAndFileInfo struct {
 // the given base path, excluding any relative path that matches any of the
 // supplied exclusions, along with any of its descendents.
 //
-// The nodes involved are of type *PathAndFileInfo. Special case: a value of
-// *PathAndFileInfo(nil) is taken to be the root of the hierarchy.
+// The nodes involved are of type *pathAndFileInfo. Special case: a value of
+// *pathAndFileInfo(nil) is taken to be the root of the hierarchy.
 func newSuccessorFinder(
 	basePath string,
 	exclusions []*regexp.Regexp) (sf graph.SuccessorFinder) {
@@ -65,7 +65,7 @@ func (sf *fsSuccessorFinder) FindDirectSuccessors(
 	ctx context.Context,
 	node graph.Node) (successors []graph.Node, err error) {
 	// Ensure the input is of the correct type.
-	pfi, ok := node.(*PathAndFileInfo)
+	pfi, ok := node.(*pathAndFileInfo)
 	if !ok {
 		err = fmt.Errorf("Node has unexpected type: %T", node)
 		return
@@ -102,7 +102,7 @@ func (sf *fsSuccessorFinder) FindDirectSuccessors(
 			continue
 		}
 
-		successor := &PathAndFileInfo{
+		successor := &pathAndFileInfo{
 			Path: childRelPath,
 			Info: fi,
 		}
