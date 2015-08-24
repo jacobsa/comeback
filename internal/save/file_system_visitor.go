@@ -35,21 +35,17 @@ type PathAndFileInfo struct {
 	Info os.FileInfo
 }
 
-// Create a visitor that walks the directory hierarchy rooted at the given base
-// path, excluding any relative path that matches any of the supplied
-// exclusions, along with any of its descendents. Everything encountered and
-// not excluded will be emitted to the supplied channel in an unspecified
-// order. The channel will not be closed.
+// Create a graph.SuccessorFinder that models the directory hierarchy rooted at
+// the given base path, excluding any relative path that matches any of the
+// supplied exclusions, along with any of its descendents.
 //
-// It is expected that node names are paths relative to the supplied base path.
-// In particular, to walk the entire hierarchy, use "" as the traversal root.
+// The nodes involved are of type *PathAndFileInfo. To explore the entire
+// hierarchy, use a root note with Path == "".
 func NewFileSystemVisitor(
 	basePath string,
-	output chan<- PathAndFileInfo,
-	exclusions []*regexp.Regexp) (v graph.Visitor) {
-	v = &fileSystemVisitor{
+	exclusions []*regexp.Regexp) (sf graph.SuccessorFinder) {
+	sf = &fileSystemVisitor{
 		basePath:   basePath,
-		output:     output,
 		exclusions: exclusions,
 	}
 
@@ -62,49 +58,39 @@ func NewFileSystemVisitor(
 
 type fileSystemVisitor struct {
 	basePath   string
-	output     chan<- PathAndFileInfo
 	exclusions []*regexp.Regexp
 }
 
-func (fsv *fileSystemVisitor) Visit(
+func (fsv *fileSystemVisitor) FindDirectSuccessors(
 	ctx context.Context,
-	node string) (adjacent []string, err error) {
+	node graph.Node) (successors []graph.Node, err error) {
+	// Ensure the input is of the correct type.
+	pfi, ok := node.(*PathAndFileInfo)
+	if !ok {
+		err = fmt.Errorf("Node has unexpected type: %T", node)
+		return
+	}
+
 	// Read and lstat all of the names in the directory.
-	entries, err := fsv.readDir(node)
+	entries, err := fsv.readDir(pfi.Path)
 	if err != nil {
 		err = fmt.Errorf("readDir: %v", err)
 		return
 	}
 
-	// Feed to the output channel, returning directories as adjacent nodes that
-	// need to be visited.
+	// Filter out excluded entries, and return the rest as adjacent nodes.
 	for _, fi := range entries {
-		relPath := path.Join(node, fi.Name())
-
-		// Skip exclusions.
+		relPath := path.Join(pfi.Path, fi.Name())
 		if fsv.shouldSkip(relPath) {
 			continue
 		}
 
-		// Send to the output channel.
-		pfi := PathAndFileInfo{
+		successor := &PathAndFileInfo{
 			Path: relPath,
 			Info: fi,
 		}
 
-		select {
-		// Cancelled?
-		case <-ctx.Done():
-			err = ctx.Err()
-			return
-
-		case fsv.output <- pfi:
-		}
-
-		// Record child directories.
-		if fi.IsDir() {
-			adjacent = append(adjacent, relPath)
-		}
+		successors = append(successors, successor)
 	}
 
 	return
