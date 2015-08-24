@@ -26,7 +26,7 @@ import (
 	"github.com/jacobsa/comeback/internal/graph"
 )
 
-type PathAndFileInfo struct {
+type pathAndFileInfo struct {
 	// The path to the file (or directory, etc.), relative to the backup base
 	// path.
 	Path string
@@ -39,12 +39,12 @@ type PathAndFileInfo struct {
 // the given base path, excluding any relative path that matches any of the
 // supplied exclusions, along with any of its descendents.
 //
-// The nodes involved are of type *PathAndFileInfo. Special case: a value of
-// *PathAndFileInfo(nil) is taken to be the root of the hierarchy.
-func NewFileSystemVisitor(
+// The nodes involved are of type *pathAndFileInfo. Special case: a value of
+// *pathAndFileInfo(nil) is taken to be the root of the hierarchy.
+func newSuccessorFinder(
 	basePath string,
 	exclusions []*regexp.Regexp) (sf graph.SuccessorFinder) {
-	sf = &fileSystemVisitor{
+	sf = &fsSuccessorFinder{
 		basePath:   basePath,
 		exclusions: exclusions,
 	}
@@ -56,16 +56,16 @@ func NewFileSystemVisitor(
 // Implementation
 ////////////////////////////////////////////////////////////////////////
 
-type fileSystemVisitor struct {
+type fsSuccessorFinder struct {
 	basePath   string
 	exclusions []*regexp.Regexp
 }
 
-func (fsv *fileSystemVisitor) FindDirectSuccessors(
+func (sf *fsSuccessorFinder) FindDirectSuccessors(
 	ctx context.Context,
 	node graph.Node) (successors []graph.Node, err error) {
 	// Ensure the input is of the correct type.
-	pfi, ok := node.(*PathAndFileInfo)
+	pfi, ok := node.(*pathAndFileInfo)
 	if !ok {
 		err = fmt.Errorf("Node has unexpected type: %T", node)
 		return
@@ -89,7 +89,7 @@ func (fsv *fileSystemVisitor) FindDirectSuccessors(
 	}
 
 	// Read and lstat all of the names in the directory.
-	entries, err := fsv.readDir(relPath)
+	entries, err := sf.readDir(relPath)
 	if err != nil {
 		err = fmt.Errorf("readDir: %v", err)
 		return
@@ -98,11 +98,11 @@ func (fsv *fileSystemVisitor) FindDirectSuccessors(
 	// Filter out excluded entries, and return the rest as adjacent nodes.
 	for _, fi := range entries {
 		childRelPath := path.Join(relPath, fi.Name())
-		if fsv.shouldSkip(childRelPath) {
+		if sf.shouldSkip(childRelPath) {
 			continue
 		}
 
-		successor := &PathAndFileInfo{
+		successor := &pathAndFileInfo{
 			Path: childRelPath,
 			Info: fi,
 		}
@@ -114,10 +114,10 @@ func (fsv *fileSystemVisitor) FindDirectSuccessors(
 }
 
 // Read and lstat everything in the directory with the given relative path.
-func (fsv *fileSystemVisitor) readDir(
+func (sf *fsSuccessorFinder) readDir(
 	relPath string) (entries []os.FileInfo, err error) {
 	// Open the directory for reading.
-	f, err := os.Open(path.Join(fsv.basePath, relPath))
+	f, err := os.Open(path.Join(sf.basePath, relPath))
 	if err != nil {
 		err = fmt.Errorf("Open: %v", err)
 		return
@@ -140,8 +140,8 @@ func (fsv *fileSystemVisitor) readDir(
 	return
 }
 
-func (fsv *fileSystemVisitor) shouldSkip(relPath string) bool {
-	for _, re := range fsv.exclusions {
+func (sf *fsSuccessorFinder) shouldSkip(relPath string) bool {
+	for _, re := range sf.exclusions {
 		if re.MatchString(relPath) {
 			return true
 		}

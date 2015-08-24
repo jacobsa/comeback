@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package save_test
+package save
 
 import (
 	"io/ioutil"
@@ -27,18 +27,17 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/jacobsa/comeback/internal/graph"
-	"github.com/jacobsa/comeback/internal/save"
 	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
 )
 
-func TestFileSystemVisitor(t *testing.T) { RunTests(t) }
+func TestFSSuccessorFinder(t *testing.T) { RunTests(t) }
 
 ////////////////////////////////////////////////////////////////////////
 // Helpers
 ////////////////////////////////////////////////////////////////////////
 
-type PathAndFileInfoSlice []*save.PathAndFileInfo
+type PathAndFileInfoSlice []*pathAndFileInfo
 
 func (p PathAndFileInfoSlice) Len() int {
 	return len(p)
@@ -54,7 +53,7 @@ func (p PathAndFileInfoSlice) Swap(i, j int) {
 
 func sortNodes(nodes []graph.Node) (pfis PathAndFileInfoSlice) {
 	for _, n := range nodes {
-		pfis = append(pfis, n.(*save.PathAndFileInfo))
+		pfis = append(pfis, n.(*pathAndFileInfo))
 	}
 
 	sort.Sort(pfis)
@@ -76,25 +75,25 @@ func init() {
 // Boilerplate
 ////////////////////////////////////////////////////////////////////////
 
-type FileSystemVisitorTest struct {
+type FSSuccessorFinderTest struct {
 	ctx context.Context
 
 	// A temporary directory that is cleaned up at the end of the test. This is
-	// the base path with which the visitor is configured.
+	// the base path with which the successor finder is configured.
 	dir string
 
-	// The exclusions with which to configure the visitor.
+	// The exclusions with which to configure the successor finder.
 	exclusions []*regexp.Regexp
 
-	visitor graph.SuccessorFinder
+	sf graph.SuccessorFinder
 }
 
-var _ SetUpInterface = &FileSystemVisitorTest{}
-var _ TearDownInterface = &FileSystemVisitorTest{}
+var _ SetUpInterface = &FSSuccessorFinderTest{}
+var _ TearDownInterface = &FSSuccessorFinderTest{}
 
-func init() { RegisterTestSuite(&FileSystemVisitorTest{}) }
+func init() { RegisterTestSuite(&FSSuccessorFinderTest{}) }
 
-func (t *FileSystemVisitorTest) SetUp(ti *TestInfo) {
+func (t *FSSuccessorFinderTest) SetUp(ti *TestInfo) {
 	t.ctx = ti.Ctx
 
 	// Create the base directory.
@@ -102,11 +101,11 @@ func (t *FileSystemVisitorTest) SetUp(ti *TestInfo) {
 	t.dir, err = ioutil.TempDir("", "file_system_visistor_test")
 	AssertEq(nil, err)
 
-	// And the visitor.
+	// And the successor finder.
 	t.resetVisistor()
 }
 
-func (t *FileSystemVisitorTest) TearDown() {
+func (t *FSSuccessorFinderTest) TearDown() {
 	var err error
 
 	// Clean up the junk we left in the file system.
@@ -114,28 +113,26 @@ func (t *FileSystemVisitorTest) TearDown() {
 	AssertEq(nil, err)
 }
 
-func (t *FileSystemVisitorTest) resetVisistor() {
-	t.visitor = save.NewFileSystemVisitor(
-		t.dir,
-		t.exclusions)
+func (t *FSSuccessorFinderTest) resetVisistor() {
+	t.sf = newSuccessorFinder(t.dir, t.exclusions)
 }
 
 ////////////////////////////////////////////////////////////////////////
 // Tests
 ////////////////////////////////////////////////////////////////////////
 
-func (t *FileSystemVisitorTest) NonExistentPath() {
-	node := &save.PathAndFileInfo{
+func (t *FSSuccessorFinderTest) NonExistentPath() {
+	node := &pathAndFileInfo{
 		Path: "foo/bar",
 		Info: gDirInfo,
 	}
 
-	_, err := t.visitor.FindDirectSuccessors(t.ctx, node)
+	_, err := t.sf.FindDirectSuccessors(t.ctx, node)
 	ExpectThat(err, Error(HasSubstr(node.Path)))
 	ExpectThat(err, Error(HasSubstr("no such file")))
 }
 
-func (t *FileSystemVisitorTest) VisitRootNode() {
+func (t *FSSuccessorFinderTest) VisitRootNode() {
 	var err error
 
 	// Create two children.
@@ -146,12 +143,12 @@ func (t *FileSystemVisitorTest) VisitRootNode() {
 	AssertEq(nil, err)
 
 	// Visit the root.
-	node := &save.PathAndFileInfo{
+	node := &pathAndFileInfo{
 		Path: "",
 		Info: gDirInfo,
 	}
 
-	successors, err := t.visitor.FindDirectSuccessors(t.ctx, node)
+	successors, err := t.sf.FindDirectSuccessors(t.ctx, node)
 	AssertEq(nil, err)
 
 	// Check the output.
@@ -161,7 +158,7 @@ func (t *FileSystemVisitorTest) VisitRootNode() {
 	ExpectEq("foo", pfis[1].Path)
 }
 
-func (t *FileSystemVisitorTest) VisitNonRootNode() {
+func (t *FSSuccessorFinderTest) VisitNonRootNode() {
 	var err error
 
 	// Make a few levels of sub-directories.
@@ -178,12 +175,12 @@ func (t *FileSystemVisitorTest) VisitNonRootNode() {
 	AssertEq(nil, err)
 
 	// Visit the directory.
-	node := &save.PathAndFileInfo{
+	node := &pathAndFileInfo{
 		Path: "sub/dirs",
 		Info: gDirInfo,
 	}
 
-	successors, err := t.visitor.FindDirectSuccessors(t.ctx, node)
+	successors, err := t.sf.FindDirectSuccessors(t.ctx, node)
 	AssertEq(nil, err)
 
 	// Check the output.
@@ -193,7 +190,7 @@ func (t *FileSystemVisitorTest) VisitNonRootNode() {
 	ExpectEq("sub/dirs/foo", pfis[1].Path)
 }
 
-func (t *FileSystemVisitorTest) VisitFileNode() {
+func (t *FSSuccessorFinderTest) VisitFileNode() {
 	var err error
 
 	// Create a file.
@@ -205,20 +202,20 @@ func (t *FileSystemVisitorTest) VisitFileNode() {
 	AssertEq(nil, err)
 
 	// Visit it.
-	node := &save.PathAndFileInfo{
+	node := &pathAndFileInfo{
 		Path: "foo",
 		Info: fi,
 	}
 
-	successors, err := t.visitor.FindDirectSuccessors(t.ctx, node)
+	successors, err := t.sf.FindDirectSuccessors(t.ctx, node)
 	AssertEq(nil, err)
 
 	ExpectThat(successors, ElementsAre())
 }
 
-func (t *FileSystemVisitorTest) Files() {
+func (t *FSSuccessorFinderTest) Files() {
 	var err error
-	var pfi *save.PathAndFileInfo
+	var pfi *pathAndFileInfo
 
 	// Make a sub-directory.
 	d := path.Join(t.dir, "dir")
@@ -234,12 +231,12 @@ func (t *FileSystemVisitorTest) Files() {
 	AssertEq(nil, err)
 
 	// Visit.
-	node := &save.PathAndFileInfo{
+	node := &pathAndFileInfo{
 		Path: "dir",
 		Info: gDirInfo,
 	}
 
-	successors, err := t.visitor.FindDirectSuccessors(t.ctx, node)
+	successors, err := t.sf.FindDirectSuccessors(t.ctx, node)
 	AssertEq(nil, err)
 
 	// Check the output.
@@ -257,9 +254,9 @@ func (t *FileSystemVisitorTest) Files() {
 	ExpectEq(len("taco"), pfi.Info.Size())
 }
 
-func (t *FileSystemVisitorTest) Directories() {
+func (t *FSSuccessorFinderTest) Directories() {
 	var err error
-	var pfi *save.PathAndFileInfo
+	var pfi *pathAndFileInfo
 
 	// Make a sub-directory.
 	d := path.Join(t.dir, "dir")
@@ -275,12 +272,12 @@ func (t *FileSystemVisitorTest) Directories() {
 	AssertEq(nil, err)
 
 	// Visit.
-	node := &save.PathAndFileInfo{
+	node := &pathAndFileInfo{
 		Path: "dir",
 		Info: gDirInfo,
 	}
 
-	successors, err := t.visitor.FindDirectSuccessors(t.ctx, node)
+	successors, err := t.sf.FindDirectSuccessors(t.ctx, node)
 	AssertEq(nil, err)
 
 	// Check the output.
@@ -298,9 +295,9 @@ func (t *FileSystemVisitorTest) Directories() {
 	ExpectTrue(pfi.Info.IsDir())
 }
 
-func (t *FileSystemVisitorTest) Symlinks() {
+func (t *FSSuccessorFinderTest) Symlinks() {
 	var err error
-	var pfi *save.PathAndFileInfo
+	var pfi *pathAndFileInfo
 
 	// Make a sub-directory.
 	d := path.Join(t.dir, "dir")
@@ -313,12 +310,12 @@ func (t *FileSystemVisitorTest) Symlinks() {
 	AssertEq(nil, err)
 
 	// Visit.
-	node := &save.PathAndFileInfo{
+	node := &pathAndFileInfo{
 		Path: "dir",
 		Info: gDirInfo,
 	}
 
-	successors, err := t.visitor.FindDirectSuccessors(t.ctx, node)
+	successors, err := t.sf.FindDirectSuccessors(t.ctx, node)
 	AssertEq(nil, err)
 
 	// Check the output.
@@ -331,7 +328,7 @@ func (t *FileSystemVisitorTest) Symlinks() {
 	ExpectFalse(pfi.Info.IsDir())
 }
 
-func (t *FileSystemVisitorTest) Exclusions() {
+func (t *FSSuccessorFinderTest) Exclusions() {
 	var err error
 
 	// Make a sub-directory.
@@ -359,12 +356,12 @@ func (t *FileSystemVisitorTest) Exclusions() {
 	t.resetVisistor()
 
 	// Visit.
-	node := &save.PathAndFileInfo{
+	node := &pathAndFileInfo{
 		Path: "dir",
 		Info: gDirInfo,
 	}
 
-	successors, err := t.visitor.FindDirectSuccessors(t.ctx, node)
+	successors, err := t.sf.FindDirectSuccessors(t.ctx, node)
 
 	AssertEq(nil, err)
 	ExpectThat(successors, ElementsAre())

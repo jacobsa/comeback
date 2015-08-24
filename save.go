@@ -18,15 +18,14 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	"golang.org/x/net/context"
 
 	"github.com/jacobsa/comeback/internal/config"
-	"github.com/jacobsa/comeback/internal/graph"
 	"github.com/jacobsa/comeback/internal/registry"
 	"github.com/jacobsa/comeback/internal/save"
-	"github.com/jacobsa/syncutil"
 )
 
 var cmdSave = &Command{
@@ -61,55 +60,17 @@ func saveStatePeriodically(c <-chan time.Time) {
 }
 
 func doList(job *config.Job) (err error) {
-	b := syncutil.NewBundle(context.Background())
+	err = save.List(
+		context.Background(),
+		os.Stdout,
+		job.BasePath,
+		job.Excludes)
 
-	// Explore the file system graph, writing all non-excluded nodes into a
-	// channel.
-	//
-	// TODO(jacobsa): Hide the use of the graph package in the unexported
-	// implementation details of package save.
-	graphNodes := make(chan graph.Node, 100)
-	b.Add(func(ctx context.Context) (err error) {
-		defer close(graphNodes)
-		sf := save.NewFileSystemVisitor(job.BasePath, job.Excludes)
-
-		const parallelism = 8
-		err = graph.ExploreDirectedGraph(
-			ctx,
-			sf,
-			[]graph.Node{(*save.PathAndFileInfo)(nil)},
-			graphNodes,
-			parallelism)
-
-		if err != nil {
-			err = fmt.Errorf("ExploreDirectedGraph: %v", err)
-			return
-		}
-
+	if err != nil {
+		err = fmt.Errorf("save.List: %v", err)
 		return
-	})
+	}
 
-	// Print out info about each node.
-	b.Add(func(ctx context.Context) (err error) {
-		for n := range graphNodes {
-			pfi, ok := n.(*save.PathAndFileInfo)
-			if !ok {
-				err = fmt.Errorf("Unexpected node type: %T", n)
-				return
-			}
-
-			// Skip the root node.
-			if pfi == nil {
-				continue
-			}
-
-			fmt.Printf("%s %d\n", pfi.Path, pfi.Info.Size())
-		}
-
-		return
-	})
-
-	err = b.Join()
 	return
 }
 
