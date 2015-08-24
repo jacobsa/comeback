@@ -69,7 +69,6 @@ func doList(job *config.Job) (err error) {
 	// TODO(jacobsa): Hide the use of the graph package in the unexported
 	// implementation details of package save.
 	graphNodes := make(chan graph.Node, 100)
-	rootNode := &save.PathAndFileInfo{}
 	b.Add(func(ctx context.Context) (err error) {
 		defer close(graphNodes)
 		sf := save.NewFileSystemVisitor(job.BasePath, job.Excludes)
@@ -78,7 +77,7 @@ func doList(job *config.Job) (err error) {
 		err = graph.ExploreDirectedGraph(
 			ctx,
 			sf,
-			[]graph.Node{rootNode},
+			[]graph.Node{(*save.PathAndFileInfo)(nil)},
 			graphNodes,
 			parallelism)
 
@@ -99,8 +98,8 @@ func doList(job *config.Job) (err error) {
 				return
 			}
 
-			// Skip the root node that we synthesized above.
-			if pfi == rootNode {
+			// Skip the root node.
+			if pfi == nil {
 				continue
 			}
 

@@ -39,8 +39,8 @@ type PathAndFileInfo struct {
 // the given base path, excluding any relative path that matches any of the
 // supplied exclusions, along with any of its descendents.
 //
-// The nodes involved are of type *PathAndFileInfo. To explore the entire
-// hierarchy, use a root note with Path == "".
+// The nodes involved are of type *PathAndFileInfo. Special case: a value of
+// *PathAndFileInfo(nil) is taken to be the root of the hierarchy.
 func NewFileSystemVisitor(
 	basePath string,
 	exclusions []*regexp.Regexp) (sf graph.SuccessorFinder) {
@@ -71,13 +71,25 @@ func (fsv *fileSystemVisitor) FindDirectSuccessors(
 		return
 	}
 
+	// Extract the pertinent info.
+	var relPath string
+	var isDir bool
+
+	if pfi == nil {
+		// This is the root of the hierarchy.
+		isDir = true
+	} else {
+		relPath = pfi.Path
+		isDir = pfi.Info.IsDir()
+	}
+
 	// Skip non-directories; they have no successors.
-	if !pfi.Info.IsDir() {
+	if !isDir {
 		return
 	}
 
 	// Read and lstat all of the names in the directory.
-	entries, err := fsv.readDir(pfi.Path)
+	entries, err := fsv.readDir(relPath)
 	if err != nil {
 		err = fmt.Errorf("readDir: %v", err)
 		return
@@ -85,13 +97,13 @@ func (fsv *fileSystemVisitor) FindDirectSuccessors(
 
 	// Filter out excluded entries, and return the rest as adjacent nodes.
 	for _, fi := range entries {
-		relPath := path.Join(pfi.Path, fi.Name())
-		if fsv.shouldSkip(relPath) {
+		childRelPath := path.Join(relPath, fi.Name())
+		if fsv.shouldSkip(childRelPath) {
 			continue
 		}
 
 		successor := &PathAndFileInfo{
-			Path: relPath,
+			Path: childRelPath,
 			Info: fi,
 		}
 
