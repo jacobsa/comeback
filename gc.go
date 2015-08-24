@@ -26,7 +26,6 @@ import (
 	"io"
 	"log"
 	"os"
-	"runtime"
 	"sync/atomic"
 	"time"
 
@@ -206,9 +205,6 @@ func deleteObjects(
 ////////////////////////////////////////////////////////////////////////
 
 func runGC(args []string) {
-	// Allow parallelism.
-	runtime.GOMAXPROCS(runtime.NumCPU())
-
 	// Die on error.
 	var err error
 	defer func() {

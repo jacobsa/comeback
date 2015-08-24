@@ -18,7 +18,6 @@ package main
 import (
 	"fmt"
 	"log"
-	"runtime"
 	"time"
 
 	"golang.org/x/net/context"
@@ -100,10 +99,6 @@ func doList(job *config.Job) (err error) {
 
 func runSave(args []string) {
 	cfg := getConfig()
-
-	// Allow parallelism between e.g. scanning directories and writing out the
-	// state file.
-	runtime.GOMAXPROCS(runtime.NumCPU())
 
 	// Look for the specified job.
 	if *g_jobName == "" {

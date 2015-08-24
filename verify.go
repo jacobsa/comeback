@@ -58,7 +58,6 @@ import (
 	"os"
 	"os/user"
 	"path"
-	"runtime"
 	"time"
 
 	"github.com/jacobsa/comeback/internal/blob"
@@ -345,9 +344,6 @@ func openVerifyLog() (
 
 func runVerify(args []string) {
 	readFiles := !*fFast
-
-	// Allow parallelism.
-	runtime.GOMAXPROCS(runtime.NumCPU())
 
 	// Die on error.
 	var err error

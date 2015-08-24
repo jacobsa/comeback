@@ -19,7 +19,6 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
-	"runtime"
 	"sort"
 	"sync"
 	"testing"
@@ -93,15 +92,9 @@ type TraverseTest struct {
 	nodesVisited []string
 }
 
-var _ SetUpTestSuiteInterface = &TraverseTest{}
 var _ SetUpInterface = &TraverseTest{}
 
 func init() { RegisterTestSuite(&TraverseTest{}) }
-
-func (t *TraverseTest) SetUpTestSuite() {
-	// Ensure that we get real parallelism where available.
-	runtime.GOMAXPROCS(runtime.NumCPU())
-}
 
 func (t *TraverseTest) SetUp(ti *TestInfo) {
 	t.ctx = ti.Ctx

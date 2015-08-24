@@ -21,7 +21,6 @@ package main
 import (
 	"fmt"
 	"log"
-	"runtime"
 	"time"
 
 	"github.com/jacobsa/gcloud/gcs"
@@ -40,9 +39,6 @@ var cmdDeleteGarbage = &Command{
 ////////////////////////////////////////////////////////////////////////
 
 func runDeleteGarbage(args []string) {
-	// Allow parallelism.
-	runtime.GOMAXPROCS(runtime.NumCPU())
-
 	// Die on error.
 	var err error
 	defer func() {
