@@ -37,26 +37,26 @@ func TestFSSuccessorFinder(t *testing.T) { RunTests(t) }
 // Helpers
 ////////////////////////////////////////////////////////////////////////
 
-type PathAndFileInfoSlice []*pathAndFileInfo
+type fsNodeSlice []*fsNode
 
-func (p PathAndFileInfoSlice) Len() int {
+func (p fsNodeSlice) Len() int {
 	return len(p)
 }
 
-func (p PathAndFileInfoSlice) Less(i, j int) bool {
-	return p[i].Path < p[j].Path
+func (p fsNodeSlice) Less(i, j int) bool {
+	return p[i].RelPath < p[j].RelPath
 }
 
-func (p PathAndFileInfoSlice) Swap(i, j int) {
+func (p fsNodeSlice) Swap(i, j int) {
 	p[i], p[j] = p[j], p[i]
 }
 
-func sortNodes(nodes []graph.Node) (pfis PathAndFileInfoSlice) {
-	for _, n := range nodes {
-		pfis = append(pfis, n.(*pathAndFileInfo))
+func sortNodes(graphNodes []graph.Node) (nodes fsNodeSlice) {
+	for _, n := range graphNodes {
+		nodes = append(nodes, n.(*fsNode))
 	}
 
-	sort.Sort(pfis)
+	sort.Sort(nodes)
 	return
 }
 
@@ -122,13 +122,13 @@ func (t *FSSuccessorFinderTest) resetVisistor() {
 ////////////////////////////////////////////////////////////////////////
 
 func (t *FSSuccessorFinderTest) NonExistentPath() {
-	node := &pathAndFileInfo{
-		Path: "foo/bar",
-		Info: gDirInfo,
+	node := &fsNode{
+		RelPath: "foo/bar",
+		Info:    gDirInfo,
 	}
 
 	_, err := t.sf.FindDirectSuccessors(t.ctx, node)
-	ExpectThat(err, Error(HasSubstr(node.Path)))
+	ExpectThat(err, Error(HasSubstr(node.RelPath)))
 	ExpectThat(err, Error(HasSubstr("no such file")))
 }
 
@@ -143,9 +143,9 @@ func (t *FSSuccessorFinderTest) VisitRootNode() {
 	AssertEq(nil, err)
 
 	// Visit the root.
-	node := &pathAndFileInfo{
-		Path: "",
-		Info: gDirInfo,
+	node := &fsNode{
+		RelPath: "",
+		Info:    gDirInfo,
 	}
 
 	successors, err := t.sf.FindDirectSuccessors(t.ctx, node)
@@ -154,8 +154,8 @@ func (t *FSSuccessorFinderTest) VisitRootNode() {
 	// Check the output.
 	pfis := sortNodes(successors)
 	AssertEq(2, len(pfis))
-	ExpectEq("bar", pfis[0].Path)
-	ExpectEq("foo", pfis[1].Path)
+	ExpectEq("bar", pfis[0].RelPath)
+	ExpectEq("foo", pfis[1].RelPath)
 }
 
 func (t *FSSuccessorFinderTest) VisitNonRootNode() {
@@ -175,9 +175,9 @@ func (t *FSSuccessorFinderTest) VisitNonRootNode() {
 	AssertEq(nil, err)
 
 	// Visit the directory.
-	node := &pathAndFileInfo{
-		Path: "sub/dirs",
-		Info: gDirInfo,
+	node := &fsNode{
+		RelPath: "sub/dirs",
+		Info:    gDirInfo,
 	}
 
 	successors, err := t.sf.FindDirectSuccessors(t.ctx, node)
@@ -186,8 +186,8 @@ func (t *FSSuccessorFinderTest) VisitNonRootNode() {
 	// Check the output.
 	pfis := sortNodes(successors)
 	AssertEq(2, len(pfis))
-	ExpectEq("sub/dirs/bar", pfis[0].Path)
-	ExpectEq("sub/dirs/foo", pfis[1].Path)
+	ExpectEq("sub/dirs/bar", pfis[0].RelPath)
+	ExpectEq("sub/dirs/foo", pfis[1].RelPath)
 }
 
 func (t *FSSuccessorFinderTest) VisitFileNode() {
@@ -202,9 +202,9 @@ func (t *FSSuccessorFinderTest) VisitFileNode() {
 	AssertEq(nil, err)
 
 	// Visit it.
-	node := &pathAndFileInfo{
-		Path: "foo",
-		Info: fi,
+	node := &fsNode{
+		RelPath: "foo",
+		Info:    fi,
 	}
 
 	successors, err := t.sf.FindDirectSuccessors(t.ctx, node)
@@ -215,7 +215,7 @@ func (t *FSSuccessorFinderTest) VisitFileNode() {
 
 func (t *FSSuccessorFinderTest) Files() {
 	var err error
-	var pfi *pathAndFileInfo
+	var pfi *fsNode
 
 	// Make a sub-directory.
 	d := path.Join(t.dir, "dir")
@@ -231,9 +231,9 @@ func (t *FSSuccessorFinderTest) Files() {
 	AssertEq(nil, err)
 
 	// Visit.
-	node := &pathAndFileInfo{
-		Path: "dir",
-		Info: gDirInfo,
+	node := &fsNode{
+		RelPath: "dir",
+		Info:    gDirInfo,
 	}
 
 	successors, err := t.sf.FindDirectSuccessors(t.ctx, node)
@@ -244,19 +244,21 @@ func (t *FSSuccessorFinderTest) Files() {
 	AssertEq(2, len(pfis))
 
 	pfi = pfis[0]
-	ExpectEq("dir/bar", pfi.Path)
+	ExpectEq("dir/bar", pfi.RelPath)
 	ExpectEq("bar", pfi.Info.Name())
 	ExpectEq(len("burrito"), pfi.Info.Size())
+	ExpectEq(node, pfi.Parent)
 
 	pfi = pfis[1]
-	ExpectEq("dir/foo", pfi.Path)
+	ExpectEq("dir/foo", pfi.RelPath)
 	ExpectEq("foo", pfi.Info.Name())
 	ExpectEq(len("taco"), pfi.Info.Size())
+	ExpectEq(node, pfi.Parent)
 }
 
 func (t *FSSuccessorFinderTest) Directories() {
 	var err error
-	var pfi *pathAndFileInfo
+	var pfi *fsNode
 
 	// Make a sub-directory.
 	d := path.Join(t.dir, "dir")
@@ -272,9 +274,9 @@ func (t *FSSuccessorFinderTest) Directories() {
 	AssertEq(nil, err)
 
 	// Visit.
-	node := &pathAndFileInfo{
-		Path: "dir",
-		Info: gDirInfo,
+	node := &fsNode{
+		RelPath: "dir",
+		Info:    gDirInfo,
 	}
 
 	successors, err := t.sf.FindDirectSuccessors(t.ctx, node)
@@ -285,19 +287,21 @@ func (t *FSSuccessorFinderTest) Directories() {
 	AssertEq(2, len(pfis))
 
 	pfi = pfis[0]
-	ExpectEq("dir/bar", pfi.Path)
+	ExpectEq("dir/bar", pfi.RelPath)
 	ExpectEq("bar", pfi.Info.Name())
 	ExpectTrue(pfi.Info.IsDir())
+	ExpectEq(node, pfi.Parent)
 
 	pfi = pfis[1]
-	ExpectEq("dir/foo", pfi.Path)
+	ExpectEq("dir/foo", pfi.RelPath)
 	ExpectEq("foo", pfi.Info.Name())
 	ExpectTrue(pfi.Info.IsDir())
+	ExpectEq(node, pfi.Parent)
 }
 
 func (t *FSSuccessorFinderTest) Symlinks() {
 	var err error
-	var pfi *pathAndFileInfo
+	var pfi *fsNode
 
 	// Make a sub-directory.
 	d := path.Join(t.dir, "dir")
@@ -310,9 +314,9 @@ func (t *FSSuccessorFinderTest) Symlinks() {
 	AssertEq(nil, err)
 
 	// Visit.
-	node := &pathAndFileInfo{
-		Path: "dir",
-		Info: gDirInfo,
+	node := &fsNode{
+		RelPath: "dir",
+		Info:    gDirInfo,
 	}
 
 	successors, err := t.sf.FindDirectSuccessors(t.ctx, node)
@@ -323,9 +327,10 @@ func (t *FSSuccessorFinderTest) Symlinks() {
 	AssertEq(1, len(pfis))
 
 	pfi = pfis[0]
-	ExpectEq("dir/foo", pfi.Path)
+	ExpectEq("dir/foo", pfi.RelPath)
 	ExpectEq("foo", pfi.Info.Name())
 	ExpectFalse(pfi.Info.IsDir())
+	ExpectEq(node, pfi.Parent)
 }
 
 func (t *FSSuccessorFinderTest) Exclusions() {
@@ -356,9 +361,9 @@ func (t *FSSuccessorFinderTest) Exclusions() {
 	t.resetVisistor()
 
 	// Visit.
-	node := &pathAndFileInfo{
-		Path: "dir",
-		Info: gDirInfo,
+	node := &fsNode{
+		RelPath: "dir",
+		Info:    gDirInfo,
 	}
 
 	successors, err := t.sf.FindDirectSuccessors(t.ctx, node)

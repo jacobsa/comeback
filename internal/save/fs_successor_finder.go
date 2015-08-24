@@ -26,21 +26,11 @@ import (
 	"github.com/jacobsa/comeback/internal/graph"
 )
 
-type pathAndFileInfo struct {
-	// The path to the file (or directory, etc.), relative to the backup base
-	// path.
-	Path string
-
-	// Information about the file, as returned by os.Lstat.
-	Info os.FileInfo
-}
-
 // Create a graph.SuccessorFinder that models the directory hierarchy rooted at
-// the given base path, excluding any relative path that matches any of the
-// supplied exclusions, along with any of its descendents.
+// the given base path, excluding all relative paths that matches any of the
+// supplied exclusions, along with all of their descendants.
 //
-// The nodes involved are of type *pathAndFileInfo. Special case: a value of
-// *pathAndFileInfo(nil) is taken to be the root of the hierarchy.
+// The nodes involved are of type *fsNode.
 func newSuccessorFinder(
 	basePath string,
 	exclusions []*regexp.Regexp) (sf graph.SuccessorFinder) {
@@ -65,31 +55,19 @@ func (sf *fsSuccessorFinder) FindDirectSuccessors(
 	ctx context.Context,
 	node graph.Node) (successors []graph.Node, err error) {
 	// Ensure the input is of the correct type.
-	pfi, ok := node.(*pathAndFileInfo)
+	n, ok := node.(*fsNode)
 	if !ok {
 		err = fmt.Errorf("Node has unexpected type: %T", node)
 		return
 	}
 
-	// Extract the pertinent info.
-	var relPath string
-	var isDir bool
-
-	if pfi == nil {
-		// This is the root of the hierarchy.
-		isDir = true
-	} else {
-		relPath = pfi.Path
-		isDir = pfi.Info.IsDir()
-	}
-
 	// Skip non-directories; they have no successors.
-	if !isDir {
+	if !n.Info.IsDir() {
 		return
 	}
 
 	// Read and lstat all of the names in the directory.
-	entries, err := sf.readDir(relPath)
+	entries, err := sf.readDir(n.RelPath)
 	if err != nil {
 		err = fmt.Errorf("readDir: %v", err)
 		return
@@ -97,14 +75,15 @@ func (sf *fsSuccessorFinder) FindDirectSuccessors(
 
 	// Filter out excluded entries, and return the rest as adjacent nodes.
 	for _, fi := range entries {
-		childRelPath := path.Join(relPath, fi.Name())
+		childRelPath := path.Join(n.RelPath, fi.Name())
 		if sf.shouldSkip(childRelPath) {
 			continue
 		}
 
-		successor := &pathAndFileInfo{
-			Path: childRelPath,
-			Info: fi,
+		successor := &fsNode{
+			RelPath: childRelPath,
+			Info:    fi,
+			Parent:  n,
 		}
 
 		successors = append(successors, successor)

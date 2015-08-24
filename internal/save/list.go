@@ -18,6 +18,7 @@ package save
 import (
 	"fmt"
 	"io"
+	"os"
 	"regexp"
 
 	"golang.org/x/net/context"
@@ -40,6 +41,24 @@ func List(
 	// channel.
 	graphNodes := make(chan graph.Node, 100)
 	b.Add(func(ctx context.Context) (err error) {
+		// Set up a root node.
+		rootNode := &fsNode{
+			RelPath: "",
+			Parent:  nil,
+		}
+
+		rootNode.Info, err = os.Lstat(basePath)
+		if err != nil {
+			err = fmt.Errorf("os.Lstat: %v", err)
+			return
+		}
+
+		if !rootNode.Info.IsDir() {
+			err = fmt.Errorf("Not a directory: %q", basePath)
+			return
+		}
+
+		// Explore the graph.
 		defer close(graphNodes)
 		sf := newSuccessorFinder(basePath, exclusions)
 
@@ -47,7 +66,7 @@ func List(
 		err = graph.ExploreDirectedGraph(
 			ctx,
 			sf,
-			[]graph.Node{(*pathAndFileInfo)(nil)},
+			[]graph.Node{rootNode},
 			graphNodes,
 			parallelism)
 
@@ -61,19 +80,15 @@ func List(
 
 	// Print out info about each node.
 	b.Add(func(ctx context.Context) (err error) {
-		for n := range graphNodes {
-			pfi, ok := n.(*pathAndFileInfo)
+		for graphNode := range graphNodes {
+			n, ok := graphNode.(*fsNode)
 			if !ok {
 				err = fmt.Errorf("Unexpected node type: %T", n)
 				return
 			}
 
 			// Skip the root node.
-			if pfi == nil {
-				continue
-			}
-
-			_, err = fmt.Fprintf(w, "%s %d\n", pfi.Path, pfi.Info.Size())
+			_, err = fmt.Fprintf(w, "%q %d\n", n.RelPath, n.Info.Size())
 			if err != nil {
 				err = fmt.Errorf("Fprintf: %v", err)
 				return
