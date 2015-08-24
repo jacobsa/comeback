@@ -25,48 +25,38 @@ import (
 	"golang.org/x/net/context"
 )
 
-// A visitor in a directed graph whose nodes are identified by strings.
-type Visitor interface {
-	// Process the supplied node and return a list of direct successors.
-	Visit(ctx context.Context, node string) (adjacent []string, err error)
-}
-
-// Invoke v.Visit once on each node reachable from the supplied search roots,
-// including the roots themselves. Use the supplied degree of parallelism.
+// Given a set S of root nodes within the directed graph defined by the
+// supplied successor finder, write all nodes accessible from the nodes in S to
+// the supplied channel, without duplicates. There is no guarantee on output
+// order.
 //
-// It is guaranteed that if a node N is fed to v.Visit, then either:
-//
-//  *  N is an element of roots, or
-//  *  There exists a direct predecessor N' of N such that v.Visit(N') was
-//     called and returned successfully.
-//
-// In particular, if the graph is a rooted tree and searching starts at the
-// root, then parents will be successfully visited before children are visited.
-// However note that in arbitrary DAGs it is *not* guaranteed that all of a
-// node's predecessors have been visited before it is.
-func Traverse(
+// The successor finder may be called up to the given number of times
+// concurrently.
+func ExploreDirectedGraph(
 	ctx context.Context,
-	parallelism int,
-	roots []string,
-	v Visitor) (err error) {
+	sf SuccessorFinder,
+	roots []Node,
+	nodes chan<- Node,
+	parallelism int) (err error) {
 	b := syncutil.NewBundle(ctx)
 
 	// Set up initial state.
-	ts := &traverseState{
-		admitted: make(map[string]struct{}),
+	es := &exploreState{
+		output:   nodes,
+		admitted: make(map[Node]struct{}),
 	}
 
-	ts.mu = syncutil.NewInvariantMutex(ts.checkInvariants)
-	ts.cond.L = &ts.mu
+	es.mu = syncutil.NewInvariantMutex(es.checkInvariants)
+	es.cond.L = &es.mu
 
-	ts.mu.Lock()
-	ts.enqueueNodes(roots)
-	ts.mu.Unlock()
+	es.mu.Lock()
+	es.enqueueNodes(roots)
+	es.mu.Unlock()
 
 	// Run the appropriate number of workers.
 	for i := 0; i < parallelism; i++ {
 		b.Add(func(ctx context.Context) (err error) {
-			err = traverse(ctx, ts, v)
+			err = explore(ctx, es, sf)
 			return
 		})
 	}
@@ -82,33 +72,34 @@ func Traverse(
 	//  *  The bundle observes worker B's error before worker A's.
 	//
 	b.Join()
-	ts.mu.Lock()
-	err = ts.firstErr
-	ts.mu.Unlock()
+	es.mu.Lock()
+	err = es.firstErr
+	es.mu.Unlock()
 
 	return
 }
 
 ////////////////////////////////////////////////////////////////////////
-// traverseState
+// exploreState
 ////////////////////////////////////////////////////////////////////////
 
-// State shared by each traverse worker.
-type traverseState struct {
-	mu syncutil.InvariantMutex
+// State shared by each ExploreDirectedGraph worker.
+type exploreState struct {
+	output chan<- Node
+	mu     syncutil.InvariantMutex
 
 	// All nodes that have ever been seen. If a node is in this map, it will
 	// eventually be visted (barring errors returned by the visitor).
 	//
 	// GUARDED_BY(mu)
-	admitted map[string]struct{}
+	admitted map[Node]struct{}
 
 	// Admitted nodes that have yet to be visted.
 	//
 	// INVARIANT: For each n in toVisit, n is a key of admitted.
 	//
 	// GUARDED_BY(mu)
-	toVisit []string
+	toVisit []Node
 
 	// Set to the first error seen by a worker, if any. When non-nil, all workers
 	// should wake up and return.
@@ -137,11 +128,11 @@ type traverseState struct {
 	cond sync.Cond
 }
 
-// LOCKS_REQUIRED(ts.mu)
-func (ts *traverseState) checkInvariants() {
+// LOCKS_REQUIRED(es.mu)
+func (es *exploreState) checkInvariants() {
 	// INVARIANT: For each n in toVisit, n is a key of admitted.
-	for _, n := range ts.toVisit {
-		if _, ok := ts.admitted[n]; !ok {
+	for _, n := range es.toVisit {
+		if _, ok := es.admitted[n]; !ok {
 			panic(fmt.Sprintf("Expected %q to be in admitted map", n))
 		}
 	}
@@ -149,111 +140,121 @@ func (ts *traverseState) checkInvariants() {
 
 // Is there anything that needs a worker's attention?
 //
-// LOCKS_REQUIRED(ts.mu)
-func (ts *traverseState) shouldWake() bool {
-	return len(ts.toVisit) != 0 || ts.firstErr != nil || ts.busyWorkers == 0
+// LOCKS_REQUIRED(es.mu)
+func (es *exploreState) shouldWake() bool {
+	return len(es.toVisit) != 0 || es.firstErr != nil || es.busyWorkers == 0
 }
 
-// Sleep until there's something interesting for a traverse worker.
+// Sleep until there's something interesting for a worker to do.
 //
-// LOCKS_REQUIRED(ts.mu)
-func (ts *traverseState) waitForSomethingToDo() {
-	for !ts.shouldWake() {
-		ts.cond.Wait()
+// LOCKS_REQUIRED(es.mu)
+func (es *exploreState) waitForSomethingToDo() {
+	for !es.shouldWake() {
+		es.cond.Wait()
 	}
 }
 
 // Enqueue any of the supplied nodes that haven't already been enqueued.
 //
-// LOCKS_REQUIRED(ts.mu)
-func (ts *traverseState) enqueueNodes(nodes []string) {
+// LOCKS_REQUIRED(es.mu)
+func (es *exploreState) enqueueNodes(nodes []Node) {
 	for _, n := range nodes {
-		if _, ok := ts.admitted[n]; !ok {
-			ts.toVisit = append(ts.toVisit, n)
-			ts.admitted[n] = struct{}{}
+		if _, ok := es.admitted[n]; !ok {
+			es.toVisit = append(es.toVisit, n)
+			es.admitted[n] = struct{}{}
 		}
 	}
 
-	ts.cond.Broadcast()
+	es.cond.Broadcast()
 }
 
 ////////////////////////////////////////////////////////////////////////
 // Helpers
 ////////////////////////////////////////////////////////////////////////
 
-// REQUIRES: len(ts.toVisit) > 0
+// REQUIRES: len(es.toVisit) > 0
 //
-// LOCKS_REQUIRED(ts.mu)
-func visitOne(
+// LOCKS_REQUIRED(es.mu)
+func exploreOne(
 	ctx context.Context,
-	ts *traverseState,
-	v Visitor) (err error) {
+	es *exploreState,
+	sf SuccessorFinder) (err error) {
 	// Mark this worker as busy for the duration of this function.
-	ts.busyWorkers++
-	ts.cond.Broadcast()
+	es.busyWorkers++
+	es.cond.Broadcast()
 
 	defer func() {
-		ts.busyWorkers--
-		ts.cond.Broadcast()
+		es.busyWorkers--
+		es.cond.Broadcast()
 	}()
 
-	// Extract the node to visit.
-	l := len(ts.toVisit)
-	node := ts.toVisit[l-1]
-	ts.toVisit = ts.toVisit[:l-1]
-	ts.cond.Broadcast()
+	// Extract the node to process.
+	l := len(es.toVisit)
+	node := es.toVisit[l-1]
+	es.toVisit = es.toVisit[:l-1]
+	es.cond.Broadcast()
 
-	// Unlock while visiting.
-	ts.mu.Unlock()
-	adjacent, err := v.Visit(ctx, node)
-	ts.mu.Lock()
+	// Unlock while writing to the channel and visiting.
+	es.mu.Unlock()
 
+	var successors []Node
+	select {
+	case es.output <- node:
+		successors, err = sf.FindDirectSuccessors(ctx, node)
+
+	case <-ctx.Done():
+		err = ctx.Err()
+	}
+
+	es.mu.Lock()
+
+	// Did we encounter an error in the unlocked region above?
 	if err != nil {
 		return
 	}
 
-	// Enqueue the adjacent nodes that we haven't already admitted.
-	ts.enqueueNodes(adjacent)
+	// Enqueue the successor nodes that we haven't already admitted.
+	es.enqueueNodes(successors)
 
 	return
 }
 
-// A single traverse worker.
-func traverse(
+// A single ExploreDirectedGraph worker.
+func explore(
 	ctx context.Context,
-	ts *traverseState,
-	v Visitor) (err error) {
-	ts.mu.Lock()
-	defer ts.mu.Unlock()
+	es *exploreState,
+	sf SuccessorFinder) (err error) {
+	es.mu.Lock()
+	defer es.mu.Unlock()
 
 	defer func() {
 		// Record our error if it's the first.
-		if ts.firstErr == nil && err != nil {
-			ts.firstErr = err
-			ts.cond.Broadcast()
+		if es.firstErr == nil && err != nil {
+			es.firstErr = err
+			es.cond.Broadcast()
 		}
 	}()
 
 	for {
 		// Wait for something to do.
-		ts.waitForSomethingToDo()
+		es.waitForSomethingToDo()
 
 		// Why were we awoken?
 		switch {
 		// Return immediately if another worker has seen an error.
-		case ts.firstErr != nil:
+		case es.firstErr != nil:
 			err = errors.New("Cancelled")
 			return
 
 		// Otherwise, handle work if it exists.
-		case len(ts.toVisit) != 0:
-			err = visitOne(ctx, ts, v)
+		case len(es.toVisit) != 0:
+			err = exploreOne(ctx, es, sf)
 			if err != nil {
 				return
 			}
 
 		// Otherwise, are we done?
-		case ts.busyWorkers == 0:
+		case es.busyWorkers == 0:
 			return
 
 		default:

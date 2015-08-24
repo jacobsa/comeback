@@ -61,13 +61,11 @@ import (
 	"time"
 
 	"github.com/jacobsa/comeback/internal/blob"
-	"github.com/jacobsa/comeback/internal/graph"
 	"github.com/jacobsa/comeback/internal/util"
 	"github.com/jacobsa/comeback/internal/verify"
 	"github.com/jacobsa/comeback/internal/wiring"
 	"github.com/jacobsa/gcloud/gcs"
 	"github.com/jacobsa/syncutil"
-	"github.com/jacobsa/timeutil"
 	"golang.org/x/net/context"
 )
 
@@ -191,45 +189,21 @@ func verifyImpl(
 	output io.Writer) (nodesVerified uint64, err error) {
 	b := syncutil.NewBundle(ctx)
 
-	// Visit every node in the graph, snooping on the graph structure into a
-	// channel.
-	visitorRecords := make(chan verify.Record, 100)
+	// Call the workhorse function, writing records int o a channel.
+	records := make(chan verify.Record, 100)
 	b.Add(func(ctx context.Context) (err error) {
-		defer close(visitorRecords)
-
-		visitor := verify.NewVisitor(
+		defer close(records)
+		err = verify.Verify(
+			ctx,
 			readFiles,
+			rootScores,
 			knownScores,
 			knownStructure,
-			visitorRecords,
-			timeutil.RealClock(),
+			records,
 			blobStore)
 
-		// Format root node names.
-		var roots []string
-		for _, score := range rootScores {
-			root := verify.Node{
-				Score: score,
-				Dir:   true,
-			}
-
-			roots = append(roots, root.String())
-		}
-
-		// Traverse starting at the specified roots. Use an "experimentally
-		// determined" parallelism, which in theory should depend on bandwidth-delay
-		// products but in practice comes down to when the OS gets cranky about open
-		// files.
-		const parallelism = 128
-
-		err = graph.Traverse(
-			context.Background(),
-			parallelism,
-			roots,
-			visitor)
-
 		if err != nil {
-			err = fmt.Errorf("Traverse: %v", err)
+			err = fmt.Errorf("verify.Verify: %v", err)
 			return
 		}
 
@@ -238,7 +212,7 @@ func verifyImpl(
 
 	// Count and output the nodes visited.
 	b.Add(func(ctx context.Context) (err error) {
-		for r := range visitorRecords {
+		for r := range records {
 			// Increment the count.
 			nodesVerified++
 
