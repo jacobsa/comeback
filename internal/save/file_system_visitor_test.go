@@ -37,7 +37,7 @@ func TestFileSystemVisitor(t *testing.T) { RunTests(t) }
 // Helpers
 ////////////////////////////////////////////////////////////////////////
 
-type PathAndFileInfoSlice []save.PathAndFileInfo
+type PathAndFileInfoSlice []*save.PathAndFileInfo
 
 func (p PathAndFileInfoSlice) Len() int {
 	return len(p)
@@ -51,6 +51,15 @@ func (p PathAndFileInfoSlice) Swap(i, j int) {
 	p[i], p[j] = p[j], p[i]
 }
 
+func sortNodes(nodes []graph.Node) (pfis PathAndFileInfoSlice) {
+	for _, n := range nodes {
+		pfis = append(pfis, n.(*save.PathAndFileInfo))
+	}
+
+	sort.Sort(pfis)
+	return
+}
+
 ////////////////////////////////////////////////////////////////////////
 // Boilerplate
 ////////////////////////////////////////////////////////////////////////
@@ -62,13 +71,10 @@ type FileSystemVisitorTest struct {
 	// the base path with which the visitor is configured.
 	dir string
 
-	// The channel into which the visitor writes. Configured with a large buffer.
-	output chan save.PathAndFileInfo
-
 	// The exclusions with which to configure the visitor.
 	exclusions []*regexp.Regexp
 
-	visitor graph.Visitor
+	visitor graph.SuccessorFinder
 }
 
 var _ SetUpInterface = &FileSystemVisitorTest{}
@@ -78,7 +84,6 @@ func init() { RegisterTestSuite(&FileSystemVisitorTest{}) }
 
 func (t *FileSystemVisitorTest) SetUp(ti *TestInfo) {
 	t.ctx = ti.Ctx
-	t.output = make(chan save.PathAndFileInfo, 10e3)
 
 	// Create the base directory.
 	var err error
@@ -100,19 +105,7 @@ func (t *FileSystemVisitorTest) TearDown() {
 func (t *FileSystemVisitorTest) resetVisistor() {
 	t.visitor = save.NewFileSystemVisitor(
 		t.dir,
-		t.output,
 		t.exclusions)
-}
-
-// Consume the output, returning a slice sorted by path.
-func (t *FileSystemVisitorTest) sortOutput() (output PathAndFileInfoSlice) {
-	close(t.output)
-	for o := range t.output {
-		output = append(output, o)
-	}
-
-	sort.Sort(output)
-	return
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -120,10 +113,12 @@ func (t *FileSystemVisitorTest) sortOutput() (output PathAndFileInfoSlice) {
 ////////////////////////////////////////////////////////////////////////
 
 func (t *FileSystemVisitorTest) NonExistentPath() {
-	const node = "foo/bar"
+	node := &save.PathAndFileInfo{
+		Path: "foo/bar",
+	}
 
-	_, err := t.visitor.Visit(t.ctx, node)
-	ExpectThat(err, Error(HasSubstr(node)))
+	_, err := t.visitor.FindDirectSuccessors(t.ctx, node)
+	ExpectThat(err, Error(HasSubstr(node.Path)))
 	ExpectThat(err, Error(HasSubstr("no such file")))
 }
 
@@ -138,14 +133,18 @@ func (t *FileSystemVisitorTest) VisitRootNode() {
 	AssertEq(nil, err)
 
 	// Visit the root.
-	_, err = t.visitor.Visit(t.ctx, "")
+	node := &save.PathAndFileInfo{
+		Path: "",
+	}
+
+	successors, err := t.visitor.FindDirectSuccessors(t.ctx, node)
 	AssertEq(nil, err)
 
 	// Check the output.
-	output := t.sortOutput()
-	AssertEq(2, len(output))
-	ExpectEq("bar", output[0].Path)
-	ExpectEq("foo", output[1].Path)
+	pfis := sortNodes(successors)
+	AssertEq(2, len(pfis))
+	ExpectEq("bar", pfis[0].Path)
+	ExpectEq("foo", pfis[1].Path)
 }
 
 func (t *FileSystemVisitorTest) VisitNonRootNode() {
@@ -164,20 +163,24 @@ func (t *FileSystemVisitorTest) VisitNonRootNode() {
 	err = ioutil.WriteFile(path.Join(d, "bar"), []byte{}, 0500)
 	AssertEq(nil, err)
 
-	// Visit the root.
-	_, err = t.visitor.Visit(t.ctx, "sub/dirs")
+	// Visit the directory.
+	node := &save.PathAndFileInfo{
+		Path: "sub/dirs",
+	}
+
+	successors, err := t.visitor.FindDirectSuccessors(t.ctx, node)
 	AssertEq(nil, err)
 
 	// Check the output.
-	output := t.sortOutput()
-	AssertEq(2, len(output))
-	ExpectEq("sub/dirs/bar", output[0].Path)
-	ExpectEq("sub/dirs/foo", output[1].Path)
+	pfis := sortNodes(successors)
+	AssertEq(2, len(pfis))
+	ExpectEq("sub/dirs/bar", pfis[0].Path)
+	ExpectEq("sub/dirs/foo", pfis[1].Path)
 }
 
 func (t *FileSystemVisitorTest) Files() {
 	var err error
-	var pfi save.PathAndFileInfo
+	var pfi *save.PathAndFileInfo
 
 	// Make a sub-directory.
 	d := path.Join(t.dir, "dir")
@@ -193,21 +196,23 @@ func (t *FileSystemVisitorTest) Files() {
 	AssertEq(nil, err)
 
 	// Visit.
-	adjacent, err := t.visitor.Visit(t.ctx, "dir")
+	node := &save.PathAndFileInfo{
+		Path: "dir",
+	}
 
+	successors, err := t.visitor.FindDirectSuccessors(t.ctx, node)
 	AssertEq(nil, err)
-	ExpectThat(adjacent, ElementsAre())
 
 	// Check the output.
-	output := t.sortOutput()
-	AssertEq(2, len(output))
+	pfis := sortNodes(successors)
+	AssertEq(2, len(pfis))
 
-	pfi = output[0]
+	pfi = pfis[0]
 	ExpectEq("dir/bar", pfi.Path)
 	ExpectEq("bar", pfi.Info.Name())
 	ExpectEq(len("burrito"), pfi.Info.Size())
 
-	pfi = output[1]
+	pfi = pfis[1]
 	ExpectEq("dir/foo", pfi.Path)
 	ExpectEq("foo", pfi.Info.Name())
 	ExpectEq(len("taco"), pfi.Info.Size())
@@ -215,7 +220,7 @@ func (t *FileSystemVisitorTest) Files() {
 
 func (t *FileSystemVisitorTest) Directories() {
 	var err error
-	var pfi save.PathAndFileInfo
+	var pfi *save.PathAndFileInfo
 
 	// Make a sub-directory.
 	d := path.Join(t.dir, "dir")
@@ -231,22 +236,23 @@ func (t *FileSystemVisitorTest) Directories() {
 	AssertEq(nil, err)
 
 	// Visit.
-	adjacent, err := t.visitor.Visit(t.ctx, "dir")
-	sort.Strings(adjacent)
+	node := &save.PathAndFileInfo{
+		Path: "dir",
+	}
 
+	successors, err := t.visitor.FindDirectSuccessors(t.ctx, node)
 	AssertEq(nil, err)
-	ExpectThat(adjacent, ElementsAre("dir/bar", "dir/foo"))
 
 	// Check the output.
-	output := t.sortOutput()
-	AssertEq(2, len(output))
+	pfis := sortNodes(successors)
+	AssertEq(2, len(pfis))
 
-	pfi = output[0]
+	pfi = pfis[0]
 	ExpectEq("dir/bar", pfi.Path)
 	ExpectEq("bar", pfi.Info.Name())
 	ExpectTrue(pfi.Info.IsDir())
 
-	pfi = output[1]
+	pfi = pfis[1]
 	ExpectEq("dir/foo", pfi.Path)
 	ExpectEq("foo", pfi.Info.Name())
 	ExpectTrue(pfi.Info.IsDir())
@@ -254,7 +260,7 @@ func (t *FileSystemVisitorTest) Directories() {
 
 func (t *FileSystemVisitorTest) Symlinks() {
 	var err error
-	var pfi save.PathAndFileInfo
+	var pfi *save.PathAndFileInfo
 
 	// Make a sub-directory.
 	d := path.Join(t.dir, "dir")
@@ -267,16 +273,18 @@ func (t *FileSystemVisitorTest) Symlinks() {
 	AssertEq(nil, err)
 
 	// Visit.
-	adjacent, err := t.visitor.Visit(t.ctx, "dir")
+	node := &save.PathAndFileInfo{
+		Path: "dir",
+	}
 
+	successors, err := t.visitor.FindDirectSuccessors(t.ctx, node)
 	AssertEq(nil, err)
-	ExpectThat(adjacent, ElementsAre())
 
 	// Check the output.
-	output := t.sortOutput()
-	AssertEq(1, len(output))
+	pfis := sortNodes(successors)
+	AssertEq(1, len(pfis))
 
-	pfi = output[0]
+	pfi = pfis[0]
 	ExpectEq("dir/foo", pfi.Path)
 	ExpectEq("foo", pfi.Info.Name())
 	ExpectFalse(pfi.Info.IsDir())
@@ -310,9 +318,12 @@ func (t *FileSystemVisitorTest) Exclusions() {
 	t.resetVisistor()
 
 	// Visit.
-	adjacent, err := t.visitor.Visit(t.ctx, "dir")
+	node := &save.PathAndFileInfo{
+		Path: "dir",
+	}
+
+	successors, err := t.visitor.FindDirectSuccessors(t.ctx, node)
 
 	AssertEq(nil, err)
-	ExpectThat(adjacent, ElementsAre())
-	ExpectThat(t.sortOutput(), ElementsAre())
+	ExpectThat(successors, ElementsAre())
 }
