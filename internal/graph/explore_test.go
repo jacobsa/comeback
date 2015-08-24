@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"math/rand"
 	"sort"
-	"sync"
 	"testing"
 
 	"golang.org/x/net/context"
@@ -28,25 +27,33 @@ import (
 	"github.com/jacobsa/comeback/internal/graph"
 	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
+	"github.com/jacobsa/syncutil"
 )
 
-func TestTraverse(t *testing.T) { RunTests(t) }
+func TestExplore(t *testing.T) { RunTests(t) }
 
 ////////////////////////////////////////////////////////////////////////
 // Helpers
 ////////////////////////////////////////////////////////////////////////
 
-// A graph.Visitor that invokes a wrapped function.
-type funcVisitor struct {
+// A graph.SuccessorFinder that invokes a wrapped function, and assumes that
+// all nodes are strings.
+type successorFinder struct {
 	F func(context.Context, string) ([]string, error)
 }
 
-var _ graph.Visitor = &funcVisitor{}
+var _ graph.SuccessorFinder = &successorFinder{}
 
-func (fv *funcVisitor) Visit(
+func (sf *successorFinder) FindDirectSuccessors(
 	ctx context.Context,
-	node string) (adjacent []string, err error) {
-	adjacent, err = fv.F(ctx, node)
+	node graph.Node) (successors []graph.Node, err error) {
+	var a []string
+	a, err = sf.F(ctx, node.(string))
+
+	for _, a := range a {
+		successors = append(successors, a)
+	}
+
 	return
 }
 
@@ -70,59 +77,77 @@ func indexNodes(nodes []string) (index map[string]int) {
 // Boilerplate
 ////////////////////////////////////////////////////////////////////////
 
-const parallelism = 16
+const exploreParallelism = 16
 
-type TraverseTest struct {
+type ExploreDirectedGraphTest struct {
 	ctx context.Context
-	mu  sync.Mutex
 
-	// The roots from which we traverse.
-	roots []string
-
-	// Edges used by the default implementation of visit.
+	// Edges used by the default implementation of findDirectSuccessors.
 	edges map[string][]string
 
-	// The function that will be called for visiting nodes. By default, this
-	// writes to nodesVisited and reads from edges.
-	visit func(context.Context, string) ([]string, error)
-
-	// The nodes that were visited, in the order in which they were visited.
-	//
-	// GUARDED_BY(mu)
-	nodesVisited []string
+	// The function that will be called for finding direct successors. By
+	// default, this reads from edges.
+	findDirectSuccessors func(context.Context, string) ([]string, error)
 }
 
-var _ SetUpInterface = &TraverseTest{}
+var _ SetUpInterface = &ExploreDirectedGraphTest{}
 
-func init() { RegisterTestSuite(&TraverseTest{}) }
+func init() { RegisterTestSuite(&ExploreDirectedGraphTest{}) }
 
-func (t *TraverseTest) SetUp(ti *TestInfo) {
+func (t *ExploreDirectedGraphTest) SetUp(ti *TestInfo) {
 	t.ctx = ti.Ctx
 	t.edges = make(map[string][]string)
 }
 
-func (t *TraverseTest) defaultVisit(
+func (t *ExploreDirectedGraphTest) defaultFindDirectSuccessors(
 	ctx context.Context,
-	node string) (adjacent []string, err error) {
-	t.mu.Lock()
-	t.nodesVisited = append(t.nodesVisited, node)
-	t.mu.Unlock()
-
-	adjacent = t.edges[node]
+	node string) (successors []string, err error) {
+	successors = t.edges[node]
 	return
 }
 
-func (t *TraverseTest) traverse() (err error) {
-	// Choose a visit function.
-	visit := t.visit
-	if visit == nil {
-		visit = t.defaultVisit
+func (t *ExploreDirectedGraphTest) explore(
+	roots []string) (nodes []string, err error) {
+	// Choose a "find direct successors" function.
+	findDirectSuccessors := t.findDirectSuccessors
+	if findDirectSuccessors == nil {
+		findDirectSuccessors = t.defaultFindDirectSuccessors
 	}
 
-	// Traverse.
-	v := &funcVisitor{F: visit}
-	err = graph.Traverse(t.ctx, parallelism, t.roots, v)
+	// Convert to a list of nodes.
+	var rootNodes []graph.Node
+	for _, n := range roots {
+		rootNodes = append(rootNodes, n)
+	}
 
+	b := syncutil.NewBundle(t.ctx)
+
+	// Write nodes into a channel.
+	nodeChan := make(chan graph.Node)
+	b.Add(func(ctx context.Context) (err error) {
+		defer close(nodeChan)
+
+		sf := &successorFinder{F: findDirectSuccessors}
+		err = graph.ExploreDirectedGraph(
+			ctx,
+			sf,
+			rootNodes,
+			nodeChan,
+			exploreParallelism)
+
+		return
+	})
+
+	// Accumulate into the output slice.
+	b.Add(func(ctx context.Context) (err error) {
+		for n := range nodeChan {
+			nodes = append(nodes, n.(string))
+		}
+
+		return
+	})
+
+	err = b.Join()
 	return
 }
 
@@ -130,29 +155,31 @@ func (t *TraverseTest) traverse() (err error) {
 // Tests
 ////////////////////////////////////////////////////////////////////////
 
-func (t *TraverseTest) EmptyGraph() {
-	// Traverse.
-	err := t.traverse()
+func (t *ExploreDirectedGraphTest) EmptyGraph() {
+	roots := []string{}
+
+	// Explore.
+	nodes, err := t.explore(roots)
 	AssertEq(nil, err)
 
-	// Nothing should have been visited.
-	ExpectEq(0, len(t.nodesVisited))
+	// Nothing should have been emitted.
+	ExpectEq(0, len(nodes))
 }
 
-func (t *TraverseTest) SingleNodeConnectedComponents() {
+func (t *ExploreDirectedGraphTest) SingleNodeConnectedComponents() {
 	// Graph structure:
 	//
 	//     A  B  C  D
 	//
-	t.roots = []string{"A", "B", "C", "D"}
+	roots := []string{"A", "B", "C", "D"}
 	t.edges = map[string][]string{}
 
-	// Traverse.
-	err := t.traverse()
+	// Explore.
+	nodes, err := t.explore(roots)
 	AssertEq(nil, err)
 
 	AssertThat(
-		sortNodes(t.nodesVisited),
+		sortNodes(nodes),
 		ElementsAre(
 			"A",
 			"B",
@@ -161,7 +188,7 @@ func (t *TraverseTest) SingleNodeConnectedComponents() {
 		))
 }
 
-func (t *TraverseTest) SimpleRootedTree() {
+func (t *ExploreDirectedGraphTest) SimpleRootedTree() {
 	// Graph structure:
 	//
 	//        A
@@ -174,7 +201,7 @@ func (t *TraverseTest) SimpleRootedTree() {
 	//           | \
 	//           J  K
 	//
-	t.roots = []string{"A"}
+	roots := []string{"A"}
 	t.edges = map[string][]string{
 		"A": []string{"B", "C"},
 		"C": []string{"D", "E", "F"},
@@ -183,12 +210,12 @@ func (t *TraverseTest) SimpleRootedTree() {
 		"I": []string{"J", "K"},
 	}
 
-	// Traverse.
-	err := t.traverse()
+	// Explore.
+	nodes, err := t.explore(roots)
 	AssertEq(nil, err)
 
 	AssertThat(
-		sortNodes(t.nodesVisited),
+		sortNodes(nodes),
 		ElementsAre(
 			"A",
 			"B",
@@ -203,7 +230,7 @@ func (t *TraverseTest) SimpleRootedTree() {
 			"K",
 		))
 
-	nodeIndex := indexNodes(t.nodesVisited)
+	nodeIndex := indexNodes(nodes)
 	for p, successors := range t.edges {
 		for _, s := range successors {
 			ExpectLt(nodeIndex[p], nodeIndex[s], "%q %q", p, s)
@@ -211,7 +238,7 @@ func (t *TraverseTest) SimpleRootedTree() {
 	}
 }
 
-func (t *TraverseTest) SimpleDAG() {
+func (t *ExploreDirectedGraphTest) SimpleDAG() {
 	// Graph structure:
 	//
 	//        A
@@ -222,7 +249,7 @@ func (t *TraverseTest) SimpleDAG() {
 	//         \|
 	//          E
 	//
-	t.roots = []string{"A"}
+	roots := []string{"A"}
 	t.edges = map[string][]string{
 		"A": []string{"B", "C"},
 		"B": []string{"D"},
@@ -230,12 +257,12 @@ func (t *TraverseTest) SimpleDAG() {
 		"D": []string{"E"},
 	}
 
-	// Traverse.
-	err := t.traverse()
+	// Explore.
+	nodes, err := t.explore(roots)
 	AssertEq(nil, err)
 
 	AssertThat(
-		sortNodes(t.nodesVisited),
+		sortNodes(nodes),
 		ElementsAre(
 			"A",
 			"B",
@@ -244,7 +271,7 @@ func (t *TraverseTest) SimpleDAG() {
 			"E",
 		))
 
-	nodeIndex := indexNodes(t.nodesVisited)
+	nodeIndex := indexNodes(nodes)
 	ExpectGt(nodeIndex["B"], nodeIndex["A"])
 	ExpectGt(nodeIndex["C"], nodeIndex["A"])
 
@@ -257,7 +284,7 @@ func (t *TraverseTest) SimpleDAG() {
 		AnyOf(GreaterThan(nodeIndex["D"]), GreaterThan(nodeIndex["C"])))
 }
 
-func (t *TraverseTest) MultipleConnectedComponents() {
+func (t *ExploreDirectedGraphTest) MultipleConnectedComponents() {
 	// Graph structure:
 	//
 	//        A       E
@@ -266,7 +293,7 @@ func (t *TraverseTest) MultipleConnectedComponents() {
 	//      \  /
 	//        D
 	//
-	t.roots = []string{"A", "E"}
+	roots := []string{"A", "E"}
 	t.edges = map[string][]string{
 		"A": []string{"B", "C"},
 		"B": []string{"D"},
@@ -274,12 +301,12 @@ func (t *TraverseTest) MultipleConnectedComponents() {
 		"E": []string{"F", "G"},
 	}
 
-	// Traverse.
-	err := t.traverse()
+	// Explore.
+	nodes, err := t.explore(roots)
 	AssertEq(nil, err)
 
 	AssertThat(
-		sortNodes(t.nodesVisited),
+		sortNodes(nodes),
 		ElementsAre(
 			"A",
 			"B",
@@ -290,7 +317,7 @@ func (t *TraverseTest) MultipleConnectedComponents() {
 			"G",
 		))
 
-	nodeIndex := indexNodes(t.nodesVisited)
+	nodeIndex := indexNodes(nodes)
 	ExpectGt(nodeIndex["B"], nodeIndex["A"])
 	ExpectGt(nodeIndex["C"], nodeIndex["A"])
 
@@ -302,7 +329,7 @@ func (t *TraverseTest) MultipleConnectedComponents() {
 	ExpectGt(nodeIndex["G"], nodeIndex["E"])
 }
 
-func (t *TraverseTest) RedundantRoots() {
+func (t *ExploreDirectedGraphTest) RedundantRoots() {
 	// Graph structure:
 	//
 	//        A
@@ -313,7 +340,7 @@ func (t *TraverseTest) RedundantRoots() {
 	//         \|
 	//          E
 	//
-	t.roots = []string{"A", "D", "B", "A"}
+	roots := []string{"A", "D", "B", "A"}
 	t.edges = map[string][]string{
 		"A": []string{"B", "C"},
 		"B": []string{"D"},
@@ -321,12 +348,12 @@ func (t *TraverseTest) RedundantRoots() {
 		"D": []string{"E"},
 	}
 
-	// Traverse.
-	err := t.traverse()
+	// Explore.
+	nodes, err := t.explore(roots)
 	AssertEq(nil, err)
 
 	AssertThat(
-		sortNodes(t.nodesVisited),
+		sortNodes(nodes),
 		ElementsAre(
 			"A",
 			"B",
@@ -335,7 +362,7 @@ func (t *TraverseTest) RedundantRoots() {
 			"E",
 		))
 
-	nodeIndex := indexNodes(t.nodesVisited)
+	nodeIndex := indexNodes(nodes)
 	ExpectGt(nodeIndex["C"], nodeIndex["A"])
 
 	ExpectThat(
@@ -343,7 +370,7 @@ func (t *TraverseTest) RedundantRoots() {
 		AnyOf(GreaterThan(nodeIndex["D"]), GreaterThan(nodeIndex["C"])))
 }
 
-func (t *TraverseTest) Cycle() {
+func (t *ExploreDirectedGraphTest) Cycle() {
 	// Graph structure:
 	//
 	//        A
@@ -352,7 +379,7 @@ func (t *TraverseTest) Cycle() {
 	//      \ |/
 	//        D
 	//
-	t.roots = []string{"A"}
+	roots := []string{"A"}
 	t.edges = map[string][]string{
 		"A": []string{"B", "C"},
 		"B": []string{"D"},
@@ -360,12 +387,12 @@ func (t *TraverseTest) Cycle() {
 		"D": []string{"A"},
 	}
 
-	// Traverse.
-	err := t.traverse()
+	// Explore.
+	nodes, err := t.explore(roots)
 	AssertEq(nil, err)
 
 	AssertThat(
-		sortNodes(t.nodesVisited),
+		sortNodes(nodes),
 		ElementsAre(
 			"A",
 			"B",
@@ -374,11 +401,11 @@ func (t *TraverseTest) Cycle() {
 		))
 }
 
-func (t *TraverseTest) LargeRootedTree() {
+func (t *ExploreDirectedGraphTest) LargeRootedTree() {
 	// Set up a tree of the given depth, with a random number of children for
 	// each node.
 	const depth = 10
-	t.roots = []string{"root"}
+	roots := []string{"root"}
 
 	nextID := 0
 	nextLevel := []string{"root"}
@@ -402,19 +429,19 @@ func (t *TraverseTest) LargeRootedTree() {
 		}
 	}
 
-	// Traverse.
-	err := t.traverse()
+	// Explore.
+	nodes, err := t.explore(roots)
 	AssertEq(nil, err)
 
 	// All ndoes should be represented.
-	AssertEq(len(allNodes), len(t.nodesVisited))
-	for _, n := range t.nodesVisited {
+	AssertEq(len(allNodes), len(nodes))
+	for _, n := range nodes {
 		_, ok := allNodes[n]
 		AssertTrue(ok, "Unexpected node: %q", n)
 	}
 
 	// Edge order should be respected.
-	nodeIndex := indexNodes(t.nodesVisited)
+	nodeIndex := indexNodes(nodes)
 	for p, successors := range t.edges {
 		for _, s := range successors {
 			ExpectLt(nodeIndex[p], nodeIndex[s], "%q %q", p, s)
@@ -422,8 +449,8 @@ func (t *TraverseTest) LargeRootedTree() {
 	}
 }
 
-func (t *TraverseTest) VisitorReturnsError() {
-	AssertGt(parallelism, 1)
+func (t *ExploreDirectedGraphTest) VisitorReturnsError() {
+	AssertGt(exploreParallelism, 1)
 
 	// Graph structure:
 	//
@@ -437,7 +464,7 @@ func (t *TraverseTest) VisitorReturnsError() {
 	//           | \
 	//           J  K
 	//
-	t.roots = []string{"A"}
+	roots := []string{"A"}
 	t.edges = map[string][]string{
 		"A": []string{"B", "C"},
 		"B": []string{"D"},
@@ -461,11 +488,11 @@ func (t *TraverseTest) VisitorReturnsError() {
 	bReceived := make(chan struct{})
 	bCancelled := make(chan struct{})
 
-	t.visit = func(
+	t.findDirectSuccessors = func(
 		ctx context.Context,
-		node string) (adjacent []string, err error) {
+		node string) (successors []string, err error) {
 		// Call through.
-		adjacent, err = t.defaultVisit(ctx, node)
+		successors, err = t.defaultFindDirectSuccessors(ctx, node)
 
 		// Perform special behavior.
 		switch node {
@@ -485,8 +512,8 @@ func (t *TraverseTest) VisitorReturnsError() {
 		return
 	}
 
-	// Traverse. We should get the expected error.
-	err := t.traverse()
+	// Explore.
+	nodes, err := t.explore(roots)
 	ExpectEq(cErr, err)
 
 	// B should have seen cancellation.
@@ -494,6 +521,6 @@ func (t *TraverseTest) VisitorReturnsError() {
 
 	// Nothing descending from B or C should have been visted.
 	ExpectThat(
-		sortNodes(t.nodesVisited),
+		sortNodes(nodes),
 		ElementsAre("A", "B", "C"))
 }
