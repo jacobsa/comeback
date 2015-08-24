@@ -25,18 +25,27 @@ import (
 )
 
 // Attempt to fill in fsNode.Scores fields for files arriving on nodesIn based
-// on the contents of a state.ScoreMap. Update the score map for nodes where
-// this wasn't successful based on the results arriving on downstreamResults.
-func consultScoreMapForNodes(
+// on the contents of a state.ScoreMap.
+func consultScoreMap(
 	ctx context.Context,
 	scoreMap state.ScoreMap,
 	clock timeutil.Clock,
 	nodesIn <-chan *fsNode,
-	nodesOut chan<- *fsNode,
-	downstreamResults <-chan *fsNode) (err error) {
+	nodesOut chan<- *fsNode) (err error) {
 	// TODO(jacobsa): Make sure to consult score_map_saver.go. We don't need the
 	// bit that talks to the blob store (added in abd1800) if we kill blob store
 	// internal asynchronicity, though.
+	err = errors.New("TODO")
+	return
+}
+
+// For each incoming file node n that consultScoreMap did not mark as having
+// hit in its score map, update the score map based on n.Scores.
+func updateScoreMap(
+	ctx context.Context,
+	scoreMap state.ScoreMap,
+	nodes <-chan *fsNode) (err error) {
+	// TODO(jacobsa): Make sure to consult score_map_saver.go.
 	err = errors.New("TODO")
 	return
 }
