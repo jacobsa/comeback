@@ -30,8 +30,8 @@ import (
 // *   a successor finder that agrees with the topological sort about the
 //     structure of the graph,
 //
-// invoke the supplied visitor once for each node in the graph with bounded
-// parallelism. The visitor will be invoked for a node N only after it has
+// invoke the supplied visitor once for each node in the graph with, bounded
+// parallelism. The visitor will be called for a node N only after it has
 // returned success for all of N's predecessors.
 func TraverseDAG(
 	ctx context.Context,
