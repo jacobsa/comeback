@@ -15,7 +15,11 @@
 
 package save
 
-import "os"
+import (
+	"os"
+
+	"github.com/jacobsa/comeback/internal/blob"
+)
 
 // A node within the tree defined by the file system hierarchy rooted at a
 // particular directory, called the base path below.
@@ -29,4 +33,7 @@ type fsNode struct {
 	// The node for the parent of this file, or nil if this is the root of the
 	// tree of interest.
 	Parent *fsNode
+
+	// A list of scores reflecting the contents of this file or directory.
+	Scores []blob.Score
 }
