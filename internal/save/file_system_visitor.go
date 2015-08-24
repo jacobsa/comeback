@@ -71,6 +71,11 @@ func (fsv *fileSystemVisitor) FindDirectSuccessors(
 		return
 	}
 
+	// Skip non-directories; they have no successors.
+	if !pfi.Info.IsDir() {
+		return
+	}
+
 	// Read and lstat all of the names in the directory.
 	entries, err := fsv.readDir(pfi.Path)
 	if err != nil {
