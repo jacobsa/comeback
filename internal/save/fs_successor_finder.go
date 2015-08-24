@@ -83,7 +83,7 @@ func (sf *fsSuccessorFinder) FindDirectSuccessors(
 		successor := &fsNode{
 			RelPath: childRelPath,
 			Info:    fi,
-			// TODO(jacobsa): Test for parents.
+			Parent:  n,
 		}
 
 		successors = append(successors, successor)
