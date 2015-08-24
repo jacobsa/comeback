@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package verify_test
+package verify
 
 import (
 	"errors"
@@ -27,28 +27,26 @@ import (
 	"github.com/jacobsa/comeback/internal/blob/mock"
 	"github.com/jacobsa/comeback/internal/fs"
 	"github.com/jacobsa/comeback/internal/repr"
-	"github.com/jacobsa/comeback/internal/verify"
 	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/oglemock"
 	. "github.com/jacobsa/ogletest"
 	"github.com/jacobsa/timeutil"
 )
 
-func TestVisitor(t *testing.T) { RunTests(t) }
+func TestSuccessorFinder(t *testing.T) { RunTests(t) }
 
 ////////////////////////////////////////////////////////////////////////
 // Helpers
 ////////////////////////////////////////////////////////////////////////
 
-func makeNodeName(
+func makeNode(
 	dir bool,
-	score blob.Score) (s string) {
-	n := verify.Node{
+	score blob.Score) (n Node) {
+	n = Node{
 		Dir:   dir,
 		Score: score,
 	}
 
-	s = n.String()
 	return
 }
 
@@ -61,9 +59,9 @@ const namePrefix = "blobs/"
 type superTest struct {
 	ctx            context.Context
 	readFiles      bool
-	records        chan verify.Record
+	records        chan Record
 	allScores      []blob.Score
-	knownStructure map[verify.Node][]verify.Node
+	knownStructure map[Node][]Node
 	blobStore      mock_blob.MockStore
 	clock          timeutil.SimulatedClock
 }
@@ -73,15 +71,14 @@ func (t *superTest) setUp(
 	readFiles bool) {
 	t.ctx = ti.Ctx
 	t.readFiles = readFiles
-	t.records = make(chan verify.Record, 1000)
-	t.knownStructure = make(map[verify.Node][]verify.Node)
+	t.records = make(chan Record, 1000)
+	t.knownStructure = make(map[Node][]Node)
 	t.blobStore = mock_blob.NewMockStore(ti.MockController, "blobStore")
 	t.clock.SetTime(time.Date(2012, 8, 15, 22, 56, 0, 0, time.Local))
 }
 
-func (t *superTest) visit(n string) (adjacent []string, err error) {
-	// Create the visitor.
-	visitor := verify.NewVisitor(
+func (t *superTest) visit(n Node) (successorNames []string, err error) {
+	sf := newSuccessorFinder(
 		t.readFiles,
 		t.allScores,
 		t.knownStructure,
@@ -89,13 +86,16 @@ func (t *superTest) visit(n string) (adjacent []string, err error) {
 		&t.clock,
 		t.blobStore)
 
-	// Visit.
-	adjacent, err = visitor.Visit(t.ctx, n)
+	successors, err := sf.FindDirectSuccessors(t.ctx, n)
+	for _, untyped := range successors {
+		tmp := untyped.(Node)
+		successorNames = append(successorNames, tmp.String())
+	}
 
 	return
 }
 
-func (t *superTest) getRecords() (records []verify.Record) {
+func (t *superTest) getRecords() (records []Record) {
 	close(t.records)
 	for r := range t.records {
 		records = append(records, r)
@@ -105,42 +105,19 @@ func (t *superTest) getRecords() (records []verify.Record) {
 }
 
 ////////////////////////////////////////////////////////////////////////
-// Common
-////////////////////////////////////////////////////////////////////////
-
-type CommonTest struct {
-	superTest
-}
-
-var _ SetUpInterface = &CommonTest{}
-
-func init() { RegisterTestSuite(&CommonTest{}) }
-
-func (t *CommonTest) SetUp(ti *TestInfo) {
-	t.superTest.setUp(ti, false)
-}
-
-func (t *CommonTest) InvalidNodeName() {
-	_, err := t.visit("taco")
-
-	ExpectThat(err, Error(HasSubstr("ParseNode")))
-	ExpectThat(err, Error(HasSubstr("taco")))
-}
-
-////////////////////////////////////////////////////////////////////////
 // Directories
 ////////////////////////////////////////////////////////////////////////
 
 type DirsTest struct {
 	superTest
 
-	knownNode   verify.Node
-	unknownNode verify.Node
+	knownNode   Node
+	unknownNode Node
 
 	listing  []*fs.DirectoryEntry
 	contents []byte
 	score    blob.Score
-	node     string
+	node     Node
 }
 
 var _ SetUpInterface = &DirsTest{}
@@ -179,16 +156,16 @@ func (t *DirsTest) SetUp(ti *TestInfo) {
 	AssertEq(nil, err)
 
 	t.score = blob.ComputeScore(t.contents)
-	t.node = makeNodeName(true, t.score)
+	t.node = makeNode(true, t.score)
 	t.allScores = append(t.allScores, t.score)
 
 	// Set up canned nodes.
-	t.knownNode = verify.Node{
+	t.knownNode = Node{
 		Dir:   true,
 		Score: blob.ComputeScore([]byte("knownNode")),
 	}
 
-	t.unknownNode = verify.Node{
+	t.unknownNode = Node{
 		Dir:   true,
 		Score: blob.ComputeScore([]byte("unknownNode")),
 	}
@@ -201,10 +178,10 @@ func (t *DirsTest) SetUp(ti *TestInfo) {
 
 func (t *DirsTest) NodeVisitedOnPastRun_ScoreAbsent() {
 	// Set up known children for the node whose score is not in allScores.
-	t.knownStructure[t.unknownNode] = []verify.Node{t.knownNode}
+	t.knownStructure[t.unknownNode] = []Node{t.knownNode}
 
 	// We should receive an error, and no records.
-	_, err := t.visit(t.unknownNode.String())
+	_, err := t.visit(t.unknownNode)
 
 	ExpectThat(err, Error(HasSubstr("Unknown")))
 	ExpectThat(err, Error(HasSubstr("score")))
@@ -215,11 +192,11 @@ func (t *DirsTest) NodeVisitedOnPastRun_ScoreAbsent() {
 
 func (t *DirsTest) NodeVisitedOnPastRun_ScorePresent() {
 	// Set up known children for the node whose score is in allScores.
-	t.knownStructure[t.knownNode] = []verify.Node{t.unknownNode, t.knownNode}
+	t.knownStructure[t.knownNode] = []Node{t.unknownNode, t.knownNode}
 
 	// We should succeed without doing anything further. No new record should be
 	// minted.
-	adjacent, err := t.visit(t.knownNode.String())
+	adjacent, err := t.visit(t.knownNode)
 
 	AssertEq(nil, err)
 	ExpectThat(adjacent, ElementsAre(t.unknownNode.String(), t.knownNode.String()))
@@ -253,7 +230,7 @@ func (t *DirsTest) BlobIsJunk() {
 	t.contents = append(t.contents, 'a')
 	t.score = blob.ComputeScore(t.contents)
 	t.allScores = append(t.allScores, t.score)
-	t.node = makeNodeName(true, t.score)
+	t.node = makeNode(true, t.score)
 
 	// Load
 	ExpectCall(t.blobStore, "Load")(Any(), Any()).
@@ -285,7 +262,7 @@ func (t *DirsTest) UnknownEntryType() {
 
 	t.score = blob.ComputeScore(t.contents)
 	t.allScores = append(t.allScores, t.score)
-	t.node = makeNodeName(true, t.score)
+	t.node = makeNode(true, t.score)
 
 	// Load
 	ExpectCall(t.blobStore, "Load")(Any(), Any()).
@@ -317,7 +294,7 @@ func (t *DirsTest) SymlinkWithScores() {
 
 	t.score = blob.ComputeScore(t.contents)
 	t.allScores = append(t.allScores, t.score)
-	t.node = makeNodeName(true, t.score)
+	t.node = makeNode(true, t.score)
 
 	// Load
 	ExpectCall(t.blobStore, "Load")(Any(), Any()).
@@ -345,7 +322,8 @@ func (t *DirsTest) ReturnsAppropriateAdjacentNodesAndRecords() {
 	for _, entry := range t.listing {
 		dir := entry.Type == fs.TypeDirectory
 		for _, score := range entry.Scores {
-			expected = append(expected, makeNodeName(dir, score))
+			tmp := makeNode(dir, score)
+			expected = append(expected, tmp.String())
 		}
 	}
 
@@ -355,7 +333,7 @@ func (t *DirsTest) ReturnsAppropriateAdjacentNodesAndRecords() {
 	// Check records.
 	records := t.getRecords()
 	AssertEq(1, len(records))
-	var r verify.Record
+	var r Record
 
 	r = records[0]
 	ExpectThat(r.Time, timeutil.TimeEq(t.clock.Now()))
@@ -379,20 +357,20 @@ type filesCommonTest struct {
 
 	contents []byte
 
-	knownNode   verify.Node
-	unknownNode verify.Node
+	knownNode   Node
+	unknownNode Node
 }
 
 func (t *filesCommonTest) setUp(ti *TestInfo, readFiles bool) {
 	t.contents = []byte("foobarbaz")
 
 	// Set up canned nodes.
-	t.knownNode = verify.Node{
+	t.knownNode = Node{
 		Dir:   false,
 		Score: blob.ComputeScore(t.contents),
 	}
 
-	t.unknownNode = verify.Node{
+	t.unknownNode = Node{
 		Dir:   false,
 		Score: blob.ComputeScore(append(t.contents, 'a')),
 	}
@@ -416,10 +394,10 @@ func (t *FilesLiteTest) SetUp(ti *TestInfo) {
 
 func (t *FilesLiteTest) NodeVisitedOnPastRun_ScoreAbsent() {
 	// Set up known children for the node whose score is not in allScores.
-	t.knownStructure[t.unknownNode] = []verify.Node{}
+	t.knownStructure[t.unknownNode] = []Node{}
 
 	// We should receive an error, and no records.
-	_, err := t.visit(t.unknownNode.String())
+	_, err := t.visit(t.unknownNode)
 
 	ExpectThat(err, Error(HasSubstr("Unknown")))
 	ExpectThat(err, Error(HasSubstr("score")))
@@ -430,11 +408,11 @@ func (t *FilesLiteTest) NodeVisitedOnPastRun_ScoreAbsent() {
 
 func (t *FilesLiteTest) NodeVisitedOnPastRun_ScorePresent() {
 	// Set up known children for the node whose score is in allScores.
-	t.knownStructure[t.knownNode] = []verify.Node{}
+	t.knownStructure[t.knownNode] = []Node{}
 
 	// We should succeed without doing anything further. No new record should be
 	// minted.
-	adjacent, err := t.visit(t.knownNode.String())
+	adjacent, err := t.visit(t.knownNode)
 
 	AssertEq(nil, err)
 	ExpectThat(adjacent, ElementsAre())
@@ -443,7 +421,7 @@ func (t *FilesLiteTest) NodeVisitedOnPastRun_ScorePresent() {
 
 func (t *FilesLiteTest) ScoreNotInList() {
 	// Call
-	_, err := t.visit(t.unknownNode.String())
+	_, err := t.visit(t.unknownNode)
 
 	ExpectThat(err, Error(HasSubstr("Unknown")))
 	ExpectThat(err, Error(HasSubstr("score")))
@@ -454,7 +432,7 @@ func (t *FilesLiteTest) ScoreNotInList() {
 
 func (t *FilesLiteTest) ScoreIsInList() {
 	// Call
-	adjacent, err := t.visit(t.knownNode.String())
+	adjacent, err := t.visit(t.knownNode)
 
 	AssertEq(nil, err)
 	ExpectThat(adjacent, ElementsAre())
@@ -479,10 +457,10 @@ func (t *FilesFullTest) SetUp(ti *TestInfo) {
 
 func (t *FilesFullTest) NodeVisitedOnPastRun_ScoreAbsent() {
 	// Set up known children for the node whose score is not in allScores.
-	t.knownStructure[t.unknownNode] = []verify.Node{}
+	t.knownStructure[t.unknownNode] = []Node{}
 
 	// We should receive an error, and no records.
-	_, err := t.visit(t.unknownNode.String())
+	_, err := t.visit(t.unknownNode)
 
 	ExpectThat(err, Error(HasSubstr("Unknown")))
 	ExpectThat(err, Error(HasSubstr("score")))
@@ -493,11 +471,11 @@ func (t *FilesFullTest) NodeVisitedOnPastRun_ScoreAbsent() {
 
 func (t *FilesFullTest) NodeVisitedOnPastRun_ScorePresent() {
 	// Set up known children for the node whose score is in allScores.
-	t.knownStructure[t.knownNode] = []verify.Node{}
+	t.knownStructure[t.knownNode] = []Node{}
 
 	// We should succeed without doing anything further. No new record should be
 	// minted.
-	adjacent, err := t.visit(t.knownNode.String())
+	adjacent, err := t.visit(t.knownNode)
 
 	AssertEq(nil, err)
 	ExpectThat(adjacent, ElementsAre())
@@ -510,7 +488,7 @@ func (t *FilesFullTest) CallsBlobStore() {
 		WillOnce(Return(nil, errors.New("")))
 
 	// Call
-	t.visit(t.knownNode.String())
+	t.visit(t.knownNode)
 }
 
 func (t *FilesFullTest) BlobStoreReturnsError() {
@@ -519,7 +497,7 @@ func (t *FilesFullTest) BlobStoreReturnsError() {
 		WillOnce(Return(nil, errors.New("taco")))
 
 	// Call
-	_, err := t.visit(t.knownNode.String())
+	_, err := t.visit(t.knownNode)
 
 	ExpectThat(err, Error(HasSubstr("Load")))
 	ExpectThat(err, Error(HasSubstr("taco")))
@@ -533,7 +511,7 @@ func (t *FilesFullTest) BlobStoreSucceeds() {
 		WillOnce(Return(t.contents, nil))
 
 	// Call
-	adjacent, err := t.visit(t.knownNode.String())
+	adjacent, err := t.visit(t.knownNode)
 
 	AssertEq(nil, err)
 	ExpectThat(adjacent, ElementsAre())
