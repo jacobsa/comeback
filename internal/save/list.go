@@ -16,6 +16,7 @@
 package save
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -27,6 +28,17 @@ import (
 	"github.com/jacobsa/syncutil"
 )
 
+// Given a base directory and a set of exclusions, list all file system nodes
+// involved, filling in only the RelPath and Parent fields.
+func listNodes(
+	ctx context.Context,
+	basePath string,
+	exclusions []*regexp.Regexp,
+	nodes chan<- *fsNode) (err error) {
+	err = errors.New("TODO")
+	return
+}
+
 // Given a base directory and a set of exclusions, list the files and
 // directories that would be saved by a backup job with the same info in a
 // human-readable format. Write the output to the supplied writer.
@@ -35,6 +47,8 @@ func List(
 	w io.Writer,
 	basePath string,
 	exclusions []*regexp.Regexp) (err error) {
+	// TODO(jacobsa): Make this function use listNodes.
+
 	b := syncutil.NewBundle(context.Background())
 
 	// Explore the file system graph, writing all non-excluded nodes into a
