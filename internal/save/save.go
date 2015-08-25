@@ -138,7 +138,7 @@ func Save(
 
 func findRootScore(nodes <-chan *fsNode) (score blob.Score, err error) {
 	found := false
-	for _, n := range nodes {
+	for n := range nodes {
 		// Skip non-root nodes.
 		if n.Parent != nil {
 			continue
@@ -174,6 +174,23 @@ func teeNodes(
 	in <-chan *fsNode,
 	out1 chan<- *fsNode,
 	out2 chan<- *fsNode) (err error) {
-	err = errors.New("TODO")
+	for n := range in {
+		// Write to first output.
+		select {
+		case out1 <- n:
+		case <-ctx.Done():
+			err = ctx.Err()
+			return
+		}
+
+		// And the second.
+		select {
+		case out2 <- n:
+		case <-ctx.Done():
+			err = ctx.Err()
+			return
+		}
+	}
+
 	return
 }
