@@ -16,7 +16,6 @@
 package save
 
 import (
-	"errors"
 	"io/ioutil"
 	"os"
 	"path"
@@ -275,17 +274,48 @@ func (t *ConsultScoreMapTest) AbsentInScoreMap() {
 
 type UpdateScoreMapTest struct {
 	scoreMapTest
+	expectedKey *state.ScoreMapKey
 }
 
 func init() { RegisterTestSuite(&UpdateScoreMapTest{}) }
 
+func (t *UpdateScoreMapTest) SetUp(ti *TestInfo) {
+	t.scoreMapTest.SetUp(ti)
+	var err error
+
+	// Make sure the node is eligible by default.
+	t.node.RelPath = "foo"
+
+	f, err := os.Create(path.Join(t.dir, t.node.RelPath))
+	AssertEq(nil, err)
+	defer f.Close()
+
+	t.node.Info, err = f.Stat()
+	AssertEq(nil, err)
+
+	t.expectedKey = makeScoreMapKey(&t.node, &t.clock)
+	AssertNe(nil, t.expectedKey)
+}
+
 func (t *UpdateScoreMapTest) call() (err error) {
-	err = errors.New("TODO")
+	nodesIn := make(chan *fsNode, 1)
+	nodesIn <- &t.node
+	close(nodesIn)
+
+	err = updateScoreMap(t.ctx, t.scoreMap, nodesIn)
 	return
 }
 
 func (t *UpdateScoreMapTest) NodeNotEligible() {
-	AssertTrue(false, "TODO")
+	var err error
+
+	// Make the node appear as a directory.
+	t.node.Info, err = os.Stat(t.dir)
+	AssertEq(nil, err)
+
+	// Nothing bad should happen.
+	err = t.call()
+	AssertEq(nil, err)
 }
 
 func (t *UpdateScoreMapTest) NodeWasAlreadyPresent() {
