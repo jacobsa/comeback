@@ -16,6 +16,7 @@
 package save
 
 import (
+	"bytes"
 	"io/ioutil"
 	"os"
 	"path"
@@ -40,6 +41,7 @@ func TestBlobStore(t *testing.T) { RunTests(t) }
 
 type VisitorTest struct {
 	ctx       context.Context
+	chunkSize int
 	blobStore mock_blob.MockStore
 
 	node fsNode
@@ -57,6 +59,7 @@ func (t *VisitorTest) SetUp(ti *TestInfo) {
 	var err error
 
 	t.ctx = ti.Ctx
+	t.chunkSize = 8
 	t.blobStore = mock_blob.NewMockStore(ti.MockController, "blobStore")
 
 	// Set up the directory.
@@ -72,7 +75,7 @@ func (t *VisitorTest) TearDown() {
 }
 
 func (t *VisitorTest) call() (err error) {
-	visitor := newVisitor(t.blobStore, make(chan *fsNode, 1))
+	visitor := newVisitor(t.chunkSize, t.blobStore, make(chan *fsNode, 1))
 	err = visitor.Visit(t.ctx, &t.node)
 	return
 }
@@ -173,7 +176,38 @@ func (t *VisitorTest) File_Empty() {
 }
 
 func (t *VisitorTest) File_LastChunkIsFull() {
-	AssertTrue(false, "TODO")
+	var err error
+
+	// Node setup
+	p := path.Join(t.dir, "foo")
+
+	chunk0 := bytes.Repeat([]byte{0}, t.chunkSize)
+	chunk1 := bytes.Repeat([]byte{1}, t.chunkSize)
+
+	var contents []byte
+	contents = append(contents, chunk0...)
+	contents = append(contents, chunk1...)
+
+	err = ioutil.WriteFile(p, contents, 0700)
+	AssertEq(nil, err)
+
+	t.node.Info, err = os.Lstat(p)
+	AssertEq(nil, err)
+
+	// Blob store
+	score0 := blob.ComputeScore(chunk0)
+	ExpectCall(t.blobStore, "Store")(Any(), DeepEquals(chunk0)).
+		WillOnce(Return(score0, nil))
+
+	score1 := blob.ComputeScore(chunk0)
+	ExpectCall(t.blobStore, "Store")(Any(), DeepEquals(chunk0)).
+		WillOnce(Return(score1, nil))
+
+	// Call
+	err = t.call()
+	AssertEq(nil, err)
+
+	ExpectThat(t.node.Scores, ElementsAre(score0, score1))
 }
 
 func (t *VisitorTest) File_LastChunkIsPartial() {

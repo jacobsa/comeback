@@ -25,6 +25,8 @@ import (
 	"github.com/jacobsa/comeback/internal/graph"
 )
 
+const fileChunkSize = 1 << 24
+
 // For each incoming node, use the supplied blob store to ensure that the node
 // has a non-nil list of scores. Incoming nodes must be in reverse
 // topologically sorted order: children must appear before parents.
@@ -41,6 +43,7 @@ func fillInScores(
 // filling in the node's Scores field when it is nil. All visited nodes are
 // then written to nodesOut.
 func newVisitor(
+	chunkSize int,
 	blobStore blob.Store,
 	nodesOut chan<- *fsNode) (v graph.Visitor) {
 	v = &visitor{
@@ -52,6 +55,7 @@ func newVisitor(
 }
 
 type visitor struct {
+	chunkSize int
 	blobStore blob.Store
 	nodesOut  chan<- *fsNode
 }
