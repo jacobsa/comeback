@@ -16,8 +16,13 @@
 package graph_test
 
 import (
+	"fmt"
 	"testing"
 
+	"golang.org/x/net/context"
+
+	"github.com/jacobsa/comeback/internal/graph"
+	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
 )
 
@@ -28,6 +33,7 @@ func TestReverseTopsort(t *testing.T) { RunTests(t) }
 ////////////////////////////////////////////////////////////////////////
 
 type ReverseTopsortTreeTest struct {
+	ctx context.Context
 }
 
 var _ SetUpInterface = &ReverseTopsortTreeTest{}
@@ -35,15 +41,54 @@ var _ SetUpInterface = &ReverseTopsortTreeTest{}
 func init() { RegisterTestSuite(&ReverseTopsortTreeTest{}) }
 
 func (t *ReverseTopsortTreeTest) SetUp(ti *TestInfo) {
-	AssertTrue(false, "TODO")
+	t.ctx = ti.Ctx
+}
+
+func (t *ReverseTopsortTreeTest) run(
+	root string,
+	edges map[string][]string) (nodes []string, err error) {
+	// Set up a successor finder.
+	sf := &successorFinder{
+		F: func(ctx context.Context, n string) (successors []string, err error) {
+			successors = edges[n]
+			return
+		},
+	}
+
+	// Call through.
+	c := make(chan graph.Node, 10e3)
+	err = graph.ReverseTopsortTree(
+		t.ctx,
+		sf,
+		root,
+		c)
+
+	if err != nil {
+		err = fmt.Errorf("ReverseTopsortTree: %v", err)
+		return
+	}
+
+	// Convert the nodes returned in the channel.
+	close(c)
+	for n := range c {
+		nodes = append(nodes, n.(string))
+	}
+
+	return
 }
 
 ////////////////////////////////////////////////////////////////////////
 // Tests
 ////////////////////////////////////////////////////////////////////////
 
-func (t *ReverseTopsortTreeTest) Empty() {
-	AssertTrue(false, "TODO")
+func (t *ReverseTopsortTreeTest) SingleNode() {
+	edges := map[string][]string{}
+	root := "A"
+
+	nodes, err := t.run(root, edges)
+	AssertEq(nil, err)
+
+	ExpectThat(nodes, ElementsAre("A"))
 }
 
 func (t *ReverseTopsortTreeTest) NoBranching() {
