@@ -57,14 +57,16 @@ type CheckingStore_StoreTest struct {
 func init() { RegisterTestSuite(&CheckingStore_StoreTest{}) }
 
 func (t *CheckingStore_StoreTest) CallsWrapped() {
-	b := []byte{0xde, 0xad}
+	req := &blob.StoreRequest{
+		Blob: []byte{0xde, 0xad},
+	}
 
 	// Wrapped
-	ExpectCall(t.wrapped, "Store")(Any(), DeepEquals(b)).
+	ExpectCall(t.wrapped, "Store")(Any(), req).
 		WillOnce(oglemock.Return(blob.Score{}, errors.New("")))
 
 	// Call
-	t.store.Store(t.ctx, b)
+	t.store.Store(t.ctx, req)
 }
 
 func (t *CheckingStore_StoreTest) WrappedReturnsError() {
@@ -75,7 +77,7 @@ func (t *CheckingStore_StoreTest) WrappedReturnsError() {
 		WillOnce(oglemock.Return(blob.Score{}, errors.New("taco")))
 
 	// Call
-	_, err := t.store.Store(t.ctx, b)
+	_, err := t.store.Store(t.ctx, &blob.StoreRequest{Blob: b})
 
 	ExpectThat(err, Error(Equals("taco")))
 }
@@ -90,7 +92,7 @@ func (t *CheckingStore_StoreTest) WrappedReturnsIncorrectScore() {
 		WillOnce(oglemock.Return(incorrectScore, nil))
 
 	// Call
-	_, err := t.store.Store(t.ctx, b)
+	_, err := t.store.Store(t.ctx, &blob.StoreRequest{Blob: b})
 
 	ExpectThat(err, Error(HasSubstr("Incorrect")))
 	ExpectThat(err, Error(HasSubstr("score")))
@@ -107,7 +109,7 @@ func (t *CheckingStore_StoreTest) WrappedReturnsCorrectScore() {
 		WillOnce(oglemock.Return(correctScore, nil))
 
 	// Call
-	score, err := t.store.Store(t.ctx, b)
+	score, err := t.store.Store(t.ctx, &blob.StoreRequest{Blob: b})
 
 	AssertEq(nil, err)
 	ExpectThat(score, DeepEquals(correctScore))
