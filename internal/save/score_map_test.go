@@ -20,6 +20,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"syscall"
 	"testing"
 	"time"
 
@@ -83,18 +84,19 @@ type MakeScoreMapKeyTest struct {
 func init() { RegisterTestSuite(&MakeScoreMapKeyTest{}) }
 
 func (t *MakeScoreMapKeyTest) call() (key *state.ScoreMapKey) {
+	var err error
+
+	// Set up the Info field.
+	t.node.Info, err = os.Lstat(path.Join(t.dir, t.node.RelPath))
+	AssertEq(nil, err)
+
+	// Call through.
 	key = makeScoreMapKey(&t.node, &t.clock)
+
 	return
 }
 
 func (t *MakeScoreMapKeyTest) Directory() {
-	var err error
-
-	// Set up
-	t.node.Info, err = os.Lstat(t.dir)
-	AssertEq(nil, err)
-
-	// Call
 	key := t.call()
 	ExpectEq(nil, key)
 }
@@ -103,11 +105,9 @@ func (t *MakeScoreMapKeyTest) Symlink() {
 	var err error
 
 	// Set up
-	p := path.Join(t.dir, "foo")
-	err = os.Symlink("blah", p)
-	AssertEq(nil, err)
+	t.node.RelPath = "foo"
 
-	t.node.Info, err = os.Lstat(p)
+	err = os.Symlink("blah", path.Join(t.dir, t.node.RelPath))
 	AssertEq(nil, err)
 
 	// Call
@@ -120,9 +120,9 @@ func (t *MakeScoreMapKeyTest) RecentlyModified() {
 	var key *state.ScoreMapKey
 
 	// Set up
-	p := path.Join(t.dir, "foo")
+	t.node.RelPath = "foo"
 
-	f, err := os.Create(p)
+	f, err := os.Create(path.Join(t.dir, t.node.RelPath))
 	AssertEq(nil, err)
 	defer f.Close()
 
@@ -141,15 +141,46 @@ func (t *MakeScoreMapKeyTest) RecentlyModified() {
 	key = t.call()
 	ExpectEq(nil, key)
 
-	// In the future
+	// A short while in the future
 	t.clock.SetTime(fi.ModTime().Add(-10 * time.Second))
+
+	key = t.call()
+	ExpectEq(nil, key)
+
+	// Far in the future
+	t.clock.SetTime(fi.ModTime().Add(-365 * 24 * time.Hour))
 
 	key = t.call()
 	ExpectEq(nil, key)
 }
 
 func (t *MakeScoreMapKeyTest) Valid() {
-	AssertTrue(false, "TODO")
+	var err error
+
+	// Set up
+	t.node.RelPath = "foo"
+
+	f, err := os.Create(path.Join(t.dir, t.node.RelPath))
+	AssertEq(nil, err)
+	defer f.Close()
+
+	_, err = f.Write([]byte("tacoburrito"))
+	AssertEq(nil, err)
+
+	fi, err := f.Stat()
+	AssertEq(nil, err)
+
+	// Call
+	key := t.call()
+	AssertNe(nil, key)
+
+	ExpectEq(t.node.RelPath, key.Path)
+	ExpectEq(fi.Mode()&os.ModePerm, key.Permissions)
+	ExpectEq(fi.Sys().(*syscall.Stat_t).Uid, key.Uid)
+	ExpectEq(fi.Sys().(*syscall.Stat_t).Gid, key.Gid)
+	ExpectThat(key.MTime, timeutil.TimeEq(fi.ModTime()))
+	ExpectEq(fi.Sys().(*syscall.Stat_t).Ino, key.Inode)
+	ExpectEq(fi.Size(), key.Size)
 }
 
 ////////////////////////////////////////////////////////////////////////
