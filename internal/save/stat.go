@@ -16,7 +16,9 @@
 package save
 
 import (
-	"errors"
+	"fmt"
+	"os"
+	"path"
 
 	"golang.org/x/net/context"
 )
@@ -28,6 +30,22 @@ func statNodes(
 	basePath string,
 	nodesIn <-chan *fsNode,
 	nodesOut chan<- *fsNode) (err error) {
-	err = errors.New("TODO")
+	for n := range nodesIn {
+		// Stat.
+		n.Info, err = os.Stat(path.Join(basePath, n.RelPath))
+		if err != nil {
+			err = fmt.Errorf("Stat: %v", err)
+			return
+		}
+
+		// Write to output.
+		select {
+		case nodesOut <- n:
+		case <-ctx.Done():
+			err = ctx.Err()
+			return
+		}
+	}
+
 	return
 }
