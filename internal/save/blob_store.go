@@ -42,10 +42,17 @@ func fillInScores(
 func newVisitor(
 	blobStore blob.Store,
 	nodesOut chan<- *fsNode) (v graph.Visitor) {
-	panic("TODO")
+	v = &visitor{
+		blobStore: blobStore,
+		nodesOut:  nodesOut,
+	}
+
+	return
 }
 
 type visitor struct {
+	blobStore blob.Store
+	nodesOut  chan<- *fsNode
 }
 
 func (v *visitor) Visit(ctx context.Context, untyped graph.Node) (err error) {
