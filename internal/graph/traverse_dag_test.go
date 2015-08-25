@@ -18,6 +18,7 @@ package graph_test
 import (
 	cryptorand "crypto/rand"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"log"
 	"math/rand"
@@ -28,6 +29,7 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/jacobsa/comeback/internal/graph"
+	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
 )
 
@@ -208,13 +210,15 @@ func (t *TraverseDAGTest) SetUp(ti *TestInfo) {
 	t.ctx = ti.Ctx
 }
 
-// Run the graph described by the given edges through TraverseDAG, inserting
-// sleeps to attempt to shake out races, and make sure we can't catch it
-// violating any of its promises.
-func (t *TraverseDAGTest) runTest(edges map[string][]string) {
+func (t *TraverseDAGTest) call(
+	edges map[string][]string,
+	visit func(context.Context, string) error) (err error) {
 	// Sort the nodes into a valid order and stick them in a channel.
 	nodes, err := topsort(edges)
-	AssertEq(nil, err)
+	if err != nil {
+		err = fmt.Errorf("topsort: %v", err)
+		return
+	}
 
 	nodeChan := make(chan graph.Node, len(nodes))
 	for _, n := range nodes {
@@ -222,6 +226,21 @@ func (t *TraverseDAGTest) runTest(edges map[string][]string) {
 	}
 	close(nodeChan)
 
+	// Call.
+	err = graph.TraverseDAG(
+		t.ctx,
+		nodeChan,
+		successorFinderForEdges(edges),
+		&visitor{F: visit},
+		traverseDAGParallelism)
+
+	return
+}
+
+// Run the graph described by the given edges through TraverseDAG, inserting
+// sleeps to attempt to shake out races, and make sure we can't catch it
+// violating any of its promises.
+func (t *TraverseDAGTest) runTest(edges map[string][]string) {
 	// Compute the reachability relation for the DAG, and invert it.
 	reachable, err := reachabilityRelation(edges)
 	AssertEq(nil, err)
@@ -258,17 +277,11 @@ func (t *TraverseDAGTest) runTest(edges map[string][]string) {
 	}
 
 	// Call.
-	err = graph.TraverseDAG(
-		t.ctx,
-		nodeChan,
-		successorFinderForEdges(edges),
-		&visitor{F: visit},
-		traverseDAGParallelism)
-
+	err = t.call(edges, visit)
 	AssertEq(nil, err)
 
 	// Make sure everything was visited.
-	for _, n := range nodes {
+	for n, _ := range edges {
 		_, ok := visited[n]
 		AssertTrue(ok, "n: %q", n)
 	}
@@ -422,10 +435,84 @@ func (t *TraverseDAGTest) LargeRootedTree_Inverted() {
 	t.runTest(edges)
 }
 
-func (t *TraverseDAGTest) SuccessorFinderReturnsError() {
-	AssertTrue(false, "TODO")
-}
-
 func (t *TraverseDAGTest) VisitorReturnsError() {
-	AssertTrue(false, "TODO")
+	AssertGt(traverseDAGParallelism, 1)
+
+	// Graph structure:
+	//
+	//        A
+	//      / |
+	//     B  C
+	//     |  | \
+	//     D  E  F
+	//      / |  |
+	//     G  H  I
+	//           | \
+	//           J  K
+	//
+	edges := map[string][]string{
+		"A": {"B", "C"},
+		"B": {"D"},
+		"C": {"E", "F"},
+		"D": {},
+		"E": {"G", "H"},
+		"F": {"I"},
+		"G": {},
+		"H": {},
+		"I": {"J", "K"},
+		"J": {},
+		"K": {},
+	}
+
+	// Visitor behavior:
+	//
+	//  *  Record the node visited.
+	//
+	//  *  For C, wait until told and then return an error.
+	//
+	//  *  For B:
+	//     *   Tell C to proceed.
+	//     *   Block until cancelled.
+	//     *   Close a channel indicating that the context was cancelled.
+	//
+	cErr := errors.New("taco")
+	bReceived := make(chan struct{})
+	bCancelled := make(chan struct{})
+	visited := make(chan string, len(edges))
+
+	visit := func(ctx context.Context, n string) (err error) {
+		visited <- n
+
+		switch n {
+		case "C":
+			<-bReceived
+			err = cErr
+
+		case "B":
+			close(bReceived)
+
+			done := ctx.Done()
+			AssertNe(nil, done)
+			<-done
+			close(bCancelled)
+		}
+
+		return
+	}
+
+	// Traverse.
+	err := t.call(edges, visit)
+	ExpectEq(cErr, err)
+
+	// B should have seen cancellation.
+	<-bCancelled
+
+	// Nothing descending from B or C should have been visted.
+	close(visited)
+	var nodes []string
+	for n := range visited {
+		nodes = append(nodes, n)
+	}
+
+	ExpectThat(sortNodes(nodes), ElementsAre("A", "B", "C"))
 }
