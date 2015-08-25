@@ -25,6 +25,7 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/jacobsa/comeback/internal/blob"
+	"github.com/jacobsa/comeback/internal/fs"
 	"github.com/jacobsa/comeback/internal/graph"
 )
 
@@ -103,16 +104,15 @@ func (v *visitor) setScores(
 	}
 
 	// Files and directories are the only interesting cases.
-	modeType := n.Info.Mode() & os.ModeType
-	switch {
-	case modeType == 0:
+	switch n.Info.Type {
+	case fs.TypeFile:
 		n.Scores, err = v.saveFile(ctx, path.Join(v.basePath, n.RelPath))
 		if err != nil {
 			err = fmt.Errorf("saveFile: %v", err)
 			return
 		}
 
-	case modeType&os.ModeDir != 0:
+	case fs.TypeDirectory:
 		n.Scores, err = v.saveDir(ctx, path.Join(v.basePath, n.RelPath))
 		if err != nil {
 			err = fmt.Errorf("saveDir: %v", err)
