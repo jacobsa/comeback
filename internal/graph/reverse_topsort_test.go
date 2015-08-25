@@ -56,7 +56,7 @@ func (t *ReverseTopsortTreeTest) run(
 	}
 
 	// Call through.
-	c := make(chan graph.Node, 10e3)
+	c := make(chan graph.Node, len(edges))
 	err = graph.ReverseTopsortTree(
 		t.ctx,
 		sf,
@@ -87,7 +87,9 @@ func (t *ReverseTopsortTreeTest) SingleNode() {
 	//        A
 	//
 	root := "A"
-	edges := map[string][]string{}
+	edges := map[string][]string{
+		"A": {},
+	}
 
 	// Call
 	nodes, err := t.run(root, edges)
@@ -109,6 +111,7 @@ func (t *ReverseTopsortTreeTest) NoBranching() {
 	edges := map[string][]string{
 		"A": {"B"},
 		"B": {"C"},
+		"C": {},
 	}
 
 	// Call
@@ -144,7 +147,9 @@ func (t *ReverseTopsortTreeTest) LittleBranching() {
 	edges := map[string][]string{
 		"A": {"B", "D"},
 		"B": {"C"},
+		"C": {},
 		"D": {"E"},
+		"E": {},
 	}
 
 	// Call
@@ -184,11 +189,17 @@ func (t *ReverseTopsortTreeTest) LotsOfBranching() {
 	//
 	root := "A"
 	edges := map[string][]string{
-		"A": []string{"B", "C"},
-		"C": []string{"D", "E", "F"},
-		"E": []string{"G", "H"},
-		"F": []string{"I"},
-		"I": []string{"J", "K"},
+		"A": {"B", "C"},
+		"B": {},
+		"C": {"D", "E", "F"},
+		"D": {},
+		"E": {"G", "H"},
+		"F": {"I"},
+		"G": {},
+		"H": {},
+		"I": {"J", "K"},
+		"J": {},
+		"K": {},
 	}
 
 	// Call
