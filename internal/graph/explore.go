@@ -64,7 +64,7 @@ func ExploreDirectedGraph(
 	// Join the bundle, but use the explicitly tracked first worker error in
 	// order to circumvent the following race:
 	//
-	//  *  Worker A encounters an error, sets firstErr, and returns
+	//  *  Worker A encounters an error, sets firstErr, and returns.
 	//
 	//  *  Worker B wakes up, sees firstErr, and returns with a junk follow-on
 	//     error.
