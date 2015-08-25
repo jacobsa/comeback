@@ -203,13 +203,20 @@ func (t *VisitorTest) File_LastChunkIsFull() {
 	err = ioutil.WriteFile(p, contents, 0700)
 	AssertEq(nil, err)
 
-	// Blob store
-	score0 := blob.ComputeScore(chunk0)
-	ExpectCall(t.blobStore, "Store")(Any(), DeepEquals(chunk0)).
+	// Blob store (chunk 0)
+	expected0, err := repr.MarshalFile(chunk0)
+	AssertEq(nil, err)
+
+	score0 := blob.ComputeScore(expected0)
+	ExpectCall(t.blobStore, "Store")(Any(), DeepEquals(expected0)).
 		WillOnce(Return(score0, nil))
 
-	score1 := blob.ComputeScore(chunk1)
-	ExpectCall(t.blobStore, "Store")(Any(), DeepEquals(chunk1)).
+	// Blob store (chunk 1)
+	expected1, err := repr.MarshalFile(chunk1)
+	AssertEq(nil, err)
+
+	score1 := blob.ComputeScore(expected1)
+	ExpectCall(t.blobStore, "Store")(Any(), DeepEquals(expected1)).
 		WillOnce(Return(score1, nil))
 
 	// Call
@@ -237,13 +244,20 @@ func (t *VisitorTest) File_LastChunkIsPartial() {
 	err = ioutil.WriteFile(p, contents, 0700)
 	AssertEq(nil, err)
 
-	// Blob store
-	score0 := blob.ComputeScore(chunk0)
-	ExpectCall(t.blobStore, "Store")(Any(), DeepEquals(chunk0)).
+	// Blob store (chunk 0)
+	expected0, err := repr.MarshalFile(chunk0)
+	AssertEq(nil, err)
+
+	score0 := blob.ComputeScore(expected0)
+	ExpectCall(t.blobStore, "Store")(Any(), DeepEquals(expected0)).
 		WillOnce(Return(score0, nil))
 
-	score1 := blob.ComputeScore(chunk1)
-	ExpectCall(t.blobStore, "Store")(Any(), DeepEquals(chunk1)).
+	// Blob store (chunk 1)
+	expected1, err := repr.MarshalFile(chunk1)
+	AssertEq(nil, err)
+
+	score1 := blob.ComputeScore(expected1)
+	ExpectCall(t.blobStore, "Store")(Any(), DeepEquals(expected1)).
 		WillOnce(Return(score1, nil))
 
 	// Call

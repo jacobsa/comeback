@@ -209,9 +209,17 @@ func (v *visitor) saveFile(
 			break
 		}
 
+		// Encapsulate the data so it can be identified as a file chunk.
+		var chunk []byte
+		chunk, err = repr.MarshalFile(buf[:n])
+		if err != nil {
+			err = fmt.Errorf("MarshalFile: %v", err)
+			return
+		}
+
 		// Write out the blob.
 		var s blob.Score
-		s, err = v.blobStore.Store(ctx, buf[:n])
+		s, err = v.blobStore.Store(ctx, chunk)
 		if err != nil {
 			err = fmt.Errorf("Store: %v", err)
 			return
