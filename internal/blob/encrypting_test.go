@@ -60,14 +60,14 @@ type EncryptingStore_StoreTest struct {
 func init() { RegisterTestSuite(&EncryptingStore_StoreTest{}) }
 
 func (t *EncryptingStore_StoreTest) CallsCrypter() {
-	blob := []byte{0xde, 0xad}
+	b := []byte{0xde, 0xad}
 
 	// Crypter
-	ExpectCall(t.crypter, "Encrypt")(DeepEquals(blob)).
+	ExpectCall(t.crypter, "Encrypt")(DeepEquals(b)).
 		WillOnce(oglemock.Return(nil, errors.New("")))
 
 	// Call
-	t.store.Store(t.ctx, blob)
+	t.store.Store(t.ctx, &blob.StoreRequest{Blob: b})
 }
 
 func (t *EncryptingStore_StoreTest) CrypterReturnsError() {
@@ -76,7 +76,7 @@ func (t *EncryptingStore_StoreTest) CrypterReturnsError() {
 		WillOnce(oglemock.Return(nil, errors.New("taco")))
 
 	// Call
-	_, err := t.store.Store(t.ctx, []byte{})
+	_, err := t.store.Store(t.ctx, &blob.StoreRequest{})
 
 	ExpectThat(err, Error(HasSubstr("Encrypt")))
 	ExpectThat(err, Error(HasSubstr("taco")))
@@ -90,11 +90,15 @@ func (t *EncryptingStore_StoreTest) CallsWrapped() {
 		WillOnce(oglemock.Return(encryptedBlob, nil))
 
 	// Wrapped
-	ExpectCall(t.wrapped, "Store")(Any(), DeepEquals(encryptedBlob)).
+	expected := &blob.StoreRequest{
+		Blob: encryptedBlob,
+	}
+
+	ExpectCall(t.wrapped, "Store")(Any(), DeepEquals(expected)).
 		WillOnce(oglemock.Return(blob.Score{}, errors.New("")))
 
 	// Call
-	t.store.Store(t.ctx, []byte{})
+	t.store.Store(t.ctx, &blob.StoreRequest{})
 }
 
 func (t *EncryptingStore_StoreTest) WrappedReturnsError() {
@@ -107,7 +111,7 @@ func (t *EncryptingStore_StoreTest) WrappedReturnsError() {
 		WillOnce(oglemock.Return(blob.Score{}, errors.New("taco")))
 
 	// Call
-	_, err := t.store.Store(t.ctx, []byte{})
+	_, err := t.store.Store(t.ctx, &blob.StoreRequest{})
 
 	ExpectThat(err, Error(Equals("taco")))
 }
@@ -124,7 +128,7 @@ func (t *EncryptingStore_StoreTest) WrappedSucceeds() {
 		WillOnce(oglemock.Return(expected, nil))
 
 	// Call
-	score, err := t.store.Store(t.ctx, []byte{})
+	score, err := t.store.Store(t.ctx, &blob.StoreRequest{})
 	AssertEq(nil, err)
 
 	ExpectThat(score, DeepEquals(expected))

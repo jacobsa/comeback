@@ -52,8 +52,8 @@ type existingScoresStore struct {
 
 func (bs *existingScoresStore) Store(
 	ctx context.Context,
-	blob []byte) (s Score, err error) {
-	s, err = bs.wrapped.Store(ctx, blob)
+	req *StoreRequest) (s Score, err error) {
+	s, err = bs.wrapped.Store(ctx, req)
 	if err == nil {
 		bs.scores.Add(s.Hex())
 	}

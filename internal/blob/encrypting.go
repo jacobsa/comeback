@@ -37,15 +37,17 @@ type encryptingStore struct {
 
 func (s *encryptingStore) Store(
 	ctx context.Context,
-	blob []byte) (Score, error) {
+	req *StoreRequest) (score Score, err error) {
 	// Encrypt the plaintext blob.
-	ciphertext, err := s.crypter.Encrypt(blob)
+	req.Blob, err = s.crypter.Encrypt(req.Blob)
 	if err != nil {
-		return Score{}, fmt.Errorf("Encrypt: %v", err)
+		err = fmt.Errorf("Encrypt: %v", err)
+		return
 	}
 
 	// Pass on the encrypted blob.
-	return s.wrapped.Store(ctx, ciphertext)
+	score, err = s.wrapped.Store(ctx, req)
+	return
 }
 
 func (s *encryptingStore) Load(

@@ -19,10 +19,10 @@ import "golang.org/x/net/context"
 
 // A Store knows how to store blobs for later retrieval.
 type Store interface {
-	// Store the blob, returning a score with which it can later be retrieved.
+	// Store a blob, returning a score with which it can later be retrieved.
 	Store(
 		ctx context.Context,
-		blob []byte) (s Score, err error)
+		req *StoreRequest) (s Score, err error)
 
 	// Return true only if the supplied score is durable in the blob store.
 	// Implementations may choose to return false if the information is not
@@ -31,4 +31,9 @@ type Store interface {
 
 	// Load a previously-stored blob.
 	Load(ctx context.Context, s Score) (blob []byte, err error)
+}
+
+type StoreRequest struct {
+	// The blob data to be stored.
+	Blob []byte
 }

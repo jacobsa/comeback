@@ -218,8 +218,12 @@ func (v *visitor) saveFile(
 		}
 
 		// Write out the blob.
+		req := &blob.StoreRequest{
+			Blob: chunk,
+		}
+
 		var s blob.Score
-		s, err = v.blobStore.Store(ctx, chunk)
+		s, err = v.blobStore.Store(ctx, req)
 		if err != nil {
 			err = fmt.Errorf("Store: %v", err)
 			return
@@ -248,7 +252,11 @@ func (v *visitor) saveDir(
 	}
 
 	// Write out the blob.
-	s, err := v.blobStore.Store(ctx, b)
+	req := &blob.StoreRequest{
+		Blob: b,
+	}
+
+	s, err := v.blobStore.Store(ctx, req)
 	if err != nil {
 		err = fmt.Errorf("Store: %v", err)
 		return
