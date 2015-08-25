@@ -260,7 +260,13 @@ func (t *ConsultScoreMapTest) PresentInScoreMap() {
 }
 
 func (t *ConsultScoreMapTest) AbsentInScoreMap() {
-	AssertTrue(false, "TODO")
+	var err error
+
+	// Call
+	err = t.call()
+	AssertEq(nil, err)
+
+	ExpectEq(nil, t.node.Scores)
 }
 
 ////////////////////////////////////////////////////////////////////////
