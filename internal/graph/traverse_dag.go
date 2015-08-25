@@ -38,6 +38,9 @@ import (
 // invoke the supplied visitor once for each node in the graph with, bounded
 // parallelism. The visitor will be called for a node N only after it has
 // returned success for all of N's predecessors.
+//
+// The successor finder may be called multiple times per node, and must be
+// idempotent.
 func TraverseDAG(
 	ctx context.Context,
 	nodes <-chan Node,
@@ -73,7 +76,7 @@ func TraverseDAG(
 	// Run multiple workers to deal with the nodes that are ready to visit.
 	for i := 0; i < parallelism; i++ {
 		b.Add(func(ctx context.Context) (err error) {
-			err = visitNodes(ctx, v, state)
+			err = visitNodes(ctx, sf, v, state)
 			if err != nil {
 				err = fmt.Errorf("visitNodes: %v", err)
 				return
@@ -274,21 +277,103 @@ func processIncomingNodes(
 // possibility of nodes becoming ready.
 func visitNodes(
 	ctx context.Context,
+	sf SuccessorFinder,
 	v Visitor,
 	state *traverseDAGState) (err error) {
-	// Update state when this function returns.
-	defer func() {
-		if err != nil {
-			state.mu.Lock()
-			defer state.mu.Unlock()
+	state.mu.Lock()
+	defer state.mu.Unlock()
 
-			if state.firstErr == nil {
-				state.firstErr = err
-				state.cond.Broadcast()
-			}
+	defer func() {
+		// Record our error if it's the first.
+		if state.firstErr == nil && err != nil {
+			state.firstErr = err
+			state.cond.Broadcast()
 		}
 	}()
 
-	err = errors.New("TODO")
+	for {
+		// Wait for something to do.
+		state.waitForSomethingToDo()
+
+		// Why were we awoken?
+		switch {
+		// Return immediately if another worker has seen an error.
+		case state.firstErr != nil:
+			err = errors.New("Cancelled")
+			return
+
+		// Otherwise, handle work if it exists.
+		case len(state.readyToVisit) != 0:
+			err = visitOne(ctx, sf, v, state)
+			if err != nil {
+				return
+			}
+
+		// Otherwise, are we done?
+		case state.busyWorkers == 0:
+			return
+
+		default:
+			panic("Unexpected wake-up")
+		}
+	}
+}
+
+// REQUIRES: len(state.readyToVisit) > 0
+//
+// LOCKS_REQUIRED(state.mu)
+func visitOne(
+	ctx context.Context,
+	sf SuccessorFinder,
+	v Visitor,
+	state *traverseDAGState) (err error) {
+	// Mark this worker as busy for the duration of this function.
+	state.busyWorkers++
+	state.cond.Broadcast()
+
+	defer func() {
+		state.busyWorkers--
+		state.cond.Broadcast()
+	}()
+
+	// Extract the node to process.
+	l := len(state.readyToVisit)
+	n := state.readyToVisit[l-1]
+	state.readyToVisit = state.readyToVisit[:l-1]
+	state.cond.Broadcast()
+
+	// Unlock while visiting and finding successors.
+	state.mu.Unlock()
+	err = v.Visit(ctx, n)
+
+	var successors []Node
+	if err == nil {
+		successors, err = sf.FindDirectSuccessors(ctx, n)
+	}
+
+	state.mu.Lock()
+
+	// Did we encounter an error in the unlocked region above?
+	if err != nil {
+		return
+	}
+
+	// Update state for the successor nodes. Some may now have been unblocked.
+	for _, s := range successors {
+		tmp, ok := state.notReadyToVisit[s]
+		if !ok {
+			log.Panicf("Unexpectedly missing: %#v", s)
+		}
+
+		tmp.predecessorsOutstanding--
+		if tmp.readyToVisit() {
+			delete(state.notReadyToVisit, s)
+			state.readyToVisit = append(state.readyToVisit, s)
+			state.cond.Broadcast()
+		} else {
+			state.notReadyToVisit[s] = tmp
+		}
+	}
+
 	return
 }
