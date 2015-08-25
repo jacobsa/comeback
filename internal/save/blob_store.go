@@ -77,9 +77,9 @@ func (v *visitor) Visit(ctx context.Context, untyped graph.Node) (err error) {
 	}
 
 	// Ensure that the node has scores set, if it needs to.
-	err = v.fillInScores(ctx, n)
+	err = v.setScores(ctx, n)
 	if err != nil {
-		err = fmt.Errorf("fillInScores: %v", err)
+		err = fmt.Errorf("setScores: %v", err)
 		return
 	}
 
@@ -94,7 +94,7 @@ func (v *visitor) Visit(ctx context.Context, untyped graph.Node) (err error) {
 	return
 }
 
-func (v *visitor) fillInScores(
+func (v *visitor) setScores(
 	ctx context.Context,
 	n *fsNode) (err error) {
 	// If the node already has scores, we're done.
