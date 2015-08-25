@@ -17,8 +17,6 @@ package graph_test
 
 import (
 	"errors"
-	"fmt"
-	"math/rand"
 	"sort"
 	"testing"
 
@@ -402,41 +400,18 @@ func (t *ExploreDirectedGraphTest) Cycle() {
 }
 
 func (t *ExploreDirectedGraphTest) LargeRootedTree() {
-	// Set up a tree of the given depth, with a random number of children for
-	// each node.
 	const depth = 10
+	t.edges = randomTree(depth)
 	roots := []string{"root"}
-
-	nextID := 0
-	nextLevel := []string{"root"}
-	allNodes := map[string]struct{}{
-		"root": struct{}{},
-	}
-
-	for depthI := 0; depthI < depth; depthI++ {
-		thisLevel := nextLevel
-		nextLevel = nil
-		for _, parent := range thisLevel {
-			numChildren := int(rand.Int31n(6))
-			for childI := 0; childI < numChildren; childI++ {
-				child := fmt.Sprintf("%v", nextID)
-				nextID++
-
-				nextLevel = append(nextLevel, child)
-				t.edges[parent] = append(t.edges[parent], child)
-				allNodes[child] = struct{}{}
-			}
-		}
-	}
 
 	// Explore.
 	nodes, err := t.explore(roots)
 	AssertEq(nil, err)
 
 	// All nodes should be represented.
-	AssertEq(len(allNodes), len(nodes))
+	AssertEq(len(t.edges), len(nodes))
 	for _, n := range nodes {
-		_, ok := allNodes[n]
+		_, ok := t.edges[n]
 		AssertTrue(ok, "Unexpected node: %q", n)
 	}
 
