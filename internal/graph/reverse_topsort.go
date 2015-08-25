@@ -16,7 +16,7 @@
 package graph
 
 import (
-	"errors"
+	"fmt"
 
 	"golang.org/x/net/context"
 )
@@ -29,6 +29,28 @@ func ReverseTopsortTree(
 	sf SuccessorFinder,
 	root Node,
 	nodes chan<- Node) (err error) {
-	err = errors.New("TODO")
+	// Find successors of the root.
+	successors, err := sf.FindDirectSuccessors(ctx, root)
+	if err != nil {
+		err = fmt.Errorf("FindDirectSuccessors: %v", err)
+		return
+	}
+
+	// Recurse into each.
+	for _, s := range successors {
+		err = ReverseTopsortTree(ctx, sf, s, nodes)
+		if err != nil {
+			return
+		}
+	}
+
+	// Yield the root.
+	select {
+	case nodes <- root:
+	case <-ctx.Done():
+		err = ctx.Err()
+		return
+	}
+
 	return
 }
