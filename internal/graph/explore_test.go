@@ -400,7 +400,8 @@ func (t *ExploreDirectedGraphTest) Cycle() {
 }
 
 func (t *ExploreDirectedGraphTest) LargeRootedTree() {
-	t.edges = randomTree()
+	const depth = 10
+	t.edges = randomTree(depth)
 	roots := []string{"root"}
 
 	// Explore.

@@ -269,8 +269,7 @@ func (t *TraverseDAGTest) runTest(edges map[string][]string) {
 
 // Generate a tree with a certain depth, where the number of children for each
 // node is random. The root node is "root".
-func randomTree() (edges map[string][]string) {
-	const depth = 10
+func randomTree(depth int) (edges map[string][]string) {
 	edges = make(map[string][]string)
 	randSrc := makeRandSource()
 
@@ -399,7 +398,8 @@ func (t *TraverseDAGTest) MultipleConnectedComponents() {
 }
 
 func (t *TraverseDAGTest) LargeRootedTree() {
-	edges := randomTree()
+	const depth = 6
+	edges := randomTree(depth)
 	t.runTest(edges)
 }
 
