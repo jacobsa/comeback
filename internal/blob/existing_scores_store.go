@@ -22,10 +22,6 @@ import (
 
 // Create a blob store that wraps another, responding to calls as follows:
 //
-//  *  Flush will panic; it is assumed that any buffering and early returning
-//     is in front of this store, and that the wrapped store responds to Store
-//     only when the blob is durable.
-//
 //  *  Contains will be responded to directly by this store based on the
 //     contents of existingScores. It is assumed that existingScores initially
 //     contains only scores that are durable in the wrapped store.
@@ -63,10 +59,6 @@ func (bs *existingScoresStore) Store(
 	}
 
 	return
-}
-
-func (bs *existingScoresStore) Flush(ctx context.Context) (err error) {
-	panic("We expect buffering to happen outside of here")
 }
 
 func (bs *existingScoresStore) Contains(
