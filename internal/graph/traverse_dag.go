@@ -48,7 +48,7 @@ func TraverseDAG(
 	// Set up a state struct.
 	state := &traverseDAGState{
 		notReadyToVisit: make(map[Node]traverseDAGNodeState),
-		newReadyNodes:   make(chan Node, 100),
+		newReadyNodes:   make(chan Node),
 	}
 
 	state.mu = syncutil.NewInvariantMutex(state.checkInvariants)
@@ -164,7 +164,63 @@ func processIncomingNodes(
 	nodes <-chan Node,
 	sf SuccessorFinder,
 	state *traverseDAGState) (err error) {
-	err = errors.New("TODO")
+	for n := range nodes {
+		// Find the successors for this node.
+		var successors []Node
+		successors, err = sf.FindDirectSuccessors(ctx, n)
+		if err != nil {
+			err = fmt.Errorf("FindDirectSuccessors: %v", err)
+			return
+		}
+
+		state.mu.Lock()
+
+		// Put a hold on each direct successor.
+		for _, s := range successors {
+			tmp := state.notReadyToVisit[s]
+			if tmp.seen {
+				log.Panicf("Not topologically sorted? Node: %#v", n)
+			}
+
+			tmp.predecessorsOutstanding++
+			state.notReadyToVisit[s] = tmp
+		}
+
+		// Update state for this node.
+		ready := false
+		{
+			tmp := state.notReadyToVisit[n]
+			if tmp.seen {
+				log.Panicf("Already seen: %#v", n)
+			}
+
+			tmp.seen = true
+			if tmp.readyToVisit() {
+				ready = true
+				delete(state.notReadyToVisit, n)
+			} else {
+				state.notReadyToVisit[n] = tmp
+			}
+		}
+
+		state.mu.Unlock()
+
+		// If we're not ready to visit this node, we're done. It's sitting in the
+		// map and will be updated later as its predecessors complete.
+		if !ready {
+			continue
+		}
+
+		// We're ready to visit this node. Hand it off to a goroutine performing
+		// visits.
+		select {
+		case state.newReadyNodes <- n:
+		case <-ctx.Done():
+			err = ctx.Err()
+			return
+		}
+	}
+
 	return
 }
 
