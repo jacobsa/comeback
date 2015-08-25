@@ -16,9 +16,8 @@
 package save
 
 import (
-	"os"
-
 	"github.com/jacobsa/comeback/internal/blob"
+	"github.com/jacobsa/comeback/internal/fs"
 	"github.com/jacobsa/comeback/internal/state"
 )
 
@@ -28,8 +27,8 @@ type fsNode struct {
 	// The path of the file (or directory, etc.) relative to the base path.
 	RelPath string
 
-	// Information about the file, as returned by os.Lstat.
-	Info os.FileInfo
+	// Type, size, etc. information about the file.
+	Info fs.DirectoryEntry
 
 	// The node for the parent of this file, or nil if this is the root of the
 	// tree of interest.
