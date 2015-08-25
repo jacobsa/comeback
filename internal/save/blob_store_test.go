@@ -153,7 +153,23 @@ func (t *VisitorTest) Directory() {
 }
 
 func (t *VisitorTest) File_Empty() {
-	AssertTrue(false, "TODO")
+	var err error
+
+	// Node setup
+	p := path.Join(t.dir, "foo")
+
+	err = ioutil.WriteFile(p, []byte(""), 0700)
+	AssertEq(nil, err)
+
+	t.node.Info, err = os.Lstat(p)
+	AssertEq(nil, err)
+
+	// Call
+	err = t.call()
+	AssertEq(nil, err)
+
+	AssertNe(nil, t.node.Scores)
+	ExpectThat(t.node.Scores, ElementsAre())
 }
 
 func (t *VisitorTest) File_LastChunkIsFull() {
