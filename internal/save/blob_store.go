@@ -18,6 +18,7 @@ package save
 import (
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path"
 
@@ -126,6 +127,8 @@ func (v *visitor) fillInScores(
 func (v *visitor) saveFile(
 	ctx context.Context,
 	n *fsNode) (scores []blob.Score, err error) {
+	scores = make([]blob.Score, 0, 1)
+
 	// Open the file for reading.
 	f, err := os.Open(path.Join(v.basePath, n.RelPath))
 	if err != nil {
@@ -135,7 +138,39 @@ func (v *visitor) saveFile(
 
 	defer f.Close()
 
-	err = errors.New("TODO")
+	// Process a chunk at a time.
+	buf := make([]byte, v.chunkSize)
+	for {
+		// Read some data.
+		var n int
+		n, err = f.Read(buf)
+
+		switch {
+		case err == io.EOF:
+			// Ignore EOF.
+			err = nil
+
+		case err != nil:
+			err = fmt.Errorf("Read: %v", err)
+			return
+		}
+
+		// Are we done?
+		if n == 0 {
+			break
+		}
+
+		// Write out the blob.
+		var s blob.Score
+		s, err = v.blobStore.Store(ctx, buf[:n])
+		if err != nil {
+			err = fmt.Errorf("Store: %v", err)
+			return
+		}
+
+		scores = append(scores, s)
+	}
+
 	return
 }
 
