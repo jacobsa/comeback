@@ -137,7 +137,35 @@ func Save(
 }
 
 func findRootScore(nodes <-chan *fsNode) (score blob.Score, err error) {
-	err = errors.New("TODO")
+	found := false
+	for n := range nodes {
+		// Skip non-root nodes.
+		if n.Parent != nil {
+			continue
+		}
+
+		// Is this a duplicate?
+		if found {
+			err = fmt.Errorf("Found a duplicate root node: %#v", n)
+			return
+		}
+
+		found = true
+
+		// We expect directory nodes to have exactly one score.
+		if len(n.Scores) != 1 {
+			err = fmt.Errorf("Unexpected score count for rooT: %#v", n)
+			return
+		}
+
+		score = n.Scores[0]
+	}
+
+	if !found {
+		err = errors.New("No root node found")
+		return
+	}
+
 	return
 }
 
@@ -146,6 +174,23 @@ func teeNodes(
 	in <-chan *fsNode,
 	out1 chan<- *fsNode,
 	out2 chan<- *fsNode) (err error) {
-	err = errors.New("TODO")
+	for n := range in {
+		// Write to first output.
+		select {
+		case out1 <- n:
+		case <-ctx.Done():
+			err = ctx.Err()
+			return
+		}
+
+		// And the second.
+		select {
+		case out2 <- n:
+		case <-ctx.Done():
+			err = ctx.Err()
+			return
+		}
+	}
+
 	return
 }
