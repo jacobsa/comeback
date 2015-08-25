@@ -63,14 +63,8 @@ func (t *fileSystemTest) SetUp(i *TestInfo) {
 
 	// Set up dependencies.
 	t.mockController = i.MockController
-
-	if t.userRegistry, err = sys.NewUserRegistry(); err != nil {
-		log.Fatalf("Creating user registry: %v", err)
-	}
-
-	if t.groupRegistry, err = sys.NewGroupRegistry(); err != nil {
-		log.Fatalf("Creating group registry: %v", err)
-	}
+	t.userRegistry = sys.NewUserRegistry()
+	t.groupRegistry = sys.NewGroupRegistry()
 
 	// Set up the file system.
 	t.setUpFileSystem()

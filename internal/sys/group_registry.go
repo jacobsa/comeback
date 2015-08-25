@@ -35,8 +35,8 @@ type GroupRegistry interface {
 }
 
 // Return a group registry hooked up to the system's real group registry.
-func NewGroupRegistry() (GroupRegistry, error) {
-	return &groupRegistry{}, nil
+func NewGroupRegistry() GroupRegistry {
+	return &groupRegistry{}
 }
 
 type groupRegistry struct{}

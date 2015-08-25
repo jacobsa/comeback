@@ -28,6 +28,19 @@ const (
 	permissionBits os.FileMode = os.ModePerm | os.ModeSetuid | os.ModeSetgid | os.ModeSticky
 )
 
+var gUserRegistry = sys.NewUserRegistry()
+var gGroupRegistry = sys.NewGroupRegistry()
+
+// Convert the result of os.Lstat or os.Stat to a directory entry.
+// symlinkTarget should be empty if this is not a symlink.
+func ConvertFileInfo(
+	fi os.FileInfo,
+	symlinkTarget string) (entry *DirectoryEntry, err error) {
+	entry, err = convertFileInfo(fi, symlinkTarget, gUserRegistry, gGroupRegistry)
+	return
+}
+
+// Like ConvertFileInfo, but allows injecting registries.
 func convertFileInfo(
 	fi os.FileInfo,
 	symlinkTarget string,
