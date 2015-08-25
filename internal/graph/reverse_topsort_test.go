@@ -132,7 +132,41 @@ func (t *ReverseTopsortTreeTest) NoBranching() {
 }
 
 func (t *ReverseTopsortTreeTest) LittleBranching() {
-	AssertTrue(false, "TODO")
+	// Graph structure:
+	//
+	//        A
+	//      / |
+	//     B  D
+	//     |  |
+	//     C  E
+	//
+	root := "A"
+	edges := map[string][]string{
+		"A": {"B", "D"},
+		"B": {"C"},
+		"D": {"E"},
+	}
+
+	// Call
+	nodes, err := t.run(root, edges)
+	AssertEq(nil, err)
+
+	AssertThat(
+		sortNodes(nodes),
+		ElementsAre(
+			"A",
+			"B",
+			"C",
+			"D",
+			"E",
+		))
+
+	nodeIndex := indexNodes(nodes)
+	for p, successors := range edges {
+		for _, s := range successors {
+			ExpectLt(nodeIndex[s], nodeIndex[p], "%q -> %q", p, s)
+		}
+	}
 }
 
 func (t *ReverseTopsortTreeTest) LotsOfBranching() {
