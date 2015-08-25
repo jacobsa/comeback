@@ -36,4 +36,8 @@ type fsNode struct {
 
 	// A list of scores reflecting the contents of this file or directory.
 	Scores []blob.Score
+
+	// For private use by consultScoreMap and updateScoreMap: whether the scores
+	// ought to be inserted into the score map after being computed.
+	shouldInsertIntoScoreMap bool
 }

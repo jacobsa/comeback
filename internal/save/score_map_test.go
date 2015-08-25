@@ -240,6 +240,7 @@ func (t *ConsultScoreMapTest) NodeNotEligible() {
 	AssertEq(nil, err)
 
 	ExpectEq(nil, t.node.Scores)
+	ExpectFalse(t.node.shouldInsertIntoScoreMap)
 }
 
 func (t *ConsultScoreMapTest) PresentInScoreMap() {
@@ -256,6 +257,7 @@ func (t *ConsultScoreMapTest) PresentInScoreMap() {
 	AssertEq(nil, err)
 
 	ExpectThat(t.node.Scores, ElementsAre(score1, score2))
+	ExpectFalse(t.node.shouldInsertIntoScoreMap)
 }
 
 func (t *ConsultScoreMapTest) AbsentInScoreMap() {
@@ -266,6 +268,7 @@ func (t *ConsultScoreMapTest) AbsentInScoreMap() {
 	AssertEq(nil, err)
 
 	ExpectEq(nil, t.node.Scores)
+	ExpectTrue(t.node.shouldInsertIntoScoreMap)
 }
 
 ////////////////////////////////////////////////////////////////////////

@@ -41,6 +41,9 @@ func consultScoreMap(
 		key := makeScoreMapKey(n, clock)
 		if key != nil {
 			n.Scores = scoreMap.Get(*key)
+			if n.Scores == nil {
+				n.shouldInsertIntoScoreMap = true
+			}
 		}
 
 		// Pass on the node.
