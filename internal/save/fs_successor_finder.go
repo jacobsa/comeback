@@ -30,7 +30,8 @@ import (
 // the given base path, excluding all relative paths that matches any of the
 // supplied exclusions, along with all of their descendants.
 //
-// The nodes involved are of type *fsNode.
+// The nodes involved are of type *fsNode. The successor finder fills in
+// RelPath, Info, and Parent fields.
 func newSuccessorFinder(
 	basePath string,
 	exclusions []*regexp.Regexp) (sf graph.SuccessorFinder) {
