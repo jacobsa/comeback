@@ -45,15 +45,8 @@ func NewDirectoryRestorer(
 	fileSystem fs.FileSystem,
 	fileRestorer FileRestorer,
 ) (restorer DirectoryRestorer, err error) {
-	userRegistry, err := sys.NewUserRegistry()
-	if err != nil {
-		err = fmt.Errorf("NewUserRegistry: %v", err)
-	}
-
-	groupRegistry, err := sys.NewGroupRegistry()
-	if err != nil {
-		err = fmt.Errorf("NewGroupRegistry: %v", err)
-	}
+	userRegistry := sys.NewUserRegistry()
+	groupRegistry := sys.NewGroupRegistry()
 
 	createRestorer := func(wrapped DirectoryRestorer) DirectoryRestorer {
 		restorer, err := NewNonRecursiveDirectoryRestorer(
