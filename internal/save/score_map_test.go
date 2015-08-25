@@ -32,7 +32,7 @@ func TestScoreMap(t *testing.T) { RunTests(t) }
 // Boilerplate
 ////////////////////////////////////////////////////////////////////////
 
-type ConsultScoreMapTest struct {
+type scoreMapTest struct {
 	ctx      context.Context
 	scoreMap state.ScoreMap
 	clock    timeutil.Clock
@@ -40,24 +40,61 @@ type ConsultScoreMapTest struct {
 	node fsNode
 }
 
-var _ SetUpInterface = &ConsultScoreMapTest{}
+var _ SetUpInterface = &scoreMapTest{}
 
-func init() { RegisterTestSuite(&ConsultScoreMapTest{}) }
-
-func (t *ConsultScoreMapTest) SetUp(ti *TestInfo) {
+func (t *scoreMapTest) SetUp(ti *TestInfo) {
 	t.ctx = ti.Ctx
 	AssertTrue(false, "TODO")
 }
+
+////////////////////////////////////////////////////////////////////////
+// makeScoreMapKey
+////////////////////////////////////////////////////////////////////////
+
+type MakeScoreMapKeyTest struct {
+	scoreMapTest
+}
+
+func init() { RegisterTestSuite(&MakeScoreMapKeyTest{}) }
+
+func (t *MakeScoreMapKeyTest) DoesFoo() {
+	AssertTrue(false, "TODO")
+}
+
+////////////////////////////////////////////////////////////////////////
+// consultScoreMap
+////////////////////////////////////////////////////////////////////////
+
+type ConsultScoreMapTest struct {
+	scoreMapTest
+}
+
+func init() { RegisterTestSuite(&ConsultScoreMapTest{}) }
 
 func (t *ConsultScoreMapTest) call() (err error) {
 	err = errors.New("TODO")
 	return
 }
 
+func (t *ConsultScoreMapTest) DoesFoo() {
+	AssertTrue(false, "TODO")
+}
+
 ////////////////////////////////////////////////////////////////////////
-// Tests
+// updateScoreMap
 ////////////////////////////////////////////////////////////////////////
 
-func (t *ConsultScoreMapTest) DoesFoo() {
+type UpdateScoreMapTest struct {
+	scoreMapTest
+}
+
+func init() { RegisterTestSuite(&UpdateScoreMapTest{}) }
+
+func (t *UpdateScoreMapTest) call() (err error) {
+	err = errors.New("TODO")
+	return
+}
+
+func (t *UpdateScoreMapTest) DoesFoo() {
 	AssertTrue(false, "TODO")
 }

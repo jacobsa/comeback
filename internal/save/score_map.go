@@ -49,3 +49,10 @@ func updateScoreMap(
 	err = errors.New("TODO")
 	return
 }
+
+// Return an appropriate score map key for the node, or nil if the score map
+// should not be used.
+func makeScoreMapKey(node *fsNode) (key *state.ScoreMapKey) {
+	// TODO(jacobsa): Fill this in.
+	return
+}
