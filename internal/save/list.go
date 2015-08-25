@@ -109,45 +109,28 @@ func List(
 	w io.Writer,
 	basePath string,
 	exclusions []*regexp.Regexp) (err error) {
-	// TODO(jacobsa): Make this function use listNodes.
+	b := syncutil.NewBundle(ctx)
 
-	b := syncutil.NewBundle(context.Background())
-
-	// Explore the file system graph, writing all non-excluded nodes into a
-	// channel.
-	graphNodes := make(chan graph.Node, 100)
+	// List nodes.
+	nodes := make(chan *fsNode, 100)
 	b.Add(func(ctx context.Context) (err error) {
-		// Set up a root node.
-		rootNode := &fsNode{
-			RelPath: "",
-			Parent:  nil,
-		}
-
-		rootNode.Info, err = os.Lstat(basePath)
+		defer close(nodes)
+		err = listNodes(ctx, basePath, exclusions, nodes)
 		if err != nil {
-			err = fmt.Errorf("os.Lstat: %v", err)
+			err = fmt.Errorf("listNodes: %v", err)
 			return
 		}
 
-		if !rootNode.Info.IsDir() {
-			err = fmt.Errorf("Not a directory: %q", basePath)
-			return
-		}
+		return
+	})
 
-		// Explore the graph.
-		defer close(graphNodes)
-		sf := newSuccessorFinder(basePath, exclusions)
-
-		const parallelism = 8
-		err = graph.ExploreDirectedGraph(
-			ctx,
-			sf,
-			[]graph.Node{rootNode},
-			graphNodes,
-			parallelism)
-
+	// Fill in stat info.
+	statted := make(chan *fsNode, 100)
+	b.Add(func(ctx context.Context) (err error) {
+		defer close(statted)
+		err = statNodes(ctx, basePath, nodes, statted)
 		if err != nil {
-			err = fmt.Errorf("ExploreDirectedGraph: %v", err)
+			err = fmt.Errorf("statNodes: %v", err)
 			return
 		}
 
@@ -156,14 +139,7 @@ func List(
 
 	// Print out info about each node.
 	b.Add(func(ctx context.Context) (err error) {
-		for graphNode := range graphNodes {
-			n, ok := graphNode.(*fsNode)
-			if !ok {
-				err = fmt.Errorf("Unexpected node type: %T", n)
-				return
-			}
-
-			// Skip the root node.
+		for n := range statted {
 			_, err = fmt.Fprintf(w, "%q %d\n", n.RelPath, n.Info.Size())
 			if err != nil {
 				err = fmt.Errorf("Fprintf: %v", err)
