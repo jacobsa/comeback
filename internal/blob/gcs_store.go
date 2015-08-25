@@ -83,6 +83,8 @@ type GCSStore struct {
 	namePrefix string
 }
 
+var _ Store = &GCSStore{}
+
 // Parse and verify the internal consistency of the supplied object record in
 // the same manner that a GCSStore configured with the supplied object name
 // prefix would. Return the score of the blob that the object contains.
@@ -291,7 +293,9 @@ func (s *GCSStore) makeName(score Score) (name string) {
 
 func (s *GCSStore) Store(
 	ctx context.Context,
-	blob []byte) (score Score, err error) {
+	req *StoreRequest) (score Score, err error) {
+	blob := req.Blob
+
 	// Compute a score and an object name.
 	score = ComputeScore(blob)
 	name := s.makeName(score)
@@ -301,7 +305,7 @@ func (s *GCSStore) Store(
 	md5 := *gcsutil.MD5(blob)
 	sha1 := sha1.Sum(blob)
 
-	req := &gcs.CreateObjectRequest{
+	createReq := &gcs.CreateObjectRequest{
 		Name:     name,
 		Contents: bytes.NewReader(blob),
 		CRC32C:   &crc32c,
@@ -314,7 +318,7 @@ func (s *GCSStore) Store(
 		},
 	}
 
-	o, err := s.bucket.CreateObject(ctx, req)
+	o, err := s.bucket.CreateObject(ctx, createReq)
 	if err != nil {
 		err = fmt.Errorf("CreateObject: %v", err)
 		return
