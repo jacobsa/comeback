@@ -27,6 +27,7 @@ import (
 	"github.com/jacobsa/comeback/internal/blob"
 	"github.com/jacobsa/comeback/internal/fs"
 	"github.com/jacobsa/comeback/internal/graph"
+	"github.com/jacobsa/comeback/internal/repr"
 )
 
 const fileChunkSize = 1 << 24
@@ -113,7 +114,7 @@ func (v *visitor) setScores(
 		}
 
 	case fs.TypeDirectory:
-		n.Scores, err = v.saveDir(ctx, path.Join(v.basePath, n.RelPath))
+		n.Scores, err = v.saveDir(ctx, n.Children)
 		if err != nil {
 			err = fmt.Errorf("saveDir: %v", err)
 			return
@@ -176,7 +177,27 @@ func (v *visitor) saveFile(
 
 func (v *visitor) saveDir(
 	ctx context.Context,
-	path string) (scores []blob.Score, err error) {
-	err = errors.New("TODO")
+	children []*fsNode) (scores []blob.Score, err error) {
+	// Set up a list of directory entries.
+	var entries []*fs.DirectoryEntry
+	for _, child := range children {
+		entries = append(entries, &child.Info)
+	}
+
+	// Create a blob describing the directory's contents.
+	b, err := repr.MarshalDir(entries)
+	if err != nil {
+		err = fmt.Errorf("MarshalDir: %v", err)
+		return
+	}
+
+	// Write out the blob.
+	s, err := v.blobStore.Store(ctx, b)
+	if err != nil {
+		err = fmt.Errorf("Store: %v", err)
+		return
+	}
+
+	scores = []blob.Score{s}
 	return
 }
