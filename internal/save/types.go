@@ -44,5 +44,5 @@ type fsNode struct {
 	// For private use by consultScoreMap and updateScoreMap: if the scores ought
 	// to be inserted into the score map after being computed, the key to use
 	// when doing so.
-	scoreMapKey *state.ScoreMapKey
+	ScoreMapKey *state.ScoreMapKey
 }

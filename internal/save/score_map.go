@@ -39,7 +39,7 @@ func consultScoreMap(
 		if key != nil {
 			n.Scores = scoreMap.Get(*key)
 			if n.Scores == nil {
-				n.scoreMapKey = key
+				n.ScoreMapKey = key
 			}
 		}
 
@@ -62,11 +62,11 @@ func updateScoreMap(
 	scoreMap state.ScoreMap,
 	nodes <-chan *fsNode) (err error) {
 	for n := range nodes {
-		if n.scoreMapKey == nil {
+		if n.ScoreMapKey == nil {
 			continue
 		}
 
-		scoreMap.Set(*n.scoreMapKey, n.Scores)
+		scoreMap.Set(*n.ScoreMapKey, n.Scores)
 	}
 
 	return
