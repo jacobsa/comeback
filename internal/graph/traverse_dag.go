@@ -17,6 +17,7 @@ package graph
 
 import (
 	"errors"
+	"fmt"
 	"log"
 
 	"github.com/jacobsa/syncutil"
@@ -42,11 +43,46 @@ func TraverseDAG(
 	sf SuccessorFinder,
 	v Visitor,
 	parallelism int) (err error) {
-	err = errors.New("TODO")
+	b := syncutil.NewBundle(ctx)
+
+	// Set up a state struct.
+	state := &traverseDAGState{
+		notReadyToVisit: make(map[Node]traverseDAGNodeState),
+		newReadyNodes:   make(chan Node, 100),
+	}
+
+	state.mu = syncutil.NewInvariantMutex(state.checkInvariants)
+
+	// Process incoming nodes from the user.
+	b.Add(func(ctx context.Context) (err error) {
+		defer close(state.newReadyNodes)
+		err = processIncomingNodes(ctx, nodes, sf, state)
+		if err != nil {
+			err = fmt.Errorf("processIncomingNodes: %v", err)
+			return
+		}
+
+		return
+	})
+
+	// Run multiple workers to deal with the nodes that are ready to visit.
+	for i := 0; i < parallelism; i++ {
+		b.Add(func(ctx context.Context) (err error) {
+			err = visitNodes(ctx, v, state)
+			if err != nil {
+				err = fmt.Errorf("visitNodes: %v", err)
+				return
+			}
+
+			return
+		})
+	}
+
+	err = b.Join()
 	return
 }
 
-type traverseDagState struct {
+type traverseDAGState struct {
 	mu syncutil.InvariantMutex
 
 	// A map containing nodes that we are not yet ready to visit, because they
@@ -57,7 +93,7 @@ type traverseDagState struct {
 	// INVARIANT: For all v, v.checkInvariants doesn't panic
 	//
 	// GUARDED_BY(mu)
-	notReadyToVisit map[Node]traverseDagNodeState
+	notReadyToVisit map[Node]traverseDAGNodeState
 
 	// A list of nodes that we are ready to visit but have not yet started
 	// visiting.
@@ -76,7 +112,7 @@ type traverseDagState struct {
 }
 
 // LOCKS_REQUIRED(s.mu)
-func (s *traverseDagState) checkInvariants() {
+func (s *traverseDAGState) checkInvariants() {
 	// INVARIANT: For all v, !v.readyToVisit()
 	for k, v := range s.notReadyToVisit {
 		if v.readyToVisit() {
@@ -97,7 +133,7 @@ func (s *traverseDagState) checkInvariants() {
 	}
 }
 
-type traverseDagNodeState struct {
+type traverseDAGNodeState struct {
 	// The number of predecessors of this node that we have encountered but not
 	// yet finished visiting.
 	//
@@ -109,13 +145,36 @@ type traverseDagNodeState struct {
 	seen bool
 }
 
-func (s traverseDagNodeState) checkInvariants() {
+func (s traverseDAGNodeState) checkInvariants() {
 	// INVARIANT: predecessorsOutstanding >= 0
 	if s.predecessorsOutstanding < 0 {
 		log.Panicf("Unexpected count: %d", s.predecessorsOutstanding)
 	}
 }
 
-func (s traverseDagNodeState) readyToVisit() bool {
+func (s traverseDAGNodeState) readyToVisit() bool {
 	return s.predecessorsOutstanding == 0 && s.seen
+}
+
+// Read incoming nodes and update their successors' records. If the incoming
+// node is ready to process, write it to state.newReadyNodes. Otherwise update
+// the 'seen' field for its record.
+func processIncomingNodes(
+	ctx context.Context,
+	nodes <-chan Node,
+	sf SuccessorFinder,
+	state *traverseDAGState) (err error) {
+	err = errors.New("TODO")
+	return
+}
+
+// Read nodes that are ready to visit from state.readyToVisit and
+// state.newReadyNodes, and visit them. Return when there is no longer any
+// possibility of nodes becoming ready.
+func visitNodes(
+	ctx context.Context,
+	v Visitor,
+	state *traverseDAGState) (err error) {
+	err = errors.New("TODO")
+	return
 }
