@@ -20,6 +20,8 @@ import (
 
 	"golang.org/x/net/context"
 
+	"github.com/jacobsa/comeback/internal/blob"
+	"github.com/jacobsa/comeback/internal/blob/mock"
 	. "github.com/jacobsa/ogletest"
 )
 
@@ -30,13 +32,23 @@ func TestBlobStore(t *testing.T) { RunTests(t) }
 ////////////////////////////////////////////////////////////////////////
 
 type VisitorTest struct {
-	ctx context.Context
+	ctx       context.Context
+	blobStore blob.Store
+
+	node fsNode
 }
 
 func init() { RegisterTestSuite(&VisitorTest{}) }
 
 func (t *VisitorTest) SetUp(ti *TestInfo) {
 	t.ctx = ti.Ctx
+	t.blobStore = mock_blob.NewMockStore(ti.MockController, "blobStore")
+}
+
+func (t *VisitorTest) call() (err error) {
+	visitor := newVisitor(t.blobStore, make(chan *fsNode, 1))
+	err = visitor.Visit(t.ctx, &t.node)
+	return
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -44,11 +56,21 @@ func (t *VisitorTest) SetUp(ti *TestInfo) {
 ////////////////////////////////////////////////////////////////////////
 
 func (t *VisitorTest) ScoresAlreadyPresent_Empty() {
-	AssertTrue(false, "TODO")
+	scores := []blob.Score{}
+	t.node.Scores = scores
+
+	err := t.call()
+	AssertEq(nil, err)
+	ExpectEq(scores, t.node.Scores)
 }
 
 func (t *VisitorTest) ScoresAlreadyPresent_NonEmpty() {
-	AssertTrue(false, "TODO")
+	scores := []blob.Score{blob.ComputeScore([]byte("taco"))}
+	t.node.Scores = scores
+
+	err := t.call()
+	AssertEq(nil, err)
+	ExpectEq(scores, t.node.Scores)
 }
 
 func (t *VisitorTest) Symlink() {
