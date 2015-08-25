@@ -19,6 +19,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"os"
+	"path"
 	"testing"
 
 	"golang.org/x/net/context"
@@ -89,7 +90,19 @@ func (t *MakeScoreMapKeyTest) Directory() {
 }
 
 func (t *MakeScoreMapKeyTest) Symlink() {
-	AssertTrue(false, "TODO")
+	var err error
+
+	// Set up
+	p := path.Join(t.dir, "foo")
+	err = os.Symlink("blah", p)
+	AssertEq(nil, err)
+
+	t.node.Info, err = os.Lstat(p)
+	AssertEq(nil, err)
+
+	// Call
+	key := makeScoreMapKey(&t.node)
+	ExpectEq(nil, key)
 }
 
 func (t *MakeScoreMapKeyTest) RecentlyModified() {
