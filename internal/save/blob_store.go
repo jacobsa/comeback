@@ -16,7 +16,6 @@
 package save
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -28,6 +27,7 @@ import (
 	"github.com/jacobsa/comeback/internal/fs"
 	"github.com/jacobsa/comeback/internal/graph"
 	"github.com/jacobsa/comeback/internal/repr"
+	"github.com/jacobsa/syncutil"
 )
 
 const fileChunkSize = 1 << 24
@@ -39,9 +39,57 @@ func fillInScores(
 	ctx context.Context,
 	basePath string,
 	blobStore blob.Store,
-	nodeIn <-chan *fsNode,
+	nodesIn <-chan *fsNode,
 	nodesOut chan<- *fsNode) (err error) {
-	err = errors.New("TODO")
+	b := syncutil.NewBundle(ctx)
+
+	// Convert *fsNode to graph.Node.
+	graphNodes := make(chan graph.Node, 100)
+	b.Add(func(ctx context.Context) (err error) {
+		defer close(graphNodes)
+		for n := range nodesIn {
+			select {
+			case graphNodes <- n:
+			case <-ctx.Done():
+				err = ctx.Err()
+				return
+			}
+		}
+
+		return
+	})
+
+	// Traverse the inverted graph, requiring children to finish before parents
+	// start.
+	b.Add(func(ctx context.Context) (err error) {
+		sf := &parentSuccessorFinder{}
+		v := newVisitor(
+			fileChunkSize,
+			basePath,
+			blobStore,
+			nodesOut)
+
+		// Hopefully enough parallelism to keep our CPUs saturated (for encryption,
+		// SHA-1 computation, etc.) or our NIC saturated (for GCS traffic),
+		// depending on which is the current bottleneck.
+		const parallelism = 128
+
+		err = graph.TraverseDAG(
+			ctx,
+			graphNodes,
+			sf,
+			v,
+			parallelism)
+
+		if err != nil {
+			err = fmt.Errorf("TraverseDAG: %v", err)
+			return
+		}
+
+		return
+	})
+
+	err = b.Join()
 	return
 }
 
@@ -199,5 +247,26 @@ func (v *visitor) saveDir(
 	}
 
 	scores = []blob.Score{s}
+	return
+}
+
+// A successor finder for the inverted file system graph, where children have
+// arrows to their parents.
+type parentSuccessorFinder struct {
+}
+
+func (sf *parentSuccessorFinder) FindDirectSuccessors(
+	ctx context.Context,
+	untyped graph.Node) (successors []graph.Node, err error) {
+	n, ok := untyped.(*fsNode)
+	if !ok {
+		err = fmt.Errorf("Unexpected node type: %T", untyped)
+		return
+	}
+
+	if n.Parent != nil {
+		successors = []graph.Node{n.Parent}
+	}
+
 	return
 }
