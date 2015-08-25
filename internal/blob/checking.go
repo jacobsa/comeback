@@ -34,14 +34,14 @@ type checkingStore struct {
 
 func (s *checkingStore) Store(
 	ctx context.Context,
-	blob []byte) (score Score, err error) {
+	req *StoreRequest) (score Score, err error) {
 	// Call the wrapped store.
-	if score, err = s.wrapped.Store(ctx, blob); err != nil {
+	if score, err = s.wrapped.Store(ctx, req); err != nil {
 		return
 	}
 
 	// Check its result.
-	expected := ComputeScore(blob)
+	expected := ComputeScore(req.blob)
 	if score != expected {
 		err = fmt.Errorf(
 			"Incorrect score returned for blob; %s vs %s.",
