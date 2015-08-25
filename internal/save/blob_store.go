@@ -106,14 +106,14 @@ func (v *visitor) fillInScores(
 	mode := n.Info.Mode()
 	switch {
 	case mode == 0:
-		n.Scores, err = v.saveFile(ctx, n)
+		n.Scores, err = v.saveFile(ctx, path.Join(v.basePath, n.RelPath))
 		if err != nil {
 			err = fmt.Errorf("saveFile: %v", err)
 			return
 		}
 
 	case mode&os.ModeDir != 0:
-		n.Scores, err = v.saveDir(ctx, n)
+		n.Scores, err = v.saveDir(ctx, path.Join(v.basePath, n.RelPath))
 		if err != nil {
 			err = fmt.Errorf("saveDir: %v", err)
 			return
@@ -126,11 +126,11 @@ func (v *visitor) fillInScores(
 // Guarantees non-nil result when successful, even for empty list of scores.
 func (v *visitor) saveFile(
 	ctx context.Context,
-	n *fsNode) (scores []blob.Score, err error) {
+	path string) (scores []blob.Score, err error) {
 	scores = make([]blob.Score, 0, 1)
 
 	// Open the file for reading.
-	f, err := os.Open(path.Join(v.basePath, n.RelPath))
+	f, err := os.Open(path)
 	if err != nil {
 		err = fmt.Errorf("Open: %v", err)
 		return
@@ -176,7 +176,7 @@ func (v *visitor) saveFile(
 
 func (v *visitor) saveDir(
 	ctx context.Context,
-	n *fsNode) (scores []blob.Score, err error) {
+	path string) (scores []blob.Score, err error) {
 	err = errors.New("TODO")
 	return
 }
