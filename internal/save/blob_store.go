@@ -50,4 +50,5 @@ type visitor struct {
 
 func (v *visitor) Visit(ctx context.Context, untyped graph.Node) (err error) {
 	err = errors.New("TODO")
+	return
 }
