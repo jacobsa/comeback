@@ -57,7 +57,23 @@ type MakeScoreMapKeyTest struct {
 
 func init() { RegisterTestSuite(&MakeScoreMapKeyTest{}) }
 
-func (t *MakeScoreMapKeyTest) DoesFoo() {
+func (t *MakeScoreMapKeyTest) Directory() {
+	AssertTrue(false, "TODO")
+}
+
+func (t *MakeScoreMapKeyTest) Symlink() {
+	AssertTrue(false, "TODO")
+}
+
+func (t *MakeScoreMapKeyTest) RecentlyModified() {
+	AssertTrue(false, "TODO")
+}
+
+func (t *MakeScoreMapKeyTest) ModifiedInFuture() {
+	AssertTrue(false, "TODO")
+}
+
+func (t *MakeScoreMapKeyTest) Valid() {
 	AssertTrue(false, "TODO")
 }
 
