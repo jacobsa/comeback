@@ -182,6 +182,24 @@ func (s *traverseDAGState) checkInvariants() {
 	}
 }
 
+// Is there anything that needs a worker's attention?
+//
+// LOCKS_REQUIRED(state.mu)
+func (state *traverseDAGState) shouldWake() bool {
+	return len(state.readyToVisit) != 0 ||
+		state.firstErr != nil ||
+		state.busyWorkers == 0
+}
+
+// Sleep until there's something interesting for a worker to do.
+//
+// LOCKS_REQUIRED(state.mu)
+func (state *traverseDAGState) waitForSomethingToDo() {
+	for !state.shouldWake() {
+		state.cond.Wait()
+	}
+}
+
 type traverseDAGNodeState struct {
 	// The number of predecessors of this node that we have encountered but not
 	// yet finished visiting.
