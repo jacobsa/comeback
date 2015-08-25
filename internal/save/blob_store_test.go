@@ -21,6 +21,7 @@ import (
 	"os"
 	"path"
 	"testing"
+	"time"
 
 	"golang.org/x/net/context"
 
@@ -124,13 +125,15 @@ func (t *VisitorTest) Directory() {
 	// Children
 	child0 := &fsNode{
 		Info: fs.DirectoryEntry{
-			Name: "taco",
+			Name:  "taco",
+			MTime: time.Date(2012, time.August, 15, 12, 56, 00, 0, time.Local),
 		},
 	}
 
 	child1 := &fsNode{
 		Info: fs.DirectoryEntry{
-			Name: "burrito",
+			Name:  "burrito",
+			MTime: time.Date(2015, 4, 5, 2, 15, 0, 0, time.Local),
 		},
 	}
 
@@ -157,12 +160,10 @@ func (t *VisitorTest) Directory() {
 	// Parse the blob.
 	entries, err := repr.UnmarshalDir(savedBlob)
 	AssertEq(nil, err)
+	AssertEq(2, len(entries))
 
-	ExpectThat(
-		entries,
-		ElementsAre(
-			Pointee(DeepEquals(child0.Info)),
-			Pointee(DeepEquals(child1.Info))))
+	ExpectThat(*entries[0], DeepEquals(child0.Info))
+	ExpectThat(*entries[1], DeepEquals(child1.Info))
 }
 
 func (t *VisitorTest) File_Empty() {
