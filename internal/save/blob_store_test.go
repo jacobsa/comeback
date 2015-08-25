@@ -214,8 +214,8 @@ func (t *VisitorTest) File_LastChunkIsFull() {
 	ExpectCall(t.blobStore, "Store")(Any(), DeepEquals(chunk0)).
 		WillOnce(Return(score0, nil))
 
-	score1 := blob.ComputeScore(chunk0)
-	ExpectCall(t.blobStore, "Store")(Any(), DeepEquals(chunk0)).
+	score1 := blob.ComputeScore(chunk1)
+	ExpectCall(t.blobStore, "Store")(Any(), DeepEquals(chunk1)).
 		WillOnce(Return(score1, nil))
 
 	// Call
@@ -250,8 +250,8 @@ func (t *VisitorTest) File_LastChunkIsPartial() {
 	ExpectCall(t.blobStore, "Store")(Any(), DeepEquals(chunk0)).
 		WillOnce(Return(score0, nil))
 
-	score1 := blob.ComputeScore(chunk0)
-	ExpectCall(t.blobStore, "Store")(Any(), DeepEquals(chunk0)).
+	score1 := blob.ComputeScore(chunk1)
+	ExpectCall(t.blobStore, "Store")(Any(), DeepEquals(chunk1)).
 		WillOnce(Return(score1, nil))
 
 	// Call
