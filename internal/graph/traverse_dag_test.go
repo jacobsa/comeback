@@ -322,7 +322,25 @@ func (t *TraverseDAGTest) SimpleRootedTree() {
 }
 
 func (t *TraverseDAGTest) SimpleDAG() {
-	AssertTrue(false, "TODO")
+	// Graph structure:
+	//
+	//        A
+	//      /  \
+	//     B    C
+	//      \  /|
+	//        D |
+	//         \|
+	//          E
+	//
+	edges := map[string][]string{
+		"A": {"B", "C"},
+		"B": {"D"},
+		"C": {"D", "E"},
+		"D": {"E"},
+		"E": {},
+	}
+
+	t.runTest(edges)
 }
 
 func (t *TraverseDAGTest) MultipleConnectedComponents() {
