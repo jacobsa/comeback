@@ -142,6 +142,13 @@ func invertRelation(r map[string][]string) (inverted map[string][]string) {
 		}
 	}
 
+	// Ensure that everything has an entry, even if empty.
+	for k, _ := range r {
+		if _, ok := inverted[k]; !ok {
+			inverted[k] = nil
+		}
+	}
+
 	return
 }
 
@@ -404,7 +411,9 @@ func (t *TraverseDAGTest) LargeRootedTree() {
 }
 
 func (t *TraverseDAGTest) LargeRootedTree_Inverted() {
-	AssertTrue(false, "TODO")
+	const depth = 6
+	edges := invertRelation(randomTree(depth))
+	t.runTest(edges)
 }
 
 func (t *TraverseDAGTest) SuccessorFinderReturnsError() {
