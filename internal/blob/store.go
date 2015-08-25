@@ -19,20 +19,14 @@ import "golang.org/x/net/context"
 
 // A Store knows how to store blobs for later retrieval.
 type Store interface {
-	// Store the supplied blob, returning a score with which it can later be
-	// retrieved. Note that the blob is not guaranteed to be durable until Flush
-	// is successfully called.
+	// Store the blob, returning a score with which it can later be retrieved.
 	Store(
 		ctx context.Context,
 		blob []byte) (s Score, err error)
 
-	// Flush previous stored blobs to durable storage. Store must not be called
-	// again.
-	Flush(ctx context.Context) (err error)
-
-	// Return true only if the supplied score is in the blob store and will be
-	// durable by the time of a successful Flush call. Implementations may choose
-	// to return false if the information is not available.
+	// Return true only if the supplied score is durable in the blob store.
+	// Implementations may choose to return false if the information is not
+	// available.
 	Contains(ctx context.Context, score Score) (b bool)
 
 	// Load a previously-stored blob.
