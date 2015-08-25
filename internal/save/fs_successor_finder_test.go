@@ -17,7 +17,6 @@ package save
 
 import (
 	"io/ioutil"
-	"log"
 	"os"
 	"path"
 	"regexp"
@@ -26,6 +25,7 @@ import (
 
 	"golang.org/x/net/context"
 
+	"github.com/jacobsa/comeback/internal/fs"
 	"github.com/jacobsa/comeback/internal/graph"
 	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
@@ -58,17 +58,6 @@ func sortNodes(graphNodes []graph.Node) (nodes fsNodeSlice) {
 
 	sort.Sort(nodes)
 	return
-}
-
-// A valid os.FileInfo for a directory.
-var gDirInfo os.FileInfo
-
-func init() {
-	var err error
-	gDirInfo, err = os.Stat("/")
-	if err != nil {
-		log.Fatalf("Stat: %v", err)
-	}
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -124,7 +113,9 @@ func (t *FSSuccessorFinderTest) resetVisistor() {
 func (t *FSSuccessorFinderTest) NonExistentPath() {
 	node := &fsNode{
 		RelPath: "foo/bar",
-		Info:    gDirInfo,
+		Info: fs.DirectoryEntry{
+			Type: fs.TypeDirectory,
+		},
 	}
 
 	_, err := t.sf.FindDirectSuccessors(t.ctx, node)
@@ -145,7 +136,9 @@ func (t *FSSuccessorFinderTest) VisitRootNode() {
 	// Visit the root.
 	node := &fsNode{
 		RelPath: "",
-		Info:    gDirInfo,
+		Info: fs.DirectoryEntry{
+			Type: fs.TypeDirectory,
+		},
 	}
 
 	successors, err := t.sf.FindDirectSuccessors(t.ctx, node)
@@ -180,7 +173,9 @@ func (t *FSSuccessorFinderTest) VisitNonRootNode() {
 	// Visit the directory.
 	node := &fsNode{
 		RelPath: "sub/dirs",
-		Info:    gDirInfo,
+		Info: fs.DirectoryEntry{
+			Type: fs.TypeDirectory,
+		},
 	}
 
 	successors, err := t.sf.FindDirectSuccessors(t.ctx, node)
@@ -199,18 +194,12 @@ func (t *FSSuccessorFinderTest) VisitNonRootNode() {
 func (t *FSSuccessorFinderTest) VisitFileNode() {
 	var err error
 
-	// Create a file.
-	f := path.Join(t.dir, "foo")
-	err = ioutil.WriteFile(f, []byte{}, 0500)
-	AssertEq(nil, err)
-
-	fi, err := os.Stat(f)
-	AssertEq(nil, err)
-
-	// Visit it.
+	// Call
 	node := &fsNode{
 		RelPath: "foo",
-		Info:    fi,
+		Info: fs.DirectoryEntry{
+			Type: fs.TypeFile,
+		},
 	}
 
 	successors, err := t.sf.FindDirectSuccessors(t.ctx, node)
@@ -240,7 +229,9 @@ func (t *FSSuccessorFinderTest) Files() {
 	// Visit.
 	node := &fsNode{
 		RelPath: "dir",
-		Info:    gDirInfo,
+		Info: fs.DirectoryEntry{
+			Type: fs.TypeDirectory,
+		},
 	}
 
 	successors, err := t.sf.FindDirectSuccessors(t.ctx, node)
@@ -252,16 +243,16 @@ func (t *FSSuccessorFinderTest) Files() {
 
 	pfi = pfis[0]
 	ExpectEq("dir/bar", pfi.RelPath)
-	ExpectEq("bar", pfi.Info.Name())
+	ExpectEq("bar", pfi.Info.Name)
 	ExpectEq("", pfi.Info.Target)
-	ExpectEq(len("burrito"), pfi.Info.Size())
+	ExpectEq(len("burrito"), pfi.Info.Size)
 	ExpectEq(node, pfi.Parent)
 
 	pfi = pfis[1]
 	ExpectEq("dir/foo", pfi.RelPath)
-	ExpectEq("foo", pfi.Info.Name())
+	ExpectEq("foo", pfi.Info.Name)
 	ExpectEq("", pfi.Info.Target)
-	ExpectEq(len("taco"), pfi.Info.Size())
+	ExpectEq(len("taco"), pfi.Info.Size)
 	ExpectEq(node, pfi.Parent)
 }
 
@@ -285,7 +276,9 @@ func (t *FSSuccessorFinderTest) Directories() {
 	// Visit.
 	node := &fsNode{
 		RelPath: "dir",
-		Info:    gDirInfo,
+		Info: fs.DirectoryEntry{
+			Type: fs.TypeDirectory,
+		},
 	}
 
 	successors, err := t.sf.FindDirectSuccessors(t.ctx, node)
@@ -297,16 +290,16 @@ func (t *FSSuccessorFinderTest) Directories() {
 
 	pfi = pfis[0]
 	ExpectEq("dir/bar", pfi.RelPath)
-	ExpectEq("bar", pfi.Info.Name())
+	ExpectEq("bar", pfi.Info.Name)
 	ExpectEq("", pfi.Info.Target)
-	ExpectTrue(pfi.Info.IsDir())
+	ExpectEq(fs.TypeDirectory, pfi.Info.Type)
 	ExpectEq(node, pfi.Parent)
 
 	pfi = pfis[1]
 	ExpectEq("dir/foo", pfi.RelPath)
-	ExpectEq("foo", pfi.Info.Name())
+	ExpectEq("foo", pfi.Info.Name)
 	ExpectEq("", pfi.Info.Target)
-	ExpectTrue(pfi.Info.IsDir())
+	ExpectEq(fs.TypeDirectory, pfi.Info.Type)
 	ExpectEq(node, pfi.Parent)
 }
 
@@ -327,7 +320,9 @@ func (t *FSSuccessorFinderTest) Symlinks() {
 	// Visit.
 	node := &fsNode{
 		RelPath: "dir",
-		Info:    gDirInfo,
+		Info: fs.DirectoryEntry{
+			Type: fs.TypeDirectory,
+		},
 	}
 
 	successors, err := t.sf.FindDirectSuccessors(t.ctx, node)
@@ -339,9 +334,9 @@ func (t *FSSuccessorFinderTest) Symlinks() {
 
 	pfi = pfis[0]
 	ExpectEq("dir/foo", pfi.RelPath)
-	ExpectEq("foo", pfi.Info.Name())
+	ExpectEq("foo", pfi.Info.Name)
 	ExpectEq("blah/blah", pfi.Info.Target)
-	ExpectFalse(pfi.Info.IsDir())
+	ExpectEq(fs.TypeSymlink, pfi.Info.Type)
 	ExpectEq(node, pfi.Parent)
 }
 
@@ -375,7 +370,9 @@ func (t *FSSuccessorFinderTest) Exclusions() {
 	// Visit.
 	node := &fsNode{
 		RelPath: "dir",
-		Info:    gDirInfo,
+		Info: fs.DirectoryEntry{
+			Type: fs.TypeDirectory,
+		},
 	}
 
 	successors, err := t.sf.FindDirectSuccessors(t.ctx, node)
