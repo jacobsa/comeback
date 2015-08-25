@@ -198,7 +198,15 @@ func (t *ConsultScoreMapTest) call() (err error) {
 	return
 }
 
-func (t *ConsultScoreMapTest) DoesFoo() {
+func (t *ConsultScoreMapTest) NodeNotEligible() {
+	AssertTrue(false, "TODO")
+}
+
+func (t *ConsultScoreMapTest) PresentInScoreMap() {
+	AssertTrue(false, "TODO")
+}
+
+func (t *ConsultScoreMapTest) AbsentInScoreMap() {
 	AssertTrue(false, "TODO")
 }
 
@@ -217,6 +225,14 @@ func (t *UpdateScoreMapTest) call() (err error) {
 	return
 }
 
-func (t *UpdateScoreMapTest) DoesFoo() {
+func (t *UpdateScoreMapTest) NodeNotEligible() {
+	AssertTrue(false, "TODO")
+}
+
+func (t *UpdateScoreMapTest) NodeWasAlreadyPresent() {
+	AssertTrue(false, "TODO")
+}
+
+func (t *UpdateScoreMapTest) NodeWasntAlreadyPresent() {
 	AssertTrue(false, "TODO")
 }
