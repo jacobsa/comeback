@@ -303,6 +303,12 @@ func randomTree(depth int) (edges map[string][]string) {
 		}
 	}
 
+	// Ensure that there is an entry for everything in the last level, even if
+	// there are no children.
+	for _, n := range nextLevel {
+		edges[n] = []string{}
+	}
+
 	return
 }
 
