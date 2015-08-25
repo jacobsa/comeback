@@ -17,6 +17,8 @@ package save
 
 import (
 	"errors"
+	"io/ioutil"
+	"os"
 	"testing"
 
 	"golang.org/x/net/context"
@@ -38,14 +40,30 @@ type scoreMapTest struct {
 	clock    timeutil.Clock
 
 	node fsNode
+
+	// A temporary directory removed at the end of the test.
+	dir string
 }
 
 var _ SetUpInterface = &scoreMapTest{}
+var _ TearDownInterface = &scoreMapTest{}
 
 func (t *scoreMapTest) SetUp(ti *TestInfo) {
+	var err error
+
 	t.ctx = ti.Ctx
 	t.scoreMap = state.NewScoreMap()
 	t.clock = timeutil.RealClock()
+
+	t.dir, err = ioutil.TempDir("", "score_map_test")
+	AssertEq(nil, err)
+}
+
+func (t *scoreMapTest) TearDown() {
+	var err error
+
+	err = os.RemoveAll(t.dir)
+	AssertEq(nil, err)
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -59,7 +77,15 @@ type MakeScoreMapKeyTest struct {
 func init() { RegisterTestSuite(&MakeScoreMapKeyTest{}) }
 
 func (t *MakeScoreMapKeyTest) Directory() {
-	AssertTrue(false, "TODO")
+	var err error
+
+	// Set up
+	t.node.Info, err = os.Lstat(t.dir)
+	AssertEq(nil, err)
+
+	// Call
+	key := makeScoreMapKey(&t.node)
+	ExpectEq(nil, key)
 }
 
 func (t *MakeScoreMapKeyTest) Symlink() {
