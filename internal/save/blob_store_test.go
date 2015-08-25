@@ -129,8 +129,11 @@ func (t *VisitorTest) Directory() {
 	t.node.Info, err = os.Lstat(t.dir)
 	AssertEq(nil, err)
 
-	// Add one child.
-	err = ioutil.WriteFile(path.Join(t.dir, "foo"), []byte("taco"), 0700)
+	// Add two children.
+	err = ioutil.WriteFile(path.Join(t.dir, "bar"), []byte("taco"), 0700)
+	AssertEq(nil, err)
+
+	err = os.Symlink("blah", path.Join(t.dir, "foo"))
 	AssertEq(nil, err)
 
 	// Snoop on the call to the blob store.
@@ -147,12 +150,19 @@ func (t *VisitorTest) Directory() {
 
 	entries, err := repr.UnmarshalDir(savedBlob)
 	AssertEq(nil, err)
-	AssertEq(1, len(entries))
+	AssertEq(2, len(entries))
+	var entry *fs.DirectoryEntry
 
-	entry := entries[0]
-	ExpectEq("foo", entry.Name)
+	entry = entries[0]
+	ExpectEq("bar", entry.Name)
 	ExpectEq(fs.TypeFile, entry.Type)
 	ExpectEq(len("taco"), entry.Size)
+	ExpectEq("", entry.Target)
+
+	entry = entries[1]
+	ExpectEq("foo", entry.Name)
+	ExpectEq(fs.TypeSymlink, entry.Type)
+	ExpectEq("blah", entry.Target)
 }
 
 func (t *VisitorTest) File_Empty() {

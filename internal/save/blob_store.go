@@ -18,6 +18,7 @@ package save
 import (
 	"errors"
 	"fmt"
+	"os"
 
 	"golang.org/x/net/context"
 
@@ -68,7 +69,12 @@ func (v *visitor) Visit(ctx context.Context, untyped graph.Node) (err error) {
 		return
 	}
 
-	// TODO
+	// Ensure that the node has scores set, if it needs to.
+	err = v.ensureScores(ctx, n)
+	if err != nil {
+		err = fmt.Errorf("ensureScores: %v", err)
+		return
+	}
 
 	// Pass on the node.
 	select {
@@ -78,5 +84,49 @@ func (v *visitor) Visit(ctx context.Context, untyped graph.Node) (err error) {
 		return
 	}
 
+	return
+}
+
+func (v *visitor) ensureScores(
+	ctx context.Context,
+	n *fsNode) (err error) {
+	// If the node already has scores, we're done.
+	if n.Scores != nil {
+		return
+	}
+
+	// Files and directories are the only interesting cases.
+	mode := n.Info.Mode()
+	switch {
+	case mode == 0:
+		n.Scores, err = v.saveFile(ctx, n)
+		if err != nil {
+			err = fmt.Errorf("saveFile: %v", err)
+			return
+		}
+
+	case mode&os.ModeDir != 0:
+		n.Scores, err = v.saveDir(ctx, n)
+		if err != nil {
+			err = fmt.Errorf("saveDir: %v", err)
+			return
+		}
+	}
+
+	return
+}
+
+// Guarantees non-nil result when successful, even for empty list of scores.
+func (v *visitor) saveFile(
+	ctx context.Context,
+	n *fsNode) (scores []blob.Score, err error) {
+	err = errors.New("TODO")
+	return
+}
+
+func (v *visitor) saveDir(
+	ctx context.Context,
+	n *fsNode) (scores []blob.Score, err error) {
+	err = errors.New("TODO")
 	return
 }
