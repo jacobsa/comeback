@@ -65,8 +65,8 @@ const metadataKey_MD5 = "comeback_md5"
 // bucket's namespace -- if a score name exists, then it points to the correct
 // data.
 //
-// The returned store does not support Flush or Contains; these methods must
-// not be called.
+// The returned store does not support Contains; this method must not be
+// called.
 func NewGCSStore(
 	bucket gcs.Bucket,
 	prefix string) (store *GCSStore) {
@@ -342,10 +342,6 @@ func (s *GCSStore) Store(
 	}
 
 	return
-}
-
-func (s *GCSStore) Flush(ctx context.Context) (err error) {
-	panic("GCSStore.Flush not supported; wiring code bug?")
 }
 
 func (s *GCSStore) Contains(ctx context.Context, score Score) (b bool) {

@@ -74,11 +74,6 @@ func (s *checkingStore) Load(
 	return
 }
 
-func (s *checkingStore) Flush(ctx context.Context) (err error) {
-	err = s.wrapped.Flush(ctx)
-	return
-}
-
 func (s *checkingStore) Contains(ctx context.Context, score Score) (b bool) {
 	b = s.wrapped.Contains(ctx, score)
 	return

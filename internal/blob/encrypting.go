@@ -66,11 +66,6 @@ func (s *encryptingStore) Load(
 	return plaintext, nil
 }
 
-func (s *encryptingStore) Flush(ctx context.Context) (err error) {
-	err = s.wrapped.Flush(ctx)
-	return
-}
-
 func (s *encryptingStore) Contains(ctx context.Context, score Score) (b bool) {
 	b = s.wrapped.Contains(ctx, score)
 	return
