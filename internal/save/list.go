@@ -124,22 +124,9 @@ func List(
 		return
 	})
 
-	// Fill in stat info.
-	statted := make(chan *fsNode, 100)
-	b.Add(func(ctx context.Context) (err error) {
-		defer close(statted)
-		err = statNodes(ctx, basePath, nodes, statted)
-		if err != nil {
-			err = fmt.Errorf("statNodes: %v", err)
-			return
-		}
-
-		return
-	})
-
 	// Print out info about each node.
 	b.Add(func(ctx context.Context) (err error) {
-		for n := range statted {
+		for n := range nodes {
 			_, err = fmt.Fprintf(w, "%q %d\n", n.RelPath, n.Info.Size())
 			if err != nil {
 				err = fmt.Errorf("Fprintf: %v", err)

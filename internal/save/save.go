@@ -53,25 +53,12 @@ func Save(
 		return
 	})
 
-	// Stat each one.
-	stattedNodes := make(chan *fsNode, 100)
-	b.Add(func(ctx context.Context) (err error) {
-		defer close(stattedNodes)
-		err = statNodes(ctx, dir, listedNodes, stattedNodes)
-		if err != nil {
-			err = fmt.Errorf("statNodes: %v", err)
-			return
-		}
-
-		return
-	})
-
 	// Fill in scores for files that don't appear to have changed since the last
 	// run.
 	postScoreMap := make(chan *fsNode, 100)
 	b.Add(func(ctx context.Context) (err error) {
 		defer close(postScoreMap)
-		err = consultScoreMap(ctx, scoreMap, clock, stattedNodes, postScoreMap)
+		err = consultScoreMap(ctx, scoreMap, clock, listedNodes, postScoreMap)
 		if err != nil {
 			err = fmt.Errorf("consultScoreMap: %v", err)
 			return
