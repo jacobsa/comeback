@@ -22,6 +22,7 @@ import (
 
 	"github.com/jacobsa/comeback/internal/blob"
 	"github.com/jacobsa/comeback/internal/blob/mock"
+	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
 )
 
@@ -61,7 +62,7 @@ func (t *VisitorTest) ScoresAlreadyPresent_Empty() {
 
 	err := t.call()
 	AssertEq(nil, err)
-	ExpectEq(scores, t.node.Scores)
+	ExpectThat(t.node.Scores, DeepEquals(scores))
 }
 
 func (t *VisitorTest) ScoresAlreadyPresent_NonEmpty() {
@@ -70,7 +71,7 @@ func (t *VisitorTest) ScoresAlreadyPresent_NonEmpty() {
 
 	err := t.call()
 	AssertEq(nil, err)
-	ExpectEq(scores, t.node.Scores)
+	ExpectThat(t.node.Scores, DeepEquals(scores))
 }
 
 func (t *VisitorTest) Symlink() {
