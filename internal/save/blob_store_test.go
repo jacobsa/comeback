@@ -43,6 +43,30 @@ func (t *VisitorTest) SetUp(ti *TestInfo) {
 // Tests
 ////////////////////////////////////////////////////////////////////////
 
-func (t *VisitorTest) DoesFoo() {
+func (t *VisitorTest) ScoresAlreadyPresent_Empty() {
+	AssertTrue(false, "TODO")
+}
+
+func (t *VisitorTest) ScoresAlreadyPresent_NonEmpty() {
+	AssertTrue(false, "TODO")
+}
+
+func (t *VisitorTest) Symlink() {
+	AssertTrue(false, "TODO")
+}
+
+func (t *VisitorTest) Directory() {
+	AssertTrue(false, "TODO")
+}
+
+func (t *VisitorTest) File_Empty() {
+	AssertTrue(false, "TODO")
+}
+
+func (t *VisitorTest) File_LastChunkIsFull() {
+	AssertTrue(false, "TODO")
+}
+
+func (t *VisitorTest) File_LastChunkIsPartial() {
 	AssertTrue(false, "TODO")
 }
