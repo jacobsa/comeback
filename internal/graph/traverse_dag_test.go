@@ -18,7 +18,6 @@ package graph_test
 import (
 	cryptorand "crypto/rand"
 	"encoding/binary"
-	"errors"
 	"fmt"
 	"log"
 	"math/rand"
@@ -97,10 +96,39 @@ func topsort(edges map[string][]string) (nodes []string, err error) {
 }
 
 // Compute the the reachability partial order for the DAG defined by the
-// supplied edges.
+// supplied edges. Don't include self-reachability.
 func reachabilityRelation(
 	edges map[string][]string) (r map[string][]string, err error) {
-	err = errors.New("TODO")
+	r = make(map[string][]string)
+
+	var visit func(string)
+	visit = func(n string) {
+		// Have we already computed the result for n?
+		if _, ok := r[n]; ok {
+			return
+		}
+
+		// The set of things reachable from n is the set of things reachable from
+		// its successors, plus those successors.
+		set := make(map[string]struct{})
+		for _, successor := range edges[n] {
+			set[successor] = struct{}{}
+
+			visit(successor)
+			for _, m := range r[successor] {
+				set[m] = struct{}{}
+			}
+		}
+
+		for m, _ := range set {
+			r[n] = append(r[n], m)
+		}
+	}
+
+	for n, _ := range edges {
+		visit(n)
+	}
+
 	return
 }
 
