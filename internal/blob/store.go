@@ -15,7 +15,12 @@
 
 package blob
 
-import "golang.org/x/net/context"
+import (
+	"github.com/jacobsa/comeback/internal/crypto"
+	"github.com/jacobsa/comeback/internal/util"
+	"github.com/jacobsa/gcloud/gcs"
+	"golang.org/x/net/context"
+)
 
 // A Store knows how to store blobs for later retrieval.
 type Store interface {
@@ -36,4 +41,29 @@ type Store interface {
 type StoreRequest struct {
 	// The blob data to be stored.
 	Blob []byte
+}
+
+// Create a blob store that stores blobs in the supplied bucket under the given
+// name prefix, encrypting with the supplied crypter.
+//
+// existingScores must contain only scores that are known to exist in the
+// bucket, in hex form. It will be updated as the blob store is used.
+func NewStore(
+	bucket gcs.Bucket,
+	objectNamePrefix string,
+	crypter crypto.Crypter,
+	existingScores util.StringSet) (bs Store, err error) {
+	// Store blobs in GCS.
+	bs = NewGCSStore(bucket, objectNamePrefix)
+
+	// Respond efficiently to Contains requests.
+	bs = NewExistingScoresStore(existingScores, bs)
+
+	// Make paranoid checks on the results.
+	bs = NewCheckingStore(bs)
+
+	// Encrypt blob data before sending it off to GCS.
+	bs = NewEncryptingStore(crypter, bs)
+
+	return
 }

@@ -43,17 +43,11 @@ func MakeBlobStore(
 	bucket gcs.Bucket,
 	crypter crypto.Crypter,
 	existingScores util.StringSet) (bs blob.Store, err error) {
-	// Store blobs in GCS.
-	bs = blob.NewGCSStore(bucket, BlobObjectNamePrefix)
-
-	// Respond efficiently to Contains requests.
-	bs = blob.NewExistingScoresStore(existingScores, bs)
-
-	// Make paranoid checks on the results.
-	bs = blob.NewCheckingStore(bs)
-
-	// Encrypt blob data before sending it off to GCS.
-	bs = blob.NewEncryptingStore(crypter, bs)
+	bs, err = blob.NewStore(
+		bucket,
+		BlobObjectNamePrefix,
+		crypter,
+		existingScores)
 
 	return
 }
