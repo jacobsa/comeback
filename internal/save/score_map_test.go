@@ -192,7 +192,7 @@ func (t *ConsultScoreMapTest) NodeNotEligible() {
 	AssertEq(nil, err)
 
 	ExpectEq(nil, t.node.Scores)
-	ExpectEq(nil, t.node.scoreMapKey)
+	ExpectEq(nil, t.node.ScoreMapKey)
 }
 
 func (t *ConsultScoreMapTest) PresentInScoreMap() {
@@ -209,7 +209,7 @@ func (t *ConsultScoreMapTest) PresentInScoreMap() {
 	AssertEq(nil, err)
 
 	ExpectThat(t.node.Scores, ElementsAre(score1, score2))
-	ExpectEq(nil, t.node.scoreMapKey)
+	ExpectEq(nil, t.node.ScoreMapKey)
 }
 
 func (t *ConsultScoreMapTest) AbsentInScoreMap() {
@@ -220,7 +220,7 @@ func (t *ConsultScoreMapTest) AbsentInScoreMap() {
 	AssertEq(nil, err)
 
 	ExpectEq(nil, t.node.Scores)
-	ExpectThat(t.node.scoreMapKey, Pointee(DeepEquals(*t.expectedKey)))
+	ExpectThat(t.node.ScoreMapKey, Pointee(DeepEquals(*t.expectedKey)))
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -251,7 +251,7 @@ func (t *UpdateScoreMapTest) ScoreMapKeyMissing() {
 		blob.ComputeScore([]byte("burrito")),
 	}
 
-	t.node.scoreMapKey = nil
+	t.node.ScoreMapKey = nil
 
 	// Call
 	err = t.call()
@@ -267,7 +267,7 @@ func (t *UpdateScoreMapTest) ScoreMapKeyPresent() {
 		blob.ComputeScore([]byte("burrito")),
 	}
 
-	t.node.scoreMapKey = &state.ScoreMapKey{
+	t.node.ScoreMapKey = &state.ScoreMapKey{
 		Uid: 17,
 	}
 
@@ -276,6 +276,6 @@ func (t *UpdateScoreMapTest) ScoreMapKeyPresent() {
 	AssertEq(nil, err)
 
 	ExpectThat(
-		t.scoreMap.Get(*t.node.scoreMapKey),
+		t.scoreMap.Get(*t.node.ScoreMapKey),
 		ElementsAre(t.node.Scores[0], t.node.Scores[1]))
 }
