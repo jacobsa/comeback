@@ -140,12 +140,12 @@ func findRootScore(nodes <-chan *fsNode) (score blob.Score, err error) {
 		found = true
 
 		// We expect directory nodes to have exactly one score.
-		if len(n.Scores) != 1 {
+		if len(n.Info.Scores) != 1 {
 			err = fmt.Errorf("Unexpected score count for rooT: %#v", n)
 			return
 		}
 
-		score = n.Scores[0]
+		score = n.Info.Scores[0]
 	}
 
 	if !found {

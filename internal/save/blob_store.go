@@ -94,8 +94,8 @@ func fillInScores(
 }
 
 // Create a graph.Visitor for *fsNode that saves to the supplied blob store,
-// filling in the node's Scores field when it is nil. All visited nodes are
-// then written to nodesOut.
+// filling in the node's Info.Scores field when it is nil. All visited nodes
+// are then written to nodesOut.
 func newVisitor(
 	chunkSize int,
 	basePath string,
@@ -148,21 +148,21 @@ func (v *visitor) setScores(
 	ctx context.Context,
 	n *fsNode) (err error) {
 	// If the node already has scores, we're done.
-	if n.Scores != nil {
+	if n.Info.Scores != nil {
 		return
 	}
 
 	// Files and directories are the only interesting cases.
 	switch n.Info.Type {
 	case fs.TypeFile:
-		n.Scores, err = v.saveFile(ctx, path.Join(v.basePath, n.RelPath))
+		n.Info.Scores, err = v.saveFile(ctx, path.Join(v.basePath, n.RelPath))
 		if err != nil {
 			err = fmt.Errorf("saveFile: %v", err)
 			return
 		}
 
 	case fs.TypeDirectory:
-		n.Scores, err = v.saveDir(ctx, n.Children)
+		n.Info.Scores, err = v.saveDir(ctx, n.Children)
 		if err != nil {
 			err = fmt.Errorf("saveDir: %v", err)
 			return

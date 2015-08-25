@@ -33,7 +33,8 @@ import (
 //
 // The nodes involved are of type *fsNode. The successor finder fills in the
 // RelPath, Info and Parent fields of the successors, and the Children field of
-// the node on which it is called.
+// the node on which it is called. The Scores field of Info is left as nil,
+// however.
 func newSuccessorFinder(
 	basePath string,
 	exclusions []*regexp.Regexp) (sf graph.SuccessorFinder) {

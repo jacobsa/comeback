@@ -16,7 +16,6 @@
 package save
 
 import (
-	"github.com/jacobsa/comeback/internal/blob"
 	"github.com/jacobsa/comeback/internal/fs"
 	"github.com/jacobsa/comeback/internal/state"
 )
@@ -38,11 +37,8 @@ type fsNode struct {
 	// non-directories.
 	Children []*fsNode
 
-	// A list of scores reflecting the contents of this file or directory.
-	Scores []blob.Score
-
-	// For private use by consultScoreMap and updateScoreMap: if the scores ought
-	// to be inserted into the score map after being computed, the key to use
-	// when doing so.
+	// For private use by consultScoreMap and updateScoreMap: if the scores in
+	// Info ought to be inserted into the score map after being computed, the key
+	// to use when doing so.
 	ScoreMapKey *state.ScoreMapKey
 }

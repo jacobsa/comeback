@@ -87,20 +87,20 @@ func (t *VisitorTest) call() (err error) {
 
 func (t *VisitorTest) ScoresAlreadyPresent_Empty() {
 	scores := []blob.Score{}
-	t.node.Scores = scores
+	t.node.Info.Scores = scores
 
 	err := t.call()
 	AssertEq(nil, err)
-	ExpectThat(t.node.Scores, DeepEquals(scores))
+	ExpectThat(t.node.Info.Scores, DeepEquals(scores))
 }
 
 func (t *VisitorTest) ScoresAlreadyPresent_NonEmpty() {
 	scores := []blob.Score{blob.ComputeScore([]byte("taco"))}
-	t.node.Scores = scores
+	t.node.Info.Scores = scores
 
 	err := t.call()
 	AssertEq(nil, err)
-	ExpectThat(t.node.Scores, DeepEquals(scores))
+	ExpectThat(t.node.Info.Scores, DeepEquals(scores))
 }
 
 func (t *VisitorTest) Symlink() {
@@ -116,7 +116,7 @@ func (t *VisitorTest) Symlink() {
 	err = t.call()
 	AssertEq(nil, err)
 
-	ExpectEq(nil, t.node.Scores)
+	ExpectEq(nil, t.node.Info.Scores)
 }
 
 func (t *VisitorTest) Directory() {
@@ -155,7 +155,7 @@ func (t *VisitorTest) Directory() {
 	// Call
 	err = t.call()
 	AssertEq(nil, err)
-	AssertThat(t.node.Scores, ElementsAre(expectedScore))
+	AssertThat(t.node.Info.Scores, ElementsAre(expectedScore))
 
 	// Parse the blob.
 	entries, err := repr.UnmarshalDir(savedBlob)
@@ -181,8 +181,8 @@ func (t *VisitorTest) File_Empty() {
 	err = t.call()
 	AssertEq(nil, err)
 
-	AssertNe(nil, t.node.Scores)
-	ExpectThat(t.node.Scores, ElementsAre())
+	AssertNe(nil, t.node.Info.Scores)
+	ExpectThat(t.node.Info.Scores, ElementsAre())
 }
 
 func (t *VisitorTest) File_LastChunkIsFull() {
@@ -216,7 +216,7 @@ func (t *VisitorTest) File_LastChunkIsFull() {
 	err = t.call()
 	AssertEq(nil, err)
 
-	ExpectThat(t.node.Scores, ElementsAre(score0, score1))
+	ExpectThat(t.node.Info.Scores, ElementsAre(score0, score1))
 }
 
 func (t *VisitorTest) File_LastChunkIsPartial() {
@@ -250,5 +250,5 @@ func (t *VisitorTest) File_LastChunkIsPartial() {
 	err = t.call()
 	AssertEq(nil, err)
 
-	ExpectThat(t.node.Scores, ElementsAre(score0, score1))
+	ExpectThat(t.node.Info.Scores, ElementsAre(score0, score1))
 }

@@ -25,8 +25,8 @@ import (
 	"golang.org/x/net/context"
 )
 
-// Attempt to fill in fsNode.Scores fields for files arriving on nodesIn based
-// on the contents of a state.ScoreMap.
+// Attempt to fill in fsNode.Info.Scores fields for files arriving on nodesIn
+// based on the contents of a state.ScoreMap.
 func consultScoreMap(
 	ctx context.Context,
 	scoreMap state.ScoreMap,
@@ -37,8 +37,8 @@ func consultScoreMap(
 		// Consult the score map if it makes sense to do so.
 		key := makeScoreMapKey(n, clock)
 		if key != nil {
-			n.Scores = scoreMap.Get(*key)
-			if n.Scores == nil {
+			n.Info.Scores = scoreMap.Get(*key)
+			if n.Info.Scores == nil {
 				n.ScoreMapKey = key
 			}
 		}
@@ -56,7 +56,7 @@ func consultScoreMap(
 }
 
 // For each incoming file node n that consultScoreMap did not mark as having
-// hit in its score map, update the score map based on n.Scores.
+// hit in its score map, update the score map based on n.Info.Scores.
 func updateScoreMap(
 	ctx context.Context,
 	scoreMap state.ScoreMap,
@@ -66,7 +66,7 @@ func updateScoreMap(
 			continue
 		}
 
-		scoreMap.Set(*n.ScoreMapKey, n.Scores)
+		scoreMap.Set(*n.ScoreMapKey, n.Info.Scores)
 	}
 
 	return

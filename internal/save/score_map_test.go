@@ -187,11 +187,11 @@ func (t *ConsultScoreMapTest) NodeNotEligible() {
 	// Make the node appear as a directory.
 	t.node.Info.Type = fs.TypeDirectory
 
-	// Call. Nothing should be changed about the Scores field.
+	// Call. Nothing should be changed about the Info.Scores field.
 	err = t.call()
 	AssertEq(nil, err)
 
-	ExpectEq(nil, t.node.Scores)
+	ExpectEq(nil, t.node.Info.Scores)
 	ExpectEq(nil, t.node.ScoreMapKey)
 }
 
@@ -208,7 +208,7 @@ func (t *ConsultScoreMapTest) PresentInScoreMap() {
 	err = t.call()
 	AssertEq(nil, err)
 
-	ExpectThat(t.node.Scores, ElementsAre(score1, score2))
+	ExpectThat(t.node.Info.Scores, ElementsAre(score1, score2))
 	ExpectEq(nil, t.node.ScoreMapKey)
 }
 
@@ -219,7 +219,7 @@ func (t *ConsultScoreMapTest) AbsentInScoreMap() {
 	err = t.call()
 	AssertEq(nil, err)
 
-	ExpectEq(nil, t.node.Scores)
+	ExpectEq(nil, t.node.Info.Scores)
 	ExpectThat(t.node.ScoreMapKey, Pointee(DeepEquals(*t.expectedKey)))
 }
 
@@ -246,7 +246,7 @@ func (t *UpdateScoreMapTest) ScoreMapKeyMissing() {
 	var err error
 
 	// Prepare
-	t.node.Scores = []blob.Score{
+	t.node.Info.Scores = []blob.Score{
 		blob.ComputeScore([]byte("taco")),
 		blob.ComputeScore([]byte("burrito")),
 	}
@@ -262,7 +262,7 @@ func (t *UpdateScoreMapTest) ScoreMapKeyPresent() {
 	var err error
 
 	// Prepare
-	t.node.Scores = []blob.Score{
+	t.node.Info.Scores = []blob.Score{
 		blob.ComputeScore([]byte("taco")),
 		blob.ComputeScore([]byte("burrito")),
 	}
@@ -277,5 +277,5 @@ func (t *UpdateScoreMapTest) ScoreMapKeyPresent() {
 
 	ExpectThat(
 		t.scoreMap.Get(*t.node.ScoreMapKey),
-		ElementsAre(t.node.Scores[0], t.node.Scores[1]))
+		ElementsAre(t.node.Info.Scores[0], t.node.Info.Scores[1]))
 }
