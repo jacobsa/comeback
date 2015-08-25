@@ -211,5 +211,36 @@ func (t *VisitorTest) File_LastChunkIsFull() {
 }
 
 func (t *VisitorTest) File_LastChunkIsPartial() {
-	AssertTrue(false, "TODO")
+	var err error
+
+	// Node setup
+	p := path.Join(t.dir, "foo")
+
+	chunk0 := bytes.Repeat([]byte{0}, t.chunkSize)
+	chunk1 := bytes.Repeat([]byte{1}, t.chunkSize-1)
+
+	var contents []byte
+	contents = append(contents, chunk0...)
+	contents = append(contents, chunk1...)
+
+	err = ioutil.WriteFile(p, contents, 0700)
+	AssertEq(nil, err)
+
+	t.node.Info, err = os.Lstat(p)
+	AssertEq(nil, err)
+
+	// Blob store
+	score0 := blob.ComputeScore(chunk0)
+	ExpectCall(t.blobStore, "Store")(Any(), DeepEquals(chunk0)).
+		WillOnce(Return(score0, nil))
+
+	score1 := blob.ComputeScore(chunk0)
+	ExpectCall(t.blobStore, "Store")(Any(), DeepEquals(chunk0)).
+		WillOnce(Return(score1, nil))
+
+	// Call
+	err = t.call()
+	AssertEq(nil, err)
+
+	ExpectThat(t.node.Scores, ElementsAre(score0, score1))
 }
