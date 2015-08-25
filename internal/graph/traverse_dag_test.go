@@ -44,6 +44,10 @@ func topsort(edges map[string][]string) (nodes []string, err error) {
 	// Cf. https://en.wikipedia.org/wiki/Topological_sorting#Algorithms
 	marked := make(map[string]struct{})
 	tempMarked := make(map[string]struct{})
+	unmarked := make(map[string]struct{})
+	for n, _ := range edges {
+		unmarked[n] = struct{}{}
+	}
 
 	var visit func(string) error
 	visit = func(n string) (err error) {
@@ -58,6 +62,7 @@ func topsort(edges map[string][]string) (nodes []string, err error) {
 			return
 		}
 
+		delete(unmarked, n)
 		tempMarked[n] = struct{}{}
 		for _, m := range edges[n] {
 			err = visit(m)
@@ -73,12 +78,7 @@ func topsort(edges map[string][]string) (nodes []string, err error) {
 		return
 	}
 
-	// All ndoes are initially unmarked.
-	unmarked := make(map[string]struct{})
-	for n, _ := range edges {
-		unmarked[n] = struct{}{}
-	}
-
+	// Visit nodes until there are no unmarked ones left.
 	for len(unmarked) > 0 {
 		var someNode string
 		for n, _ := range unmarked {
@@ -277,7 +277,18 @@ func (t *TraverseDAGTest) EmptyGraph() {
 }
 
 func (t *TraverseDAGTest) SingleNodeConnectedComponents() {
-	AssertTrue(false, "TODO")
+	// Graph structure:
+	//
+	//     A  B  C  D
+	//
+	edges := map[string][]string{
+		"A": {},
+		"B": {},
+		"C": {},
+		"D": {},
+	}
+
+	t.runTest(edges)
 }
 
 func (t *TraverseDAGTest) SimpleRootedTree() {
