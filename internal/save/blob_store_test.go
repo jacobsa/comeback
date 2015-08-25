@@ -107,14 +107,9 @@ func (t *VisitorTest) Symlink() {
 
 	// Node setup
 	t.node.RelPath = "foo"
-	p := path.Join(t.dir, t.node.RelPath)
-
-	err = os.Symlink("blah", p)
-	AssertEq(nil, err)
-
-	t.node.Info, err = os.Lstat(p)
-	AssertEq(nil, err)
-	AssertEq(os.ModeSymlink, t.node.Info.Mode()&os.ModeType)
+	t.node.Info = fs.DirectoryEntry{
+		Type: fs.TypeSymlink,
+	}
 
 	// Call
 	err = t.call()
@@ -126,18 +121,26 @@ func (t *VisitorTest) Symlink() {
 func (t *VisitorTest) Directory() {
 	var err error
 
+	// Children
+	child0 := &fsNode{
+		Info: fs.DirectoryEntry{
+			Name: "taco",
+		},
+	}
+
+	child1 := &fsNode{
+		Info: fs.DirectoryEntry{
+			Name: "burrito",
+		},
+	}
+
 	// Node setup
 	t.node.RelPath = ""
+	t.node.Info = fs.DirectoryEntry{
+		Type: fs.TypeDirectory,
+	}
 
-	t.node.Info, err = os.Lstat(t.dir)
-	AssertEq(nil, err)
-
-	// Add two children.
-	err = ioutil.WriteFile(path.Join(t.dir, "bar"), []byte("taco"), 0700)
-	AssertEq(nil, err)
-
-	err = os.Symlink("blah", path.Join(t.dir, "foo"))
-	AssertEq(nil, err)
+	t.node.Children = []*fsNode{child0, child1}
 
 	// Snoop on the call to the blob store.
 	var savedBlob []byte
@@ -151,21 +154,15 @@ func (t *VisitorTest) Directory() {
 	AssertEq(nil, err)
 	AssertThat(t.node.Scores, ElementsAre(expectedScore))
 
+	// Parse the blob.
 	entries, err := repr.UnmarshalDir(savedBlob)
 	AssertEq(nil, err)
-	AssertEq(2, len(entries))
-	var entry *fs.DirectoryEntry
 
-	entry = entries[0]
-	ExpectEq("bar", entry.Name)
-	ExpectEq(fs.TypeFile, entry.Type)
-	ExpectEq(len("taco"), entry.Size)
-	ExpectEq("", entry.Target)
-
-	entry = entries[1]
-	ExpectEq("foo", entry.Name)
-	ExpectEq(fs.TypeSymlink, entry.Type)
-	ExpectEq("blah", entry.Target)
+	ExpectThat(
+		entries,
+		ElementsAre(
+			Pointee(DeepEquals(child0.Info)),
+			Pointee(DeepEquals(child1.Info))))
 }
 
 func (t *VisitorTest) File_Empty() {
@@ -173,12 +170,10 @@ func (t *VisitorTest) File_Empty() {
 
 	// Node setup
 	t.node.RelPath = "foo"
+	t.node.Info.Type = fs.TypeFile
 	p := path.Join(t.dir, t.node.RelPath)
 
 	err = ioutil.WriteFile(p, []byte(""), 0700)
-	AssertEq(nil, err)
-
-	t.node.Info, err = os.Lstat(p)
 	AssertEq(nil, err)
 
 	// Call
@@ -194,6 +189,7 @@ func (t *VisitorTest) File_LastChunkIsFull() {
 
 	// Node setup
 	t.node.RelPath = "foo"
+	t.node.Info.Type = fs.TypeFile
 	p := path.Join(t.dir, t.node.RelPath)
 
 	chunk0 := bytes.Repeat([]byte{0}, t.chunkSize)
@@ -204,9 +200,6 @@ func (t *VisitorTest) File_LastChunkIsFull() {
 	contents = append(contents, chunk1...)
 
 	err = ioutil.WriteFile(p, contents, 0700)
-	AssertEq(nil, err)
-
-	t.node.Info, err = os.Lstat(p)
 	AssertEq(nil, err)
 
 	// Blob store
@@ -231,6 +224,7 @@ func (t *VisitorTest) File_LastChunkIsPartial() {
 	// Node setup
 	t.node.RelPath = "foo"
 	p := path.Join(t.dir, t.node.RelPath)
+	t.node.Info.Type = fs.TypeFile
 
 	chunk0 := bytes.Repeat([]byte{0}, t.chunkSize)
 	chunk1 := bytes.Repeat([]byte{1}, t.chunkSize-1)
@@ -240,9 +234,6 @@ func (t *VisitorTest) File_LastChunkIsPartial() {
 	contents = append(contents, chunk1...)
 
 	err = ioutil.WriteFile(p, contents, 0700)
-	AssertEq(nil, err)
-
-	t.node.Info, err = os.Lstat(p)
 	AssertEq(nil, err)
 
 	// Blob store
