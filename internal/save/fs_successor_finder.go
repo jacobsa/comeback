@@ -30,7 +30,8 @@ import (
 // the given base path, excluding all relative paths that matches any of the
 // supplied exclusions, along with all of their descendants.
 //
-// The nodes involved are of type *fsNode.
+// The nodes involved are of type *fsNode. The only fields filled in are
+// RelPath and Parent.
 func newSuccessorFinder(
 	basePath string,
 	exclusions []*regexp.Regexp) (sf graph.SuccessorFinder) {
@@ -66,23 +67,22 @@ func (sf *fsSuccessorFinder) FindDirectSuccessors(
 		return
 	}
 
-	// Read and lstat all of the names in the directory.
-	entries, err := sf.readDir(n.RelPath)
+	// Read all of the names in the directory.
+	names, err := sf.readdirnames(n.RelPath)
 	if err != nil {
-		err = fmt.Errorf("readDir: %v", err)
+		err = fmt.Errorf("readdirnames: %v", err)
 		return
 	}
 
 	// Filter out excluded entries, and return the rest as adjacent nodes.
-	for _, fi := range entries {
-		childRelPath := path.Join(n.RelPath, fi.Name())
+	for _, name := range names {
+		childRelPath := path.Join(n.RelPath, name)
 		if sf.shouldSkip(childRelPath) {
 			continue
 		}
 
 		successor := &fsNode{
 			RelPath: childRelPath,
-			Info:    fi,
 			Parent:  n,
 		}
 
@@ -92,9 +92,9 @@ func (sf *fsSuccessorFinder) FindDirectSuccessors(
 	return
 }
 
-// Read and lstat everything in the directory with the given relative path.
-func (sf *fsSuccessorFinder) readDir(
-	relPath string) (entries []os.FileInfo, err error) {
+// Read every name in the directory with the given relative path.
+func (sf *fsSuccessorFinder) readdirnames(
+	relPath string) (names []string, err error) {
 	// Open the directory for reading.
 	f, err := os.Open(path.Join(sf.basePath, relPath))
 	if err != nil {
@@ -110,9 +110,9 @@ func (sf *fsSuccessorFinder) readDir(
 	}()
 
 	// Read.
-	entries, err = f.Readdir(0)
+	names, err = f.Readdirnames(0)
 	if err != nil {
-		err = fmt.Errorf("Readdir: %v", err)
+		err = fmt.Errorf("Readdirnames: %v", err)
 		return
 	}
 
