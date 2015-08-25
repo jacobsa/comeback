@@ -26,7 +26,9 @@ import (
 
 	"golang.org/x/net/context"
 
+	"github.com/jacobsa/comeback/internal/blob"
 	"github.com/jacobsa/comeback/internal/state"
+	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
 	"github.com/jacobsa/timeutil"
 )
@@ -242,7 +244,19 @@ func (t *ConsultScoreMapTest) NodeNotEligible() {
 }
 
 func (t *ConsultScoreMapTest) PresentInScoreMap() {
-	AssertTrue(false, "TODO")
+	var err error
+
+	// Prepare score map
+	score1 := blob.ComputeScore([]byte("taco"))
+	score2 := blob.ComputeScore([]byte("burrito"))
+
+	t.scoreMap.Set(*t.expectedKey, []blob.Score{score1, score2})
+
+	// Call
+	err = t.call()
+	AssertEq(nil, err)
+
+	ExpectThat(t.node.Scores, ElementsAre(score1, score2))
 }
 
 func (t *ConsultScoreMapTest) AbsentInScoreMap() {
