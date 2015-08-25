@@ -16,6 +16,7 @@
 package fs
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
@@ -31,18 +32,26 @@ func (fs *fileSystem) ReadDir(
 
 	// Convert each entry.
 	entries = []*DirectoryEntry{}
-	for _, fileInfo := range fileInfos {
-		entry, err := fs.convertFileInfo(fileInfo)
-		if err != nil {
-			return nil, err
+	for _, fi := range fileInfos {
+		// Read the symlink target, if any.
+		var symlinkTarget string
+		if fi.Mode()&os.ModeSymlink != 0 {
+			symlinkTarget, err = os.Readlink(path.Join(dirpath, fi.Name()))
+			if err != nil {
+				err = fmt.Errorf("Readlink: %v", err)
+				return
+			}
 		}
 
-		// Handle symlinks.
-		if entry.Type == TypeSymlink {
-			linkPath := path.Join(dirpath, entry.Name)
-			if entry.Target, err = os.Readlink(linkPath); err != nil {
-				return nil, err
-			}
+		// Convert.
+		entry, err := convertFileInfo(
+			fi,
+			symlinkTarget,
+			fs.userRegistry,
+			fs.groupRegistry)
+
+		if err != nil {
+			return nil, err
 		}
 
 		entries = append(entries, entry)

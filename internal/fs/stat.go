@@ -28,7 +28,11 @@ const (
 	permissionBits os.FileMode = os.ModePerm | os.ModeSetuid | os.ModeSetgid | os.ModeSticky
 )
 
-func (fs *fileSystem) convertFileInfo(fi os.FileInfo) (entry *DirectoryEntry, err error) {
+func convertFileInfo(
+	fi os.FileInfo,
+	symlinkTarget string,
+	userRegistry sys.UserRegistry,
+	groupRegistry sys.GroupRegistry) (entry *DirectoryEntry, err error) {
 	// Grab system-specific info.
 	statT, ok := fi.Sys().(*syscall.Stat_t)
 	if !ok {
@@ -49,10 +53,11 @@ func (fs *fileSystem) convertFileInfo(fi os.FileInfo) (entry *DirectoryEntry, er
 		Size:             uint64(statT.Size),
 		ContainingDevice: statT.Dev,
 		Inode:            statT.Ino,
+		Target:           symlinkTarget,
 	}
 
 	// Attempt to look up user info.
-	username, err := fs.userRegistry.FindById(entry.Uid)
+	username, err := userRegistry.FindById(entry.Uid)
 
 	if _, ok := err.(sys.NotFoundError); ok {
 		err = nil
@@ -63,7 +68,7 @@ func (fs *fileSystem) convertFileInfo(fi os.FileInfo) (entry *DirectoryEntry, er
 	}
 
 	// Attempt to look up group info.
-	groupname, err := fs.groupRegistry.FindById(entry.Gid)
+	groupname, err := groupRegistry.FindById(entry.Gid)
 
 	if _, ok := err.(sys.NotFoundError); ok {
 		err = nil
@@ -100,26 +105,35 @@ func (fs *fileSystem) convertFileInfo(fi os.FileInfo) (entry *DirectoryEntry, er
 }
 
 func (fs *fileSystem) Stat(path string) (entry DirectoryEntry, err error) {
-	// Call stat.
-	var fi os.FileInfo
-	if fi, err = os.Lstat(path); err != nil {
+	// Call lstat.
+	fi, err := os.Lstat(path)
+	if err != nil {
+		err = fmt.Errorf("Lstat: %v", err)
 		return
 	}
 
-	// Convert to an entry.
-	var entryPtr *DirectoryEntry
-	if entryPtr, err = fs.convertFileInfo(fi); err != nil {
-		return
-	}
-
-	entry = *entryPtr
-
-	// Convert symlinks.
-	if entry.Type == TypeSymlink {
-		if entry.Target, err = os.Readlink(path); err != nil {
+	// Read the symlink target, if any.
+	var symlinkTarget string
+	if fi.Mode()&os.ModeSymlink != 0 {
+		symlinkTarget, err = os.Readlink(path)
+		if err != nil {
+			err = fmt.Errorf("Readlink: %v", err)
 			return
 		}
 	}
 
+	// Convert to an entry.
+	entryPtr, err := convertFileInfo(
+		fi,
+		symlinkTarget,
+		fs.userRegistry,
+		fs.groupRegistry)
+
+	if err != nil {
+		err = fmt.Errorf("convertFileInfo: %v", err)
+		return
+	}
+
+	entry = *entryPtr
 	return
 }
