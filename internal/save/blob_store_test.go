@@ -16,6 +16,9 @@
 package save
 
 import (
+	"io/ioutil"
+	"os"
+	"path"
 	"testing"
 
 	"golang.org/x/net/context"
@@ -37,13 +40,32 @@ type VisitorTest struct {
 	blobStore blob.Store
 
 	node fsNode
+
+	// A temporary directory removed at the end of the test.
+	dir string
 }
 
 func init() { RegisterTestSuite(&VisitorTest{}) }
 
+var _ SetUpInterface = &VisitorTest{}
+var _ TearDownInterface = &VisitorTest{}
+
 func (t *VisitorTest) SetUp(ti *TestInfo) {
+	var err error
+
 	t.ctx = ti.Ctx
 	t.blobStore = mock_blob.NewMockStore(ti.MockController, "blobStore")
+
+	// Set up the directory.
+	t.dir, err = ioutil.TempDir("", "score_map_test")
+	AssertEq(nil, err)
+}
+
+func (t *VisitorTest) TearDown() {
+	var err error
+
+	err = os.RemoveAll(t.dir)
+	AssertEq(nil, err)
 }
 
 func (t *VisitorTest) call() (err error) {
@@ -75,7 +97,23 @@ func (t *VisitorTest) ScoresAlreadyPresent_NonEmpty() {
 }
 
 func (t *VisitorTest) Symlink() {
-	AssertTrue(false, "TODO")
+	var err error
+
+	// Node setup
+	p := path.Join(t.dir, "foo")
+
+	err = os.Symlink("blah", p)
+	AssertEq(nil, err)
+
+	t.node.Info, err = os.Lstat(p)
+	AssertEq(nil, err)
+	AssertEq(os.ModeSymlink, t.node.Info.Mode()&os.ModeType)
+
+	// Call
+	err = t.call()
+	AssertEq(nil, err)
+
+	ExpectEq(nil, t.node.Scores)
 }
 
 func (t *VisitorTest) Directory() {
