@@ -16,8 +16,10 @@
 package graph
 
 import (
+	"errors"
 	"fmt"
 	"log"
+	"sync"
 
 	"github.com/jacobsa/syncutil"
 
@@ -47,14 +49,18 @@ func TraverseDAG(
 	// Set up a state struct.
 	state := &traverseDAGState{
 		notReadyToVisit: make(map[Node]traverseDAGNodeState),
-		newReadyNodes:   make(chan Node),
+
+		// One, for processIncomingNodes, to prevent visitNodes from returning
+		// immediately. processIncomingNodes will mark itself as no longer busy
+		// when it returns.
+		busyWorkers: 1,
 	}
 
 	state.mu = syncutil.NewInvariantMutex(state.checkInvariants)
+	state.cond.L = &state.mu
 
 	// Process incoming nodes from the user.
 	b.Add(func(ctx context.Context) (err error) {
-		defer close(state.newReadyNodes)
 		err = processIncomingNodes(ctx, nodes, sf, state)
 		if err != nil {
 			err = fmt.Errorf("processIncomingNodes: %v", err)
@@ -77,7 +83,21 @@ func TraverseDAG(
 		})
 	}
 
-	err = b.Join()
+	// Join the bundle, but use the explicitly tracked first worker error in
+	// order to circumvent the following race:
+	//
+	//  *  Worker A encounters an error, sets firstErr, and returns.
+	//
+	//  *  Worker B wakes up, sees firstErr, and returns with a junk follow-on
+	//     error.
+	//
+	//  *  The bundle observes worker B's error before worker A's.
+	//
+	b.Join()
+	state.mu.Lock()
+	err = state.firstErr
+	state.mu.Unlock()
+
 	return
 }
 
@@ -102,12 +122,34 @@ type traverseDAGState struct {
 	// GUARDED_BY(mu)
 	readyToVisit []Node
 
-	// A channel of nodes that are ready to visit. Visitor workers sleep on this
-	// channel when readyToVisit is empty. To avoid deadlock, it is never written
-	// to by visitor workers; only the driver that processes incoming nodes from
-	// the user. Similarly, the latter never writes to readyToVisit, because its
-	// updates may be missed by the former.
-	newReadyNodes chan Node
+	// Set to the first error seen by a worker, if any. When non-nil, all workers
+	// should wake up and return.
+	//
+	// We must track this explicitly rather than just using syncutil.Bundle's
+	// support because we sleep on a condition variable, which can't be composed
+	// with receiving from the context's Done channel.
+	//
+	// GUARDED_BY(mu)
+	firstErr error
+
+	// The number of workers that are doing something besides waiting on a node
+	// to visit, including the distinguished goroutine handling incoming nodes.
+	// If this hits zero with readyToVisit empty, it means that there is nothing
+	// further to do.
+	//
+	// INVARIANT: busyWorkers >= 0
+	//
+	// GUARDED_BY(mu)
+	busyWorkers int64
+
+	// Broadcasted to with mu held when any of the following state changes:
+	//
+	//  *  readyToVisit
+	//  *  firstErr
+	//  *  busyWorkers
+	//
+	// GUARDED_BY(mu)
+	cond sync.Cond
 }
 
 // LOCKS_REQUIRED(s.mu)
@@ -129,6 +171,11 @@ func (s *traverseDAGState) checkInvariants() {
 		if _, ok := s.notReadyToVisit[n]; ok {
 			log.Panicf("Ready and not ready: %#v", n)
 		}
+	}
+
+	// INVARIANT: busyWorkers >= 0
+	if s.busyWorkers < 0 {
+		log.Panicf("Negative count: %d", s.busyWorkers)
 	}
 }
 
@@ -163,6 +210,20 @@ func processIncomingNodes(
 	nodes <-chan Node,
 	sf SuccessorFinder,
 	state *traverseDAGState) (err error) {
+	// Update state when this function returns.
+	defer func() {
+		state.mu.Lock()
+		defer state.mu.Unlock()
+
+		state.busyWorkers--
+		if err != nil && state.firstErr == nil {
+			state.firstErr = err
+		}
+
+		state.cond.Broadcast()
+	}()
+
+	// Deal with each incoming node.
 	for n := range nodes {
 		// Find the successors for this node.
 		var successors []Node
@@ -186,7 +247,6 @@ func processIncomingNodes(
 		}
 
 		// Update state for this node.
-		ready := false
 		{
 			tmp := state.notReadyToVisit[n]
 			if tmp.seen {
@@ -195,29 +255,15 @@ func processIncomingNodes(
 
 			tmp.seen = true
 			if tmp.readyToVisit() {
-				ready = true
 				delete(state.notReadyToVisit, n)
+				state.readyToVisit = append(state.readyToVisit, n)
+				state.cond.Broadcast()
 			} else {
 				state.notReadyToVisit[n] = tmp
 			}
 		}
 
 		state.mu.Unlock()
-
-		// If we're not ready to visit this node, we're done. It's sitting in the
-		// map and will be updated later as its predecessors complete.
-		if !ready {
-			continue
-		}
-
-		// We're ready to visit this node. Hand it off to a goroutine performing
-		// visits.
-		select {
-		case state.newReadyNodes <- n:
-		case <-ctx.Done():
-			err = ctx.Err()
-			return
-		}
 	}
 
 	return
@@ -230,26 +276,19 @@ func visitNodes(
 	ctx context.Context,
 	v Visitor,
 	state *traverseDAGState) (err error) {
-	// We enter the loop locked.
-	state.mu.Lock()
-	for {
-		var n Node
+	// Update state when this function returns.
+	defer func() {
+		if err != nil {
+			state.mu.Lock()
+			defer state.mu.Unlock()
 
-		// Grab a node that's immediately available, if any.
-		{
-			l := len(state.readyToVisit)
-			if l > 0 {
-				n = state.readyToVisit[l-1]
-				state.readyToVisit = state.readyToVisit[:l-1]
+			if state.firstErr == nil {
+				state.firstErr = err
+				state.cond.Broadcast()
 			}
 		}
+	}()
 
-		state.mu.Unlock()
-
-		// TODO(jacobsa): Waiting for the channel here isn't great. It means that
-		// we may miss updates from another worker when a predecessor finishes, and
-		// reduce our parallelism. (The updates won't be lost forever though, since
-		// that worker will get around to them.) Hmm. I guess we need to suck it up
-		// and use cond vars like in explore.go.
-	}
+	err = errors.New("TODO")
+	return
 }
