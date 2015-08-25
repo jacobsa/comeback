@@ -41,7 +41,58 @@ func TestTraverseDAG(t *testing.T) { RunTests(t) }
 // Return a topological sort of the nodes of the DAG defined by the supplied
 // edge map.
 func topsort(edges map[string][]string) (nodes []string, err error) {
-	err = errors.New("TODO")
+	// A DFS-based algorithm that detects cycles.
+	// Cf. https://en.wikipedia.org/wiki/Topological_sorting#Algorithms
+	marked := make(map[string]struct{})
+	tempMarked := make(map[string]struct{})
+
+	var visit func(string) error
+	visit = func(n string) (err error) {
+		// Cycle?
+		if _, ok := tempMarked[n]; ok {
+			err = fmt.Errorf("Cycle containing %q detected", n)
+			return
+		}
+
+		// Already visited?
+		if _, ok := marked[n]; ok {
+			return
+		}
+
+		tempMarked[n] = struct{}{}
+		for _, m := range edges[n] {
+			err = visit(m)
+			if err != nil {
+				return
+			}
+		}
+
+		marked[n] = struct{}{}
+		delete(tempMarked, n)
+		nodes = append([]string{n}, nodes...)
+
+		return
+	}
+
+	// All ndoes are initially unmarked.
+	unmarked := make(map[string]struct{})
+	for n, _ := range edges {
+		unmarked[n] = struct{}{}
+	}
+
+	for len(unmarked) > 0 {
+		var someNode string
+		for n, _ := range unmarked {
+			someNode = n
+			break
+		}
+
+		err = visit(someNode)
+		if err != nil {
+			return
+		}
+	}
+
 	return
 }
 
