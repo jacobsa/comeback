@@ -433,7 +433,7 @@ func (t *ExploreDirectedGraphTest) LargeRootedTree() {
 	nodes, err := t.explore(roots)
 	AssertEq(nil, err)
 
-	// All ndoes should be represented.
+	// All nodes should be represented.
 	AssertEq(len(allNodes), len(nodes))
 	for _, n := range nodes {
 		_, ok := allNodes[n]

@@ -17,6 +17,7 @@ package graph_test
 
 import (
 	"fmt"
+	"math/rand"
 	"testing"
 
 	"golang.org/x/net/context"
@@ -220,5 +221,50 @@ func (t *ReverseTopsortTreeTest) LotsOfBranching() {
 }
 
 func (t *ReverseTopsortTreeTest) LargeTree() {
-	AssertTrue(false, "TODO")
+	// Set up a tree of the given depth, with a random number of children for
+	// each node.
+	const depth = 10
+	root := "root"
+
+	nextID := 0
+	nextLevel := []string{"root"}
+	allNodes := map[string]struct{}{
+		"root": struct{}{},
+	}
+
+	edges := map[string][]string{}
+	for depthI := 0; depthI < depth; depthI++ {
+		thisLevel := nextLevel
+		nextLevel = nil
+		for _, parent := range thisLevel {
+			numChildren := int(rand.Int31n(6))
+			for childI := 0; childI < numChildren; childI++ {
+				child := fmt.Sprintf("%v", nextID)
+				nextID++
+
+				nextLevel = append(nextLevel, child)
+				edges[parent] = append(edges[parent], child)
+				allNodes[child] = struct{}{}
+			}
+		}
+	}
+
+	// Call
+	nodes, err := t.run(root, edges)
+	AssertEq(nil, err)
+
+	// All nodes should be represented.
+	AssertEq(len(allNodes), len(nodes))
+	for _, n := range nodes {
+		_, ok := allNodes[n]
+		AssertTrue(ok, "Unexpected node: %q", n)
+	}
+
+	// Edge order should be respected.
+	nodeIndex := indexNodes(nodes)
+	for p, successors := range edges {
+		for _, s := range successors {
+			ExpectLt(nodeIndex[s], nodeIndex[p], "%q -> %q", p, s)
+		}
+	}
 }
