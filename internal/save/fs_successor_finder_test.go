@@ -156,6 +156,9 @@ func (t *FSSuccessorFinderTest) VisitRootNode() {
 	AssertEq(2, len(pfis))
 	ExpectEq("bar", pfis[0].RelPath)
 	ExpectEq("foo", pfis[1].RelPath)
+
+	// The children should have been recorded.
+	ExpectThat(node.Children, ElementsAre(pfis[0], pfis[1]))
 }
 
 func (t *FSSuccessorFinderTest) VisitNonRootNode() {
@@ -188,6 +191,9 @@ func (t *FSSuccessorFinderTest) VisitNonRootNode() {
 	AssertEq(2, len(pfis))
 	ExpectEq("sub/dirs/bar", pfis[0].RelPath)
 	ExpectEq("sub/dirs/foo", pfis[1].RelPath)
+
+	// The children should have been recorded.
+	ExpectThat(node.Children, ElementsAre(pfis[0], pfis[1]))
 }
 
 func (t *FSSuccessorFinderTest) VisitFileNode() {
@@ -211,6 +217,7 @@ func (t *FSSuccessorFinderTest) VisitFileNode() {
 	AssertEq(nil, err)
 
 	ExpectThat(successors, ElementsAre())
+	ExpectThat(node.Children, ElementsAre())
 }
 
 func (t *FSSuccessorFinderTest) Files() {
@@ -370,4 +377,5 @@ func (t *FSSuccessorFinderTest) Exclusions() {
 
 	AssertEq(nil, err)
 	ExpectThat(successors, ElementsAre())
+	ExpectThat(node.Children, ElementsAre())
 }

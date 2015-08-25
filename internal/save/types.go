@@ -35,6 +35,10 @@ type fsNode struct {
 	// tree of interest.
 	Parent *fsNode
 
+	// The nodes comprising the children of this directory. Empty for
+	// non-directories.
+	Children []*fsNode
+
 	// A list of scores reflecting the contents of this file or directory.
 	Scores []blob.Score
 
