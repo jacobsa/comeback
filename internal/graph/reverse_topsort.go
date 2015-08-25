@@ -24,7 +24,7 @@ import (
 // Write all of the nodes for the tree rooted at the given node to the supplied
 // channel. The order is guaranteed to be a reverse topological sort (i.e. a
 // node appears only after all of its successors have appeared).
-func RevserseTopsortTree(
+func ReverseTopsortTree(
 	ctx context.Context,
 	sf SuccessorFinder,
 	root Node,

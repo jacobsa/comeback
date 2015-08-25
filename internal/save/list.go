@@ -16,7 +16,6 @@
 package save
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -37,7 +36,68 @@ func listNodes(
 	basePath string,
 	exclusions []*regexp.Regexp,
 	nodes chan<- *fsNode) (err error) {
-	err = errors.New("TODO")
+	b := syncutil.NewBundle(ctx)
+
+	// Find the nodes in the appropriate order, writing them to a channel of
+	// graph.Node.
+	graphNodes := make(chan graph.Node, 100)
+	b.Add(func(ctx context.Context) (err error) {
+		defer close(graphNodes)
+
+		// Set up a root node.
+		rootNode := &fsNode{
+			RelPath: "",
+			Parent:  nil,
+		}
+
+		rootNode.Info, err = os.Lstat(basePath)
+		if err != nil {
+			err = fmt.Errorf("os.Lstat: %v", err)
+			return
+		}
+
+		if !rootNode.Info.IsDir() {
+			err = fmt.Errorf("Not a directory: %q", basePath)
+			return
+		}
+
+		// Explore the graph.
+		sf := newSuccessorFinder(basePath, exclusions)
+		err = graph.ReverseTopsortTree(
+			ctx,
+			sf,
+			rootNode,
+			graphNodes)
+
+		if err != nil {
+			err = fmt.Errorf("ReverseTopsortTree: %v", err)
+			return
+		}
+
+		return
+	})
+
+	// Convert to *fsNode.
+	b.Add(func(ctx context.Context) (err error) {
+		for graphNode := range graphNodes {
+			n, ok := graphNode.(*fsNode)
+			if !ok {
+				err = fmt.Errorf("Unexpected node type: %T", graphNode)
+				return
+			}
+
+			select {
+			case nodes <- n:
+			case <-ctx.Done():
+				err = ctx.Err()
+				return
+			}
+		}
+
+		return
+	})
+
+	err = b.Join()
 	return
 }
 
