@@ -137,7 +137,35 @@ func Save(
 }
 
 func findRootScore(nodes <-chan *fsNode) (score blob.Score, err error) {
-	err = errors.New("TODO")
+	found := false
+	for _, n := range nodes {
+		// Skip non-root nodes.
+		if n.Parent != nil {
+			continue
+		}
+
+		// Is this a duplicate?
+		if found {
+			err = fmt.Errorf("Found a duplicate root node: %#v", n)
+			return
+		}
+
+		found = true
+
+		// We expect directory nodes to have exactly one score.
+		if len(n.Scores) != 1 {
+			err = fmt.Errorf("Unexpected score count for rooT: %#v", n)
+			return
+		}
+
+		score = n.Scores[0]
+	}
+
+	if !found {
+		err = errors.New("No root node found")
+		return
+	}
+
 	return
 }
 
