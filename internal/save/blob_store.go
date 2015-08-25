@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path"
 
 	"golang.org/x/net/context"
 
@@ -33,6 +34,7 @@ const fileChunkSize = 1 << 24
 // topologically sorted order: children must appear before parents.
 func fillInScores(
 	ctx context.Context,
+	basePath string,
 	blobStore blob.Store,
 	nodeIn <-chan *fsNode,
 	nodesOut chan<- *fsNode) (err error) {
@@ -45,9 +47,12 @@ func fillInScores(
 // then written to nodesOut.
 func newVisitor(
 	chunkSize int,
+	basePath string,
 	blobStore blob.Store,
 	nodesOut chan<- *fsNode) (v graph.Visitor) {
 	v = &visitor{
+		chunkSize: chunkSize,
+		basePath:  basePath,
 		blobStore: blobStore,
 		nodesOut:  nodesOut,
 	}
@@ -57,6 +62,7 @@ func newVisitor(
 
 type visitor struct {
 	chunkSize int
+	basePath  string
 	blobStore blob.Store
 	nodesOut  chan<- *fsNode
 }
@@ -120,6 +126,15 @@ func (v *visitor) fillInScores(
 func (v *visitor) saveFile(
 	ctx context.Context,
 	n *fsNode) (scores []blob.Score, err error) {
+	// Open the file for reading.
+	f, err := os.Open(path.Join(v.basePath, n.RelPath))
+	if err != nil {
+		err = fmt.Errorf("Open: %v", err)
+		return
+	}
+
+	defer f.Close()
+
 	err = errors.New("TODO")
 	return
 }

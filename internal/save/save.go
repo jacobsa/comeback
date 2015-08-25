@@ -73,7 +73,7 @@ func Save(
 	postDAGTraversal := make(chan *fsNode, 100)
 	b.Add(func(ctx context.Context) (err error) {
 		defer close(postDAGTraversal)
-		err = fillInScores(ctx, blobStore, postScoreMap, postDAGTraversal)
+		err = fillInScores(ctx, dir, blobStore, postScoreMap, postDAGTraversal)
 		if err != nil {
 			err = fmt.Errorf("fillInScores: %v", err)
 			return

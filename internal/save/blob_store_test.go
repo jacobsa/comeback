@@ -75,7 +75,7 @@ func (t *VisitorTest) TearDown() {
 }
 
 func (t *VisitorTest) call() (err error) {
-	visitor := newVisitor(t.chunkSize, t.blobStore, make(chan *fsNode, 1))
+	visitor := newVisitor(t.chunkSize, t.dir, t.blobStore, make(chan *fsNode, 1))
 	err = visitor.Visit(t.ctx, &t.node)
 	return
 }
@@ -106,7 +106,8 @@ func (t *VisitorTest) Symlink() {
 	var err error
 
 	// Node setup
-	p := path.Join(t.dir, "foo")
+	t.node.RelPath = "foo"
+	p := path.Join(t.dir, t.node.RelPath)
 
 	err = os.Symlink("blah", p)
 	AssertEq(nil, err)
@@ -126,6 +127,8 @@ func (t *VisitorTest) Directory() {
 	var err error
 
 	// Node setup
+	t.node.RelPath = ""
+
 	t.node.Info, err = os.Lstat(t.dir)
 	AssertEq(nil, err)
 
@@ -169,7 +172,8 @@ func (t *VisitorTest) File_Empty() {
 	var err error
 
 	// Node setup
-	p := path.Join(t.dir, "foo")
+	t.node.RelPath = "foo"
+	p := path.Join(t.dir, t.node.RelPath)
 
 	err = ioutil.WriteFile(p, []byte(""), 0700)
 	AssertEq(nil, err)
@@ -189,7 +193,8 @@ func (t *VisitorTest) File_LastChunkIsFull() {
 	var err error
 
 	// Node setup
-	p := path.Join(t.dir, "foo")
+	t.node.RelPath = "foo"
+	p := path.Join(t.dir, t.node.RelPath)
 
 	chunk0 := bytes.Repeat([]byte{0}, t.chunkSize)
 	chunk1 := bytes.Repeat([]byte{1}, t.chunkSize)
@@ -224,7 +229,8 @@ func (t *VisitorTest) File_LastChunkIsPartial() {
 	var err error
 
 	// Node setup
-	p := path.Join(t.dir, "foo")
+	t.node.RelPath = "foo"
+	p := path.Join(t.dir, t.node.RelPath)
 
 	chunk0 := bytes.Repeat([]byte{0}, t.chunkSize)
 	chunk1 := bytes.Repeat([]byte{1}, t.chunkSize-1)
