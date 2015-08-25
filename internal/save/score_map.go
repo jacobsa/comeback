@@ -36,10 +36,22 @@ func consultScoreMap(
 	clock timeutil.Clock,
 	nodesIn <-chan *fsNode,
 	nodesOut chan<- *fsNode) (err error) {
-	// TODO(jacobsa): Make sure to consult score_map_saver.go. We don't need the
-	// bit that talks to the blob store (added in abd1800) if we kill blob store
-	// internal asynchronicity, though.
-	err = errors.New("TODO")
+	for n := range nodesIn {
+		// Consult the score map if it makes sense to do so.
+		key := makeScoreMapKey(n, clock)
+		if key != nil {
+			n.Scores = scoreMap.Get(*key)
+		}
+
+		// Pass on the node.
+		select {
+		case nodesOut <- n:
+		case <-ctx.Done():
+			err = ctx.Err()
+			return
+		}
+	}
+
 	return
 }
 
