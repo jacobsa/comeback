@@ -29,7 +29,9 @@ import (
 )
 
 // Given a base directory and a set of exclusions, list all file system nodes
-// involved, filling in only the RelPath and Parent fields.
+// involved, filling in only the RelPath and Parent fields. Output nodes are
+// guaranteed to be in reverse topologically sorted order: children appear
+// before their parents.
 func listNodes(
 	ctx context.Context,
 	basePath string,

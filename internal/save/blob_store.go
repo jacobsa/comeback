@@ -18,21 +18,19 @@ package save
 import (
 	"errors"
 
+	"golang.org/x/net/context"
+
 	"github.com/jacobsa/comeback/internal/blob"
-	"github.com/jacobsa/comeback/internal/graph"
 )
 
-// Create a graph.Visitor which does the following, for each node n of type
-// *fsNode:
-//
-// 1.  If n.Scores == nil, use the supplied blob store to fill in the
-//     appropriate scores.
-//
-// 2.  Write n to nodesProcessed.
-//
-func newVisitor(
+// For each incoming node, use the supplied blob store to ensure that the node
+// has a non-nil list of scores. Incoming nodes must be in reverse
+// topologically sorted order: children must appear before parents.
+func fillInScores(
+	ctx context.Context,
 	blobStore blob.Store,
-	nodesProcessed chan<- *fsNode) (v graph.Visitor, err error) {
+	nodeIn <-chan *fsNode,
+	nodesOut chan<- *fsNode) (err error) {
 	err = errors.New("TODO")
 	return
 }
