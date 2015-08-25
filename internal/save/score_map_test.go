@@ -322,7 +322,20 @@ func (t *UpdateScoreMapTest) NodeNotEligible() {
 }
 
 func (t *UpdateScoreMapTest) NodeWasAlreadyPresent() {
-	AssertTrue(false, "TODO")
+	var err error
+
+	// Prepare
+	t.node.Scores = []blob.Score{
+		blob.ComputeScore([]byte("taco")),
+		blob.ComputeScore([]byte("burrito")),
+	}
+
+	t.node.shouldInsertIntoScoreMap = false
+
+	// Call
+	err = t.call()
+	AssertEq(nil, err)
+	ExpectEq(nil, t.scoreMap.Get(*t.expectedKey))
 }
 
 func (t *UpdateScoreMapTest) NodeWasntAlreadyPresent() {
