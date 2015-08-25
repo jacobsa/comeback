@@ -96,17 +96,16 @@ func Save(
 	})
 
 	// Update the score map with the results of the previous stage.
+	postScoreMapUpdate := make(chan *fsNode, 100)
 	{
-		// Tap the channel above.
-		teeInput := postDAGTraversal
+		// Tee the channel; updateScoreMap doesn't give output, nor does it modify
+		// nodes.
 		tmp := make(chan *fsNode, 100)
-		postDAGTraversal = make(chan *fsNode, 100)
-
 		b.Add(func(ctx context.Context) (err error) {
 			defer close(tmp)
-			defer close(postDAGTraversal)
+			defer close(postScoreMapUpdate)
 
-			err = teeNodes(ctx, teeInput, tmp, postDAGTraversal)
+			err = teeNodes(ctx, postDAGTraversal, tmp, postScoreMapUpdate)
 			return
 		})
 
@@ -124,7 +123,7 @@ func Save(
 
 	// Find the root score.
 	b.Add(func(ctx context.Context) (err error) {
-		score, err = findRootScore(postDAGTraversal)
+		score, err = findRootScore(postScoreMapUpdate)
 		if err != nil {
 			err = fmt.Errorf("findRootScore: %v", err)
 			return
