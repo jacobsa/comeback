@@ -28,10 +28,12 @@ import (
 	"github.com/jacobsa/timeutil"
 )
 
-// TODO(jacobsa): Comments.
+// Save a backup of the given directory, applying the supplied exclusions and
+// using the supplied score map to avoid reading file content when possible.
+// Return a score for the root of the backup.
 func Save(
 	ctx context.Context,
-	basePath string,
+	dir string,
 	exclusions []*regexp.Regexp,
 	scoreMap state.ScoreMap,
 	blobStore blob.Store,
@@ -42,7 +44,7 @@ func Save(
 	listedNodes := make(chan *fsNode, 100)
 	b.Add(func(ctx context.Context) (err error) {
 		defer close(listedNodes)
-		err = listNodes(ctx, basePath, exclusions, listedNodes)
+		err = listNodes(ctx, dir, exclusions, listedNodes)
 		if err != nil {
 			err = fmt.Errorf("listNodes: %v", err)
 			return
@@ -55,7 +57,7 @@ func Save(
 	stattedNodes := make(chan *fsNode, 100)
 	b.Add(func(ctx context.Context) (err error) {
 		defer close(stattedNodes)
-		err = statNodes(ctx, basePath, listedNodes, stattedNodes)
+		err = statNodes(ctx, dir, listedNodes, stattedNodes)
 		if err != nil {
 			err = fmt.Errorf("statNodes: %v", err)
 			return
