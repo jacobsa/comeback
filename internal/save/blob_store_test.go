@@ -25,7 +25,10 @@ import (
 
 	"github.com/jacobsa/comeback/internal/blob"
 	"github.com/jacobsa/comeback/internal/blob/mock"
+	"github.com/jacobsa/comeback/internal/fs"
+	"github.com/jacobsa/comeback/internal/repr"
 	. "github.com/jacobsa/oglematchers"
+	. "github.com/jacobsa/oglemock"
 	. "github.com/jacobsa/ogletest"
 )
 
@@ -37,7 +40,7 @@ func TestBlobStore(t *testing.T) { RunTests(t) }
 
 type VisitorTest struct {
 	ctx       context.Context
-	blobStore blob.Store
+	blobStore mock_blob.MockStore
 
 	node fsNode
 
@@ -117,7 +120,36 @@ func (t *VisitorTest) Symlink() {
 }
 
 func (t *VisitorTest) Directory() {
-	AssertTrue(false, "TODO")
+	var err error
+
+	// Node setup
+	t.node.Info, err = os.Lstat(t.dir)
+	AssertEq(nil, err)
+
+	// Add one child.
+	err = ioutil.WriteFile(path.Join(t.dir, "foo"), []byte("taco"), 0700)
+	AssertEq(nil, err)
+
+	// Snoop on the call to the blob store.
+	var savedBlob []byte
+	expectedScore := blob.ComputeScore([]byte("taco"))
+
+	ExpectCall(t.blobStore, "Store")(Any(), Any()).
+		WillOnce(DoAll(SaveArg(1, &savedBlob), Return(expectedScore, nil)))
+
+	// Call
+	err = t.call()
+	AssertEq(nil, err)
+	AssertThat(t.node.Scores, ElementsAre(expectedScore))
+
+	entries, err := repr.UnmarshalDir(savedBlob)
+	AssertEq(nil, err)
+	AssertEq(1, len(entries))
+
+	entry := entries[0]
+	ExpectEq("foo", entry.Name)
+	ExpectEq(fs.TypeFile, entry.Type)
+	ExpectEq(len("taco"), entry.Size)
 }
 
 func (t *VisitorTest) File_Empty() {
