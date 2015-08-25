@@ -253,12 +253,14 @@ func (t *FSSuccessorFinderTest) Files() {
 	pfi = pfis[0]
 	ExpectEq("dir/bar", pfi.RelPath)
 	ExpectEq("bar", pfi.Info.Name())
+	ExpectEq("", pfi.Info.Target)
 	ExpectEq(len("burrito"), pfi.Info.Size())
 	ExpectEq(node, pfi.Parent)
 
 	pfi = pfis[1]
 	ExpectEq("dir/foo", pfi.RelPath)
 	ExpectEq("foo", pfi.Info.Name())
+	ExpectEq("", pfi.Info.Target)
 	ExpectEq(len("taco"), pfi.Info.Size())
 	ExpectEq(node, pfi.Parent)
 }
@@ -296,12 +298,14 @@ func (t *FSSuccessorFinderTest) Directories() {
 	pfi = pfis[0]
 	ExpectEq("dir/bar", pfi.RelPath)
 	ExpectEq("bar", pfi.Info.Name())
+	ExpectEq("", pfi.Info.Target)
 	ExpectTrue(pfi.Info.IsDir())
 	ExpectEq(node, pfi.Parent)
 
 	pfi = pfis[1]
 	ExpectEq("dir/foo", pfi.RelPath)
 	ExpectEq("foo", pfi.Info.Name())
+	ExpectEq("", pfi.Info.Target)
 	ExpectTrue(pfi.Info.IsDir())
 	ExpectEq(node, pfi.Parent)
 }
@@ -336,6 +340,7 @@ func (t *FSSuccessorFinderTest) Symlinks() {
 	pfi = pfis[0]
 	ExpectEq("dir/foo", pfi.RelPath)
 	ExpectEq("foo", pfi.Info.Name())
+	ExpectEq("blah/blah", pfi.Info.Target)
 	ExpectFalse(pfi.Info.IsDir())
 	ExpectEq(node, pfi.Parent)
 }
