@@ -17,6 +17,9 @@ package graph
 
 import (
 	"errors"
+	"log"
+
+	"github.com/jacobsa/syncutil"
 
 	"golang.org/x/net/context"
 )
@@ -41,4 +44,78 @@ func TraverseDAG(
 	parallelism int) (err error) {
 	err = errors.New("TODO")
 	return
+}
+
+type traverseDagState struct {
+	mu syncutil.InvariantMutex
+
+	// A map containing nodes that we are not yet ready to visit, because they
+	// have predecessors that have not yet been visited or because we have not
+	// yet seen them.
+	//
+	// INVARIANT: For all v, !v.readyToVisit()
+	// INVARIANT: For all v, v.checkInvariants doesn't panic
+	//
+	// GUARDED_BY(mu)
+	notReadyToVisit map[Node]traverseDagNodeState
+
+	// A list of nodes that we are ready to visit but have not yet started
+	// visiting.
+	//
+	// INVARIANT: For all n, n is not a key in notReadyToVisit
+	//
+	// GUARDED_BY(mu)
+	readyToVisit []Node
+
+	// A channel of nodes that are ready to visit. Visitor workers sleep on this
+	// channel when readyToVisit is empty. To avoid deadlock, it is never written
+	// to by visitor workers; only the driver that processes incoming nodes from
+	// the user. Similarly, the latter never writes to readyToVisit, because its
+	// updates may be missed by the former.
+	newReadyNodes chan Node
+}
+
+// LOCKS_REQUIRED(s.mu)
+func (s *traverseDagState) checkInvariants() {
+	// INVARIANT: For all v, !v.readyToVisit()
+	for k, v := range s.notReadyToVisit {
+		if v.readyToVisit() {
+			log.Panicf("Unexpected ready node: %#v, %#v", k, v)
+		}
+	}
+
+	// INVARIANT: For all v, v.checkInvariants doesn't panic
+	for _, v := range s.notReadyToVisit {
+		v.checkInvariants()
+	}
+
+	// INVARIANT: For all n, n is not a key in notReadyToVisit
+	for _, n := range s.readyToVisit {
+		if _, ok := s.notReadyToVisit[n]; ok {
+			log.Panicf("Ready and not ready: %#v", n)
+		}
+	}
+}
+
+type traverseDagNodeState struct {
+	// The number of predecessors of this node that we have encountered but not
+	// yet finished visiting.
+	//
+	// INVARIANT: predecessorsOutstanding >= 0
+	predecessorsOutstanding int64
+
+	// Have we yet seen this node in the stream of input nodes? If not, we may
+	// not yet have encountered all of its predecessors.
+	seen bool
+}
+
+func (s traverseDagNodeState) checkInvariants() {
+	// INVARIANT: predecessorsOutstanding >= 0
+	if s.predecessorsOutstanding < 0 {
+		log.Panicf("Unexpected count: %d", s.predecessorsOutstanding)
+	}
+}
+
+func (s traverseDagNodeState) readyToVisit() bool {
+	return s.predecessorsOutstanding == 0 && s.seen
 }
