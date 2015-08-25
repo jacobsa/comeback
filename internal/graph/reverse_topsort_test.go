@@ -42,6 +42,22 @@ func (t *ReverseTopsortTreeTest) SetUp(ti *TestInfo) {
 // Tests
 ////////////////////////////////////////////////////////////////////////
 
-func (t *ReverseTopsortTreeTest) DoesFoo() {
+func (t *ReverseTopsortTreeTest) Empty() {
+	AssertTrue(false, "TODO")
+}
+
+func (t *ReverseTopsortTreeTest) NoBranching() {
+	AssertTrue(false, "TODO")
+}
+
+func (t *ReverseTopsortTreeTest) LittleBranching() {
+	AssertTrue(false, "TODO")
+}
+
+func (t *ReverseTopsortTreeTest) LotsOfBranching() {
+	AssertTrue(false, "TODO")
+}
+
+func (t *ReverseTopsortTreeTest) LargeTree() {
 	AssertTrue(false, "TODO")
 }
