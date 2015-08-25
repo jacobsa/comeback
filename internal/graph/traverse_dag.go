@@ -16,7 +16,6 @@
 package graph
 
 import (
-	"errors"
 	"fmt"
 	"log"
 
@@ -231,6 +230,26 @@ func visitNodes(
 	ctx context.Context,
 	v Visitor,
 	state *traverseDAGState) (err error) {
-	err = errors.New("TODO")
-	return
+	// We enter the loop locked.
+	state.mu.Lock()
+	for {
+		var n Node
+
+		// Grab a node that's immediately available, if any.
+		{
+			l := len(state.readyToVisit)
+			if l > 0 {
+				n = state.readyToVisit[l-1]
+				state.readyToVisit = state.readyToVisit[:l-1]
+			}
+		}
+
+		state.mu.Unlock()
+
+		// TODO(jacobsa): Waiting for the channel here isn't great. It means that
+		// we may miss updates from another worker when a predecessor finishes, and
+		// reduce our parallelism. (The updates won't be lost forever though, since
+		// that worker will get around to them.) Hmm. I guess we need to suck it up
+		// and use cond vars like in explore.go.
+	}
 }
