@@ -16,7 +16,6 @@
 package save
 
 import (
-	"errors"
 	"os"
 	"syscall"
 	"time"
@@ -42,7 +41,7 @@ func consultScoreMap(
 		if key != nil {
 			n.Scores = scoreMap.Get(*key)
 			if n.Scores == nil {
-				n.shouldInsertIntoScoreMap = true
+				n.scoreMapKey = key
 			}
 		}
 
@@ -64,8 +63,14 @@ func updateScoreMap(
 	ctx context.Context,
 	scoreMap state.ScoreMap,
 	nodes <-chan *fsNode) (err error) {
-	// TODO(jacobsa): Make sure to consult score_map_saver.go.
-	err = errors.New("TODO")
+	for n := range nodes {
+		if n.scoreMapKey == nil {
+			continue
+		}
+
+		scoreMap.Set(*n.scoreMapKey, n.Scores)
+	}
+
 	return
 }
 

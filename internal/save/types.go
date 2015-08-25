@@ -19,6 +19,7 @@ import (
 	"os"
 
 	"github.com/jacobsa/comeback/internal/blob"
+	"github.com/jacobsa/comeback/internal/state"
 )
 
 // A node within the tree defined by the file system hierarchy rooted at a
@@ -37,7 +38,8 @@ type fsNode struct {
 	// A list of scores reflecting the contents of this file or directory.
 	Scores []blob.Score
 
-	// For private use by consultScoreMap and updateScoreMap: whether the scores
-	// ought to be inserted into the score map after being computed.
-	shouldInsertIntoScoreMap bool
+	// For private use by consultScoreMap and updateScoreMap: if the scores ought
+	// to be inserted into the score map after being computed, the key to use
+	// when doing so.
+	scoreMapKey *state.ScoreMapKey
 }

@@ -240,7 +240,7 @@ func (t *ConsultScoreMapTest) NodeNotEligible() {
 	AssertEq(nil, err)
 
 	ExpectEq(nil, t.node.Scores)
-	ExpectFalse(t.node.shouldInsertIntoScoreMap)
+	ExpectEq(nil, t.node.scoreMapKey)
 }
 
 func (t *ConsultScoreMapTest) PresentInScoreMap() {
@@ -257,7 +257,7 @@ func (t *ConsultScoreMapTest) PresentInScoreMap() {
 	AssertEq(nil, err)
 
 	ExpectThat(t.node.Scores, ElementsAre(score1, score2))
-	ExpectFalse(t.node.shouldInsertIntoScoreMap)
+	ExpectEq(nil, t.node.scoreMapKey)
 }
 
 func (t *ConsultScoreMapTest) AbsentInScoreMap() {
@@ -268,7 +268,7 @@ func (t *ConsultScoreMapTest) AbsentInScoreMap() {
 	AssertEq(nil, err)
 
 	ExpectEq(nil, t.node.Scores)
-	ExpectTrue(t.node.shouldInsertIntoScoreMap)
+	ExpectThat(t.node.scoreMapKey, Pointee(DeepEquals(*t.expectedKey)))
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -330,7 +330,7 @@ func (t *UpdateScoreMapTest) NodeWasAlreadyPresent() {
 		blob.ComputeScore([]byte("burrito")),
 	}
 
-	t.node.shouldInsertIntoScoreMap = false
+	t.node.scoreMapKey = nil
 
 	// Call
 	err = t.call()
@@ -347,7 +347,7 @@ func (t *UpdateScoreMapTest) NodeWasntAlreadyPresent() {
 		blob.ComputeScore([]byte("burrito")),
 	}
 
-	t.node.shouldInsertIntoScoreMap = true
+	t.node.scoreMapKey = t.expectedKey
 
 	// Call
 	err = t.call()
