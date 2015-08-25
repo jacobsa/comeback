@@ -32,13 +32,13 @@ import (
 	"github.com/jacobsa/syncutil"
 )
 
-// A key placed in GCS object metadata by GCSStore containing the hex SHA-1
+// A key placed in GCS object metadata by gcsStore containing the hex SHA-1
 // expected for the object contents. This is of course redundant with the
 // object name; we use it as a paranoid check against GCS returning the
 // metadata or contents for the wrong object.
 const metadataKey_SHA1 = "comeback_sha1"
 
-// A key placed in GCS object metadata by GCSStore containing the CRC32C
+// A key placed in GCS object metadata by gcsStore containing the CRC32C
 // checksum expected for the object contents. If GCS reports a different
 // checksum or returns contents with a different checksum, we know something
 // screwy has happened.
@@ -46,7 +46,7 @@ const metadataKey_SHA1 = "comeback_sha1"
 // See here for more info: https://github.com/jacobsa/comeback/issues/18
 const metadataKey_CRC32C = "comeback_crc32c"
 
-// A key placed in GCS object metadata by GCSStore containing the hex MD5 sum
+// A key placed in GCS object metadata by gcsStore containing the hex MD5 sum
 // expected for the object contents. If GCS reports a different MD5 sum or
 // returns contents with a different MD5 sum, we know something screwy has
 // happened.
@@ -67,10 +67,10 @@ const metadataKey_MD5 = "comeback_md5"
 //
 // The returned store does not support Contains; this method must not be
 // called.
-func NewGCSStore(
+func Internal_NewGCSStore(
 	bucket gcs.Bucket,
-	prefix string) (store *GCSStore) {
-	store = &GCSStore{
+	prefix string) (store Store) {
+	store = &gcsStore{
 		bucket:     bucket,
 		namePrefix: prefix,
 	}
@@ -78,15 +78,15 @@ func NewGCSStore(
 	return
 }
 
-type GCSStore struct {
+type gcsStore struct {
 	bucket     gcs.Bucket
 	namePrefix string
 }
 
-var _ Store = &GCSStore{}
+var _ Store = &gcsStore{}
 
 // Parse and verify the internal consistency of the supplied object record in
-// the same manner that a GCSStore configured with the supplied object name
+// the same manner that a gcsStore configured with the supplied object name
 // prefix would. Return the score of the blob that the object contains.
 func ParseObjectRecord(
 	o *gcs.Object,
@@ -282,7 +282,7 @@ func ListScores(
 // Helpers
 ////////////////////////////////////////////////////////////////////////
 
-func (s *GCSStore) makeName(score Score) (name string) {
+func (s *gcsStore) makeName(score Score) (name string) {
 	name = s.namePrefix + score.Hex()
 	return
 }
@@ -291,7 +291,7 @@ func (s *GCSStore) makeName(score Score) (name string) {
 // Public interface
 ////////////////////////////////////////////////////////////////////////
 
-func (s *GCSStore) Store(
+func (s *gcsStore) Store(
 	ctx context.Context,
 	req *StoreRequest) (score Score, err error) {
 	blob := req.Blob
@@ -348,11 +348,11 @@ func (s *GCSStore) Store(
 	return
 }
 
-func (s *GCSStore) Contains(ctx context.Context, score Score) (b bool) {
-	panic("GCSStore.Contains not supported; wiring code bug?")
+func (s *gcsStore) Contains(ctx context.Context, score Score) (b bool) {
+	panic("gcsStore.Contains not supported; wiring code bug?")
 }
 
-func (s *GCSStore) Load(
+func (s *gcsStore) Load(
 	ctx context.Context,
 	score Score) (blob []byte, err error) {
 	// Create a ReadCloser.
