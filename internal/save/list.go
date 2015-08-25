@@ -16,7 +16,6 @@
 package save
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -37,26 +36,14 @@ func listNodes(
 	basePath string,
 	exclusions []*regexp.Regexp,
 	nodes chan<- *fsNode) (err error) {
-	err = errors.New("TODO")
-	return
-}
+	b := syncutil.NewBundle(ctx)
 
-// Given a base directory and a set of exclusions, list the files and
-// directories that would be saved by a backup job with the same info in a
-// human-readable format. Write the output to the supplied writer.
-func List(
-	ctx context.Context,
-	w io.Writer,
-	basePath string,
-	exclusions []*regexp.Regexp) (err error) {
-	// TODO(jacobsa): Make this function use listNodes.
-
-	b := syncutil.NewBundle(context.Background())
-
-	// Explore the file system graph, writing all non-excluded nodes into a
-	// channel.
+	// Find the nodes in the appropriate order, writing them to a channel of
+	// graph.Node.
 	graphNodes := make(chan graph.Node, 100)
 	b.Add(func(ctx context.Context) (err error) {
+		defer close(graphNodes)
+
 		// Set up a root node.
 		rootNode := &fsNode{
 			RelPath: "",
@@ -75,19 +62,75 @@ func List(
 		}
 
 		// Explore the graph.
-		defer close(graphNodes)
 		sf := newSuccessorFinder(basePath, exclusions)
-
-		const parallelism = 8
-		err = graph.ExploreDirectedGraph(
+		err = graph.ReverseTopsortTree(
 			ctx,
 			sf,
-			[]graph.Node{rootNode},
-			graphNodes,
-			parallelism)
+			rootNode,
+			graphNodes)
 
 		if err != nil {
-			err = fmt.Errorf("ExploreDirectedGraph: %v", err)
+			err = fmt.Errorf("ReverseTopsortTree: %v", err)
+			return
+		}
+
+		return
+	})
+
+	// Convert to *fsNode.
+	b.Add(func(ctx context.Context) (err error) {
+		for graphNode := range graphNodes {
+			n, ok := graphNode.(*fsNode)
+			if !ok {
+				err = fmt.Errorf("Unexpected node type: %T", graphNode)
+				return
+			}
+
+			select {
+			case nodes <- n:
+			case <-ctx.Done():
+				err = ctx.Err()
+				return
+			}
+		}
+
+		return
+	})
+
+	err = b.Join()
+	return
+}
+
+// Given a base directory and a set of exclusions, list the files and
+// directories that would be saved by a backup job with the same info in a
+// human-readable format. Write the output to the supplied writer.
+func List(
+	ctx context.Context,
+	w io.Writer,
+	basePath string,
+	exclusions []*regexp.Regexp) (err error) {
+	b := syncutil.NewBundle(ctx)
+
+	// List nodes.
+	nodes := make(chan *fsNode, 100)
+	b.Add(func(ctx context.Context) (err error) {
+		defer close(nodes)
+		err = listNodes(ctx, basePath, exclusions, nodes)
+		if err != nil {
+			err = fmt.Errorf("listNodes: %v", err)
+			return
+		}
+
+		return
+	})
+
+	// Fill in stat info.
+	statted := make(chan *fsNode, 100)
+	b.Add(func(ctx context.Context) (err error) {
+		defer close(statted)
+		err = statNodes(ctx, basePath, nodes, statted)
+		if err != nil {
+			err = fmt.Errorf("statNodes: %v", err)
 			return
 		}
 
@@ -96,14 +139,7 @@ func List(
 
 	// Print out info about each node.
 	b.Add(func(ctx context.Context) (err error) {
-		for graphNode := range graphNodes {
-			n, ok := graphNode.(*fsNode)
-			if !ok {
-				err = fmt.Errorf("Unexpected node type: %T", n)
-				return
-			}
-
-			// Skip the root node.
+		for n := range statted {
 			_, err = fmt.Fprintf(w, "%q %d\n", n.RelPath, n.Info.Size())
 			if err != nil {
 				err = fmt.Errorf("Fprintf: %v", err)
