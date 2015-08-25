@@ -21,6 +21,7 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/jacobsa/comeback/internal/blob"
+	"github.com/jacobsa/comeback/internal/graph"
 )
 
 // For each incoming node, use the supplied blob store to ensure that the node
@@ -33,4 +34,20 @@ func fillInScores(
 	nodesOut chan<- *fsNode) (err error) {
 	err = errors.New("TODO")
 	return
+}
+
+// Create a graph.Visitor for *fsNode that saves to the supplied blob store,
+// filling in the node's Scores field when it is nil. All visited nodes are
+// then written to nodesOut.
+func newVisitor(
+	blobStore blob.Store,
+	nodesOut chan<- *fsNode) (v graph.Visitor) {
+	panic("TODO")
+}
+
+type visitor struct {
+}
+
+func (v *visitor) Visit(ctx context.Context, untyped graph.Node) (err error) {
+	err = errors.New("TODO")
 }
