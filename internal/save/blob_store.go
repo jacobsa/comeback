@@ -17,6 +17,7 @@ package save
 
 import (
 	"errors"
+	"fmt"
 
 	"golang.org/x/net/context"
 
@@ -56,6 +57,22 @@ type visitor struct {
 }
 
 func (v *visitor) Visit(ctx context.Context, untyped graph.Node) (err error) {
-	err = errors.New("TODO")
+	// Check the type of the node.
+	n, ok := untyped.(*fsNode)
+	if !ok {
+		err = fmt.Errorf("Unexpected node type: %T", untyped)
+		return
+	}
+
+	// TODO
+
+	// Pass on the node.
+	select {
+	case v.nodesOut <- n:
+	case <-ctx.Done():
+		err = ctx.Err()
+		return
+	}
+
 	return
 }
