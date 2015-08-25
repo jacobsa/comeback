@@ -21,6 +21,7 @@ import (
 	"os"
 	"path"
 	"testing"
+	"time"
 
 	"golang.org/x/net/context"
 
@@ -38,7 +39,7 @@ func TestScoreMap(t *testing.T) { RunTests(t) }
 type scoreMapTest struct {
 	ctx      context.Context
 	scoreMap state.ScoreMap
-	clock    timeutil.Clock
+	clock    timeutil.SimulatedClock
 
 	node fsNode
 
@@ -54,8 +55,12 @@ func (t *scoreMapTest) SetUp(ti *TestInfo) {
 
 	t.ctx = ti.Ctx
 	t.scoreMap = state.NewScoreMap()
-	t.clock = timeutil.RealClock()
 
+	// Set up the clock with a default time far in the future, so that recent
+	// modifications in the file system appear old.
+	t.clock.SetTime(time.Now().Add(365 * 24 * time.Hour))
+
+	// Set up the directory.
 	t.dir, err = ioutil.TempDir("", "score_map_test")
 	AssertEq(nil, err)
 }
@@ -77,6 +82,11 @@ type MakeScoreMapKeyTest struct {
 
 func init() { RegisterTestSuite(&MakeScoreMapKeyTest{}) }
 
+func (t *MakeScoreMapKeyTest) call() (key *state.ScoreMapKey) {
+	key = makeScoreMapKey(&t.node, &t.clock)
+	return
+}
+
 func (t *MakeScoreMapKeyTest) Directory() {
 	var err error
 
@@ -85,7 +95,7 @@ func (t *MakeScoreMapKeyTest) Directory() {
 	AssertEq(nil, err)
 
 	// Call
-	key := makeScoreMapKey(&t.node)
+	key := t.call()
 	ExpectEq(nil, key)
 }
 
@@ -101,16 +111,41 @@ func (t *MakeScoreMapKeyTest) Symlink() {
 	AssertEq(nil, err)
 
 	// Call
-	key := makeScoreMapKey(&t.node)
+	key := t.call()
 	ExpectEq(nil, key)
 }
 
 func (t *MakeScoreMapKeyTest) RecentlyModified() {
-	AssertTrue(false, "TODO")
-}
+	var err error
+	var key *state.ScoreMapKey
 
-func (t *MakeScoreMapKeyTest) ModifiedInFuture() {
-	AssertTrue(false, "TODO")
+	// Set up
+	p := path.Join(t.dir, "foo")
+
+	f, err := os.Create(p)
+	AssertEq(nil, err)
+	defer f.Close()
+
+	fi, err := f.Stat()
+	AssertEq(nil, err)
+
+	// A short while ago
+	t.clock.SetTime(fi.ModTime().Add(10 * time.Second))
+
+	key = t.call()
+	ExpectEq(nil, key)
+
+	// Now
+	t.clock.SetTime(fi.ModTime())
+
+	key = t.call()
+	ExpectEq(nil, key)
+
+	// In the future
+	t.clock.SetTime(fi.ModTime().Add(-10 * time.Second))
+
+	key = t.call()
+	ExpectEq(nil, key)
 }
 
 func (t *MakeScoreMapKeyTest) Valid() {
