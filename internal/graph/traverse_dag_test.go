@@ -16,14 +16,93 @@
 package graph_test
 
 import (
+	cryptorand "crypto/rand"
+	"encoding/binary"
+	"errors"
+	"fmt"
+	"log"
+	"math/rand"
+	"sync"
 	"testing"
+	"time"
 
 	"golang.org/x/net/context"
 
+	"github.com/jacobsa/comeback/internal/graph"
 	. "github.com/jacobsa/ogletest"
 )
 
 func TestTraverseDAG(t *testing.T) { RunTests(t) }
+
+////////////////////////////////////////////////////////////////////////
+// Helpers
+////////////////////////////////////////////////////////////////////////
+
+// Return a topological sort of the nodes of the DAG defined by the supplied
+// edge map.
+func topsort(edges map[string][]string) (nodes []string, err error) {
+	err = errors.New("TODO")
+	return
+}
+
+// Compute the the reachability partial order for the DAG defined by the
+// supplied edges.
+func reachabilityRelation(
+	edges map[string][]string) (r map[string][]string, err error) {
+	err = errors.New("TODO")
+	return
+}
+
+// Return the relation composed of pairs (Y, X) for each pair (X, Y) in the
+// input relation.
+func invertRelation(r map[string][]string) (inverted map[string][]string) {
+	inverted = make(map[string][]string)
+	for k, vs := range r {
+		for _, v := range vs {
+			inverted[v] = append(inverted[v], k)
+		}
+	}
+
+	return
+}
+
+// Create a rand.Rand seeded with a good source.
+func makeRandSource() (src *rand.Rand) {
+	// Read a seed from a good source.
+	var seed int64
+	err := binary.Read(cryptorand.Reader, binary.LittleEndian, &seed)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	src = rand.New(rand.NewSource(seed))
+	return
+}
+
+// Create a SuccessorFinder that consults the supplied map of edges.
+func successorFinderForEdges(
+	edges map[string][]string) (sf graph.SuccessorFinder) {
+	sf = &successorFinder{
+		F: func(ctx context.Context, n string) (nodes []string, err error) {
+			nodes = edges[n]
+			return
+		},
+	}
+
+	return
+}
+
+// A graph.Visitor for string nodes that calls through to a canned function.
+type visitor struct {
+	F func(context.Context, string) error
+}
+
+func (v *visitor) Visit(
+	ctx context.Context,
+	untyped graph.Node) (err error) {
+	err = v.F(ctx, untyped.(string))
+	return
+}
 
 ////////////////////////////////////////////////////////////////////////
 // Boilerplate
@@ -43,12 +122,79 @@ func (t *TraverseDAGTest) SetUp(ti *TestInfo) {
 	t.ctx = ti.Ctx
 }
 
+// Run the graph described by the given edges through TraverseDAG, inserting
+// sleeps to attempt to shake out races, and make sure we can't catch it
+// violating any of its promises.
+func (t *TraverseDAGTest) runTest(edges map[string][]string) {
+	// Sort the nodes into a valid order and stick them in a channel.
+	nodes, err := topsort(edges)
+	AssertEq(nil, err)
+
+	nodeChan := make(chan graph.Node, len(nodes))
+	for _, n := range nodes {
+		nodeChan <- n
+	}
+	close(nodeChan)
+
+	// Compute the reachability relation for the DAG, and invert it.
+	reachable, err := reachabilityRelation(edges)
+	AssertEq(nil, err)
+	inverseReachable := invertRelation(reachable)
+
+	// Set up a visit function that ensures that a visit hasn't happened out of
+	// order, sleeps for awhile, then marks the node as visited.
+	randSrc := makeRandSource()
+
+	var mu sync.Mutex
+	visited := make(map[string]struct{}) // GUARDED_BY(mu)
+
+	visit := func(ctx context.Context, n string) (err error) {
+		mu.Lock()
+		defer mu.Unlock()
+
+		// We should have already finished visiting all of the nodes from which
+		// this node is reachable.
+		for _, p := range inverseReachable[n] {
+			_, ok := visited[p]
+			if !ok {
+				err = fmt.Errorf("Visited %q before finished visiting %q", n, p)
+				return
+			}
+		}
+
+		// Wait a random amount of time, then mark the node as visited and return.
+		mu.Unlock()
+		time.Sleep(time.Duration(randSrc.Int63n(int64(20 * time.Millisecond))))
+		mu.Lock()
+
+		visited[n] = struct{}{}
+		return
+	}
+
+	// Call.
+	err = graph.TraverseDAG(
+		t.ctx,
+		nodeChan,
+		successorFinderForEdges(edges),
+		&visitor{F: visit},
+		traverseDAGParallelism)
+
+	AssertEq(nil, err)
+
+	// Make sure everything was visited.
+	for _, n := range nodes {
+		_, ok := visited[n]
+		AssertTrue(ok, "n: %q", n)
+	}
+}
+
 ////////////////////////////////////////////////////////////////////////
 // Tests
 ////////////////////////////////////////////////////////////////////////
 
 func (t *TraverseDAGTest) EmptyGraph() {
-	AssertTrue(false, "TODO")
+	edges := map[string][]string{}
+	t.runTest(edges)
 }
 
 func (t *TraverseDAGTest) SingleNodeConnectedComponents() {
