@@ -103,16 +103,16 @@ func (v *visitor) setScores(
 	}
 
 	// Files and directories are the only interesting cases.
-	mode := n.Info.Mode()
+	modeType := n.Info.Mode() & os.ModeType
 	switch {
-	case mode == 0:
+	case modeType == 0:
 		n.Scores, err = v.saveFile(ctx, path.Join(v.basePath, n.RelPath))
 		if err != nil {
 			err = fmt.Errorf("saveFile: %v", err)
 			return
 		}
 
-	case mode&os.ModeDir != 0:
+	case modeType&os.ModeDir != 0:
 		n.Scores, err = v.saveDir(ctx, path.Join(v.basePath, n.RelPath))
 		if err != nil {
 			err = fmt.Errorf("saveDir: %v", err)
