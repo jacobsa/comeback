@@ -189,17 +189,56 @@ func (t *MakeScoreMapKeyTest) Valid() {
 
 type ConsultScoreMapTest struct {
 	scoreMapTest
+	expectedKey *state.ScoreMapKey
 }
 
 func init() { RegisterTestSuite(&ConsultScoreMapTest{}) }
 
+func (t *ConsultScoreMapTest) SetUp(ti *TestInfo) {
+	t.scoreMapTest.SetUp(ti)
+	var err error
+
+	// Make sure the node is eligible by default.
+	t.node.RelPath = "foo"
+
+	f, err := os.Create(path.Join(t.dir, t.node.RelPath))
+	AssertEq(nil, err)
+	defer f.Close()
+
+	t.node.Info, err = f.Stat()
+	AssertEq(nil, err)
+
+	t.expectedKey = makeScoreMapKey(&t.node, &t.clock)
+	AssertNe(nil, t.expectedKey)
+}
+
 func (t *ConsultScoreMapTest) call() (err error) {
-	err = errors.New("TODO")
+	nodesIn := make(chan *fsNode, 1)
+	nodesIn <- &t.node
+	close(nodesIn)
+
+	err = consultScoreMap(
+		t.ctx,
+		t.scoreMap,
+		&t.clock,
+		nodesIn,
+		make(chan *fsNode, 1)) // Ignore output
+
 	return
 }
 
 func (t *ConsultScoreMapTest) NodeNotEligible() {
-	AssertTrue(false, "TODO")
+	var err error
+
+	// Make the node appear as a directory.
+	t.node.Info, err = os.Stat(t.dir)
+	AssertEq(nil, err)
+
+	// Call. Nothing should be changed about the Scores field.
+	err = t.call()
+	AssertEq(nil, err)
+
+	ExpectEq(nil, t.node.Scores)
 }
 
 func (t *ConsultScoreMapTest) PresentInScoreMap() {
