@@ -23,6 +23,7 @@ import (
 
 	"golang.org/x/net/context"
 
+	"github.com/jacobsa/comeback/internal/fs"
 	"github.com/jacobsa/comeback/internal/graph"
 )
 
@@ -30,8 +31,9 @@ import (
 // the given base path, excluding all relative paths that matches any of the
 // supplied exclusions, along with all of their descendants.
 //
-// The nodes involved are of type *fsNode. The successor finder fills in
-// RelPath, Info, and Parent fields.
+// The nodes involved are of type *fsNode. The successor finder fills in the
+// RelPath, Info and Parent fields of the successors, and the Children field of
+// the node on which it is called.
 func newSuccessorFinder(
 	basePath string,
 	exclusions []*regexp.Regexp) (sf graph.SuccessorFinder) {
@@ -63,31 +65,53 @@ func (sf *fsSuccessorFinder) FindDirectSuccessors(
 	}
 
 	// Skip non-directories; they have no successors.
-	if !n.Info.IsDir() {
+	if n.Info.Type != fs.TypeDirectory {
 		return
 	}
 
 	// Read and lstat all of the names in the directory.
-	entries, err := sf.readDir(n.RelPath)
+	listing, err := sf.readDir(n.RelPath)
 	if err != nil {
 		err = fmt.Errorf("readDir: %v", err)
 		return
 	}
 
-	// Filter out excluded entries, and return the rest as adjacent nodes.
-	for _, fi := range entries {
+	// Filter out excluded entries, converting the rest to *fs.DirectoryEntry and
+	// returning them as successors.
+	for _, fi := range listing {
+		// Skip?
 		childRelPath := path.Join(n.RelPath, fi.Name())
 		if sf.shouldSkip(childRelPath) {
 			continue
 		}
 
-		successor := &fsNode{
+		// Read a symlink target if necesssary.
+		var symlinkTarget string
+		if fi.Mode()&os.ModeSymlink != 0 {
+			symlinkTarget, err = os.Readlink(path.Join(sf.basePath, childRelPath))
+			if err != nil {
+				err = fmt.Errorf("Readlink: %v", err)
+				return
+			}
+		}
+
+		// Convert.
+		var entry *fs.DirectoryEntry
+		entry, err = fs.ConvertFileInfo(fi, symlinkTarget)
+		if err != nil {
+			err = fmt.Errorf("ConvertFileInfo: %v", err)
+			return
+		}
+
+		// Return a successor.
+		child := &fsNode{
 			RelPath: childRelPath,
-			Info:    fi,
+			Info:    *entry,
 			Parent:  n,
 		}
 
-		successors = append(successors, successor)
+		successors = append(successors, child)
+		n.Children = append(n.Children, child)
 	}
 
 	return

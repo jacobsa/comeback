@@ -16,12 +16,10 @@
 package save
 
 import (
-	"os"
-	"syscall"
 	"time"
 
+	"github.com/jacobsa/comeback/internal/fs"
 	"github.com/jacobsa/comeback/internal/state"
-	"github.com/jacobsa/comeback/internal/sys"
 	"github.com/jacobsa/timeutil"
 
 	"golang.org/x/net/context"
@@ -79,30 +77,27 @@ func updateScoreMap(
 func makeScoreMapKey(
 	node *fsNode,
 	clock timeutil.Clock) (key *state.ScoreMapKey) {
-	fi := node.Info
-
 	// Skip non-files.
-	if fi.Mode()&os.ModeType != 0 {
+	if node.Info.Type != fs.TypeFile {
 		return
 	}
 
 	// If the mtime of the file is not far enough in the past, we don't want to
 	// do any fancy caching, for fear of race conditions.
 	const minElapsed = 5 * time.Minute
-	if clock.Now().Sub(fi.ModTime()) < minElapsed {
+	if clock.Now().Sub(node.Info.MTime) < minElapsed {
 		return
 	}
 
 	// Return an appropriate key.
-	stat := fi.Sys().(*syscall.Stat_t)
 	key = &state.ScoreMapKey{
 		Path:        node.RelPath,
-		Permissions: fi.Mode() & os.ModePerm,
-		Uid:         sys.UserId(stat.Uid),
-		Gid:         sys.GroupId(stat.Gid),
-		MTime:       fi.ModTime(),
-		Inode:       stat.Ino,
-		Size:        uint64(fi.Size()),
+		Permissions: node.Info.Permissions,
+		Uid:         node.Info.Uid,
+		Gid:         node.Info.Gid,
+		MTime:       node.Info.MTime,
+		Inode:       node.Info.Inode,
+		Size:        node.Info.Size,
 	}
 
 	return

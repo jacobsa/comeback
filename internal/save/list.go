@@ -18,11 +18,11 @@ package save
 import (
 	"fmt"
 	"io"
-	"os"
 	"regexp"
 
 	"golang.org/x/net/context"
 
+	"github.com/jacobsa/comeback/internal/fs"
 	"github.com/jacobsa/comeback/internal/graph"
 	"github.com/jacobsa/syncutil"
 )
@@ -47,18 +47,10 @@ func listNodes(
 		// Set up a root node.
 		rootNode := &fsNode{
 			RelPath: "",
-			Parent:  nil,
-		}
-
-		rootNode.Info, err = os.Lstat(basePath)
-		if err != nil {
-			err = fmt.Errorf("os.Lstat: %v", err)
-			return
-		}
-
-		if !rootNode.Info.IsDir() {
-			err = fmt.Errorf("Not a directory: %q", basePath)
-			return
+			Info: fs.DirectoryEntry{
+				Type: fs.TypeDirectory,
+			},
+			Parent: nil,
 		}
 
 		// Explore the graph.
@@ -127,7 +119,7 @@ func List(
 	// Print out info about each node.
 	b.Add(func(ctx context.Context) (err error) {
 		for n := range nodes {
-			_, err = fmt.Fprintf(w, "%q %d\n", n.RelPath, n.Info.Size())
+			_, err = fmt.Fprintf(w, "%q %d\n", n.RelPath, n.Info.Size)
 			if err != nil {
 				err = fmt.Errorf("Fprintf: %v", err)
 				return
