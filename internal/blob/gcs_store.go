@@ -67,7 +67,7 @@ const metadataKey_MD5 = "comeback_md5"
 //
 // The returned store does not support Contains; this method must not be
 // called.
-func NewGCSStore(
+func Internal_NewGCSStore(
 	bucket gcs.Bucket,
 	prefix string) (store Store) {
 	store = &gcsStore{

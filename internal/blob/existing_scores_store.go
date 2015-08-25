@@ -34,7 +34,7 @@ import (
 // In other words, assuming that wrapped.Store returns successfully only when
 // durable, this store maintains the invariant that existingScores contains
 // only durable scores.
-func NewExistingScoresStore(
+func Internal_NewExistingScoresStore(
 	existingScores util.StringSet,
 	wrapped Store) (store Store) {
 	store = &existingScoresStore{

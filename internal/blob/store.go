@@ -54,16 +54,16 @@ func NewStore(
 	crypter crypto.Crypter,
 	existingScores util.StringSet) (bs Store, err error) {
 	// Store blobs in GCS.
-	bs = NewGCSStore(bucket, objectNamePrefix)
+	bs = Internal_NewGCSStore(bucket, objectNamePrefix)
 
 	// Respond efficiently to Contains requests.
-	bs = NewExistingScoresStore(existingScores, bs)
+	bs = Internal_NewExistingScoresStore(existingScores, bs)
 
 	// Make paranoid checks on the results.
-	bs = NewCheckingStore(bs)
+	bs = Internal_NewCheckingStore(bs)
 
 	// Encrypt blob data before sending it off to GCS.
-	bs = NewEncryptingStore(crypter, bs)
+	bs = Internal_NewEncryptingStore(crypter, bs)
 
 	return
 }

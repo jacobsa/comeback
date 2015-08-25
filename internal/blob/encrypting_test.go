@@ -46,7 +46,7 @@ func (t *encryptingStoreTest) SetUp(i *TestInfo) {
 	t.ctx = i.Ctx
 	t.crypter = mock_crypto.NewMockCrypter(i.MockController, "crypter")
 	t.wrapped = mock_blob.NewMockStore(i.MockController, "wrapped")
-	t.store = blob.NewEncryptingStore(t.crypter, t.wrapped)
+	t.store = blob.Internal_NewEncryptingStore(t.crypter, t.wrapped)
 }
 
 ////////////////////////////////////////////////////////////////////////
