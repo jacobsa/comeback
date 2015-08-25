@@ -41,7 +41,7 @@ func (s *checkingStore) Store(
 	}
 
 	// Check its result.
-	expected := ComputeScore(req.blob)
+	expected := ComputeScore(req.Blob)
 	if score != expected {
 		err = fmt.Errorf(
 			"Incorrect score returned for blob; %s vs %s.",

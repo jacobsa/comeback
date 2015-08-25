@@ -35,5 +35,5 @@ type Store interface {
 
 type StoreRequest struct {
 	// The blob data to be stored.
-	blob []byte
+	Blob []byte
 }
