@@ -33,6 +33,7 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/jacobsa/comeback/internal/blob"
+	"github.com/jacobsa/comeback/internal/save"
 	"github.com/jacobsa/comeback/internal/state"
 	"github.com/jacobsa/comeback/internal/util"
 	"github.com/jacobsa/comeback/internal/wiring"
@@ -167,17 +168,7 @@ func (t *WiringTest) WrongPassword() {
 	_, _, err = wiring.MakeRegistryAndCrypter(wrongPassword, t.bucket)
 	ExpectThat(err, Error(HasSubstr("password is incorrect")))
 
-	// Ditto with the dir saver.
-	_, err = wiring.MakeDirSaver(
-		wrongPassword,
-		t.bucket,
-		1<<24,
-		util.NewStringSet(),
-		state.NewScoreMap(),
-		gDiscardLogger)
-	ExpectThat(err, Error(HasSubstr("password is incorrect")))
-
-	// And the dir restorer.
+	// Ditto with the dir restorer.
 	_, err = wiring.MakeDirRestorer(wrongPassword, t.bucket)
 	ExpectThat(err, Error(HasSubstr("password is incorrect")))
 }
@@ -222,31 +213,31 @@ func (t *SaveAndRestoreTest) TearDown() {
 // Make a backup of the contents of t.src into t.bucket, returning a score for
 // the root listing.
 func (t *SaveAndRestoreTest) save() (score blob.Score, err error) {
-	// Create the dir saver.
-	dirSaver, err := wiring.MakeDirSaver(
-		password,
-		t.bucket,
-		fileChunkSize,
-		t.existingScores,
-		state.NewScoreMap(),
-		gDiscardLogger)
-
+	// Create the crypter.
+	_, crypter, err := wiring.MakeRegistryAndCrypter(password, t.bucket)
 	if err != nil {
-		err = fmt.Errorf("MakeDirSaver: %v", err)
+		err = fmt.Errorf("MakeRegistryAndCrypter: %v", err)
+		return
+	}
+
+	// Create the blob store.
+	bs, err := wiring.MakeBlobStore(t.bucket, crypter, t.existingScores)
+	if err != nil {
+		err = fmt.Errorf("MakeBlobStore: %v", err)
 		return
 	}
 
 	// Save the source directory.
-	score, err = dirSaver.Save(t.src, "", t.exclusions)
+	score, err = save.Save(
+		t.ctx,
+		t.src,
+		t.exclusions,
+		state.NewScoreMap(),
+		bs,
+		timeutil.RealClock())
+
 	if err != nil {
 		err = fmt.Errorf("Save: %v", err)
-		return
-	}
-
-	// Flush to stable storage.
-	err = dirSaver.Flush()
-	if err != nil {
-		err = fmt.Errorf("Flush: %v", err)
 		return
 	}
 

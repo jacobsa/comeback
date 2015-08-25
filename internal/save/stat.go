@@ -16,24 +16,18 @@
 package save
 
 import (
-	"os"
+	"errors"
 
-	"github.com/jacobsa/comeback/internal/blob"
+	"golang.org/x/net/context"
 )
 
-// A node within the tree defined by the file system hierarchy rooted at a
-// particular directory, called the base path below.
-type fsNode struct {
-	// The path of the file (or directory, etc.) relative to the base path.
-	RelPath string
-
-	// Information about the file, as returned by os.Lstat.
-	Info os.FileInfo
-
-	// The node for the parent of this file, or nil if this is the root of the
-	// tree of interest.
-	Parent *fsNode
-
-	// A list of scores reflecting the contents of this file or directory.
-	Scores []blob.Score
+// Fill in fsNode.Info fields for all incoming nodes. Nodes are interpreted as
+// relative to the supplied base path.
+func statNodes(
+	ctx context.Context,
+	basePath string,
+	nodesIn <-chan *fsNode,
+	nodesOut chan<- *fsNode) (err error) {
+	err = errors.New("TODO")
+	return
 }

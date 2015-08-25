@@ -33,3 +33,8 @@ type SuccessorFinder interface {
 		ctx context.Context,
 		n Node) (successors []Node, err error)
 }
+
+// A Visitor knows how to process each node in some graph traversal.
+type Visitor interface {
+	Visit(ctx context.Context, n Node) (err error)
+}
