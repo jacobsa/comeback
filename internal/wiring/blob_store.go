@@ -24,11 +24,6 @@ import (
 
 const (
 	BlobObjectNamePrefix = "blobs/"
-
-	// A generous lower bound for where the OS starts to tell us to fuck off if
-	// we have too many files. This may also cover the case where we get "no such
-	// host" errors, apparently because we do too many lookups all at once.
-	osFileLimit = 96
 )
 
 func minInt(a, b int) int {
@@ -53,17 +48,6 @@ func MakeBlobStore(
 
 	// Respond efficiently to Contains requests.
 	bs = blob.NewExistingScoresStore(existingScores, bs)
-
-	// Buffer around GCS with bounded parallelism, allowing file system scanning
-	// to proceed independent of waiting for GCS to ack writes.
-	const latencySecs = 2
-	const bandwidthBytesPerSec = 50e6
-	const bandwidthHz = 512
-
-	bs = blob.NewBufferingStore(
-		3*bandwidthBytesPerSec*latencySecs,
-		minInt(osFileLimit, 3*bandwidthHz*latencySecs),
-		bs)
 
 	// Make paranoid checks on the results.
 	bs = blob.NewCheckingStore(bs)
