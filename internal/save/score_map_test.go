@@ -44,7 +44,8 @@ var _ SetUpInterface = &scoreMapTest{}
 
 func (t *scoreMapTest) SetUp(ti *TestInfo) {
 	t.ctx = ti.Ctx
-	AssertTrue(false, "TODO")
+	t.scoreMap = state.NewScoreMap()
+	t.clock = timeutil.RealClock()
 }
 
 ////////////////////////////////////////////////////////////////////////
