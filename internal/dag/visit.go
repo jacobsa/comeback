@@ -351,17 +351,35 @@ func (state *visitState) addNodes(nodes []Node) {
 		}
 
 		state.nodes[n] = ni
-		state.toResolve = append(state.toResolve, ni)
-		if len(state.toResolve) == 1 {
-			state.cond.Broadcast()
-		}
+		state.reinsert(ni)
 	}
 }
 
 // Given a node that was removed from toResolve, unsatisfied, or toVisit and
 // then updated, re-insert it in the appropriate place.
 func (state *visitState) reinsert(ni *nodeInfo) {
-	panic("TODO")
+	switch ni.state {
+	default:
+		log.Panicf("Unknown state: %#v", ni)
+
+	case state_DependenciesUnresolved:
+		state.toResolve = append(state.toResolve, ni)
+		if len(state.toResolve) == 1 {
+			state.cond.Broadcast()
+		}
+
+	case state_DependenciesUnsatisfied:
+		state.unsatisfied[ni] = struct{}{}
+
+	case state_Unvisited:
+		state.toVisit = append(state.toVisit, ni)
+		if len(state.toVisit) == 1 {
+			state.cond.Broadcast()
+		}
+
+	case state_Visited:
+		// Nothing to do.
+	}
 }
 
 // Watch for nodes that can be resolved or visited and do so. Return when it's
