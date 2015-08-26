@@ -28,74 +28,17 @@ import (
 
 	"golang.org/x/net/context"
 
+	"github.com/jacobsa/comeback/internal/dag"
 	"github.com/jacobsa/comeback/internal/graph"
 	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
 )
 
-func TestTraverseDAG(t *testing.T) { RunTests(t) }
+func TestVisit(t *testing.T) { RunTests(t) }
 
 ////////////////////////////////////////////////////////////////////////
 // Helpers
 ////////////////////////////////////////////////////////////////////////
-
-// Return a topological sort of the nodes of the DAG defined by the supplied
-// edge map.
-func topsort(edges map[string][]string) (nodes []string, err error) {
-	// A DFS-based algorithm that detects cycles.
-	// Cf. https://en.wikipedia.org/wiki/Topological_sorting#Algorithms
-	marked := make(map[string]struct{})
-	tempMarked := make(map[string]struct{})
-	unmarked := make(map[string]struct{})
-	for n, _ := range edges {
-		unmarked[n] = struct{}{}
-	}
-
-	var visit func(string) error
-	visit = func(n string) (err error) {
-		// Cycle?
-		if _, ok := tempMarked[n]; ok {
-			err = fmt.Errorf("Cycle containing %q detected", n)
-			return
-		}
-
-		// Already visited?
-		if _, ok := marked[n]; ok {
-			return
-		}
-
-		delete(unmarked, n)
-		tempMarked[n] = struct{}{}
-		for _, m := range edges[n] {
-			err = visit(m)
-			if err != nil {
-				return
-			}
-		}
-
-		marked[n] = struct{}{}
-		delete(tempMarked, n)
-		nodes = append([]string{n}, nodes...)
-
-		return
-	}
-
-	// Visit nodes until there are no unmarked ones left.
-	for len(unmarked) > 0 {
-		var someNode string
-		for n, _ := range unmarked {
-			someNode = n
-			break
-		}
-
-		err = visit(someNode)
-		if err != nil {
-			return
-		}
-	}
-
-	return
-}
 
 // Compute the the reachability partial order for the DAG defined by the
 // supplied edges. Don't include self-reachability.
@@ -167,27 +110,14 @@ func makeRandSource() (src *rand.Rand) {
 	return
 }
 
-// Create a SuccessorFinder that consults the supplied map of edges.
-func successorFinderForEdges(
-	edges map[string][]string) (sf graph.SuccessorFinder) {
-	sf = &successorFinder{
-		F: func(ctx context.Context, n string) (nodes []string, err error) {
-			nodes = edges[n]
-			return
-		},
-	}
-
-	return
-}
-
-// A graph.Visitor for string nodes that calls through to a canned function.
+// A dag.Visitor for string nodes that calls through to a canned function.
 type visitor struct {
 	F func(context.Context, string) error
 }
 
 func (v *visitor) Visit(
 	ctx context.Context,
-	untyped graph.Node) (err error) {
+	untyped dag.Node) (err error) {
 	err = v.F(ctx, untyped.(string))
 	return
 }
@@ -196,43 +126,37 @@ func (v *visitor) Visit(
 // Boilerplate
 ////////////////////////////////////////////////////////////////////////
 
-const traverseDAGParallelism = 8
+const visitParallelism = 8
 
-type TraverseDAGTest struct {
+type VisitTest struct {
 	ctx context.Context
 }
 
-var _ SetUpInterface = &TraverseDAGTest{}
+var _ SetUpInterface = &VisitTest{}
 
-func init() { RegisterTestSuite(&TraverseDAGTest{}) }
+func init() { RegisterTestSuite(&VisitTest{}) }
 
-func (t *TraverseDAGTest) SetUp(ti *TestInfo) {
+func (t *VisitTest) SetUp(ti *TestInfo) {
 	t.ctx = ti.Ctx
 }
 
-func (t *TraverseDAGTest) call(
-	edges map[string][]string,
+func (t *VisitTest) call(
+	startNodes []string,
+	findDependencies func(context.Context, string) ([]string, error),
 	visit func(context.Context, string) error) (err error) {
-	// Sort the nodes into a valid order and stick them in a channel.
-	nodes, err := topsort(edges)
-	if err != nil {
-		err = fmt.Errorf("topsort: %v", err)
-		return
+	// Convert to a list of dag.Node.
+	var startDAGNodes []dag.Node
+	for _, n := range startNodes {
+		startDAGNodes = append(startDAGNodes, n)
 	}
-
-	nodeChan := make(chan graph.Node, len(nodes))
-	for _, n := range nodes {
-		nodeChan <- n
-	}
-	close(nodeChan)
 
 	// Call.
 	err = graph.TraverseDAG(
 		t.ctx,
-		nodeChan,
-		successorFinderForEdges(edges),
+		startDAGNodes,
+		&dependencyResolver{F: findDependencies},
 		&visitor{F: visit},
-		traverseDAGParallelism)
+		visitParallelism)
 
 	return
 }
