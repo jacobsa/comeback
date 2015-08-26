@@ -339,7 +339,20 @@ func (state *visitState) waitForSomethingToDo() {
 //
 // LOCKS_REQUIRED(state.mu)
 func (state *visitState) addNodes(nodes []Node) {
-	panic("TODO")
+	for _, n := range nodes {
+		// Skip nodes that we already know.
+		if _, ok := state.nodes[n]; ok {
+			continue
+		}
+
+		ni := &nodeInfo{
+			node:  n,
+			state: state_DependenciesUnresolved,
+		}
+
+		state.nodes[n] = ni
+		state.toResolve = append(state.toResolve, ni)
+	}
 }
 
 // Watch for nodes that can be resolved or visited and do so. Return when it's
