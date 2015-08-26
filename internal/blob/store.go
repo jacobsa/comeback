@@ -41,6 +41,10 @@ type Store interface {
 type StoreRequest struct {
 	// The blob data to be stored.
 	Blob []byte
+
+	// The score of the blob, used in a conspiracy between existingScoresStore
+	// and downstream stores.
+	score Score
 }
 
 // Create a blob store that stores blobs in the supplied bucket under the given
