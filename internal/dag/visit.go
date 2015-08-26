@@ -187,7 +187,7 @@ type visitState struct {
 }
 
 // LOCKS_REQUIRED(s.mu)
-func (s *traverseDAGState) checkInvariants() {
+func (s *visitState) checkInvariants() {
 	// INVARIANT: For all v, !v.readyToVisit()
 	for k, v := range s.notReadyToVisit {
 		if v.readyToVisit() {
@@ -200,10 +200,26 @@ func (s *traverseDAGState) checkInvariants() {
 		v.checkInvariants()
 	}
 
+	// INVARIANT: For all v, v is a key in admitted
+	for _, v := range s.notReadyToVisit {
+		_, ok := s.admitted[v]
+		if !ok {
+			log.Panicf("Not in admitted: %#v", v)
+		}
+	}
+
 	// INVARIANT: For all n, n is not a key in notReadyToVisit
 	for _, n := range s.readyToVisit {
 		if _, ok := s.notReadyToVisit[n]; ok {
 			log.Panicf("Ready and not ready: %#v", n)
+		}
+	}
+
+	// INVARIANT: For all n, n is a key in admitted
+	for _, n := range s.readyToVisit {
+		_, ok := s.admitted[v]
+		if !ok {
+			log.Panicf("Not in admitted: %#v", n)
 		}
 	}
 
