@@ -140,7 +140,7 @@ func runMount(ctx context.Context, args []string) (err error) {
 
 		// List jobs.
 		var jobs []registry.CompletedJob
-		jobs, err = r.ListBackups()
+		jobs, err = r.ListBackups(ctx)
 		if err != nil {
 			err = fmt.Errorf("ListBackups: %v", err)
 			return

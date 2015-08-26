@@ -35,10 +35,12 @@ import (
 // in the future be used with any other key and has not in the past, either.
 // Return a crypter configured to use the key.
 func NewGCSRegistry(
+	ctx context.Context,
 	bucket gcs.Bucket,
 	cryptoPassword string,
 	deriver crypto.KeyDeriver) (r Registry, crypter crypto.Crypter, err error) {
 	return newGCSRegistry(
+		ctx,
 		bucket,
 		cryptoPassword,
 		deriver,
@@ -78,7 +80,9 @@ type gcsRegistry struct {
 	bucket gcs.Bucket
 }
 
-func (r *gcsRegistry) RecordBackup(j CompletedJob) (err error) {
+func (r *gcsRegistry) RecordBackup(
+	ctx context.Context,
+	j CompletedJob) (err error) {
 	// Write an object to the bucket. On the small change that the time collides
 	// (or we've done something dumb like use the zero time), use a generation
 	// precondition to ensure we don't overwrite anything.
@@ -95,7 +99,7 @@ func (r *gcsRegistry) RecordBackup(j CompletedJob) (err error) {
 		},
 	}
 
-	_, err = r.bucket.CreateObject(context.Background(), req)
+	_, err = r.bucket.CreateObject(ctx, req)
 	if err != nil {
 		err = fmt.Errorf("CreateObject: %v", err)
 		return
@@ -155,13 +159,14 @@ func parseObjectAsJob(o *gcs.Object) (j CompletedJob, err error) {
 	return
 }
 
-func (r *gcsRegistry) ListBackups() (jobs []CompletedJob, err error) {
+func (r *gcsRegistry) ListBackups(
+	ctx context.Context) (jobs []CompletedJob, err error) {
 	// List all of the objects with the appropriate name prefix.
 	req := &gcs.ListObjectsRequest{
 		Prefix: gcsJobKeyPrefix,
 	}
 
-	objects, _, err := gcsutil.ListAll(context.Background(), r.bucket, req)
+	objects, _, err := gcsutil.ListAll(ctx, r.bucket, req)
 	if err != nil {
 		err = fmt.Errorf("gcsutil.ListAll: %v", err)
 		return
@@ -183,6 +188,7 @@ func (r *gcsRegistry) ListBackups() (jobs []CompletedJob, err error) {
 }
 
 func (r *gcsRegistry) FindBackup(
+	ctx context.Context,
 	startTime time.Time) (job CompletedJob, err error) {
 	err = fmt.Errorf("gcsRegistry.FindBackup is not implemented.")
 	return
@@ -190,6 +196,7 @@ func (r *gcsRegistry) FindBackup(
 
 // Like NewGCSRegistry, but with more injected.
 func newGCSRegistry(
+	ctx context.Context,
 	bucket gcs.Bucket,
 	cryptoPassword string,
 	deriver crypto.KeyDeriver,
@@ -197,7 +204,7 @@ func newGCSRegistry(
 	cryptoRandSrc io.Reader) (r Registry, crypter crypto.Crypter, err error) {
 	// Find the previously-written encrypted marker object, if any.
 	statReq := &gcs.StatObjectRequest{Name: markerObjectName}
-	o, err := bucket.StatObject(context.Background(), statReq)
+	o, err := bucket.StatObject(ctx, statReq)
 
 	if _, ok := err.(*gcs.NotFoundError); ok {
 		err = nil
@@ -280,7 +287,7 @@ func newGCSRegistry(
 		GenerationPrecondition: &precond,
 	}
 
-	_, err = bucket.CreateObject(context.Background(), createReq)
+	_, err = bucket.CreateObject(ctx, createReq)
 	if err != nil {
 		err = fmt.Errorf("CreateObject: %v", err)
 		return

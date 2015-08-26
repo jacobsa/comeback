@@ -40,6 +40,7 @@ func initDirRestorer(ctx context.Context) {
 	password := getPassword()
 
 	gDirRestorer, err = wiring.MakeDirRestorer(
+		ctx,
 		password,
 		bucket)
 }

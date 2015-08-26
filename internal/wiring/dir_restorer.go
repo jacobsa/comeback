@@ -18,6 +18,8 @@ package wiring
 import (
 	"fmt"
 
+	"golang.org/x/net/context"
+
 	"github.com/jacobsa/comeback/internal/backup"
 	"github.com/jacobsa/comeback/internal/util"
 	"github.com/jacobsa/gcloud/gcs"
@@ -26,6 +28,7 @@ import (
 // Create a directory restorer that reads from teh supplied bucket, decrypting
 // with a key derived from the given password.
 func MakeDirRestorer(
+	ctx context.Context,
 	password string,
 	bucket gcs.Bucket) (dr backup.DirectoryRestorer, err error) {
 	// Use the real file system.
@@ -37,7 +40,7 @@ func MakeDirRestorer(
 
 	// Create a crypter from the supplied password, verifying it against any past
 	// use of the bucket.
-	_, crypter, err := MakeRegistryAndCrypter(password, bucket)
+	_, crypter, err := MakeRegistryAndCrypter(ctx, password, bucket)
 	if err != nil {
 		err = fmt.Errorf("MakeRegistryAndCrypter: %v", err)
 		return

@@ -144,7 +144,7 @@ func runSave(ctx context.Context, args []string) (err error) {
 		Score:     score,
 	}
 
-	err = reg.RecordBackup(completedJob)
+	err = reg.RecordBackup(ctx, completedJob)
 	if err != nil {
 		err = fmt.Errorf("RecordBackup: %v", err)
 		return

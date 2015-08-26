@@ -345,7 +345,7 @@ func runVerify(ctx context.Context, args []string) (err error) {
 	defer logFile.Close()
 
 	// Find the root scores to be verified.
-	jobs, err := registry.ListBackups()
+	jobs, err := registry.ListBackups(ctx)
 	if err != nil {
 		err = fmt.Errorf("ListBackups: %v", err)
 		return
