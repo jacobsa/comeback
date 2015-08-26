@@ -18,6 +18,7 @@ package dag
 import (
 	"errors"
 	"fmt"
+	"log"
 	"sync"
 
 	"github.com/jacobsa/syncutil"
@@ -135,6 +136,10 @@ type nodeInfo struct {
 	dependants []*nodeInfo
 }
 
+func (ni *nodeInfo) checkInvariants() {
+	panic("TODO")
+}
+
 ////////////////////////////////////////////////////////////////////////
 // visitState
 ////////////////////////////////////////////////////////////////////////
@@ -165,8 +170,9 @@ type visitState struct {
 	// The set of all nodes in state_DependenciesUnsatisfied. If this is
 	// non-empty when we're done, the graph must contain a cycle.
 	//
-	// INVARIANT: For each k, v.state == state_DependenciesUnsatisfied
-	// INVARIANT: For each k, v.node is a key in nodes
+	// INVARIANT: For each k, k.state == state_DependenciesUnsatisfied
+	// INVARIANT: For each k, k.node is a key in nodes
+	// INVARIANT: All unsatisfied elements of nodes are in unsatisfied
 	//
 	// GUARDED_BY(mu)
 	unsatisfied map[*nodeInfo]struct{}
@@ -214,7 +220,79 @@ type visitState struct {
 
 // LOCKS_REQUIRED(s.mu)
 func (s *visitState) checkInvariants() {
-	panic("TODO")
+	// INVARIANT: For each k, v, v.node == k
+	for k, v := range s.nodes {
+		if !(v.node == k) {
+			log.Panicf("Node mismatch: %#v, %#v", v.node, k)
+		}
+	}
+
+	// INVARIANT: For each v, v.checkInvariants() doesn't panic
+	for _, v := range s.nodes {
+		v.checkInvariants()
+	}
+
+	// INVARIANT: For each v, v.state == state_DependenciesUnresolved
+	for _, v := range s.toResolve {
+		if !(v.state == state_DependenciesUnresolved) {
+			log.Panicf("Unexpected state: %v", v.state)
+		}
+	}
+
+	// INVARIANT: For each v, v.node is a key in nodes
+	for _, v := range s.toResolve {
+		_, ok := s.nodes[v]
+		if !ok {
+			log.Panicf("Unknown node: %#v", v)
+		}
+	}
+
+	// INVARIANT: For each k, k.state == state_DependenciesUnsatisfied
+	for k, _ := range s.unsatisfied {
+		if !(k.state == state_DependenciesUnsatisfied) {
+			log.Panicf("Unexpected state: %v", k.state)
+		}
+	}
+
+	// INVARIANT: For each k, k.node is a key in nodes
+	for k, _ := range s.unsatisfied {
+		_, ok := s.nodes[k]
+		if !ok {
+			log.Panicf("Unknown node: %#v", k)
+		}
+	}
+
+	// INVARIANT: All unsatisfied elements of nodes are in unsatisfied
+	for _, ni := range s.nodes {
+		if ni.state != state_DependenciesUnsatisfied {
+			continue
+		}
+
+		_, ok := s.unsatisfied[ni]
+		if !ok {
+			log.Panicf("Missing unsatisfied node: %#v", ni.node)
+		}
+	}
+
+	// INVARIANT: For each v, v.state == state_Unvisited
+	for _, v := range s.toVisit {
+		if !(v.state == state_Unvisited) {
+			log.Panicf("Unexpected state: %v", v.state)
+		}
+	}
+
+	// INVARIANT: For each v, v.node is a key in nodes
+	for _, v := range s.toVisit {
+		_, ok := s.nodes[v]
+		if !ok {
+			log.Panicf("Unknown node: %#v", v)
+		}
+	}
+
+	// INVARIANT: busyWorkers >= 0
+	if !(s.busyWorkers >= 0) {
+		log.Panicf("busyWorkers: %d", s.busyWorkers)
+	}
 }
 
 // Is there anything that needs a worker's attention?
