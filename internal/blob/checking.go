@@ -22,9 +22,8 @@ import (
 )
 
 // Return a blob store that wraps the supplied one, confirming that the blob
-// contents and scores it returns are correct, guarding against silent data
-// corruption.
-func NewCheckingStore(wrapped Store) Store {
+// contents it loads are correct, guarding against silent data corruption.
+func Internal_NewCheckingStore(wrapped Store) Store {
 	return &checkingStore{wrapped}
 }
 
@@ -34,24 +33,8 @@ type checkingStore struct {
 
 func (s *checkingStore) Store(
 	ctx context.Context,
-	blob []byte) (score Score, err error) {
-	// Call the wrapped store.
-	if score, err = s.wrapped.Store(ctx, blob); err != nil {
-		return
-	}
-
-	// Check its result.
-	expected := ComputeScore(blob)
-	if score != expected {
-		err = fmt.Errorf(
-			"Incorrect score returned for blob; %s vs %s.",
-			score.Hex(),
-			expected.Hex())
-
-		return
-	}
-
-	return
+	req *StoreRequest) (score Score, err error) {
+	return s.wrapped.Store(ctx, req)
 }
 
 func (s *checkingStore) Load(
@@ -71,10 +54,5 @@ func (s *checkingStore) Load(
 			actual.Hex())
 	}
 
-	return
-}
-
-func (s *checkingStore) Contains(ctx context.Context, score Score) (b bool) {
-	b = s.wrapped.Contains(ctx, score)
 	return
 }

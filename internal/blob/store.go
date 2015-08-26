@@ -15,20 +15,54 @@
 
 package blob
 
-import "golang.org/x/net/context"
+import (
+	"github.com/jacobsa/comeback/internal/crypto"
+	"github.com/jacobsa/comeback/internal/util"
+	"github.com/jacobsa/gcloud/gcs"
+	"golang.org/x/net/context"
+)
 
 // A Store knows how to store blobs for later retrieval.
 type Store interface {
-	// Store the blob, returning a score with which it can later be retrieved.
+	// Store a blob, returning a score with which it can later be retrieved.
 	Store(
 		ctx context.Context,
-		blob []byte) (s Score, err error)
-
-	// Return true only if the supplied score is durable in the blob store.
-	// Implementations may choose to return false if the information is not
-	// available.
-	Contains(ctx context.Context, score Score) (b bool)
+		req *StoreRequest) (s Score, err error)
 
 	// Load a previously-stored blob.
 	Load(ctx context.Context, s Score) (blob []byte, err error)
+}
+
+type StoreRequest struct {
+	// The blob data to be stored.
+	Blob []byte
+
+	// The score of the blob, used in a conspiracy between existingScoresStore
+	// and downstream stores.
+	score Score
+}
+
+// Create a blob store that stores blobs in the supplied bucket under the given
+// name prefix, encrypting with the supplied crypter.
+//
+// existingScores must contain only scores that are known to exist in the
+// bucket, in hex form. It will be updated as the blob store is used.
+func NewStore(
+	bucket gcs.Bucket,
+	objectNamePrefix string,
+	crypter crypto.Crypter,
+	existingScores util.StringSet) (bs Store, err error) {
+	// Store blobs in GCS.
+	bs = Internal_NewGCSStore(bucket, objectNamePrefix)
+
+	// Don't make redundant calls to GCS.
+	bs = Internal_NewExistingScoresStore(existingScores, bs)
+
+	// Make paranoid checks on the results.
+	bs = Internal_NewCheckingStore(bs)
+
+	// Encrypt blob data before sending it off to GCS.
+	bs = Internal_NewEncryptingStore(crypter, bs)
+
+	return
 }
