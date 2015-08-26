@@ -128,41 +128,88 @@ func TraverseDAG(
 	return
 }
 
+////////////////////////////////////////////////////////////////////////
+// nodeInfo
+////////////////////////////////////////////////////////////////////////
+
+type nodeState int
+
+// States in which a node involved in a call to Visit may be.
+const (
+	// The dependency resolver has not yet been called for this node, or a call
+	// is currently in progress.
+	state_DependenciesUnresolved nodeState = iota
+
+	// The dependencies of this node have been resolved, but they have not yet
+	// all been visited.
+	state_DependenciesUnsatisfied
+
+	// This node is eligible to be visited, but the visitor has not yet been
+	// called or a call is currently in progress.
+	state_Unvisited
+
+	// The visitor has been called for this node and returned successfully.
+	state_Visited
+)
+
+type nodeInfo struct {
+	node  Node
+	state nodeState
+
+	// The number of unsatisfied dependencies remaining for this node.
+	//
+	// INVARIANT: unsatisfied >= 0
+	// INVARIANT: unsatisfied > 0 iff state == state_DependenciesUnsatisfied
+	unsatisfied int64
+
+	// The set of unsatisfied nodes for which this node is a blocker.
+	//
+	// INVARIANT: len(dependants) > 0 implies state < state_Unvisited.
+	// INVARIANT: For each n, n.state == state_DependenciesUnsatisfied
+	dependants []*nodeInfo
+}
+
+////////////////////////////////////////////////////////////////////////
+// visitState
+////////////////////////////////////////////////////////////////////////
+
 type visitState struct {
 	mu syncutil.InvariantMutex
 
-	// A list of freshly-encountered nodes. These may have already had their
-	// dependencies resolved and may even have been visited, or may have never
-	// been seen before. The list may also contain duplicates.
+	// All of the nodes we've yet encountered and their current state.
+	//
+	// INVARIANT: For each k, v, v.node == k
+	// INVARIANT: For each v, v.checkInvariants() doesn't panic
 	//
 	// GUARDED_BY(mu)
-	freshNodes []Node
+	nodes map[Node]*nodeInfo
 
-	// The set of all nodes we have ever admitted to notReadyToVisit or
-	// readyToVisit. In other words, the set of all nodes whose dependencies
-	// we've already resolved.
+	// The set of nodes in state_DependenciesUnresolved for which we haven't yet
+	// started a call to the dependency resolver.
+	//
+	// INVARIANT: For each v, v.state == state_DependenciesUnresolved
+	// INVARIANT: For each v, v.node is a key in nodes
 	//
 	// GUARDED_BY(mu)
-	resolved map[Node]struct{}
+	toResolve []*nodeInfo
 
-	// A map containing nodes that we are not yet ready to visit, because they
-	// have dependencies that have not yet been visited, to the number of such
-	// dependencies.
+	// The set of all nodes in state_DependenciesUnsatisfied. If this is
+	// non-empty when we're done, the graph must contain a cycle.
 	//
-	// INVARIANT: For all v, v > 0
-	// INVARIANT: For all k, k is a key in resolved
+	// INVARIANT: For each k, v.state == state_DependenciesUnsatisfied
+	// INVARIANT: For each k, v.node is a key in nodes
 	//
 	// GUARDED_BY(mu)
-	notReadyToVisit map[Node]int64
+	unsatisfied map[*nodeInfo]struct{}
 
-	// A list of nodes that we are ready to visit but have not yet started
-	// visiting.
+	// The set of nodes in state_Unvisited for which we haven't yet started a
+	// call to the visitor.
 	//
-	// INVARIANT: For all n, n is not a key in notReadyToVisit
-	// INVARIANT: For all n, n is a key in resolved
+	// INVARIANT: For each v, v.state == state_Unvisited
+	// INVARIANT: For each v, v.node is a key in nodes
 	//
 	// GUARDED_BY(mu)
-	readyToVisit []Node
+	toVisit []*nodeInfo
 
 	// Set to the first error seen by a worker, if any. When non-nil, all workers
 	// should wake up and return.
@@ -174,8 +221,8 @@ type visitState struct {
 	// GUARDED_BY(mu)
 	firstErr error
 
-	// The number of workers that are doing something besides waiting on a node
-	// to visit. If this hits zero with readyToVisit empty, it means that there
+	// The number of workers that are doing something besides waiting on work. If
+	// this hits zero with toResolve and toVisit both empty, it means that there
 	// is nothing further to do.
 	//
 	// INVARIANT: busyWorkers >= 0
@@ -185,10 +232,12 @@ type visitState struct {
 
 	// Broadcasted to with mu held when any of the following state changes:
 	//
-	//  *  freshNodes
-	//  *  readyToVisit
+	//  *  toResolve
+	//  *  toVisit
 	//  *  firstErr
 	//  *  busyWorkers
+	//
+	// See also visitState.shouldWake, with which this list must be kept in sync.
 	//
 	// GUARDED_BY(mu)
 	cond sync.Cond
@@ -196,48 +245,15 @@ type visitState struct {
 
 // LOCKS_REQUIRED(s.mu)
 func (s *visitState) checkInvariants() {
-	// INVARIANT: For all v, v > 0
-	for k, v := range s.notReadyToVisit {
-		if v <= 0 {
-			log.Panicf("Non-positive count %d for node: %#v", v, k)
-		}
-	}
-
-	// INVARIANT: For all k, k is a key in resolved
-	for k, _ := range s.notReadyToVisit {
-		_, ok := s.resolved[k]
-		if !ok {
-			log.Panicf("Not in resolved: %#v", k)
-		}
-	}
-
-	// INVARIANT: For all n, n is not a key in notReadyToVisit
-	for _, n := range s.readyToVisit {
-		if _, ok := s.notReadyToVisit[n]; ok {
-			log.Panicf("Ready and not ready: %#v", n)
-		}
-	}
-
-	// INVARIANT: For all n, n is a key in resolved
-	for _, n := range s.readyToVisit {
-		_, ok := s.resolved[v]
-		if !ok {
-			log.Panicf("Not in resolved: %#v", n)
-		}
-	}
-
-	// INVARIANT: busyWorkers >= 0
-	if s.busyWorkers < 0 {
-		log.Panicf("Negative count: %d", s.busyWorkers)
-	}
+	panic("TODO")
 }
 
 // Is there anything that needs a worker's attention?
 //
 // LOCKS_REQUIRED(state.mu)
 func (state *visitState) shouldWake() bool {
-	return len(state.freshNodes) != 0 ||
-		len(state.readyToVisit) != 0 ||
+	return len(state.toResolve) != 0 ||
+		len(state.toVisit) != 0 ||
 		state.firstErr != nil ||
 		state.busyWorkers == 0
 }
