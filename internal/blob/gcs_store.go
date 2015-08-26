@@ -18,7 +18,6 @@ package blob
 import (
 	"bytes"
 	"crypto/md5"
-	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
 	"io/ioutil"
@@ -64,6 +63,9 @@ const metadataKey_MD5 = "comeback_md5"
 // The blob store trusts that it has full ownership of this portion of the
 // bucket's namespace -- if a score name exists, then it points to the correct
 // data.
+//
+// The resulting store requires StoreRequest.score fields to be filled in by
+// the caller.
 //
 // The returned store does not support Contains; this method must not be
 // called.
@@ -296,14 +298,17 @@ func (s *gcsStore) Store(
 	req *StoreRequest) (score Score, err error) {
 	blob := req.Blob
 
-	// Compute a score and an object name.
-	score = ComputeScore(blob)
+	// Pull out the score and choose an object name.
+	score = req.score
 	name := s.makeName(score)
+
+	// Optimization: we know that the score is the SHA-1 hash of the blob, so
+	// don't need to compute it again.
+	var sha1 []byte = score[:]
 
 	// Create the object.
 	crc32c := *gcsutil.CRC32C(blob)
 	md5 := *gcsutil.MD5(blob)
-	sha1 := sha1.Sum(blob)
 
 	createReq := &gcs.CreateObjectRequest{
 		Name:     name,
@@ -312,7 +317,7 @@ func (s *gcsStore) Store(
 		MD5:      &md5,
 
 		Metadata: map[string]string{
-			metadataKey_SHA1:   hex.EncodeToString(sha1[:]),
+			metadataKey_SHA1:   hex.EncodeToString(sha1),
 			metadataKey_CRC32C: fmt.Sprintf("%#08x", crc32c),
 			metadataKey_MD5:    hex.EncodeToString(md5[:]),
 		},
