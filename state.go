@@ -59,58 +59,68 @@ func buildExistingScores(
 	return
 }
 
-func initState(ctx context.Context) {
+func makeState(ctx context.Context) (s state.State, err error) {
 	cfg := getConfig()
 	bucket := getBucket(ctx)
-	var err error
 
 	// Open the specified file.
 	f, err := os.Open(cfg.StateFile)
-
+	switch {
 	// Special case: if the error is that the file doesn't exist, ignore it.
-	if err != nil && os.IsNotExist(err) {
+	case os.IsNotExist(err):
 		err = nil
 		log.Println("No state file found. Using fresh state.")
-	} else {
-		// Handle other Open errors.
-		if err != nil {
-			log.Fatalln("Opening state file:", err)
-		}
 
+	case err != nil:
+		return
+	}
+
+	// If we opened a file above, load from it.
+	if f != nil {
 		defer f.Close()
-
-		// Load the state struct.
 		log.Println("Loading from state file.")
 
-		g_state, err = state.LoadState(f)
+		s, err = state.LoadState(f)
 		if err != nil {
-			log.Fatalln("LoadState:", err)
+			err = fmt.Errorf("LoadState: %v", err)
+			return
 		}
 	}
 
 	// Throw out the existing score cache if requested.
 	if *g_discardScoreCache {
-		g_state.ScoresForFiles = state.NewScoreMap()
+		s.ScoresForFiles = state.NewScoreMap()
 	}
 
 	// Make sure there are no nil interface values.
-	if g_state.ScoresForFiles == nil {
-		g_state.ScoresForFiles = state.NewScoreMap()
+	if s.ScoresForFiles == nil {
+		s.ScoresForFiles = state.NewScoreMap()
 	}
 
 	// If we don't know the set of hex scores in the store, or the set of scores
 	// is stale, re-list.
-	age := time.Now().Sub(g_state.RelistTime)
+	age := time.Now().Sub(s.RelistTime)
 	const maxAge = 30 * 24 * time.Hour
 
-	if g_state.ExistingScores == nil || age > maxAge {
+	if s.ExistingScores == nil || age > maxAge {
 		log.Println("Listing existing scores...")
 
-		g_state.RelistTime = time.Now()
-		g_state.ExistingScores, err = buildExistingScores(ctx, bucket)
+		s.RelistTime = time.Now()
+		s.ExistingScores, err = buildExistingScores(ctx, bucket)
 		if err != nil {
-			log.Fatalf("buildExistingScores: %v", err)
+			err = fmt.Errorf("buildExistingScores: %v", err)
+			return
 		}
+	}
+
+	return
+}
+
+func initState(ctx context.Context) {
+	var err error
+	g_state, err = makeState(ctx)
+	if err != nil {
+		log.Fatalln(err)
 	}
 }
 
