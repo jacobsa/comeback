@@ -46,63 +46,30 @@ func Visit(
 	dr DependencyResolver,
 	v Visitor,
 	parallelism int) (err error) {
-	err = errors.New("TODO")
-	return
-}
-
-// Given
-//
-// *   a channel whose contents are a topologically-sorted list of the unique
-//     nodes in a DAG (i.e. a node appears only after all of its predecessors
-//     have) and
-//
-// *   a successor finder that agrees with the topological sort about the
-//     structure of the graph,
-//
-// invoke the supplied visitor once for each node in the graph with, bounded
-// parallelism. The visitor will be called for a node N only after it has
-// returned success for all of N's predecessors.
-//
-// The successor finder may be called multiple times per node, and must be
-// idempotent.
-func TraverseDAG(
-	ctx context.Context,
-	nodes <-chan Node,
-	sf SuccessorFinder,
-	v Visitor,
-	parallelism int) (err error) {
 	b := syncutil.NewBundle(ctx)
 
 	// Set up a state struct.
-	state := &traverseDAGState{
-		notReadyToVisit: make(map[Node]traverseDAGNodeState),
-
-		// One, for processIncomingNodes, to prevent visitNodes from returning
-		// immediately. processIncomingNodes will mark itself as no longer busy
-		// when it returns.
-		busyWorkers: 1,
+	state := &visitState{
+		dr:          dr,
+		visitor:     v,
+		nodes:       make(map[Node]*nodeInfo),
+		unsatisfied: make(map[*nodeInfo]struct{}),
 	}
 
 	state.mu = syncutil.NewInvariantMutex(state.checkInvariants)
 	state.cond.L = &state.mu
 
-	// Process incoming nodes from the user.
-	b.Add(func(ctx context.Context) (err error) {
-		err = processIncomingNodes(ctx, nodes, sf, state)
-		if err != nil {
-			err = fmt.Errorf("processIncomingNodes: %v", err)
-			return
-		}
+	// Add each of the start nodes.
+	state.mu.Lock()
+	state.addNodes(startNodes)
+	state.mu.Unlock()
 
-		return
-	})
-
-	// Run multiple workers to deal with the nodes that are ready to visit.
+	// Run multiple workers.
 	for i := 0; i < parallelism; i++ {
 		b.Add(func(ctx context.Context) (err error) {
-			err = visitNodes(ctx, sf, v, state)
+			err = state.processNodes(ctx)
 			if err != nil {
-				err = fmt.Errorf("visitNodes: %v", err)
+				err = fmt.Errorf("processNodes: %v", err)
 				return
 			}
 
@@ -115,8 +82,8 @@ func TraverseDAG(
 	//
 	//  *  Worker A encounters an error, sets firstErr, and returns.
 	//
-	//  *  Worker B wakes up, sees firstErr, and returns with a junk follow-on
-	//     error.
+	//  *  Worker B wakes up, sees firstErr, and returns with a follow-on
+	//     "cancelled" error.
 	//
 	//  *  The bundle observes worker B's error before worker A's.
 	//
@@ -174,6 +141,9 @@ type nodeInfo struct {
 ////////////////////////////////////////////////////////////////////////
 
 type visitState struct {
+	dr      DependencyResolver
+	visitor Visitor
+
 	mu syncutil.InvariantMutex
 
 	// All of the nodes we've yet encountered and their current state.
