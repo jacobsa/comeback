@@ -24,6 +24,7 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"sort"
 	"sync"
 	"testing"
 	"time"
@@ -56,6 +57,27 @@ func TestMain(m *testing.M) {
 ////////////////////////////////////////////////////////////////////////
 // Helpers
 ////////////////////////////////////////////////////////////////////////
+
+// A dag.DependencyResolver that invokes a wrapped function, and assumes that
+// all nodes are strings.
+type dependencyResolver struct {
+	F func(context.Context, string) ([]string, error)
+}
+
+var _ dag.DependencyResolver = &dependencyResolver{}
+
+func (dr *dependencyResolver) FindDependencies(
+	ctx context.Context,
+	node dag.Node) (deps []dag.Node, err error) {
+	var a []string
+	a, err = dr.F(ctx, node.(string))
+
+	for _, a := range a {
+		deps = append(deps, a)
+	}
+
+	return
+}
 
 // Compute the the reachability partial order for the DAG defined by the
 // supplied edges. Don't include self-reachability.
@@ -168,7 +190,7 @@ func (t *VisitTest) call(
 	}
 
 	// Call.
-	err = graph.TraverseDAG(
+	err = dag.Visit(
 		t.ctx,
 		startDAGNodes,
 		&dependencyResolver{F: findDependencies},
@@ -315,12 +337,14 @@ func randomTree(depth int) (edges map[string][]string) {
 // Tests
 ////////////////////////////////////////////////////////////////////////
 
-func (t *TraverseDAGTest) EmptyGraph() {
+func (t *VisitTest) EmptyGraph() {
 	edges := map[string][]string{}
-	t.runTest(edges)
+	startNodes := []string{}
+
+	t.runTest(edges, startNodes)
 }
 
-func (t *TraverseDAGTest) SingleNodeConnectedComponents() {
+func (t *VisitTest) SingleNodeConnectedComponents() {
 	// Graph structure:
 	//
 	//     A  B  C  D
@@ -331,11 +355,12 @@ func (t *TraverseDAGTest) SingleNodeConnectedComponents() {
 		"C": {},
 		"D": {},
 	}
+	startNodes := []string{"A", "B", "C", "D"}
 
-	t.runTest(edges)
+	t.runTest(edges, startNodes)
 }
 
-func (t *TraverseDAGTest) SimpleRootedTree() {
+func (t *VisitTest) SimpleRootedTree() {
 	// Graph structure:
 	//
 	//        A
@@ -361,11 +386,12 @@ func (t *TraverseDAGTest) SimpleRootedTree() {
 		"J": {},
 		"K": {},
 	}
+	startNodes := []string{"A"}
 
-	t.runTest(edges)
+	t.runTest(edges, startNodes)
 }
 
-func (t *TraverseDAGTest) SimpleDAG() {
+func (t *VisitTest) SimpleDAG() {
 	// Graph structure:
 	//
 	//        A
@@ -383,11 +409,12 @@ func (t *TraverseDAGTest) SimpleDAG() {
 		"D": {"E"},
 		"E": {},
 	}
+	startNodes := []string{"A"}
 
-	t.runTest(edges)
+	t.runTest(edges, startNodes)
 }
 
-func (t *TraverseDAGTest) MultipleConnectedComponents() {
+func (t *VisitTest) MultipleConnectedComponents() {
 	// Graph structure:
 	//
 	//        A       E
@@ -405,36 +432,41 @@ func (t *TraverseDAGTest) MultipleConnectedComponents() {
 		"F": {},
 		"G": {},
 	}
+	startNodes := []string{"A", "E"}
 
-	t.runTest(edges)
+	t.runTest(edges, startNodes)
 }
 
-func (t *TraverseDAGTest) RedundantRoots() {
+func (t *VisitTest) RedundantRoots() {
 	AssertTrue(false, "TODO")
 }
 
-func (t *TraverseDAGTest) Cycle() {
+func (t *VisitTest) Cycle() {
 	AssertTrue(false, "TODO")
 }
 
-func (t *TraverseDAGTest) LargeRootedTree() {
+func (t *VisitTest) LargeRootedTree() {
 	const depth = 6
 	edges := randomTree(depth)
-	t.runTest(edges)
+	startNodes := []string{"root"}
+
+	t.runTest(edges, startNodes)
 }
 
-func (t *TraverseDAGTest) LargeRootedTree_Inverted() {
+func (t *VisitTest) LargeRootedTree_Inverted() {
 	const depth = 6
 	edges := invertRelation(randomTree(depth))
-	t.runTest(edges)
+	startNodes := []string{"root"}
+
+	t.runTest(edges, startNodes)
 }
 
-func (t *TraverseDAGTest) DependencyResolverReturnsError() {
+func (t *VisitTest) DependencyResolverReturnsError() {
 	AssertTrue(false, "TODO")
 }
 
-func (t *TraverseDAGTest) VisitorReturnsError() {
-	AssertGt(traverseDAGParallelism, 1)
+func (t *VisitTest) VisitorReturnsError() {
+	AssertGt(visitParallelism, 1)
 
 	// Graph structure:
 	//
@@ -460,6 +492,15 @@ func (t *TraverseDAGTest) VisitorReturnsError() {
 		"I": {"J", "K"},
 		"J": {},
 		"K": {},
+	}
+	startNodes := []string{"A"}
+
+	// Dependency finder: operate as usual.
+	findDependencies := func(
+		ctx context.Context,
+		n string) (deps []string, err error) {
+		deps = edges[n]
+		return
 	}
 
 	// Visitor behavior:
@@ -498,8 +539,8 @@ func (t *TraverseDAGTest) VisitorReturnsError() {
 		return
 	}
 
-	// Traverse.
-	err := t.call(edges, visit)
+	// Call.
+	err := t.call(startNodes, findDependencies, visit)
 	ExpectEq(cErr, err)
 
 	// B should have seen cancellation.
@@ -507,10 +548,11 @@ func (t *TraverseDAGTest) VisitorReturnsError() {
 
 	// Nothing descending from B or C should have been visted.
 	close(visited)
-	var nodes []string
+	var nodes sort.StringSlice
 	for n := range visited {
 		nodes = append(nodes, n)
 	}
 
-	ExpectThat(sortNodes(nodes), ElementsAre("A", "B", "C"))
+	sort.Sort(nodes)
+	ExpectThat(nodes, ElementsAre("A", "B", "C"))
 }
