@@ -355,6 +355,12 @@ func (state *visitState) addNodes(nodes []Node) {
 	}
 }
 
+// Given a node that was removed from toResolve, unsatisfied, or toVisit and
+// then updated, re-insert it in the appropriate place.
+func (state *visitState) reinsert(ni *nodeInfo) {
+	panic("TODO")
+}
+
 // Watch for nodes that can be resolved or visited and do so. Return when it's
 // guaranteed that there's nothing further to do.
 func (state *visitState) processNodes(ctx context.Context) (err error) {
@@ -435,7 +441,18 @@ func (state *visitState) visitOne(ctx context.Context) (err error) {
 		return
 	}
 
-	err = errors.New("TODO: Update state. At least dependants; others?")
+	// Update each dependant, now that this node has been visited.
+	for _, dep := range ni.dependants {
+		dep.unsatisfied--
+		if dep.unsatisfied == 0 {
+			delete(state.unsatisfied, dep)
+			state.reinsert(dep)
+		}
+	}
+
+	// Update the node itself.
+	ni.state = state_Visited
+
 	return
 }
 
