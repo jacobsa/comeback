@@ -437,7 +437,26 @@ func (t *VisitTest) MultipleConnectedComponents() {
 }
 
 func (t *VisitTest) RedundantRoots() {
-	AssertTrue(false, "TODO")
+	// Graph structure:
+	//
+	//        A
+	//      /  \
+	//     B    C
+	//      \  /|
+	//        D |
+	//         \|
+	//          E
+	//
+	edges := map[string][]string{
+		"A": {"B", "C"},
+		"B": {"D"},
+		"C": {"D", "E"},
+		"D": {"E"},
+		"E": {},
+	}
+	startNodes := []string{"A", "D", "B", "A"}
+
+	t.runTest(edges, startNodes)
 }
 
 func (t *VisitTest) Cycle() {
