@@ -209,7 +209,6 @@ func (t *VisitTest) runTest(
 	// Compute the reachability relation for the DAG, and invert it.
 	reachable, err := reachabilityRelation(edges)
 	AssertEq(nil, err)
-	inverseReachable := invertRelation(reachable)
 
 	// Set up a visit function that ensures that a visit hasn't happened out of
 	// order, sleeps for awhile, then marks the node as visited.
@@ -229,9 +228,9 @@ func (t *VisitTest) runTest(
 			return
 		}
 
-		// We should have already finished visiting all of the nodes from which
-		// this node is reachable.
-		for _, p := range inverseReachable[n] {
+		// We should have already finished visiting all of the nodes reachable from
+		// this node along dependency edges.
+		for _, p := range reachable[n] {
 			_, ok := visited[p]
 			if !ok {
 				err = fmt.Errorf("Visited %q before finished visiting %q", n, p)
