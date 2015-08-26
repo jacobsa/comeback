@@ -129,34 +129,51 @@ func getState(ctx context.Context) *state.State {
 	return &g_state
 }
 
+func saveStateStruct(dst string, s *state.State) (err error) {
+	// Create a temporary file.
+	f, err := ioutil.TempFile("", "comeback_state")
+	if err != nil {
+		err = fmt.Errorf("TempFile: %v", err)
+		return
+	}
+
+	defer f.Close()
+	tempFilePath := f.Name()
+
+	// Write to the file.
+	err = state.SaveState(f, *s)
+	if err != nil {
+		err = fmt.Errorf("SaveState: %v", err)
+		return
+	}
+
+	// Close the file.
+	err = f.Close()
+	if err != nil {
+		err = fmt.Errorf("Close: %v", err)
+		return
+	}
+
+	// Rename the file into the new location.
+	err = os.Rename(tempFilePath, dst)
+	if err != nil {
+		err = fmt.Errorf("Rename: %v", err)
+		return
+	}
+
+	return
+}
+
 func saveState(ctx context.Context) {
 	// Make sure only one run can happen at a time.
 	g_saveStateMutex.Lock()
 	defer g_saveStateMutex.Unlock()
 
-	var err error
-
 	cfg := getConfig()
 	stateStruct := getState(ctx)
 
-	// Write out the state to a temporary file.
-	f, err := ioutil.TempFile("", "comeback_state")
+	err := saveStateStruct(cfg.StateFile, stateStruct)
 	if err != nil {
-		log.Fatalln("Creating temporary state file:", err)
-	}
-
-	tempFilePath := f.Name()
-
-	if err = state.SaveState(f, *stateStruct); err != nil {
-		log.Fatalln("SaveState:", err)
-	}
-
-	if err = f.Close(); err != nil {
-		log.Fatalln("Closing temporary state file:", err)
-	}
-
-	// Rename the file into the new location.
-	if err = os.Rename(tempFilePath, cfg.StateFile); err != nil {
-		log.Fatalln("Renaming temporary state file:", err)
+		log.Fatalf("saveStateStruct: %v", err)
 	}
 }
