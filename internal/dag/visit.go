@@ -18,7 +18,6 @@ package dag
 import (
 	"errors"
 	"fmt"
-	"log"
 	"sync"
 
 	"github.com/jacobsa/syncutil"
@@ -237,14 +236,17 @@ func (state *visitState) waitForSomethingToDo() {
 	}
 }
 
-// Read nodes that are ready to visit from state.readyToVisit and
-// state.newReadyNodes, and visit them. Return when there is no longer any
-// possibility of nodes becoming ready.
-func visitNodes(
-	ctx context.Context,
-	sf SuccessorFinder,
-	v Visitor,
-	state *traverseDAGState) (err error) {
+// Add any nodes from the list that we haven't yet seen as new nodeInfo structs
+// in state_DependenciesUnresolved. Ignore those that we have seen.
+//
+// LOCKS_REQUIRED(state.mu)
+func (state *visitState) addNodes(nodes []Node) {
+	panic("TODO")
+}
+
+// Watch for nodes that can be resolved or visited and do so. Return when it's
+// guaranteed that there's nothing further to do.
+func (state *visitState) processNodes(ctx context.Context) (err error) {
 	state.mu.Lock()
 	defer state.mu.Unlock()
 
@@ -267,10 +269,19 @@ func visitNodes(
 			err = errors.New("Cancelled")
 			return
 
-		// Otherwise, handle work if it exists.
-		case len(state.readyToVisit) != 0:
-			err = visitOne(ctx, sf, v, state)
+		// Is there a node that can be visited?
+		case len(state.toVisit) > 0:
+			err = state.visitOne(ctx)
 			if err != nil {
+				err = fmt.Errorf("visitOne: %v", err)
+				return
+			}
+
+		// Is there a node that needs to be resolved?
+		case len(state.toResolve) > 0:
+			err = state.resolveOne(ctx)
+			if err != nil {
+				err = fmt.Errorf("resolveOne: %v", err)
 				return
 			}
 
@@ -284,14 +295,10 @@ func visitNodes(
 	}
 }
 
-// REQUIRES: len(state.readyToVisit) > 0
+// REQUIRES: len(state.toVisit) > 0
 //
 // LOCKS_REQUIRED(state.mu)
-func visitOne(
-	ctx context.Context,
-	sf SuccessorFinder,
-	v Visitor,
-	state *traverseDAGState) (err error) {
+func (state *visitState) visitOne(ctx) (err error) {
 	// Mark this worker as busy for the duration of this function.
 	state.busyWorkers++
 	state.cond.Broadcast()
@@ -301,21 +308,15 @@ func visitOne(
 		state.cond.Broadcast()
 	}()
 
-	// Extract the node to process.
-	l := len(state.readyToVisit)
-	n := state.readyToVisit[l-1]
-	state.readyToVisit = state.readyToVisit[:l-1]
+	// Extract the node to visit.
+	l := len(state.toVisit)
+	ni := state.toVisit[l-1]
+	state.toVisit = state.toVisit[:l-1]
 	state.cond.Broadcast()
 
-	// Unlock while visiting and finding successors.
+	// Unlock while visiting.
 	state.mu.Unlock()
-	err = v.Visit(ctx, n)
-
-	var successors []Node
-	if err == nil {
-		successors, err = sf.FindDirectSuccessors(ctx, n)
-	}
-
+	err = v.Visit(ctx, ni.node)
 	state.mu.Lock()
 
 	// Did we encounter an error in the unlocked region above?
@@ -323,22 +324,6 @@ func visitOne(
 		return
 	}
 
-	// Update state for the successor nodes. Some may now have been unblocked.
-	for _, s := range successors {
-		tmp, ok := state.notReadyToVisit[s]
-		if !ok {
-			log.Panicf("Unexpectedly missing: %#v", s)
-		}
-
-		tmp.predecessorsOutstanding--
-		if tmp.readyToVisit() {
-			delete(state.notReadyToVisit, s)
-			state.readyToVisit = append(state.readyToVisit, s)
-			state.cond.Broadcast()
-		} else {
-			state.notReadyToVisit[s] = tmp
-		}
-	}
-
+	err = errors.New("TODO: Update state. At least dependants; others?")
 	return
 }
