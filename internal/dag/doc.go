@@ -13,5 +13,5 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Code for visiting DAGs in dependency order.
+// Code for visiting nodes within a directed acyclic graph in dependency order.
 package dag
