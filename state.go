@@ -37,10 +37,11 @@ var g_state state.State
 var g_saveStateMutex sync.Mutex
 
 func buildExistingScores(
+	ctx context.Context,
 	bucket gcs.Bucket) (existingScores util.StringSet, err error) {
 	// List into a slice.
 	slice, err := listAllScores(
-		context.Background(),
+		ctx,
 		bucket,
 		wiring.BlobObjectNamePrefix)
 
@@ -58,7 +59,7 @@ func buildExistingScores(
 	return
 }
 
-func initState() {
+func initState(ctx context.Context) {
 	cfg := getConfig()
 	bucket := getBucket(ctx)
 	var err error
@@ -106,19 +107,19 @@ func initState() {
 		log.Println("Listing existing scores...")
 
 		g_state.RelistTime = time.Now()
-		g_state.ExistingScores, err = buildExistingScores(bucket)
+		g_state.ExistingScores, err = buildExistingScores(ctx, bucket)
 		if err != nil {
 			log.Fatalf("buildExistingScores: %v", err)
 		}
 	}
 }
 
-func getState() *state.State {
-	g_stateOnce.Do(initState)
+func getState(ctx context.Context) *state.State {
+	g_stateOnce.Do(func() { initState(ctx) })
 	return &g_state
 }
 
-func saveState() {
+func saveState(ctx context.Context) {
 	// Make sure only one run can happen at a time.
 	g_saveStateMutex.Lock()
 	defer g_saveStateMutex.Unlock()
@@ -126,7 +127,7 @@ func saveState() {
 	var err error
 
 	cfg := getConfig()
-	stateStruct := getState()
+	stateStruct := getState(ctx)
 
 	// Write out the state to a temporary file.
 	f, err := ioutil.TempFile("", "comeback_state")

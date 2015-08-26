@@ -53,16 +53,18 @@ func init() {
 	cmdSave.Run = runSave // Break flag-related dependency loop.
 }
 
-func saveStatePeriodically(c <-chan time.Time) {
+func saveStatePeriodically(
+	ctx context.Context,
+	c <-chan time.Time) {
 	for _ = range c {
 		log.Println("Writing out state file.")
-		saveState()
+		saveState(ctx)
 	}
 }
 
-func doList(job *config.Job) (err error) {
+func doList(ctx context.Context, job *config.Job) (err error) {
 	err = save.List(
-		context.Background(),
+		ctx,
 		os.Stdout,
 		job.BasePath,
 		job.Excludes)
@@ -95,7 +97,7 @@ func runSave(ctx context.Context, args []string) (err error) {
 	// TODO(jacobsa): Integrate this into the pipeline when it exists. See issue
 	// #21.
 	if *fListOnly {
-		err = doList(job)
+		err = doList(ctx, job)
 		if err != nil {
 			err = fmt.Errorf("doList: %v", err)
 			return
@@ -110,13 +112,13 @@ func runSave(ctx context.Context, args []string) (err error) {
 	//
 	// Make sure to do this before setting up state saving below, because these
 	// calls may modify the state struct.
-	reg := getRegistry()
-	dirSaver := getDirSaver()
+	reg := getRegistry(ctx)
+	dirSaver := getDirSaver(ctx)
 
 	// Periodically save state.
 	const saveStatePeriod = 15 * time.Second
 	saveStateTicker := time.NewTicker(saveStatePeriod)
-	go saveStatePeriodically(saveStateTicker.C)
+	go saveStatePeriodically(ctx, saveStateTicker.C)
 
 	// Choose a start time for the job.
 	startTime := time.Now()
@@ -156,7 +158,7 @@ func runSave(ctx context.Context, args []string) (err error) {
 	// Store state for next time.
 	saveStateTicker.Stop()
 	log.Println("Writing out final state file...")
-	saveState()
+	saveState(ctx)
 
 	return
 }

@@ -58,8 +58,8 @@ func runRestore(ctx context.Context, args []string) (err error) {
 
 	// Grab dependencies. Make sure to get the registry first, because it takes
 	// less time to construct.
-	reg := getRegistry()
-	dirRestorer := getDirRestorer()
+	reg := getRegistry(ctx)
+	dirRestorer := getDirRestorer(ctx)
 
 	// Find the requested job.
 	job, err := reg.FindBackup(startTime)

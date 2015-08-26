@@ -321,8 +321,8 @@ func runVerify(ctx context.Context, args []string) (err error) {
 
 	// Grab dependencies.
 	bucket := getBucket(ctx)
-	crypter := getCrypter()
-	registry := getRegistry()
+	crypter := getCrypter(ctx)
+	registry := getRegistry(ctx)
 
 	// Create a blob store.
 	blobStore, err := wiring.MakeBlobStore(

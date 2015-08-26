@@ -112,7 +112,7 @@ func runMount(ctx context.Context, args []string) (err error) {
 
 	// Grab dependencies.
 	bucket := getBucket(ctx)
-	crypter := getCrypter()
+	crypter := getCrypter(ctx)
 
 	// Check usage.
 	if len(args) < 1 || len(args) > 2 {
@@ -136,7 +136,7 @@ func runMount(ctx context.Context, args []string) (err error) {
 			return
 		}
 	} else {
-		r := getRegistry()
+		r := getRegistry(ctx)
 
 		// List jobs.
 		var jobs []registry.CompletedJob
