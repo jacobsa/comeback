@@ -19,6 +19,8 @@ import (
 	"fmt"
 	"log"
 
+	"golang.org/x/net/context"
+
 	"github.com/jacobsa/comeback/internal/backup"
 	"github.com/jacobsa/comeback/internal/state"
 	"github.com/jacobsa/comeback/internal/util"
@@ -43,6 +45,7 @@ import (
 // TODO(jacobsa): Make sure to test the existingScores behavior. See issue #20.
 // TODO(jacobsa): Make sure to test the scoresForFiles behavior. See issue #20.
 func MakeDirSaver(
+	ctx context.Context,
 	password string,
 	bucket gcs.Bucket,
 	chunkSize int,
@@ -58,7 +61,7 @@ func MakeDirSaver(
 
 	// Create a crypter from the supplied password, verifying it against any past
 	// use of the bucket.
-	_, crypter, err := MakeRegistryAndCrypter(password, bucket)
+	_, crypter, err := MakeRegistryAndCrypter(ctx, password, bucket)
 	if err != nil {
 		err = fmt.Errorf("MakeRegistryAndCrypter: %v", err)
 		return

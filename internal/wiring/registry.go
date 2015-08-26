@@ -19,6 +19,8 @@ import (
 	"crypto/sha256"
 	"fmt"
 
+	"golang.org/x/net/context"
+
 	"github.com/jacobsa/comeback/internal/crypto"
 	"github.com/jacobsa/comeback/internal/registry"
 	"github.com/jacobsa/gcloud/gcs"
@@ -27,6 +29,7 @@ import (
 // Create a registry for the supplied bucket, given the supplied crypto key
 // password.
 func MakeRegistryAndCrypter(
+	ctx context.Context,
 	password string,
 	bucket gcs.Bucket) (r registry.Registry, crypter crypto.Crypter, err error) {
 	// Derive a crypto key from the password using PBKDF2, recommended for use by
@@ -38,7 +41,7 @@ func MakeRegistryAndCrypter(
 	keyDeriver := crypto.NewPbkdf2KeyDeriver(pbkdf2Iters, keyLen, sha256.New)
 
 	// Create the registry and crypter.
-	r, crypter, err = registry.NewGCSRegistry(bucket, password, keyDeriver)
+	r, crypter, err = registry.NewGCSRegistry(ctx, bucket, password, keyDeriver)
 	if err != nil {
 		err = fmt.Errorf("NewGCSRegistry: %v", err)
 		return
