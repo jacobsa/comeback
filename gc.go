@@ -204,15 +204,7 @@ func deleteObjects(
 // GC
 ////////////////////////////////////////////////////////////////////////
 
-func runGC(args []string) {
-	// Die on error.
-	var err error
-	defer func() {
-		if err != nil {
-			log.Fatalln(err)
-		}
-	}()
-
+func runGC(ctx context.Context, args []string) (err error) {
 	// Grab dependencies.
 	bucket := getBucket()
 
@@ -229,7 +221,7 @@ func runGC(args []string) {
 	}
 
 	// Parse it.
-	accessibleScores, err := parseGCInput(context.Background(), inputFile)
+	accessibleScores, err := parseGCInput(ctx, inputFile)
 	inputFile.Close()
 
 	if err != nil {
@@ -237,7 +229,7 @@ func runGC(args []string) {
 		return
 	}
 
-	b := syncutil.NewBundle(context.Background())
+	b := syncutil.NewBundle(ctx)
 
 	// List all extant scores into a channel.
 	allScores := make(chan blob.Score, 100)
@@ -361,4 +353,6 @@ func runGC(args []string) {
 		"Moved %d objects to garbage/, out of %d total.",
 		garbageScoresCount,
 		allScoresCount)
+
+	return
 }
