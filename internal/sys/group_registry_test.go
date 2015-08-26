@@ -16,7 +16,6 @@
 package sys_test
 
 import (
-	"log"
 	"strconv"
 	"testing"
 
@@ -39,10 +38,7 @@ type GroupRegistryTest struct {
 func init() { RegisterTestSuite(&GroupRegistryTest{}) }
 
 func (t *GroupRegistryTest) SetUp(i *TestInfo) {
-	var err error
-	if t.registry, err = sys.NewGroupRegistry(); err != nil {
-		log.Fatalf("Creating registry: %v", err)
-	}
+	t.registry = sys.NewGroupRegistry()
 }
 
 func (t *GroupRegistryTest) UnknownGroupname() {

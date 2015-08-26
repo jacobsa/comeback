@@ -16,7 +16,6 @@
 package sys_test
 
 import (
-	"log"
 	"os/user"
 	"strconv"
 	"testing"
@@ -39,10 +38,7 @@ type UserRegistryTest struct {
 func init() { RegisterTestSuite(&UserRegistryTest{}) }
 
 func (t *UserRegistryTest) SetUp(i *TestInfo) {
-	var err error
-	if t.registry, err = sys.NewUserRegistry(); err != nil {
-		log.Fatalf("Creating registry: %v", err)
-	}
+	t.registry = sys.NewUserRegistry()
 }
 
 func (t *UserRegistryTest) UnknownUsername() {
