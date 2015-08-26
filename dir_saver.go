@@ -35,7 +35,7 @@ func initDirSaver() {
 		}
 	}()
 
-	bucket := getBucket()
+	bucket := getBucket(ctx)
 	password := getPassword()
 	state := getState()
 

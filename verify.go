@@ -320,7 +320,7 @@ func runVerify(ctx context.Context, args []string) (err error) {
 	readFiles := !*fFast
 
 	// Grab dependencies.
-	bucket := getBucket()
+	bucket := getBucket(ctx)
 	crypter := getCrypter()
 	registry := getRegistry()
 

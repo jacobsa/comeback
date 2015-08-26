@@ -42,7 +42,7 @@ func runDeleteGarbage(ctx context.Context, args []string) (err error) {
 	b := syncutil.NewBundle(ctx)
 
 	// Grab dependencies.
-	bucket := getBucket()
+	bucket := getBucket(ctx)
 
 	// List all garbage objects.
 	objects := make(chan *gcs.Object, 100)

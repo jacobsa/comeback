@@ -60,7 +60,7 @@ func buildExistingScores(
 
 func initState() {
 	cfg := getConfig()
-	bucket := getBucket()
+	bucket := getBucket(ctx)
 	var err error
 
 	// Open the specified file.

@@ -111,7 +111,7 @@ func runMount(ctx context.Context, args []string) (err error) {
 	syncutil.EnableInvariantChecking()
 
 	// Grab dependencies.
-	bucket := getBucket()
+	bucket := getBucket(ctx)
 	crypter := getCrypter()
 
 	// Check usage.

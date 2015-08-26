@@ -37,7 +37,7 @@ func initRegistryAndCrypter() {
 		}
 	}()
 
-	bucket := getBucket()
+	bucket := getBucket(ctx)
 	password := getPassword()
 
 	gRegistry, gCrypter, err = wiring.MakeRegistryAndCrypter(

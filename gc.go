@@ -206,7 +206,7 @@ func deleteObjects(
 
 func runGC(ctx context.Context, args []string) (err error) {
 	// Grab dependencies.
-	bucket := getBucket()
+	bucket := getBucket(ctx)
 
 	// Open the input file.
 	if *fInput == "" {
