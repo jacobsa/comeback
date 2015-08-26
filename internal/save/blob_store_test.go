@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"path"
 	"testing"
@@ -103,7 +104,13 @@ func (t *VisitorTest) TearDown() {
 }
 
 func (t *VisitorTest) call() (err error) {
-	visitor := newVisitor(t.chunkSize, t.dir, t.blobStore, make(chan *fsNode, 1))
+	visitor := newVisitor(
+		t.chunkSize,
+		t.dir,
+		t.blobStore,
+		log.New(ioutil.Discard, "", 0),
+		make(chan *fsNode, 1))
+
 	err = visitor.Visit(t.ctx, &t.node)
 	return
 }

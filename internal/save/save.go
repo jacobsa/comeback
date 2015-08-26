@@ -18,6 +18,7 @@ package save
 import (
 	"errors"
 	"fmt"
+	"log"
 	"regexp"
 
 	"golang.org/x/net/context"
@@ -37,6 +38,7 @@ func Save(
 	exclusions []*regexp.Regexp,
 	scoreMap state.ScoreMap,
 	blobStore blob.Store,
+	logger *log.Logger,
 	clock timeutil.Clock) (score blob.Score, err error) {
 	b := syncutil.NewBundle(ctx)
 
@@ -73,7 +75,14 @@ func Save(
 	postDAGTraversal := make(chan *fsNode, 100)
 	b.Add(func(ctx context.Context) (err error) {
 		defer close(postDAGTraversal)
-		err = fillInScores(ctx, dir, blobStore, postScoreMap, postDAGTraversal)
+		err = fillInScores(
+			ctx,
+			dir,
+			blobStore,
+			logger,
+			postScoreMap,
+			postDAGTraversal)
+
 		if err != nil {
 			err = fmt.Errorf("fillInScores: %v", err)
 			return

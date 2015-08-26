@@ -133,6 +133,7 @@ func runSave(ctx context.Context, args []string) (err error) {
 		job.Excludes,
 		state.ScoresForFiles,
 		blobStore,
+		log.New(os.Stderr, "Save progress: ", 0),
 		clock)
 
 	if err != nil {

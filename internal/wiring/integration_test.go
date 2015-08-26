@@ -239,6 +239,7 @@ func (t *SaveAndRestoreTest) save() (score blob.Score, err error) {
 		t.exclusions,
 		state.NewScoreMap(),
 		bs,
+		log.New(ioutil.Discard, "", 0),
 		timeutil.RealClock())
 
 	if err != nil {

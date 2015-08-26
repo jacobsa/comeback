@@ -18,6 +18,7 @@ package save
 import (
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"path"
 
@@ -39,6 +40,7 @@ func fillInScores(
 	ctx context.Context,
 	basePath string,
 	blobStore blob.Store,
+	logger *log.Logger,
 	nodesIn <-chan *fsNode,
 	nodesOut chan<- *fsNode) (err error) {
 	b := syncutil.NewBundle(ctx)
@@ -67,6 +69,7 @@ func fillInScores(
 			fileChunkSize,
 			basePath,
 			blobStore,
+			logger,
 			nodesOut)
 
 		// Hopefully enough parallelism to keep our CPUs saturated (for encryption,
@@ -100,11 +103,13 @@ func newVisitor(
 	chunkSize int,
 	basePath string,
 	blobStore blob.Store,
+	logger *log.Logger,
 	nodesOut chan<- *fsNode) (v graph.Visitor) {
 	v = &visitor{
 		chunkSize: chunkSize,
 		basePath:  basePath,
 		blobStore: blobStore,
+		logger:    logger,
 		nodesOut:  nodesOut,
 	}
 
@@ -115,6 +120,7 @@ type visitor struct {
 	chunkSize int
 	basePath  string
 	blobStore blob.Store
+	logger    *log.Logger
 	nodesOut  chan<- *fsNode
 }
 
@@ -125,6 +131,8 @@ func (v *visitor) Visit(ctx context.Context, untyped graph.Node) (err error) {
 		err = fmt.Errorf("Unexpected node type: %T", untyped)
 		return
 	}
+
+	v.logger.Print(n.RelPath)
 
 	// Ensure that the node has scores set, if it needs to.
 	err = v.setScores(ctx, n)
