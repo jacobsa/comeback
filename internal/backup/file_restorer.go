@@ -34,7 +34,11 @@ import (
 type FileRestorer interface {
 	// Restore the contents of the supplied scores to the file at the given path.
 	// The file must not already exist.
-	RestoreFile(scores []blob.Score, path string, perms os.FileMode) (err error)
+	RestoreFile(
+		ctx context.Context,
+		scores []blob.Score,
+		path string,
+		perms os.FileMode) (err error)
 }
 
 // Create a file restorer that uses the supplied blob store and file systems.
@@ -56,6 +60,7 @@ type fileRestorer struct {
 }
 
 func (r *fileRestorer) RestoreFile(
+	ctx context.Context,
 	scores []blob.Score,
 	path string,
 	perms os.FileMode,
@@ -79,7 +84,7 @@ func (r *fileRestorer) RestoreFile(
 	for _, score := range scores {
 		// Load the blob.
 		var blob []byte
-		blob, err = r.blobStore.Load(context.TODO(), score)
+		blob, err = r.blobStore.Load(ctx, score)
 		if err != nil {
 			err = fmt.Errorf("blob.Store.Load: %v", err)
 			return

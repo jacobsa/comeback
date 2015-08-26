@@ -173,6 +173,7 @@ func (r *dirRestorer) RestoreDirectory(
 
 			// Create the file using its blobs.
 			err = r.fileRestorer.RestoreFile(
+				ctx,
 				entry.Scores,
 				entryFullPath,
 				entry.Permissions,
