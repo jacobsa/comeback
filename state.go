@@ -59,59 +59,82 @@ func buildExistingScores(
 	return
 }
 
-func initState(ctx context.Context) {
+func makeState(ctx context.Context) (s state.State, err error) {
 	cfg := getConfig()
 	bucket := getBucket(ctx)
-	var err error
 
 	// Open the specified file.
 	f, err := os.Open(cfg.StateFile)
-
+	switch {
 	// Special case: if the error is that the file doesn't exist, ignore it.
-	if err != nil && os.IsNotExist(err) {
+	case os.IsNotExist(err):
 		err = nil
 		log.Println("No state file found. Using fresh state.")
-	} else {
-		// Handle other Open errors.
-		if err != nil {
-			log.Fatalln("Opening state file:", err)
-		}
 
+	case err != nil:
+		return
+	}
+
+	// If we opened a file above, load from it.
+	if f != nil {
 		defer f.Close()
-
-		// Load the state struct.
-		log.Println("Loading from state file.")
-
-		g_state, err = state.LoadState(f)
+		s, err = state.LoadState(f)
 		if err != nil {
-			log.Fatalln("LoadState:", err)
+			err = fmt.Errorf("LoadState: %v", err)
+			return
 		}
 	}
 
 	// Throw out the existing score cache if requested.
 	if *g_discardScoreCache {
-		g_state.ScoresForFiles = state.NewScoreMap()
+		s.ScoresForFiles = state.NewScoreMap()
 	}
 
 	// Make sure there are no nil interface values.
-	if g_state.ScoresForFiles == nil {
-		g_state.ScoresForFiles = state.NewScoreMap()
+	if s.ScoresForFiles == nil {
+		s.ScoresForFiles = state.NewScoreMap()
 	}
 
 	// If we don't know the set of hex scores in the store, or the set of scores
 	// is stale, re-list.
-	age := time.Now().Sub(g_state.RelistTime)
+	age := time.Now().Sub(s.RelistTime)
 	const maxAge = 30 * 24 * time.Hour
 
-	if g_state.ExistingScores == nil || age > maxAge {
+	if s.ExistingScores == nil || age > maxAge {
 		log.Println("Listing existing scores...")
 
-		g_state.RelistTime = time.Now()
-		g_state.ExistingScores, err = buildExistingScores(ctx, bucket)
+		s.RelistTime = time.Now()
+		s.ExistingScores, err = buildExistingScores(ctx, bucket)
 		if err != nil {
-			log.Fatalf("buildExistingScores: %v", err)
+			err = fmt.Errorf("buildExistingScores: %v", err)
+			return
 		}
 	}
+
+	return
+}
+
+func initState(ctx context.Context) {
+	var err error
+
+	// Load the state struct.
+	log.Println("Loading from state file...")
+
+	g_state, err = makeState(ctx)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	// Save it back to the file, in case makeState changed it (e.g. by listing
+	// existing scores).
+	log.Println("Saving to state file...")
+
+	err = saveStateStruct(getConfig().StateFile, &g_state)
+	if err != nil {
+		log.Fatalf("saveStateStruct: %v", err)
+	}
+
+	log.Println("Finished saving to state file.")
 }
 
 func getState(ctx context.Context) *state.State {
@@ -119,34 +142,51 @@ func getState(ctx context.Context) *state.State {
 	return &g_state
 }
 
+func saveStateStruct(dst string, s *state.State) (err error) {
+	// Create a temporary file.
+	f, err := ioutil.TempFile("", "comeback_state")
+	if err != nil {
+		err = fmt.Errorf("TempFile: %v", err)
+		return
+	}
+
+	defer f.Close()
+	tempFilePath := f.Name()
+
+	// Write to the file.
+	err = state.SaveState(f, *s)
+	if err != nil {
+		err = fmt.Errorf("SaveState: %v", err)
+		return
+	}
+
+	// Close the file.
+	err = f.Close()
+	if err != nil {
+		err = fmt.Errorf("Close: %v", err)
+		return
+	}
+
+	// Rename the file into the new location.
+	err = os.Rename(tempFilePath, dst)
+	if err != nil {
+		err = fmt.Errorf("Rename: %v", err)
+		return
+	}
+
+	return
+}
+
 func saveState(ctx context.Context) {
 	// Make sure only one run can happen at a time.
 	g_saveStateMutex.Lock()
 	defer g_saveStateMutex.Unlock()
 
-	var err error
-
 	cfg := getConfig()
 	stateStruct := getState(ctx)
 
-	// Write out the state to a temporary file.
-	f, err := ioutil.TempFile("", "comeback_state")
+	err := saveStateStruct(cfg.StateFile, stateStruct)
 	if err != nil {
-		log.Fatalln("Creating temporary state file:", err)
-	}
-
-	tempFilePath := f.Name()
-
-	if err = state.SaveState(f, *stateStruct); err != nil {
-		log.Fatalln("SaveState:", err)
-	}
-
-	if err = f.Close(); err != nil {
-		log.Fatalln("Closing temporary state file:", err)
-	}
-
-	// Rename the file into the new location.
-	if err = os.Rename(tempFilePath, cfg.StateFile); err != nil {
-		log.Fatalln("Renaming temporary state file:", err)
+		log.Fatalf("saveStateStruct: %v", err)
 	}
 }
