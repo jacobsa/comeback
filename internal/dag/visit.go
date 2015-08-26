@@ -128,23 +128,31 @@ func TraverseDAG(
 	return
 }
 
-type traverseDAGState struct {
+type visitState struct {
 	mu syncutil.InvariantMutex
 
+	// The set of all nodes we have ever admitted to notReadyToVisit or
+	// readyToVisit. In other words, the set of all nodes we've yet encountered.
+	//
+	// GUARDED_BY(mu)
+	admitted map[Node]struct{}
+
 	// A map containing nodes that we are not yet ready to visit, because they
-	// have predecessors that have not yet been visited or because we have not
+	// have dependencies that have not yet been visited or because we have not
 	// yet seen them.
 	//
 	// INVARIANT: For all v, !v.readyToVisit()
 	// INVARIANT: For all v, v.checkInvariants doesn't panic
+	// INVARIANT: For all v, v is a key in admitted
 	//
 	// GUARDED_BY(mu)
-	notReadyToVisit map[Node]traverseDAGNodeState
+	notReadyToVisit map[Node]visitNodeState
 
 	// A list of nodes that we are ready to visit but have not yet started
 	// visiting.
 	//
 	// INVARIANT: For all n, n is not a key in notReadyToVisit
+	// INVARIANT: For all n, n is a key in admitted
 	//
 	// GUARDED_BY(mu)
 	readyToVisit []Node
@@ -160,9 +168,8 @@ type traverseDAGState struct {
 	firstErr error
 
 	// The number of workers that are doing something besides waiting on a node
-	// to visit, including the distinguished goroutine handling incoming nodes.
-	// If this hits zero with readyToVisit empty, it means that there is nothing
-	// further to do.
+	// to visit. If this hits zero with readyToVisit empty, it means that there
+	// is nothing further to do.
 	//
 	// INVARIANT: busyWorkers >= 0
 	//
