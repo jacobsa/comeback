@@ -131,18 +131,26 @@ func TraverseDAG(
 type visitState struct {
 	mu syncutil.InvariantMutex
 
-	// The set of all nodes we have ever admitted to notReadyToVisit or
-	// readyToVisit. In other words, the set of all nodes we've yet encountered.
+	// A list of freshly-encountered nodes. These may have already had their
+	// dependencies resolved and may even have been visited, or may have never
+	// been seen before. The list may also contain duplicates.
 	//
 	// GUARDED_BY(mu)
-	admitted map[Node]struct{}
+	freshNodes []Node
+
+	// The set of all nodes we have ever admitted to notReadyToVisit or
+	// readyToVisit. In other words, the set of all nodes whose dependencies
+	// we've already resolved.
+	//
+	// GUARDED_BY(mu)
+	resolved map[Node]struct{}
 
 	// A map containing nodes that we are not yet ready to visit, because they
 	// have dependencies that have not yet been visited, to the number of such
 	// dependencies.
 	//
 	// INVARIANT: For all v, v > 0
-	// INVARIANT: For all k, k is a key in admitted
+	// INVARIANT: For all k, k is a key in resolved
 	//
 	// GUARDED_BY(mu)
 	notReadyToVisit map[Node]int64
@@ -151,7 +159,7 @@ type visitState struct {
 	// visiting.
 	//
 	// INVARIANT: For all n, n is not a key in notReadyToVisit
-	// INVARIANT: For all n, n is a key in admitted
+	// INVARIANT: For all n, n is a key in resolved
 	//
 	// GUARDED_BY(mu)
 	readyToVisit []Node
@@ -177,6 +185,7 @@ type visitState struct {
 
 	// Broadcasted to with mu held when any of the following state changes:
 	//
+	//  *  freshNodes
 	//  *  readyToVisit
 	//  *  firstErr
 	//  *  busyWorkers
@@ -194,11 +203,11 @@ func (s *visitState) checkInvariants() {
 		}
 	}
 
-	// INVARIANT: For all k, k is a key in admitted
+	// INVARIANT: For all k, k is a key in resolved
 	for k, _ := range s.notReadyToVisit {
-		_, ok := s.admitted[k]
+		_, ok := s.resolved[k]
 		if !ok {
-			log.Panicf("Not in admitted: %#v", k)
+			log.Panicf("Not in resolved: %#v", k)
 		}
 	}
 
@@ -209,11 +218,11 @@ func (s *visitState) checkInvariants() {
 		}
 	}
 
-	// INVARIANT: For all n, n is a key in admitted
+	// INVARIANT: For all n, n is a key in resolved
 	for _, n := range s.readyToVisit {
-		_, ok := s.admitted[v]
+		_, ok := s.resolved[v]
 		if !ok {
-			log.Panicf("Not in admitted: %#v", n)
+			log.Panicf("Not in resolved: %#v", n)
 		}
 	}
 
@@ -227,7 +236,8 @@ func (s *visitState) checkInvariants() {
 //
 // LOCKS_REQUIRED(state.mu)
 func (state *visitState) shouldWake() bool {
-	return len(state.readyToVisit) != 0 ||
+	return len(state.freshNodes) != 0 ||
+		len(state.readyToVisit) != 0 ||
 		state.firstErr != nil ||
 		state.busyWorkers == 0
 }
