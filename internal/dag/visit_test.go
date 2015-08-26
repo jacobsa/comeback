@@ -454,8 +454,15 @@ func (t *VisitTest) LargeRootedTree() {
 
 func (t *VisitTest) LargeRootedTree_Inverted() {
 	const depth = 6
-	edges := invertRelation(randomTree(depth))
-	startNodes := []string{"root"}
+	origEdges := randomTree(depth)
+	edges := invertRelation(origEdges)
+
+	var startNodes []string
+	for n, deps := range origEdges {
+		if len(deps) == 0 {
+			startNodes = append(startNodes, n)
+		}
+	}
 
 	t.runTest(edges, startNodes)
 }
