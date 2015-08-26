@@ -476,30 +476,21 @@ func (t *VisitTest) VisitorReturnsError() {
 
 	// Graph structure:
 	//
-	//        A
-	//      / |
-	//     B  C
-	//     |  | \
-	//     D  E  F
-	//      / |  |
-	//     G  H  I
-	//           | \
-	//           J  K
+	//     A  B   C
+	//      \ |   |
+	//        D   E
+	//         \ /
+	//          F
 	//
 	edges := map[string][]string{
-		"A": {"B", "C"},
+		"A": {"D"},
 		"B": {"D"},
-		"C": {"E", "F"},
-		"D": {},
-		"E": {"G", "H"},
-		"F": {"I"},
-		"G": {},
-		"H": {},
-		"I": {"J", "K"},
-		"J": {},
-		"K": {},
+		"C": {"E"},
+		"D": {"F"},
+		"E": {"F"},
+		"F": {},
 	}
-	startNodes := []string{"A"}
+	startNodes := []string{"A", "B", "C"}
 
 	// Dependency finder: operate as usual.
 	findDependencies := func(
@@ -513,33 +504,33 @@ func (t *VisitTest) VisitorReturnsError() {
 	//
 	//  *  Record the node visited.
 	//
-	//  *  For C, wait until told and then return an error.
+	//  *  For D, wait until told and then return an error.
 	//
-	//  *  For B:
-	//     *   Tell C to proceed.
+	//  *  For E:
+	//     *   Tell D to proceed.
 	//     *   Block until cancelled.
 	//     *   Close a channel indicating that the context was cancelled.
 	//
-	cErr := errors.New("taco")
-	bReceived := make(chan struct{})
-	bCancelled := make(chan struct{})
+	dErr := errors.New("taco")
+	eSeen := make(chan struct{})
+	eCancelled := make(chan struct{})
 	visited := make(chan string, len(edges))
 
 	visit := func(ctx context.Context, n string) (err error) {
 		visited <- n
 
 		switch n {
-		case "C":
-			<-bReceived
-			err = cErr
+		case "D":
+			<-eSeen
+			err = dErr
 
-		case "B":
-			close(bReceived)
+		case "E":
+			close(eSeen)
 
 			done := ctx.Done()
 			AssertNe(nil, done)
 			<-done
-			close(bCancelled)
+			close(eCancelled)
 		}
 
 		return
@@ -547,12 +538,12 @@ func (t *VisitTest) VisitorReturnsError() {
 
 	// Call.
 	err := t.call(startNodes, findDependencies, visit)
-	ExpectEq(cErr, err)
+	ExpectThat(err, Error(HasSubstr(dErr.Error())))
 
-	// B should have seen cancellation.
-	<-bCancelled
+	// E should have seen cancellation.
+	<-eCancelled
 
-	// Nothing descending from B or C should have been visted.
+	// Nothing depending on D or E should have been visited.
 	close(visited)
 	var nodes sort.StringSlice
 	for n := range visited {
@@ -560,5 +551,5 @@ func (t *VisitTest) VisitorReturnsError() {
 	}
 
 	sort.Sort(nodes)
-	ExpectThat(nodes, ElementsAre("A", "B", "C"))
+	ExpectThat(nodes, ElementsAre("D", "E", "F"))
 }
