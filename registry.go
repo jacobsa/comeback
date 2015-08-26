@@ -20,6 +20,8 @@ import (
 	"log"
 	"sync"
 
+	"golang.org/x/net/context"
+
 	"github.com/jacobsa/comeback/internal/crypto"
 	"github.com/jacobsa/comeback/internal/registry"
 	"github.com/jacobsa/comeback/internal/wiring"
@@ -29,7 +31,7 @@ var gRegistryAndCrypterOnce sync.Once
 var gRegistry registry.Registry
 var gCrypter crypto.Crypter
 
-func initRegistryAndCrypter() {
+func initRegistryAndCrypter(ctx context.Context) {
 	var err error
 	defer func() {
 		if err != nil {
@@ -37,10 +39,11 @@ func initRegistryAndCrypter() {
 		}
 	}()
 
-	bucket := getBucket()
+	bucket := getBucket(ctx)
 	password := getPassword()
 
 	gRegistry, gCrypter, err = wiring.MakeRegistryAndCrypter(
+		ctx,
 		password,
 		bucket)
 
@@ -50,12 +53,12 @@ func initRegistryAndCrypter() {
 	}
 }
 
-func getRegistry() registry.Registry {
-	gRegistryAndCrypterOnce.Do(initRegistryAndCrypter)
+func getRegistry(ctx context.Context) registry.Registry {
+	gRegistryAndCrypterOnce.Do(func() { initRegistryAndCrypter(ctx) })
 	return gRegistry
 }
 
-func getCrypter() crypto.Crypter {
-	gRegistryAndCrypterOnce.Do(initRegistryAndCrypter)
+func getCrypter(ctx context.Context) crypto.Crypter {
+	gRegistryAndCrypterOnce.Do(func() { initRegistryAndCrypter(ctx) })
 	return gCrypter
 }

@@ -166,15 +166,15 @@ func (t *WiringTest) WrongPassword() {
 	var err error
 
 	// Create a registry in the bucket with the "official" password.
-	_, _, err = wiring.MakeRegistryAndCrypter(password, t.bucket)
+	_, _, err = wiring.MakeRegistryAndCrypter(t.ctx, password, t.bucket)
 	AssertEq(nil, err)
 
 	// Using a different password to do the same should fail.
-	_, _, err = wiring.MakeRegistryAndCrypter(wrongPassword, t.bucket)
+	_, _, err = wiring.MakeRegistryAndCrypter(t.ctx, wrongPassword, t.bucket)
 	ExpectThat(err, Error(HasSubstr("password is incorrect")))
 
 	// Ditto with the dir restorer.
-	_, err = wiring.MakeDirRestorer(wrongPassword, t.bucket)
+	_, err = wiring.MakeDirRestorer(t.ctx, wrongPassword, t.bucket)
 	ExpectThat(err, Error(HasSubstr("password is incorrect")))
 }
 
@@ -219,7 +219,7 @@ func (t *SaveAndRestoreTest) TearDown() {
 // the root listing.
 func (t *SaveAndRestoreTest) save() (score blob.Score, err error) {
 	// Create the crypter.
-	_, crypter, err := wiring.MakeRegistryAndCrypter(password, t.bucket)
+	_, crypter, err := wiring.MakeRegistryAndCrypter(t.ctx, password, t.bucket)
 	if err != nil {
 		err = fmt.Errorf("MakeRegistryAndCrypter: %v", err)
 		return
@@ -252,14 +252,14 @@ func (t *SaveAndRestoreTest) save() (score blob.Score, err error) {
 // Restore a backup with the given root listing into t.dst.
 func (t *SaveAndRestoreTest) restore(score blob.Score) (err error) {
 	// Create the dir restorer.
-	dirRestorer, err := wiring.MakeDirRestorer(password, t.bucket)
+	dirRestorer, err := wiring.MakeDirRestorer(t.ctx, password, t.bucket)
 	if err != nil {
 		err = fmt.Errorf("MakeDirRestorer: %v", err)
 		return
 	}
 
 	// Call it.
-	err = dirRestorer.RestoreDirectory(score, t.dst, "")
+	err = dirRestorer.RestoreDirectory(t.ctx, score, t.dst, "")
 	if err != nil {
 		err = fmt.Errorf("RestoreDirectory: %v", err)
 		return

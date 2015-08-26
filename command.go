@@ -17,10 +17,12 @@ package main
 
 import (
 	"flag"
+
+	"golang.org/x/net/context"
 )
 
 type Command struct {
 	Name  string
-	Run   func(args []string)
+	Run   func(ctx context.Context, args []string) (err error)
 	Flags flag.FlagSet
 }

@@ -16,6 +16,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -52,16 +53,18 @@ func init() {
 	cmdSave.Run = runSave // Break flag-related dependency loop.
 }
 
-func saveStatePeriodically(c <-chan time.Time) {
+func saveStatePeriodically(
+	ctx context.Context,
+	c <-chan time.Time) {
 	for _ = range c {
 		log.Println("Writing out state file.")
-		saveState()
+		saveState(ctx)
 	}
 }
 
-func doList(job *config.Job) (err error) {
+func doList(ctx context.Context, job *config.Job) (err error) {
 	err = save.List(
-		context.Background(),
+		ctx,
 		os.Stdout,
 		job.BasePath,
 		job.Excludes)
@@ -74,17 +77,19 @@ func doList(job *config.Job) (err error) {
 	return
 }
 
-func runSave(args []string) {
+func runSave(ctx context.Context, args []string) (err error) {
 	cfg := getConfig()
 
 	// Look for the specified job.
 	if *g_jobName == "" {
-		log.Fatalln("You must set the -job flag.")
+		err = errors.New("You must set the -job flag.")
+		return
 	}
 
 	job, ok := cfg.Jobs[*g_jobName]
 	if !ok {
-		log.Fatalln("Unknown job:", *g_jobName)
+		err = fmt.Errorf("Unknown job: %q", *g_jobName)
+		return
 	}
 
 	// Special case: visit the file system only if --list_only is set.
@@ -92,9 +97,9 @@ func runSave(args []string) {
 	// TODO(jacobsa): Integrate this into the pipeline when it exists. See issue
 	// #21.
 	if *fListOnly {
-		err := doList(job)
+		err = doList(ctx, job)
 		if err != nil {
-			log.Fatalf("doList: %v", err)
+			err = fmt.Errorf("doList: %v", err)
 			return
 		}
 
@@ -107,13 +112,13 @@ func runSave(args []string) {
 	//
 	// Make sure to do this before setting up state saving below, because these
 	// calls may modify the state struct.
-	reg := getRegistry()
-	dirSaver := getDirSaver()
+	reg := getRegistry(ctx)
+	dirSaver := getDirSaver(ctx)
 
 	// Periodically save state.
 	const saveStatePeriod = 15 * time.Second
 	saveStateTicker := time.NewTicker(saveStatePeriod)
-	go saveStatePeriodically(saveStateTicker.C)
+	go saveStatePeriodically(ctx, saveStateTicker.C)
 
 	// Choose a start time for the job.
 	startTime := time.Now()
@@ -121,7 +126,8 @@ func runSave(args []string) {
 	// Call the directory saver.
 	score, err := dirSaver.Save(job.BasePath, "", job.Excludes)
 	if err != nil {
-		log.Fatalln(err)
+		err = fmt.Errorf("dirSaver.Save: %v", err)
+		return
 	}
 
 	// Ensure the backup is durable.
@@ -138,8 +144,10 @@ func runSave(args []string) {
 		Score:     score,
 	}
 
-	if err = reg.RecordBackup(completedJob); err != nil {
-		log.Fatalln("Recoding to registry:", err)
+	err = reg.RecordBackup(ctx, completedJob)
+	if err != nil {
+		err = fmt.Errorf("RecordBackup: %v", err)
+		return
 	}
 
 	log.Printf(
@@ -150,5 +158,7 @@ func runSave(args []string) {
 	// Store state for next time.
 	saveStateTicker.Stop()
 	log.Println("Writing out final state file...")
-	saveState()
+	saveState(ctx)
+
+	return
 }

@@ -20,6 +20,8 @@ import (
 	"os"
 	"sync"
 
+	"golang.org/x/net/context"
+
 	"github.com/jacobsa/comeback/internal/backup"
 	"github.com/jacobsa/comeback/internal/wiring"
 )
@@ -27,7 +29,7 @@ import (
 var gDirSaverOnce sync.Once
 var gDirSaver backup.DirectorySaver
 
-func initDirSaver() {
+func initDirSaver(ctx context.Context) {
 	var err error
 	defer func() {
 		if err != nil {
@@ -35,12 +37,13 @@ func initDirSaver() {
 		}
 	}()
 
-	bucket := getBucket()
+	bucket := getBucket(ctx)
 	password := getPassword()
-	state := getState()
+	state := getState(ctx)
 
 	const chunkSize = 1 << 24 // 16 MiB
 	gDirSaver, err = wiring.MakeDirSaver(
+		ctx,
 		password,
 		bucket,
 		chunkSize,
@@ -49,7 +52,7 @@ func initDirSaver() {
 		log.New(os.Stderr, "", log.Ldate|log.Ltime|log.Lmicroseconds))
 }
 
-func getDirSaver() backup.DirectorySaver {
-	gDirSaverOnce.Do(initDirSaver)
+func getDirSaver(ctx context.Context) backup.DirectorySaver {
+	gDirSaverOnce.Do(func() { initDirSaver(ctx) })
 	return gDirSaver
 }

@@ -18,18 +18,22 @@ package registry
 import (
 	"time"
 
+	"golang.org/x/net/context"
+
 	"github.com/jacobsa/comeback/internal/blob"
 )
 
 type Registry interface {
 	// Record that the named backup job has completed.
-	RecordBackup(j CompletedJob) (err error)
+	RecordBackup(ctx context.Context, j CompletedJob) (err error)
 
 	// Return a list of all completed backups.
-	ListBackups() (jobs []CompletedJob, err error)
+	ListBackups(ctx context.Context) (jobs []CompletedJob, err error)
 
 	// Find a particular completed job by start time.
-	FindBackup(startTime time.Time) (job CompletedJob, err error)
+	FindBackup(
+		ctx context.Context,
+		startTime time.Time) (job CompletedJob, err error)
 }
 
 // A record in the backup registry describing a successful backup job.

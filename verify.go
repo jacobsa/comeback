@@ -145,7 +145,7 @@ func listAllScores(
 	ctx context.Context,
 	bucket gcs.Bucket,
 	namePrefix string) (scores []blob.Score, err error) {
-	b := syncutil.NewBundle(context.Background())
+	b := syncutil.NewBundle(ctx)
 	defer func() { err = b.Join() }()
 
 	// List scores into a channel.
@@ -275,7 +275,7 @@ func parseKnownStructure(
 // Open the file to which we log verify output. Read its current contents,
 // filtering out entries that are too old, and return a writer that can be used
 // to append to it.
-func openVerifyLog() (
+func openVerifyLog(ctx context.Context) (
 	w io.WriteCloser,
 	knownStructure map[verify.Node][]verify.Node,
 	err error) {
@@ -305,7 +305,7 @@ func openVerifyLog() (
 		return
 	}
 
-	knownStructure, err = parseKnownStructure(context.Background(), f)
+	knownStructure, err = parseKnownStructure(ctx, f)
 	if err != nil {
 		f.Close()
 		err = fmt.Errorf("parseVerifyLog: %v", err)
@@ -316,21 +316,13 @@ func openVerifyLog() (
 	return
 }
 
-func runVerify(args []string) {
+func runVerify(ctx context.Context, args []string) (err error) {
 	readFiles := !*fFast
 
-	// Die on error.
-	var err error
-	defer func() {
-		if err != nil {
-			log.Fatalln(err)
-		}
-	}()
-
 	// Grab dependencies.
-	bucket := getBucket()
-	crypter := getCrypter()
-	registry := getRegistry()
+	bucket := getBucket(ctx)
+	crypter := getCrypter(ctx)
+	registry := getRegistry(ctx)
 
 	// Create a blob store.
 	blobStore, err := wiring.MakeBlobStore(
@@ -344,7 +336,7 @@ func runVerify(args []string) {
 	}
 
 	// Open the log file.
-	logFile, knownStructure, err := openVerifyLog()
+	logFile, knownStructure, err := openVerifyLog(ctx)
 	if err != nil {
 		err = fmt.Errorf("openVerifyLog: %v", err)
 		return
@@ -353,7 +345,7 @@ func runVerify(args []string) {
 	defer logFile.Close()
 
 	// Find the root scores to be verified.
-	jobs, err := registry.ListBackups()
+	jobs, err := registry.ListBackups(ctx)
 	if err != nil {
 		err = fmt.Errorf("ListBackups: %v", err)
 		return
@@ -370,7 +362,7 @@ func runVerify(args []string) {
 	// process.
 	log.Println("Listing scores...")
 	knownScores, err := listAllScores(
-		context.Background(),
+		ctx,
 		bucket,
 		wiring.BlobObjectNamePrefix)
 
@@ -383,7 +375,7 @@ func runVerify(args []string) {
 
 	// Run the rest of the pipeline.
 	nodesVerified, err := verifyImpl(
-		context.Background(),
+		ctx,
 		readFiles,
 		rootScores,
 		knownScores,
