@@ -225,12 +225,12 @@ type visitState struct {
 	// GUARDED_BY(mu)
 	busyWorkers int64
 
-	// Broadcasted to with mu held when any of the following state changes:
+	// Broadcasted to with mu held with any of the following state changes:
 	//
-	//  *  toResolve
-	//  *  toVisit
-	//  *  firstErr
-	//  *  busyWorkers
+	//  *  toResolve becomes non-empty
+	//  *  toVisit becomes non-empty
+	//  *  firstErr is set
+	//  *  busyWorkers hits zero
 	//
 	// See also visitState.shouldWake, with which this list must be kept in sync.
 	//
@@ -352,6 +352,9 @@ func (state *visitState) addNodes(nodes []Node) {
 
 		state.nodes[n] = ni
 		state.toResolve = append(state.toResolve, ni)
+		if len(state.toResolve) == 1 {
+			state.cond.Broadcast()
+		}
 	}
 }
 
@@ -418,18 +421,18 @@ func (state *visitState) processNodes(ctx context.Context) (err error) {
 func (state *visitState) visitOne(ctx context.Context) (err error) {
 	// Mark this worker as busy for the duration of this function.
 	state.busyWorkers++
-	state.cond.Broadcast()
 
 	defer func() {
 		state.busyWorkers--
-		state.cond.Broadcast()
+		if state.busyWorkers == 0 {
+			state.cond.Broadcast()
+		}
 	}()
 
 	// Extract the node to visit.
 	l := len(state.toVisit)
 	ni := state.toVisit[l-1]
 	state.toVisit = state.toVisit[:l-1]
-	state.cond.Broadcast()
 
 	// Unlock while visiting.
 	state.mu.Unlock()
