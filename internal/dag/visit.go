@@ -132,12 +132,32 @@ type nodeInfo struct {
 	// The set of unsatisfied nodes for which this node is a blocker.
 	//
 	// INVARIANT: len(dependants) > 0 implies state < state_Unvisited.
-	// INVARIANT: For each n, n.state == state_DependenciesUnsatisfied
+	// INVARIANT: For each v, v.state == state_DependenciesUnsatisfied
 	dependants []*nodeInfo
 }
 
 func (ni *nodeInfo) checkInvariants() {
-	panic("TODO")
+	// INVARIANT: unsatisfied >= 0
+	if !(ni.unsatisfied >= 0) {
+		log.Panicf("unsatisfied: %d", ni.unsatisfied)
+	}
+
+	// INVARIANT: unsatisfied > 0 iff state == state_DependenciesUnsatisfied
+	if (ni.unsatisfied > 0) != (ni.state == state_DependenciesUnsatisfied) {
+		log.Panicf("unsatisfied: %d, state: %v", ni.unsatisfied, ni.state)
+	}
+
+	// INVARIANT: len(dependants) > 0 implies state < state_Unvisited.
+	if len(ni.dependants) > 0 && !(ni.state < state_Unvisited) {
+		log.Panicf("dependants: %d, state: %v", len(ni.dependants), ni.state)
+	}
+
+	// INVARIANT: For each v, v.state == state_DependenciesUnsatisfied
+	for _, dep := range ni.dependants {
+		if dep.state != state_DependenciesUnsatisfied {
+			log.Panicf("dep.state: %v", dep.state)
+		}
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////
