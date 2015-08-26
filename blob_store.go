@@ -1,4 +1,4 @@
-// Copyright 2012 Aaron Jacobs. All Rights Reserved.
+// Copyright 2015 Aaron Jacobs. All Rights Reserved.
 // Author: aaronjjacobs@gmail.com (Aaron Jacobs)
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,43 +16,42 @@
 package main
 
 import (
-	"log"
-	"os"
+	"fmt"
 	"sync"
 
 	"golang.org/x/net/context"
 
-	"github.com/jacobsa/comeback/internal/backup"
+	"github.com/jacobsa/comeback/internal/blob"
 	"github.com/jacobsa/comeback/internal/wiring"
 )
 
-var gDirSaverOnce sync.Once
-var gDirSaver backup.DirectorySaver
+var gBlobStoreOnce sync.Once
+var gBlobStore blob.Store
 
-func initDirSaver(ctx context.Context) {
-	var err error
-	defer func() {
-		if err != nil {
-			log.Fatalln(err)
-		}
-	}()
-
+func makeBlobStore(ctx context.Context) (bs blob.Store, err error) {
 	bucket := getBucket(ctx)
-	password := getPassword()
+	crypter := getCrypter(ctx)
 	state := getState(ctx)
 
-	const chunkSize = 1 << 24 // 16 MiB
-	gDirSaver, err = wiring.MakeDirSaver(
-		ctx,
-		password,
-		bucket,
-		chunkSize,
-		state.ExistingScores,
-		state.ScoresForFiles,
-		log.New(os.Stderr, "", log.Ldate|log.Ltime|log.Lmicroseconds))
+	bs, err = wiring.MakeBlobStore(bucket, crypter, state.ExistingScores)
+	if err != nil {
+		err = fmt.Errorf("MakeBlobStore: %v", err)
+		return
+	}
+
+	return
 }
 
-func getDirSaver(ctx context.Context) backup.DirectorySaver {
-	gDirSaverOnce.Do(func() { initDirSaver(ctx) })
-	return gDirSaver
+func initBlobStore(ctx context.Context) {
+	var err error
+
+	gBlobStore, err = makeBlobStore(ctx)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func getBlobStore(ctx context.Context) blob.Store {
+	gBlobStoreOnce.Do(func() { initBlobStore(ctx) })
+	return gBlobStore
 }
