@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package graph
+package dag
 
 import (
 	"errors"
@@ -25,6 +25,30 @@ import (
 
 	"golang.org/x/net/context"
 )
+
+// Call the visitor once for each unique node in the union of startNodes and
+// all of its transitive dependencies, with bounded parallelism.
+//
+// Guarantees:
+//
+//  *  If the graph contains a cycle, this function will not succeed.
+//
+//  *  If a node N depends on a node M, v.Visit(N) will be called only after
+//     v.Visit(M) returns successfully.
+//
+//  *  For each unique node N, dr.FindDependencies(N) and v.Visit(N) will each
+//     be called at most once. Moreover, v.Visit(N) will be called only after
+//     dr.FindDependencies(N) returns successfully.
+//
+func Visit(
+	ctx context.Context,
+	startNodes []Node,
+	dr DependencyResolver,
+	v Visitor,
+	parallelism int) (err error) {
+	err = errors.New("TODO")
+	return
+}
 
 // Given
 //
