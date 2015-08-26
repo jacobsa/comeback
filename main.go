@@ -17,8 +17,11 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"os"
+
+	"golang.org/x/net/context"
 )
 
 // The set of commands supported by the tool.
@@ -32,34 +35,47 @@ var commands = []*Command{
 	cmdVerify,
 }
 
+func runCmd(
+	ctx context.Context,
+	cmdName string,
+	cmdArgs []string) (err error) {
+	// Find and run the appropriate command.
+	for _, cmd := range commands {
+		if cmd.Name == cmdName {
+			cmd.Flags.Parse(cmdArgs)
+			err = cmd.Run(ctx, cmd.Flags.Args())
+			return
+		}
+	}
+
+	err = fmt.Errorf("Unknown command: %q", cmdName)
+	return
+}
+
 func main() {
 	flag.Parse()
 
 	// Set up bare logging output.
 	log.SetFlags(log.Lmicroseconds | log.Lshortfile)
 
-	// We get the command name.
+	// Find the command name.
 	args := flag.Args()
 	if len(args) < 1 {
-		log.Println("Missing command name. Choices are:")
+		fmt.Fprintln(os.Stderr, "Missing command name. Choices are:")
 		for _, cmd := range commands {
-			log.Printf("  %s\n", cmd.Name)
+			fmt.Fprintf(os.Stderr, "  %s\n", cmd.Name)
 		}
 
 		os.Exit(1)
 	}
 
 	cmdName := args[0]
+	cmdArgs := args[1:]
 
-	// Find and run the appropriate command.
-	for _, cmd := range commands {
-		if cmd.Name == cmdName {
-			cmd.Flags.Parse(args[1:])
-			args = cmd.Flags.Args()
-			cmd.Run(args)
-			return
-		}
+	// Call through.
+	err := runCmd(context.Background(), cmdName, cmdArgs)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
 	}
-
-	log.Fatalln("Unknown command:", cmdName)
 }

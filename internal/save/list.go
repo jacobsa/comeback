@@ -34,7 +34,7 @@ func List(
 	w io.Writer,
 	basePath string,
 	exclusions []*regexp.Regexp) (err error) {
-	b := syncutil.NewBundle(context.Background())
+	b := syncutil.NewBundle(ctx)
 
 	// Explore the file system graph, writing all non-excluded nodes into a
 	// channel.

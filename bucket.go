@@ -31,7 +31,8 @@ import (
 var g_bucketOnce sync.Once
 var g_bucket gcs.Bucket
 
-func makeTokenSource() (ts oauth2.TokenSource, err error) {
+func makeTokenSource(
+	ctx context.Context) (ts oauth2.TokenSource, err error) {
 	cfg := getConfig()
 
 	// Attempt to read the JSON file.
@@ -49,16 +50,16 @@ func makeTokenSource() (ts oauth2.TokenSource, err error) {
 	}
 
 	// Create the token source.
-	ts = jwtConfig.TokenSource(context.Background())
+	ts = jwtConfig.TokenSource(ctx)
 
 	return
 }
 
-func makeBucket() (bucket gcs.Bucket, err error) {
+func makeBucket(ctx context.Context) (bucket gcs.Bucket, err error) {
 	cfg := getConfig()
 
 	// Create an oauth2 token source.
-	tokenSrc, err := makeTokenSource()
+	tokenSrc, err := makeTokenSource(ctx)
 	if err != nil {
 		err = fmt.Errorf("makeTokenSource: %v", err)
 		return
@@ -78,7 +79,7 @@ func makeBucket() (bucket gcs.Bucket, err error) {
 
 	// Grab the bucket.
 	bucket, err = conn.OpenBucket(
-		context.Background(),
+		ctx,
 		cfg.BucketName)
 
 	if err != nil {
@@ -89,16 +90,16 @@ func makeBucket() (bucket gcs.Bucket, err error) {
 	return
 }
 
-func initBucket() {
+func initBucket(ctx context.Context) {
 	var err error
 
-	g_bucket, err = makeBucket()
+	g_bucket, err = makeBucket(ctx)
 	if err != nil {
 		panic(err)
 	}
 }
 
-func getBucket() gcs.Bucket {
-	g_bucketOnce.Do(initBucket)
+func getBucket(ctx context.Context) gcs.Bucket {
+	g_bucketOnce.Do(func() { initBucket(ctx) })
 	return g_bucket
 }

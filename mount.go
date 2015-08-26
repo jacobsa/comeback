@@ -106,13 +106,13 @@ func currentUser() (uid uint32, gid uint32, err error) {
 // Command
 ////////////////////////////////////////////////////////////////////////
 
-func doMount(args []string) (err error) {
+func runMount(ctx context.Context, args []string) (err error) {
 	// Enable invariant checking for the file system.
 	syncutil.EnableInvariantChecking()
 
 	// Grab dependencies.
-	bucket := getBucket()
-	crypter := getCrypter()
+	bucket := getBucket(ctx)
+	crypter := getCrypter(ctx)
 
 	// Check usage.
 	if len(args) < 1 || len(args) > 2 {
@@ -136,11 +136,11 @@ func doMount(args []string) (err error) {
 			return
 		}
 	} else {
-		r := getRegistry()
+		r := getRegistry(ctx)
 
 		// List jobs.
 		var jobs []registry.CompletedJob
-		jobs, err = r.ListBackups()
+		jobs, err = r.ListBackups(ctx)
 		if err != nil {
 			err = fmt.Errorf("ListBackups: %v", err)
 			return
@@ -214,7 +214,7 @@ func doMount(args []string) (err error) {
 	registerSIGINTHandler(mountPoint)
 
 	// Wait for unmount.
-	err = mfs.Join(context.Background())
+	err = mfs.Join(ctx)
 	if err != nil {
 		err = fmt.Errorf("Join: %v", err)
 		return
@@ -222,11 +222,4 @@ func doMount(args []string) (err error) {
 
 	log.Println("Exiting successfully.")
 	return
-}
-
-func runMount(args []string) {
-	err := doMount(args)
-	if err != nil {
-		log.Fatalln(err)
-	}
 }

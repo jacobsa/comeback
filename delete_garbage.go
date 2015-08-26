@@ -38,19 +38,11 @@ var cmdDeleteGarbage = &Command{
 // Delete garbage
 ////////////////////////////////////////////////////////////////////////
 
-func runDeleteGarbage(args []string) {
-	// Die on error.
-	var err error
-	defer func() {
-		if err != nil {
-			log.Fatalln(err)
-		}
-	}()
+func runDeleteGarbage(ctx context.Context, args []string) (err error) {
+	b := syncutil.NewBundle(ctx)
 
 	// Grab dependencies.
-	bucket := getBucket()
-
-	b := syncutil.NewBundle(context.Background())
+	bucket := getBucket(ctx)
 
 	// List all garbage objects.
 	objects := make(chan *gcs.Object, 100)
@@ -115,4 +107,6 @@ func runDeleteGarbage(args []string) {
 
 	// Print a summary.
 	log.Printf("Deleted %d objects.", count)
+
+	return
 }

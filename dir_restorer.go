@@ -19,6 +19,8 @@ import (
 	"log"
 	"sync"
 
+	"golang.org/x/net/context"
+
 	"github.com/jacobsa/comeback/internal/backup"
 	"github.com/jacobsa/comeback/internal/wiring"
 )
@@ -26,7 +28,7 @@ import (
 var gDirRestorer backup.DirectoryRestorer
 var gDirRestorerOnce sync.Once
 
-func initDirRestorer() {
+func initDirRestorer(ctx context.Context) {
 	var err error
 	defer func() {
 		if err != nil {
@@ -34,15 +36,16 @@ func initDirRestorer() {
 		}
 	}()
 
-	bucket := getBucket()
+	bucket := getBucket(ctx)
 	password := getPassword()
 
 	gDirRestorer, err = wiring.MakeDirRestorer(
+		ctx,
 		password,
 		bucket)
 }
 
-func getDirRestorer() backup.DirectoryRestorer {
-	gDirRestorerOnce.Do(initDirRestorer)
+func getDirRestorer(ctx context.Context) backup.DirectoryRestorer {
+	gDirRestorerOnce.Do(func() { initDirRestorer(ctx) })
 	return gDirRestorer
 }

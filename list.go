@@ -16,8 +16,11 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"time"
+
+	"golang.org/x/net/context"
 )
 
 var cmdList = &Command{
@@ -25,12 +28,13 @@ var cmdList = &Command{
 	Run:  runList,
 }
 
-func runList(args []string) {
+func runList(ctx context.Context, args []string) (err error) {
 	// Ask the registry for a list.
-	registry := getRegistry()
-	jobs, err := registry.ListBackups()
+	registry := getRegistry(ctx)
+	jobs, err := registry.ListBackups(ctx)
 	if err != nil {
-		log.Fatalln("Listing previous backups:", err)
+		err = fmt.Errorf("ListBackups: %v", err)
+		return
 	}
 
 	// Print each.
@@ -53,4 +57,6 @@ func runList(args []string) {
 			job.Score.Hex(),
 		)
 	}
+
+	return
 }

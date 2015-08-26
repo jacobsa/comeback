@@ -16,9 +16,13 @@
 package main
 
 import (
+	"errors"
+	"fmt"
 	"log"
 	"os"
 	"time"
+
+	"golang.org/x/net/context"
 )
 
 var cmdRestore = &Command{
@@ -33,57 +37,64 @@ func init() {
 	cmdRestore.Run = runRestore // Break flag-related dependency loop.
 }
 
-func runRestore(args []string) {
-	var err error
-
+func runRestore(ctx context.Context, args []string) (err error) {
 	// Parse the job start time.
 	if len(*g_jobTime) == 0 {
-		log.Fatalln("You must set the --job_time flag.")
+		err = errors.New("You must set the --job_time flag.")
+		return
 	}
 
 	startTime, err := time.Parse(time.RFC3339Nano, *g_jobTime)
 	if err != nil {
-		log.Fatalf("Parsing --job_time: %v", err)
+		err = fmt.Errorf("Parsing --job_time: %v", err)
+		return
 	}
 
 	// Check the target.
 	if *g_target == "" {
-		log.Fatalln("You must set the -target flag.")
+		err = errors.New("You must set the -target flag.")
+		return
 	}
 
 	// Grab dependencies. Make sure to get the registry first, because it takes
 	// less time to construct.
-	reg := getRegistry()
-	dirRestorer := getDirRestorer()
+	reg := getRegistry(ctx)
+	dirRestorer := getDirRestorer(ctx)
 
 	// Find the requested job.
-	job, err := reg.FindBackup(startTime)
+	job, err := reg.FindBackup(ctx, startTime)
 	if err != nil {
-		log.Fatalln("FindBackup:", err)
+		err = fmt.Errorf("FindBackup: %v", err)
+		return
 	}
 
 	// Make sure the target doesn't exist.
 	err = os.RemoveAll(*g_target)
 	if err != nil {
-		log.Fatalln("os.RemoveAll:", err)
+		err = fmt.Errorf("os.RemoveAll: %v", err)
+		return
 	}
 
 	// Create the target.
 	err = os.Mkdir(*g_target, 0700)
 	if err != nil {
-		log.Fatalln("os.Mkdir:", err)
+		err = fmt.Errorf("os.Mkdir: %v", err)
+		return
 	}
 
 	// Attempt a restore.
 	err = dirRestorer.RestoreDirectory(
+		ctx,
 		job.Score,
 		*g_target,
 		"",
 	)
 
 	if err != nil {
-		log.Fatalln("Restoring:", err)
+		err = fmt.Errorf("Restoring: %v", err)
+		return
 	}
 
 	log.Println("Successfully restored to target:", *g_target)
+	return
 }

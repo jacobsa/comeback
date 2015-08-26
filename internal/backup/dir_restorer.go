@@ -36,7 +36,11 @@ type DirectoryRestorer interface {
 	// Recursively restore a directory based on the listing named by the supplied
 	// score. The first call should set basePath to the target directory and
 	// relPath to the empty string. The target directory must already exist.
-	RestoreDirectory(score blob.Score, basePath, relPath string) (err error)
+	RestoreDirectory(
+		ctx context.Context,
+		score blob.Score,
+		basePath string,
+		relPath string) (err error)
 }
 
 // Create a directory restorer that uses the supplied objects.
@@ -87,11 +91,12 @@ type onDemandDirRestorer struct {
 }
 
 func (r *onDemandDirRestorer) RestoreDirectory(
+	ctx context.Context,
 	score blob.Score,
 	basePath string,
 	relPath string,
 ) (err error) {
-	return r.createRestorer(r).RestoreDirectory(score, basePath, relPath)
+	return r.createRestorer(r).RestoreDirectory(ctx, score, basePath, relPath)
 }
 
 // Split out for testability. You should not use this directly.
@@ -125,12 +130,13 @@ type dirRestorer struct {
 }
 
 func (r *dirRestorer) RestoreDirectory(
+	ctx context.Context,
 	score blob.Score,
 	basePath string,
 	relPath string,
 ) (err error) {
 	// Load the appropriate blob.
-	blob, err := r.blobStore.Load(context.TODO(), score)
+	blob, err := r.blobStore.Load(ctx, score)
 	if err != nil {
 		err = fmt.Errorf("Loading blob: %v", err)
 		return
@@ -167,6 +173,7 @@ func (r *dirRestorer) RestoreDirectory(
 
 			// Create the file using its blobs.
 			err = r.fileRestorer.RestoreFile(
+				ctx,
 				entry.Scores,
 				entryFullPath,
 				entry.Permissions,
@@ -195,6 +202,7 @@ func (r *dirRestorer) RestoreDirectory(
 
 			// Restore to the directory.
 			err = r.wrapped.RestoreDirectory(
+				ctx,
 				entry.Scores[0],
 				basePath,
 				entryRelPath,
