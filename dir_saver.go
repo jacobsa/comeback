@@ -43,6 +43,7 @@ func initDirSaver(ctx context.Context) {
 
 	const chunkSize = 1 << 24 // 16 MiB
 	gDirSaver, err = wiring.MakeDirSaver(
+		ctx,
 		password,
 		bucket,
 		chunkSize,

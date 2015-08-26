@@ -43,6 +43,7 @@ func initRegistryAndCrypter(ctx context.Context) {
 	password := getPassword()
 
 	gRegistry, gCrypter, err = wiring.MakeRegistryAndCrypter(
+		ctx,
 		password,
 		bucket)
 

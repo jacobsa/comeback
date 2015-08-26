@@ -31,7 +31,7 @@ var cmdList = &Command{
 func runList(ctx context.Context, args []string) (err error) {
 	// Ask the registry for a list.
 	registry := getRegistry(ctx)
-	jobs, err := registry.ListBackups()
+	jobs, err := registry.ListBackups(ctx)
 	if err != nil {
 		err = fmt.Errorf("ListBackups: %v", err)
 		return

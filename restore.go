@@ -62,7 +62,7 @@ func runRestore(ctx context.Context, args []string) (err error) {
 	dirRestorer := getDirRestorer(ctx)
 
 	// Find the requested job.
-	job, err := reg.FindBackup(startTime)
+	job, err := reg.FindBackup(ctx, startTime)
 	if err != nil {
 		err = fmt.Errorf("FindBackup: %v", err)
 		return
