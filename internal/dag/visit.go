@@ -232,7 +232,7 @@ func (s *visitState) checkInvariants() {
 // Is there anything that needs a worker's attention?
 //
 // LOCKS_REQUIRED(state.mu)
-func (state *traverseDAGState) shouldWake() bool {
+func (state *visitState) shouldWake() bool {
 	return len(state.readyToVisit) != 0 ||
 		state.firstErr != nil ||
 		state.busyWorkers == 0
@@ -241,7 +241,7 @@ func (state *traverseDAGState) shouldWake() bool {
 // Sleep until there's something interesting for a worker to do.
 //
 // LOCKS_REQUIRED(state.mu)
-func (state *traverseDAGState) waitForSomethingToDo() {
+func (state *visitState) waitForSomethingToDo() {
 	for !state.shouldWake() {
 		state.cond.Wait()
 	}
