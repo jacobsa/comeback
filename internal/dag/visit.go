@@ -131,7 +131,7 @@ type nodeInfo struct {
 
 	// The set of unsatisfied nodes for which this node is a blocker.
 	//
-	// INVARIANT: len(dependants) > 0 implies state < state_Unvisited.
+	// INVARIANT: len(dependants) > 0 implies state < state_Visited.
 	// INVARIANT: For each v, v.state == state_DependenciesUnsatisfied
 	dependants []*nodeInfo
 }
@@ -147,8 +147,8 @@ func (ni *nodeInfo) checkInvariants() {
 		log.Panicf("unsatisfied: %d, state: %v", ni.unsatisfied, ni.state)
 	}
 
-	// INVARIANT: len(dependants) > 0 implies state < state_Unvisited.
-	if len(ni.dependants) > 0 && !(ni.state < state_Unvisited) {
+	// INVARIANT: len(dependants) > 0 implies state < state_Visited.
+	if len(ni.dependants) > 0 && !(ni.state < state_Visited) {
 		log.Panicf("dependants: %d, state: %v", len(ni.dependants), ni.state)
 	}
 
