@@ -17,6 +17,7 @@ package save
 
 import (
 	"io/ioutil"
+	"math/rand"
 	"os"
 	"path"
 	"regexp"
@@ -37,26 +38,11 @@ func TestFSSuccessorFinder(t *testing.T) { RunTests(t) }
 // Helpers
 ////////////////////////////////////////////////////////////////////////
 
-type fsNodeSlice []*fsNode
-
-func (p fsNodeSlice) Len() int {
-	return len(p)
-}
-
-func (p fsNodeSlice) Less(i, j int) bool {
-	return p[i].RelPath < p[j].RelPath
-}
-
-func (p fsNodeSlice) Swap(i, j int) {
-	p[i], p[j] = p[j], p[i]
-}
-
-func sortNodes(graphNodes []graph.Node) (nodes fsNodeSlice) {
+func convertNodes(graphNodes []graph.Node) (nodes []*fsNode) {
 	for _, n := range graphNodes {
 		nodes = append(nodes, n.(*fsNode))
 	}
 
-	sort.Sort(nodes)
 	return
 }
 
@@ -145,7 +131,7 @@ func (t *FSSuccessorFinderTest) VisitRootNode() {
 	AssertEq(nil, err)
 
 	// Check the output.
-	pfis := sortNodes(successors)
+	pfis := convertNodes(successors)
 	AssertEq(2, len(pfis))
 	ExpectEq("bar", pfis[0].RelPath)
 	ExpectEq("foo", pfis[1].RelPath)
@@ -182,7 +168,7 @@ func (t *FSSuccessorFinderTest) VisitNonRootNode() {
 	AssertEq(nil, err)
 
 	// Check the output.
-	pfis := sortNodes(successors)
+	pfis := convertNodes(successors)
 	AssertEq(2, len(pfis))
 	ExpectEq("sub/dirs/bar", pfis[0].RelPath)
 	ExpectEq("sub/dirs/foo", pfis[1].RelPath)
@@ -238,7 +224,7 @@ func (t *FSSuccessorFinderTest) Files() {
 	AssertEq(nil, err)
 
 	// Check the output.
-	pfis := sortNodes(successors)
+	pfis := convertNodes(successors)
 	AssertEq(2, len(pfis))
 
 	pfi = pfis[0]
@@ -285,7 +271,7 @@ func (t *FSSuccessorFinderTest) Directories() {
 	AssertEq(nil, err)
 
 	// Check the output.
-	pfis := sortNodes(successors)
+	pfis := convertNodes(successors)
 	AssertEq(2, len(pfis))
 
 	pfi = pfis[0]
@@ -329,7 +315,7 @@ func (t *FSSuccessorFinderTest) Symlinks() {
 	AssertEq(nil, err)
 
 	// Check the output.
-	pfis := sortNodes(successors)
+	pfis := convertNodes(successors)
 	AssertEq(1, len(pfis))
 
 	pfi = pfis[0]
@@ -380,4 +366,47 @@ func (t *FSSuccessorFinderTest) Exclusions() {
 	AssertEq(nil, err)
 	ExpectThat(successors, ElementsAre())
 	ExpectThat(node.Children, ElementsAre())
+}
+
+func (t *FSSuccessorFinderTest) SortsByName() {
+	var err error
+
+	// Create several children with random names.
+	var expected sort.StringSlice
+
+	const numChildren = 64
+	for i := 0; i < numChildren; i++ {
+		const alphabet = "0123456789abcdefABCDEF"
+		const nameLength = 16
+
+		var name [nameLength]byte
+		for i := 0; i < nameLength; i++ {
+			name[i] = alphabet[rand.Intn(len(alphabet))]
+		}
+
+		err = ioutil.WriteFile(path.Join(t.dir, string(name[:])), []byte{}, 0500)
+		AssertEq(nil, err)
+
+		expected = append(expected, string(name[:]))
+	}
+
+	sort.Sort(expected)
+
+	// Visit.
+	node := &fsNode{
+		RelPath: "",
+		Info: fs.DirectoryEntry{
+			Type: fs.TypeDirectory,
+		},
+	}
+
+	successors, err := t.sf.FindDirectSuccessors(t.ctx, node)
+	AssertEq(nil, err)
+
+	// Check the order.
+	nodes := convertNodes(successors)
+	AssertEq(len(expected), len(nodes))
+	for i := 0; i < len(expected); i++ {
+		ExpectEq(expected[i], nodes[i].Info.Name, "i: %d", i)
+	}
 }

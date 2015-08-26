@@ -17,6 +17,7 @@ package save
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path"
 	"regexp"
@@ -35,6 +36,10 @@ import (
 // RelPath, Info and Parent fields of the successors, and the Children field of
 // the node on which it is called. The Scores field of Info is left as nil,
 // however.
+//
+// Results are guaranteed to be sorted by name, for stability and for
+// compatibility with old backup corpora. This is stricter than the
+// case-insensitive order apparently automatically offered on OS X.
 func newSuccessorFinder(
 	basePath string,
 	exclusions []*regexp.Regexp) (sf graph.SuccessorFinder) {
@@ -119,29 +124,11 @@ func (sf *fsSuccessorFinder) FindDirectSuccessors(
 }
 
 // Read and lstat everything in the directory with the given relative path.
+// Sort by name.
 func (sf *fsSuccessorFinder) readDir(
 	relPath string) (entries []os.FileInfo, err error) {
-	// Open the directory for reading.
-	f, err := os.Open(path.Join(sf.basePath, relPath))
-	if err != nil {
-		err = fmt.Errorf("Open: %v", err)
-		return
-	}
-
-	defer func() {
-		closeErr := f.Close()
-		if err == nil && closeErr != nil {
-			err = fmt.Errorf("Close: %v", closeErr)
-		}
-	}()
-
-	// Read.
-	entries, err = f.Readdir(0)
-	if err != nil {
-		err = fmt.Errorf("Readdir: %v", err)
-		return
-	}
-
+	// Note that ioutil.ReadDir guarantees that the output is sorted by name.
+	entries, err = ioutil.ReadDir(path.Join(sf.basePath, relPath))
 	return
 }
 
