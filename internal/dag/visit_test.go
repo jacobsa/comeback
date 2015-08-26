@@ -19,9 +19,11 @@ import (
 	cryptorand "crypto/rand"
 	"encoding/binary"
 	"errors"
+	"flag"
 	"fmt"
 	"log"
 	"math/rand"
+	"os"
 	"sync"
 	"testing"
 	"time"
@@ -31,9 +33,25 @@ import (
 	"github.com/jacobsa/comeback/internal/dag"
 	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
+	"github.com/jacobsa/syncutil"
 )
 
 func TestVisit(t *testing.T) { RunTests(t) }
+
+var fCheckInvariants = flag.Bool(
+	"check_invariants",
+	false,
+	"Enable syncutil.InvariantMutex checking.")
+
+func TestMain(m *testing.M) {
+	flag.Parse()
+
+	if *fCheckInvariants {
+		syncutil.EnableInvariantChecking()
+	}
+
+	os.Exit(m.Run())
+}
 
 ////////////////////////////////////////////////////////////////////////
 // Helpers
