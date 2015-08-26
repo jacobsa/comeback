@@ -453,8 +453,9 @@ func (state *visitState) visitOne(ctx context.Context) (err error) {
 		}
 	}
 
-	// Update the node itself.
+	// Update and reinsert the node itself.
 	ni.state = state_Visited
+	state.reinsert(ni)
 
 	return
 }
@@ -463,6 +464,54 @@ func (state *visitState) visitOne(ctx context.Context) (err error) {
 //
 // LOCKS_REQUIRED(state.mu)
 func (state *visitState) resolveOne(ctx context.Context) (err error) {
-	err = errors.New("TODO: Model this on visitOne.")
+	// Mark this worker as busy for the duration of this function.
+	state.busyWorkers++
+
+	defer func() {
+		state.busyWorkers--
+		if state.busyWorkers == 0 {
+			state.cond.Broadcast()
+		}
+	}()
+
+	// Extract the node to resolve.
+	l := len(state.toResolve)
+	ni := state.toResolve[l-1]
+	state.toResolve = state.toResolve[:l-1]
+
+	// Unlock while resolving.
+	state.mu.Unlock()
+	deps, err := state.dr.FindDependencies(ctx, ni.node)
+	state.mu.Lock()
+
+	// Did we encounter an error in the unlocked region above?
+	if err != nil {
+		return
+	}
+
+	// Ensure that we have a record for every dependency.
+	state.addNodes(deps)
+
+	// Add this node to the list of dependants for each dependency that hasn't
+	// yet been visited. Count them as we go.
+	for _, dep := range deps {
+		depNi := state.nodes[dep]
+		if depNi.state == state_Visited {
+			continue
+		}
+
+		ni.unsatisfied++
+		depNi.dependants = append(depNi.dependants, ni)
+	}
+
+	// Update and reinsert the node itself.
+	if ni.unsatisfied > 0 {
+		ni.state = state_DependenciesUnsatisfied
+	} else {
+		ni.state = state_Unvisited
+	}
+
+	state.reinsert(ni)
+
 	return
 }
