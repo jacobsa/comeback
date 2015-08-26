@@ -138,15 +138,14 @@ type visitState struct {
 	admitted map[Node]struct{}
 
 	// A map containing nodes that we are not yet ready to visit, because they
-	// have dependencies that have not yet been visited or because we have not
-	// yet seen them.
+	// have dependencies that have not yet been visited, to the number of such
+	// dependencies.
 	//
-	// INVARIANT: For all v, !v.readyToVisit()
-	// INVARIANT: For all v, v.checkInvariants doesn't panic
-	// INVARIANT: For all v, v is a key in admitted
+	// INVARIANT: For all v, v > 0
+	// INVARIANT: For all k, k is a key in admitted
 	//
 	// GUARDED_BY(mu)
-	notReadyToVisit map[Node]visitNodeState
+	notReadyToVisit map[Node]int64
 
 	// A list of nodes that we are ready to visit but have not yet started
 	// visiting.
@@ -188,23 +187,18 @@ type visitState struct {
 
 // LOCKS_REQUIRED(s.mu)
 func (s *visitState) checkInvariants() {
-	// INVARIANT: For all v, !v.readyToVisit()
+	// INVARIANT: For all v, v > 0
 	for k, v := range s.notReadyToVisit {
-		if v.readyToVisit() {
-			log.Panicf("Unexpected ready node: %#v, %#v", k, v)
+		if v <= 0 {
+			log.Panicf("Non-positive count %d for node: %#v", v, k)
 		}
 	}
 
-	// INVARIANT: For all v, v.checkInvariants doesn't panic
-	for _, v := range s.notReadyToVisit {
-		v.checkInvariants()
-	}
-
-	// INVARIANT: For all v, v is a key in admitted
-	for _, v := range s.notReadyToVisit {
-		_, ok := s.admitted[v]
+	// INVARIANT: For all k, k is a key in admitted
+	for k, _ := range s.notReadyToVisit {
+		_, ok := s.admitted[k]
 		if !ok {
-			log.Panicf("Not in admitted: %#v", v)
+			log.Panicf("Not in admitted: %#v", k)
 		}
 	}
 
@@ -245,29 +239,6 @@ func (state *visitState) waitForSomethingToDo() {
 	for !state.shouldWake() {
 		state.cond.Wait()
 	}
-}
-
-type traverseDAGNodeState struct {
-	// The number of predecessors of this node that we have encountered but not
-	// yet finished visiting.
-	//
-	// INVARIANT: predecessorsOutstanding >= 0
-	predecessorsOutstanding int64
-
-	// Have we yet seen this node in the stream of input nodes? If not, we may
-	// not yet have encountered all of its predecessors.
-	seen bool
-}
-
-func (s traverseDAGNodeState) checkInvariants() {
-	// INVARIANT: predecessorsOutstanding >= 0
-	if s.predecessorsOutstanding < 0 {
-		log.Panicf("Unexpected count: %d", s.predecessorsOutstanding)
-	}
-}
-
-func (s traverseDAGNodeState) readyToVisit() bool {
-	return s.predecessorsOutstanding == 0 && s.seen
 }
 
 // Read incoming nodes and update their successors' records. If the incoming
