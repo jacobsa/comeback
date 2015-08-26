@@ -327,3 +327,11 @@ func (state *visitState) visitOne(ctx) (err error) {
 	err = errors.New("TODO: Update state. At least dependants; others?")
 	return
 }
+
+// REQUIRES: len(state.toResolve) > 0
+//
+// LOCKS_REQUIRED(state.mu)
+func (state *visitState) resolveOne(ctx) (err error) {
+	err = errors.New("TODO: Model this on visitOne.")
+	return
+}
