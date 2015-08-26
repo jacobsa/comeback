@@ -347,6 +347,14 @@ func (t *TraverseDAGTest) MultipleConnectedComponents() {
 	t.runTest(edges)
 }
 
+func (t *TraverseDAGTest) RedundantRoots() {
+	AssertTrue(false, "TODO")
+}
+
+func (t *TraverseDAGTest) Cycle() {
+	AssertTrue(false, "TODO")
+}
+
 func (t *TraverseDAGTest) LargeRootedTree() {
 	const depth = 6
 	edges := randomTree(depth)
@@ -357,6 +365,10 @@ func (t *TraverseDAGTest) LargeRootedTree_Inverted() {
 	const depth = 6
 	edges := invertRelation(randomTree(depth))
 	t.runTest(edges)
+}
+
+func (t *TraverseDAGTest) DependencyResolverReturnsError() {
+	AssertTrue(false, "TODO")
 }
 
 func (t *TraverseDAGTest) VisitorReturnsError() {
