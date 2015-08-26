@@ -29,7 +29,6 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/jacobsa/comeback/internal/dag"
-	"github.com/jacobsa/comeback/internal/graph"
 	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
 )
