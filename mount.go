@@ -29,8 +29,6 @@ import (
 	"github.com/jacobsa/comeback/internal/blob"
 	"github.com/jacobsa/comeback/internal/comebackfs"
 	"github.com/jacobsa/comeback/internal/registry"
-	"github.com/jacobsa/comeback/internal/util"
-	"github.com/jacobsa/comeback/internal/wiring"
 	"github.com/jacobsa/fuse"
 	"github.com/jacobsa/fuse/fuseutil"
 	"github.com/jacobsa/syncutil"
@@ -111,8 +109,7 @@ func runMount(ctx context.Context, args []string) (err error) {
 	syncutil.EnableInvariantChecking()
 
 	// Grab dependencies.
-	bucket := getBucket(ctx)
-	crypter := getCrypter(ctx)
+	blobStore := getBlobStore(ctx)
 
 	// Check usage.
 	if len(args) < 1 || len(args) > 2 {
@@ -163,12 +160,6 @@ func runMount(ctx context.Context, args []string) (err error) {
 	}
 
 	log.Printf("Mounting score %s.", score.Hex())
-
-	// Create the blob store.
-	blobStore, err := wiring.MakeBlobStore(
-		bucket,
-		crypter,
-		util.NewStringSet())
 
 	// Choose permission settings.
 	uid, gid, err := currentUser()

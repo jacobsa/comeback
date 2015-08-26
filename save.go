@@ -27,6 +27,7 @@ import (
 	"github.com/jacobsa/comeback/internal/config"
 	"github.com/jacobsa/comeback/internal/registry"
 	"github.com/jacobsa/comeback/internal/save"
+	"github.com/jacobsa/timeutil"
 )
 
 var cmdSave = &Command{
@@ -113,7 +114,9 @@ func runSave(ctx context.Context, args []string) (err error) {
 	// Make sure to do this before setting up state saving below, because these
 	// calls may modify the state struct.
 	reg := getRegistry(ctx)
-	dirSaver := getDirSaver(ctx)
+	blobStore := getBlobStore(ctx)
+	state := getState(ctx)
+	clock := timeutil.RealClock()
 
 	// Periodically save state.
 	const saveStatePeriod = 15 * time.Second
@@ -121,19 +124,19 @@ func runSave(ctx context.Context, args []string) (err error) {
 	go saveStatePeriodically(ctx, saveStateTicker.C)
 
 	// Choose a start time for the job.
-	startTime := time.Now()
+	startTime := clock.Now()
 
-	// Call the directory saver.
-	score, err := dirSaver.Save(job.BasePath, "", job.Excludes)
-	if err != nil {
-		err = fmt.Errorf("dirSaver.Save: %v", err)
-		return
-	}
+	// Call the saving pipeline.
+	score, err := save.Save(
+		ctx,
+		job.BasePath,
+		job.Excludes,
+		state.ScoresForFiles,
+		blobStore,
+		clock)
 
-	// Ensure the backup is durable.
-	err = dirSaver.Flush()
 	if err != nil {
-		err = fmt.Errorf("dirSaver.Flush: %v", err)
+		err = fmt.Errorf("save.Save: %v", err)
 		return
 	}
 

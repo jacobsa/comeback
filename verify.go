@@ -61,7 +61,6 @@ import (
 	"time"
 
 	"github.com/jacobsa/comeback/internal/blob"
-	"github.com/jacobsa/comeback/internal/util"
 	"github.com/jacobsa/comeback/internal/verify"
 	"github.com/jacobsa/comeback/internal/wiring"
 	"github.com/jacobsa/gcloud/gcs"
@@ -321,19 +320,8 @@ func runVerify(ctx context.Context, args []string) (err error) {
 
 	// Grab dependencies.
 	bucket := getBucket(ctx)
-	crypter := getCrypter(ctx)
 	registry := getRegistry(ctx)
-
-	// Create a blob store.
-	blobStore, err := wiring.MakeBlobStore(
-		bucket,
-		crypter,
-		util.NewStringSet())
-
-	if err != nil {
-		err = fmt.Errorf("MakeBlobStore: %v", err)
-		return
-	}
+	blobStore := getBlobStore(ctx)
 
 	// Open the log file.
 	logFile, knownStructure, err := openVerifyLog(ctx)
