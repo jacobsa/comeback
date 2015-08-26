@@ -472,6 +472,7 @@ func (state *visitState) visitOne(ctx context.Context) (err error) {
 	}
 
 	// Update and reinsert the node itself.
+	ni.dependants = nil
 	ni.state = state_Visited
 	state.reinsert(ni)
 
