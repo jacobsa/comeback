@@ -298,7 +298,7 @@ func (state *visitState) processNodes(ctx context.Context) (err error) {
 // REQUIRES: len(state.toVisit) > 0
 //
 // LOCKS_REQUIRED(state.mu)
-func (state *visitState) visitOne(ctx) (err error) {
+func (state *visitState) visitOne(ctx context.Context) (err error) {
 	// Mark this worker as busy for the duration of this function.
 	state.busyWorkers++
 	state.cond.Broadcast()
@@ -316,7 +316,7 @@ func (state *visitState) visitOne(ctx) (err error) {
 
 	// Unlock while visiting.
 	state.mu.Unlock()
-	err = v.Visit(ctx, ni.node)
+	err = state.visitor.Visit(ctx, ni.node)
 	state.mu.Lock()
 
 	// Did we encounter an error in the unlocked region above?
@@ -331,7 +331,7 @@ func (state *visitState) visitOne(ctx) (err error) {
 // REQUIRES: len(state.toResolve) > 0
 //
 // LOCKS_REQUIRED(state.mu)
-func (state *visitState) resolveOne(ctx) (err error) {
+func (state *visitState) resolveOne(ctx context.Context) (err error) {
 	err = errors.New("TODO: Model this on visitOne.")
 	return
 }
