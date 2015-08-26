@@ -303,7 +303,7 @@ func (s *visitState) checkInvariants() {
 
 	// INVARIANT: For each v, v.node is a key in nodes
 	for _, v := range s.toVisit {
-		_, ok := s.nodes[v]
+		_, ok := s.nodes[v.node]
 		if !ok {
 			log.Panicf("Unknown node: %#v", v)
 		}
