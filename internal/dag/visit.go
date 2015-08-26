@@ -261,7 +261,7 @@ func (s *visitState) checkInvariants() {
 
 	// INVARIANT: For each v, v.node is a key in nodes
 	for _, v := range s.toResolve {
-		_, ok := s.nodes[v]
+		_, ok := s.nodes[v.node]
 		if !ok {
 			log.Panicf("Unknown node: %#v", v)
 		}
@@ -276,7 +276,7 @@ func (s *visitState) checkInvariants() {
 
 	// INVARIANT: For each k, k.node is a key in nodes
 	for k, _ := range s.unsatisfied {
-		_, ok := s.nodes[k]
+		_, ok := s.nodes[k.node]
 		if !ok {
 			log.Panicf("Unknown node: %#v", k)
 		}
