@@ -84,6 +84,7 @@ func runRestore(ctx context.Context, args []string) (err error) {
 
 	// Attempt a restore.
 	err = dirRestorer.RestoreDirectory(
+		ctx,
 		job.Score,
 		*g_target,
 		"",
