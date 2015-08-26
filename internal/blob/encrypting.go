@@ -67,8 +67,3 @@ func (s *encryptingStore) Load(
 
 	return plaintext, nil
 }
-
-func (s *encryptingStore) Contains(ctx context.Context, score Score) (b bool) {
-	b = s.wrapped.Contains(ctx, score)
-	return
-}

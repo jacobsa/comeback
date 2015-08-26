@@ -29,11 +29,6 @@ type Store interface {
 		ctx context.Context,
 		req *StoreRequest) (s Score, err error)
 
-	// Return true only if the supplied score is durable in the blob store.
-	// Implementations may choose to return false if the information is not
-	// available.
-	Contains(ctx context.Context, score Score) (b bool)
-
 	// Load a previously-stored blob.
 	Load(ctx context.Context, s Score) (blob []byte, err error)
 }
@@ -60,7 +55,7 @@ func NewStore(
 	// Store blobs in GCS.
 	bs = Internal_NewGCSStore(bucket, objectNamePrefix)
 
-	// Respond efficiently to Contains requests.
+	// Don't make redundant calls to GCS.
 	bs = Internal_NewExistingScoresStore(existingScores, bs)
 
 	// Make paranoid checks on the results.

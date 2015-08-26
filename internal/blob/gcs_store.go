@@ -66,9 +66,6 @@ const metadataKey_MD5 = "comeback_md5"
 //
 // The resulting store requires StoreRequest.score fields to be filled in by
 // the caller.
-//
-// The returned store does not support Contains; this method must not be
-// called.
 func Internal_NewGCSStore(
 	bucket gcs.Bucket,
 	prefix string) (store Store) {
@@ -351,10 +348,6 @@ func (s *gcsStore) Store(
 	}
 
 	return
-}
-
-func (s *gcsStore) Contains(ctx context.Context, score Score) (b bool) {
-	panic("gcsStore.Contains not supported; wiring code bug?")
 }
 
 func (s *gcsStore) Load(

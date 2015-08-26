@@ -64,13 +64,6 @@ func (bs *existingScoresStore) Store(
 	return
 }
 
-func (bs *existingScoresStore) Contains(
-	ctx context.Context,
-	score Score) (b bool) {
-	b = bs.scores.Contains(score.Hex())
-	return
-}
-
 func (bs *existingScoresStore) Load(
 	ctx context.Context,
 	s Score) (blob []byte, err error) {
