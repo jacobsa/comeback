@@ -78,8 +78,6 @@ func makeState(ctx context.Context) (s state.State, err error) {
 	// If we opened a file above, load from it.
 	if f != nil {
 		defer f.Close()
-		log.Println("Loading from state file.")
-
 		s, err = state.LoadState(f)
 		if err != nil {
 			err = fmt.Errorf("LoadState: %v", err)
@@ -118,10 +116,25 @@ func makeState(ctx context.Context) (s state.State, err error) {
 
 func initState(ctx context.Context) {
 	var err error
+
+	// Load the state struct.
+	log.Println("Loading from state file...")
+
 	g_state, err = makeState(ctx)
 	if err != nil {
 		log.Fatalln(err)
 	}
+
+	// Save it back to the file, in case makeState changed it (e.g. by listing
+	// existing scores).
+	log.Println("Saving to state file...")
+
+	err = saveStateStruct(getConfig().StateFile, &g_state)
+	if err != nil {
+		log.Fatalf("saveStateStruct: %v", err)
+	}
+
+	log.Println("Finished saving to state file.")
 }
 
 func getState(ctx context.Context) *state.State {
