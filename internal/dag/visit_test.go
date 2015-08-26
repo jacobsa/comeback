@@ -178,10 +178,12 @@ func (t *VisitTest) call(
 	return
 }
 
-// Run the graph described by the given edges through TraverseDAG, inserting
+// Run the graph described by the given edges through Visit, inserting
 // sleeps to attempt to shake out races, and make sure we can't catch it
 // violating any of its promises.
-func (t *TraverseDAGTest) runTest(edges map[string][]string) {
+func (t *VisitTest) runTest(
+	edges map[string][]string,
+	startNodes []string) {
 	// Compute the reachability relation for the DAG, and invert it.
 	reachable, err := reachabilityRelation(edges)
 	AssertEq(nil, err)
@@ -192,11 +194,18 @@ func (t *TraverseDAGTest) runTest(edges map[string][]string) {
 	randSrc := makeRandSource()
 
 	var mu sync.Mutex
-	visited := make(map[string]struct{}) // GUARDED_BY(mu)
+	resolved := make(map[string]struct{}) // GUARDED_BY(mu)
+	visited := make(map[string]struct{})  // GUARDED_BY(mu)
 
 	visit := func(ctx context.Context, n string) (err error) {
 		mu.Lock()
 		defer mu.Unlock()
+
+		// We should have already finished finding dependencies for this node.
+		if _, ok := resolved[n]; !ok {
+			err = fmt.Errorf("Visited %q before finished resolving it", n)
+			return
+		}
 
 		// We should have already finished visiting all of the nodes from which
 		// this node is reachable.
@@ -213,18 +222,54 @@ func (t *TraverseDAGTest) runTest(edges map[string][]string) {
 		time.Sleep(time.Duration(randSrc.Int63n(int64(20 * time.Millisecond))))
 		mu.Lock()
 
+		// This node should not yet have been visited.
+		if _, ok := visited[n]; ok {
+			err = fmt.Errorf("Node %q visited twice", n)
+			return
+		}
+
 		visited[n] = struct{}{}
 		return
 	}
 
+	// Set up a similar dependency resolution function.
+	findDependencies := func(
+		ctx context.Context,
+		n string) (deps []string, err error) {
+		mu.Lock()
+		defer mu.Unlock()
+
+		// Wait a random amount of time, then mark the node as resolved and return
+		// the appropriate dependencies.
+		mu.Unlock()
+		time.Sleep(time.Duration(randSrc.Int63n(int64(20 * time.Millisecond))))
+		mu.Lock()
+
+		// This node should not yet have been resolved.
+		if _, ok := resolved[n]; ok {
+			err = fmt.Errorf("Node %q resolved twice", n)
+			return
+		}
+
+		resolved[n] = struct{}{}
+		deps = edges[n]
+
+		return
+	}
+
 	// Call.
-	err = t.call(edges, visit)
+	err = t.call(startNodes, findDependencies, visit)
 	AssertEq(nil, err)
 
-	// Make sure everything was visited.
+	// Make sure everything was resolved and visited.
 	for n, _ := range edges {
-		_, ok := visited[n]
-		AssertTrue(ok, "n: %q", n)
+		var ok bool
+
+		_, ok = resolved[n]
+		AssertTrue(ok, "Not resolved: %q", n)
+
+		_, ok = visited[n]
+		AssertTrue(ok, "Not visited: %q", n)
 	}
 }
 
