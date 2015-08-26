@@ -466,6 +466,7 @@ func (state *visitState) visitOne(ctx context.Context) (err error) {
 	for _, dep := range ni.dependants {
 		dep.depsUnsatisfied--
 		if dep.depsUnsatisfied == 0 {
+			ni.state = state_Unvisited
 			delete(state.unsatisfied, dep)
 			state.reinsert(dep)
 		}
