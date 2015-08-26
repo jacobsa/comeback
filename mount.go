@@ -106,7 +106,7 @@ func currentUser() (uid uint32, gid uint32, err error) {
 // Command
 ////////////////////////////////////////////////////////////////////////
 
-func doMount(args []string) (err error) {
+func runMount(ctx context.Context, args []string) (err error) {
 	// Enable invariant checking for the file system.
 	syncutil.EnableInvariantChecking()
 
@@ -214,7 +214,7 @@ func doMount(args []string) (err error) {
 	registerSIGINTHandler(mountPoint)
 
 	// Wait for unmount.
-	err = mfs.Join(context.Background())
+	err = mfs.Join(ctx)
 	if err != nil {
 		err = fmt.Errorf("Join: %v", err)
 		return
@@ -222,11 +222,4 @@ func doMount(args []string) (err error) {
 
 	log.Println("Exiting successfully.")
 	return
-}
-
-func runMount(args []string) {
-	err := doMount(args)
-	if err != nil {
-		log.Fatalln(err)
-	}
 }
