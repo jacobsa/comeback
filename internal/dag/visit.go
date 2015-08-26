@@ -125,9 +125,9 @@ type nodeInfo struct {
 
 	// The number of unsatisfied dependencies remaining for this node.
 	//
-	// INVARIANT: unsatisfied >= 0
-	// INVARIANT: unsatisfied > 0 iff state == state_DependenciesUnsatisfied
-	unsatisfied int64
+	// INVARIANT: depsUnsatisfied >= 0
+	// INVARIANT: depsUnsatisfied > 0 iff state == state_DependenciesUnsatisfied
+	depsUnsatisfied int64
 
 	// The set of unsatisfied nodes for which this node is a blocker.
 	//
@@ -137,14 +137,14 @@ type nodeInfo struct {
 }
 
 func (ni *nodeInfo) checkInvariants() {
-	// INVARIANT: unsatisfied >= 0
-	if !(ni.unsatisfied >= 0) {
-		log.Panicf("unsatisfied: %d", ni.unsatisfied)
+	// INVARIANT: depsUnsatisfied >= 0
+	if !(ni.depsUnsatisfied >= 0) {
+		log.Panicf("depsUnsatisfied: %d", ni.depsUnsatisfied)
 	}
 
-	// INVARIANT: unsatisfied > 0 iff state == state_DependenciesUnsatisfied
-	if (ni.unsatisfied > 0) != (ni.state == state_DependenciesUnsatisfied) {
-		log.Panicf("unsatisfied: %d, state: %v", ni.unsatisfied, ni.state)
+	// INVARIANT: depsUnsatisfied > 0 iff state == state_DependenciesUnsatisfied
+	if (ni.depsUnsatisfied > 0) != (ni.state == state_DependenciesUnsatisfied) {
+		log.Panicf("depsUnsatisfied: %d, state: %v", ni.depsUnsatisfied, ni.state)
 	}
 
 	// INVARIANT: len(dependants) > 0 implies state < state_Visited.
@@ -464,8 +464,8 @@ func (state *visitState) visitOne(ctx context.Context) (err error) {
 
 	// Update each dependant, now that this node has been visited.
 	for _, dep := range ni.dependants {
-		dep.unsatisfied--
-		if dep.unsatisfied == 0 {
+		dep.depsUnsatisfied--
+		if dep.depsUnsatisfied == 0 {
 			delete(state.unsatisfied, dep)
 			state.reinsert(dep)
 		}
@@ -518,12 +518,12 @@ func (state *visitState) resolveOne(ctx context.Context) (err error) {
 			continue
 		}
 
-		ni.unsatisfied++
+		ni.depsUnsatisfied++
 		depNi.dependants = append(depNi.dependants, ni)
 	}
 
 	// Update and reinsert the node itself.
-	if ni.unsatisfied > 0 {
+	if ni.depsUnsatisfied > 0 {
 		ni.state = state_DependenciesUnsatisfied
 	} else {
 		ni.state = state_Unvisited
