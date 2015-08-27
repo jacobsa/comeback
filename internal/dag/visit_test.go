@@ -169,6 +169,10 @@ const visitParallelism = 8
 
 type VisitTest struct {
 	ctx context.Context
+
+	// The maximum delay to insert in the dependency resolver and visitor in
+	// runTest.
+	maxDelay time.Duration
 }
 
 var _ SetUpInterface = &VisitTest{}
@@ -177,6 +181,10 @@ func init() { RegisterTestSuite(&VisitTest{}) }
 
 func (t *VisitTest) SetUp(ti *TestInfo) {
 	t.ctx = ti.Ctx
+
+	// By default, use a decently large delay to try to shake out races. Tests
+	// for large graphs can reduce it.
+	t.maxDelay = 5 * time.Millisecond
 }
 
 func (t *VisitTest) call(
@@ -240,7 +248,7 @@ func (t *VisitTest) runTest(
 
 		// Wait a random amount of time, then mark the node as visited and return.
 		mu.Unlock()
-		time.Sleep(time.Duration(randSrc.Int63n(int64(20 * time.Millisecond))))
+		time.Sleep(time.Duration(randSrc.Int63n(int64(t.maxDelay))))
 		mu.Lock()
 
 		// This node should not yet have been visited.
@@ -263,7 +271,7 @@ func (t *VisitTest) runTest(
 		// Wait a random amount of time, then mark the node as resolved and return
 		// the appropriate dependencies.
 		mu.Unlock()
-		time.Sleep(time.Duration(randSrc.Int63n(int64(20 * time.Millisecond))))
+		time.Sleep(time.Duration(randSrc.Int63n(int64(t.maxDelay))))
 		mu.Lock()
 
 		// This node should not yet have been resolved.
@@ -312,7 +320,7 @@ func randomTree(depth int) (edges map[string][]string) {
 			edges[parent] = []string{}
 
 			// Add children.
-			numChildren := int(randSrc.Int31n(6))
+			numChildren := 2 + int(randSrc.Int31n(6))
 			for childI := 0; childI < numChildren; childI++ {
 				child := fmt.Sprintf("%v", nextID)
 				nextID++
@@ -515,18 +523,31 @@ func (t *VisitTest) Cycle() {
 }
 
 func (t *VisitTest) LargeRootedTree() {
-	const depth = 6
+	// Set up a random tree.
+	depth := 6
+	if syncutil.InvariantCheckingEnabled() {
+		depth = 5
+	}
+
 	edges := randomTree(depth)
 	startNodes := []string{"root"}
 
+	// Run the test. Use a small delay since the graph may be quite large.
+	t.maxDelay = 100 * time.Microsecond
 	t.runTest(edges, startNodes)
 }
 
 func (t *VisitTest) LargeRootedTree_Inverted() {
-	const depth = 6
+	// Set up a random tree and invert it.
+	depth := 6
+	if syncutil.InvariantCheckingEnabled() {
+		depth = 5
+	}
+
 	origEdges := randomTree(depth)
 	edges := invertRelation(origEdges)
 
+	// Use the leaves in the original tree as the start nodes.
 	var startNodes []string
 	for n, deps := range origEdges {
 		if len(deps) == 0 {
@@ -534,6 +555,8 @@ func (t *VisitTest) LargeRootedTree_Inverted() {
 		}
 	}
 
+	// Run the test. Use a small delay since the graph may be quite large.
+	t.maxDelay = 100 * time.Microsecond
 	t.runTest(edges, startNodes)
 }
 
