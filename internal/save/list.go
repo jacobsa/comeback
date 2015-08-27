@@ -16,80 +16,26 @@
 package save
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"regexp"
 
 	"golang.org/x/net/context"
 
-	"github.com/jacobsa/comeback/internal/fs"
-	"github.com/jacobsa/comeback/internal/graph"
 	"github.com/jacobsa/syncutil"
 )
 
 // Given a base directory and a set of exclusions, list all file system nodes
-// involved, filling in only the RelPath and Parent fields. Output nodes are
-// guaranteed to be in reverse topologically sorted order: children appear
-// before their parents.
+// involved.
 func listNodes(
 	ctx context.Context,
 	basePath string,
 	exclusions []*regexp.Regexp,
 	nodes chan<- *fsNode) (err error) {
-	b := syncutil.NewBundle(ctx)
-
-	// Find the nodes in the appropriate order, writing them to a channel of
-	// graph.Node.
-	graphNodes := make(chan graph.Node, 100)
-	b.Add(func(ctx context.Context) (err error) {
-		defer close(graphNodes)
-
-		// Set up a root node.
-		rootNode := &fsNode{
-			RelPath: "",
-			Info: fs.DirectoryEntry{
-				Type: fs.TypeDirectory,
-			},
-			Parent: nil,
-		}
-
-		// Explore the graph.
-		sf := newSuccessorFinder(basePath, exclusions)
-		err = graph.ReverseTopsortTree(
-			ctx,
-			sf,
-			rootNode,
-			graphNodes)
-
-		if err != nil {
-			err = fmt.Errorf("ReverseTopsortTree: %v", err)
-			return
-		}
-
-		return
-	})
-
-	// Convert to *fsNode.
-	b.Add(func(ctx context.Context) (err error) {
-		for graphNode := range graphNodes {
-			n, ok := graphNode.(*fsNode)
-			if !ok {
-				err = fmt.Errorf("Unexpected node type: %T", graphNode)
-				return
-			}
-
-			select {
-			case nodes <- n:
-			case <-ctx.Done():
-				err = ctx.Err()
-				return
-			}
-		}
-
-		return
-	})
-
-	err = b.Join()
+	// Visit all nodes in the graph with a visitor that simply writes them to a
+	// channel.
+	err = errors.New("TODO")
 	return
 }
 

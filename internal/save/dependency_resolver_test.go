@@ -26,20 +26,20 @@ import (
 
 	"golang.org/x/net/context"
 
+	"github.com/jacobsa/comeback/internal/dag"
 	"github.com/jacobsa/comeback/internal/fs"
-	"github.com/jacobsa/comeback/internal/graph"
 	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
 )
 
-func TestFSSuccessorFinder(t *testing.T) { RunTests(t) }
+func TestDependencyResolver(t *testing.T) { RunTests(t) }
 
 ////////////////////////////////////////////////////////////////////////
 // Helpers
 ////////////////////////////////////////////////////////////////////////
 
-func convertNodes(graphNodes []graph.Node) (nodes []*fsNode) {
-	for _, n := range graphNodes {
+func convertNodes(dagNodes []dag.Node) (nodes []*fsNode) {
+	for _, n := range dagNodes {
 		nodes = append(nodes, n.(*fsNode))
 	}
 
@@ -50,25 +50,25 @@ func convertNodes(graphNodes []graph.Node) (nodes []*fsNode) {
 // Boilerplate
 ////////////////////////////////////////////////////////////////////////
 
-type FSSuccessorFinderTest struct {
+type DependencyResolverTest struct {
 	ctx context.Context
 
 	// A temporary directory that is cleaned up at the end of the test. This is
-	// the base path with which the successor finder is configured.
+	// the base path with which the dependency resolver is configured.
 	dir string
 
-	// The exclusions with which to configure the successor finder.
+	// The exclusions with which to configure the dependency resolver.
 	exclusions []*regexp.Regexp
 
-	sf graph.SuccessorFinder
+	dr dag.DependencyResolver
 }
 
-var _ SetUpInterface = &FSSuccessorFinderTest{}
-var _ TearDownInterface = &FSSuccessorFinderTest{}
+var _ SetUpInterface = &DependencyResolverTest{}
+var _ TearDownInterface = &DependencyResolverTest{}
 
-func init() { RegisterTestSuite(&FSSuccessorFinderTest{}) }
+func init() { RegisterTestSuite(&DependencyResolverTest{}) }
 
-func (t *FSSuccessorFinderTest) SetUp(ti *TestInfo) {
+func (t *DependencyResolverTest) SetUp(ti *TestInfo) {
 	t.ctx = ti.Ctx
 
 	// Create the base directory.
@@ -76,11 +76,11 @@ func (t *FSSuccessorFinderTest) SetUp(ti *TestInfo) {
 	t.dir, err = ioutil.TempDir("", "file_system_visistor_test")
 	AssertEq(nil, err)
 
-	// And the successor finder.
-	t.resetVisistor()
+	// And the resolver.
+	t.resetResolver()
 }
 
-func (t *FSSuccessorFinderTest) TearDown() {
+func (t *DependencyResolverTest) TearDown() {
 	var err error
 
 	// Clean up the junk we left in the file system.
@@ -88,15 +88,15 @@ func (t *FSSuccessorFinderTest) TearDown() {
 	AssertEq(nil, err)
 }
 
-func (t *FSSuccessorFinderTest) resetVisistor() {
-	t.sf = newSuccessorFinder(t.dir, t.exclusions)
+func (t *DependencyResolverTest) resetResolver() {
+	t.dr = newDependencyResolver(t.dir, t.exclusions)
 }
 
 ////////////////////////////////////////////////////////////////////////
 // Tests
 ////////////////////////////////////////////////////////////////////////
 
-func (t *FSSuccessorFinderTest) NonExistentPath() {
+func (t *DependencyResolverTest) NonExistentPath() {
 	node := &fsNode{
 		RelPath: "foo/bar",
 		Info: fs.DirectoryEntry{
@@ -104,12 +104,12 @@ func (t *FSSuccessorFinderTest) NonExistentPath() {
 		},
 	}
 
-	_, err := t.sf.FindDirectSuccessors(t.ctx, node)
+	_, err := t.dr.FindDependencies(t.ctx, node)
 	ExpectThat(err, Error(HasSubstr(node.RelPath)))
 	ExpectThat(err, Error(HasSubstr("no such file")))
 }
 
-func (t *FSSuccessorFinderTest) VisitRootNode() {
+func (t *DependencyResolverTest) VisitRootNode() {
 	var err error
 
 	// Create two children.
@@ -127,11 +127,11 @@ func (t *FSSuccessorFinderTest) VisitRootNode() {
 		},
 	}
 
-	successors, err := t.sf.FindDirectSuccessors(t.ctx, node)
+	deps, err := t.dr.FindDependencies(t.ctx, node)
 	AssertEq(nil, err)
 
 	// Check the output.
-	pfis := convertNodes(successors)
+	pfis := convertNodes(deps)
 	AssertEq(2, len(pfis))
 	ExpectEq("bar", pfis[0].RelPath)
 	ExpectEq("foo", pfis[1].RelPath)
@@ -140,7 +140,7 @@ func (t *FSSuccessorFinderTest) VisitRootNode() {
 	ExpectThat(node.Children, ElementsAre(pfis[0], pfis[1]))
 }
 
-func (t *FSSuccessorFinderTest) VisitNonRootNode() {
+func (t *DependencyResolverTest) VisitNonRootNode() {
 	var err error
 
 	// Make a few levels of sub-directories.
@@ -164,11 +164,11 @@ func (t *FSSuccessorFinderTest) VisitNonRootNode() {
 		},
 	}
 
-	successors, err := t.sf.FindDirectSuccessors(t.ctx, node)
+	deps, err := t.dr.FindDependencies(t.ctx, node)
 	AssertEq(nil, err)
 
 	// Check the output.
-	pfis := convertNodes(successors)
+	pfis := convertNodes(deps)
 	AssertEq(2, len(pfis))
 	ExpectEq("sub/dirs/bar", pfis[0].RelPath)
 	ExpectEq("sub/dirs/foo", pfis[1].RelPath)
@@ -177,7 +177,7 @@ func (t *FSSuccessorFinderTest) VisitNonRootNode() {
 	ExpectThat(node.Children, ElementsAre(pfis[0], pfis[1]))
 }
 
-func (t *FSSuccessorFinderTest) VisitFileNode() {
+func (t *DependencyResolverTest) VisitFileNode() {
 	var err error
 
 	// Call
@@ -188,14 +188,14 @@ func (t *FSSuccessorFinderTest) VisitFileNode() {
 		},
 	}
 
-	successors, err := t.sf.FindDirectSuccessors(t.ctx, node)
+	deps, err := t.dr.FindDependencies(t.ctx, node)
 	AssertEq(nil, err)
 
-	ExpectThat(successors, ElementsAre())
+	ExpectThat(deps, ElementsAre())
 	ExpectThat(node.Children, ElementsAre())
 }
 
-func (t *FSSuccessorFinderTest) Files() {
+func (t *DependencyResolverTest) Files() {
 	var err error
 	var pfi *fsNode
 
@@ -220,11 +220,11 @@ func (t *FSSuccessorFinderTest) Files() {
 		},
 	}
 
-	successors, err := t.sf.FindDirectSuccessors(t.ctx, node)
+	deps, err := t.dr.FindDependencies(t.ctx, node)
 	AssertEq(nil, err)
 
 	// Check the output.
-	pfis := convertNodes(successors)
+	pfis := convertNodes(deps)
 	AssertEq(2, len(pfis))
 
 	pfi = pfis[0]
@@ -242,7 +242,7 @@ func (t *FSSuccessorFinderTest) Files() {
 	ExpectEq(node, pfi.Parent)
 }
 
-func (t *FSSuccessorFinderTest) Directories() {
+func (t *DependencyResolverTest) Directories() {
 	var err error
 	var pfi *fsNode
 
@@ -267,11 +267,11 @@ func (t *FSSuccessorFinderTest) Directories() {
 		},
 	}
 
-	successors, err := t.sf.FindDirectSuccessors(t.ctx, node)
+	deps, err := t.dr.FindDependencies(t.ctx, node)
 	AssertEq(nil, err)
 
 	// Check the output.
-	pfis := convertNodes(successors)
+	pfis := convertNodes(deps)
 	AssertEq(2, len(pfis))
 
 	pfi = pfis[0]
@@ -289,7 +289,7 @@ func (t *FSSuccessorFinderTest) Directories() {
 	ExpectEq(node, pfi.Parent)
 }
 
-func (t *FSSuccessorFinderTest) Symlinks() {
+func (t *DependencyResolverTest) Symlinks() {
 	var err error
 	var pfi *fsNode
 
@@ -311,11 +311,11 @@ func (t *FSSuccessorFinderTest) Symlinks() {
 		},
 	}
 
-	successors, err := t.sf.FindDirectSuccessors(t.ctx, node)
+	deps, err := t.dr.FindDependencies(t.ctx, node)
 	AssertEq(nil, err)
 
 	// Check the output.
-	pfis := convertNodes(successors)
+	pfis := convertNodes(deps)
 	AssertEq(1, len(pfis))
 
 	pfi = pfis[0]
@@ -326,7 +326,7 @@ func (t *FSSuccessorFinderTest) Symlinks() {
 	ExpectEq(node, pfi.Parent)
 }
 
-func (t *FSSuccessorFinderTest) Exclusions() {
+func (t *DependencyResolverTest) Exclusions() {
 	var err error
 
 	// Make a sub-directory.
@@ -351,7 +351,7 @@ func (t *FSSuccessorFinderTest) Exclusions() {
 		regexp.MustCompile("(bar|baz)"),
 	}
 
-	t.resetVisistor()
+	t.resetResolver()
 
 	// Visit.
 	node := &fsNode{
@@ -361,14 +361,14 @@ func (t *FSSuccessorFinderTest) Exclusions() {
 		},
 	}
 
-	successors, err := t.sf.FindDirectSuccessors(t.ctx, node)
+	deps, err := t.dr.FindDependencies(t.ctx, node)
 
 	AssertEq(nil, err)
-	ExpectThat(successors, ElementsAre())
+	ExpectThat(deps, ElementsAre())
 	ExpectThat(node.Children, ElementsAre())
 }
 
-func (t *FSSuccessorFinderTest) SortsByName() {
+func (t *DependencyResolverTest) SortsByName() {
 	var err error
 
 	// Create several children with random names.
@@ -400,11 +400,11 @@ func (t *FSSuccessorFinderTest) SortsByName() {
 		},
 	}
 
-	successors, err := t.sf.FindDirectSuccessors(t.ctx, node)
+	deps, err := t.dr.FindDependencies(t.ctx, node)
 	AssertEq(nil, err)
 
 	// Check the order.
-	nodes := convertNodes(successors)
+	nodes := convertNodes(deps)
 	AssertEq(len(expected), len(nodes))
 	for i := 0; i < len(expected); i++ {
 		ExpectEq(expected[i], nodes[i].Info.Name, "i: %d", i)
