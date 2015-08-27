@@ -24,6 +24,8 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/jacobsa/comeback/internal/blob"
+	"github.com/jacobsa/comeback/internal/dag"
+	"github.com/jacobsa/comeback/internal/fs"
 	"github.com/jacobsa/comeback/internal/state"
 	"github.com/jacobsa/syncutil"
 	"github.com/jacobsa/timeutil"
@@ -46,7 +48,41 @@ func Save(
 	processedNodes := make(chan *fsNode, 100)
 	b.Add(func(ctx context.Context) (err error) {
 		defer close(processedNodes)
-		err = errors.New("TODO")
+
+		// Hopefully enough parallelism to keep our CPUs saturated (for encryption,
+		// SHA-1 computation, etc.) or our NIC saturated (for GCS traffic),
+		// depending on which is the current bottleneck.
+		const parallelism = 128
+
+		rootNode := &fsNode{
+			RelPath: "",
+			Info: fs.DirectoryEntry{
+				Type: fs.TypeDirectory,
+			},
+			Parent: nil,
+		}
+
+		visitor := newVisitor(
+			fileChunkSize,
+			dir,
+			scoreMap,
+			blobStore,
+			clock,
+			logger,
+			processedNodes)
+
+		err = dag.Visit(
+			ctx,
+			[]dag.Node{rootNode},
+			newDependencyResolver(dir, exclusions),
+			visitor,
+			parallelism)
+
+		if err != nil {
+			err = fmt.Errorf("dag.Visit: %v", err)
+			return
+		}
+
 		return
 	})
 
