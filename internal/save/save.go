@@ -31,6 +31,16 @@ import (
 	"github.com/jacobsa/timeutil"
 )
 
+// A node that can be passed to dag.Visit to visit everything rooted at a
+// particular path.
+var gRootNode = &fsNode{
+	RelPath: "",
+	Info: fs.DirectoryEntry{
+		Type: fs.TypeDirectory,
+	},
+	Parent: nil,
+}
+
 // Save a backup of the given directory, applying the supplied exclusions and
 // using the supplied score map to avoid reading file content when possible.
 // Return a score for the root of the backup.
@@ -54,14 +64,6 @@ func Save(
 		// depending on which is the current bottleneck.
 		const parallelism = 128
 
-		rootNode := &fsNode{
-			RelPath: "",
-			Info: fs.DirectoryEntry{
-				Type: fs.TypeDirectory,
-			},
-			Parent: nil,
-		}
-
 		visitor := newVisitor(
 			fileChunkSize,
 			dir,
@@ -73,7 +75,7 @@ func Save(
 
 		err = dag.Visit(
 			ctx,
-			[]dag.Node{rootNode},
+			[]dag.Node{gRootNode},
 			newDependencyResolver(dir, exclusions),
 			visitor,
 			parallelism)

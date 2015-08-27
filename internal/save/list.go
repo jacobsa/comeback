@@ -16,28 +16,14 @@
 package save
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"regexp"
 
 	"golang.org/x/net/context"
 
-	"github.com/jacobsa/syncutil"
+	"github.com/jacobsa/comeback/internal/dag"
 )
-
-// Given a base directory and a set of exclusions, list all file system nodes
-// involved.
-func listNodes(
-	ctx context.Context,
-	basePath string,
-	exclusions []*regexp.Regexp,
-	nodes chan<- *fsNode) (err error) {
-	// Visit all nodes in the graph with a visitor that simply writes them to a
-	// channel.
-	err = errors.New("TODO")
-	return
-}
 
 // Given a base directory and a set of exclusions, list the files and
 // directories that would be saved by a backup job with the same info in a
@@ -47,34 +33,47 @@ func List(
 	w io.Writer,
 	basePath string,
 	exclusions []*regexp.Regexp) (err error) {
-	b := syncutil.NewBundle(ctx)
+	// Visit all nodes in the graph with a visitor that prints info about the
+	// node.
+	dr := newDependencyResolver(basePath, exclusions)
+	v := &listVisitor{w: w}
 
-	// List nodes.
-	nodes := make(chan *fsNode, 100)
-	b.Add(func(ctx context.Context) (err error) {
-		defer close(nodes)
-		err = listNodes(ctx, basePath, exclusions, nodes)
-		if err != nil {
-			err = fmt.Errorf("listNodes: %v", err)
-			return
-		}
+	const parallelism = 1
+	err = dag.Visit(
+		ctx,
+		[]dag.Node{gRootNode},
+		dr,
+		v,
+		parallelism)
 
+	if err != nil {
+		err = fmt.Errorf("dag.Visit: %v", err)
 		return
-	})
+	}
 
-	// Print out info about each node.
-	b.Add(func(ctx context.Context) (err error) {
-		for n := range nodes {
-			_, err = fmt.Fprintf(w, "%q %d\n", n.RelPath, n.Info.Size)
-			if err != nil {
-				err = fmt.Errorf("Fprintf: %v", err)
-				return
-			}
-		}
+	return
+}
 
+type listVisitor struct {
+	w io.Writer
+}
+
+var _ dag.Visitor = &listVisitor{}
+
+func (v *listVisitor) Visit(ctx context.Context, untyped dag.Node) (err error) {
+	// Check the type of the node.
+	n, ok := untyped.(*fsNode)
+	if !ok {
+		err = fmt.Errorf("Unexpected node type: %T", untyped)
 		return
-	})
+	}
 
-	err = b.Join()
+	// Print info about the node.
+	_, err = fmt.Fprintf(v.w, "%q %d\n", n.RelPath, n.Info.Size)
+	if err != nil {
+		err = fmt.Errorf("Fprintf: %v", err)
+		return
+	}
+
 	return
 }
