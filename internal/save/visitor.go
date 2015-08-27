@@ -202,6 +202,11 @@ func (v *visitor) saveFile(
 		scores = append(scores, s)
 	}
 
+	// Update the score map if the file is eligible.
+	if scoreMapKey != nil {
+		v.scoreMap.Set(*scoreMapKey, scores)
+	}
+
 	return
 }
 
