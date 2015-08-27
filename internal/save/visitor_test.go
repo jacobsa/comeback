@@ -149,7 +149,29 @@ func (t *VisitorTest) PresentInScoreMap_Empty() {
 }
 
 func (t *VisitorTest) PresentInScoreMap_NonEmpty() {
-	AssertTrue(false, "TODO")
+	var err error
+
+	// Node setup
+	t.node.RelPath = "foo"
+	t.node.Info.Type = fs.TypeFile
+	t.node.Info.MTime = t.clock.Now().Add(-100 * time.Hour)
+
+	// Add an entry to the score map.
+	key := makeScoreMapKey(&t.node, &t.clock)
+	AssertNe(nil, key)
+
+	scores := []blob.Score{
+		blob.ComputeScore([]byte("taco")),
+		blob.ComputeScore([]byte("burrito")),
+	}
+	t.scoreMap.Set(*key, scores)
+
+	// Call
+	err = t.call()
+	AssertEq(nil, err)
+
+	AssertNe(nil, t.node.Info.Scores)
+	ExpectThat(t.node.Info.Scores, DeepEquals(scores))
 }
 
 func (t *VisitorTest) Symlink() {
