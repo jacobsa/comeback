@@ -36,6 +36,7 @@ import (
 	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/oglemock"
 	. "github.com/jacobsa/ogletest"
+	"github.com/jacobsa/timeutil"
 )
 
 func TestBlobStore(t *testing.T) { RunTests(t) }
@@ -74,6 +75,7 @@ type VisitorTest struct {
 	chunkSize int
 	scoreMap  state.ScoreMap
 	blobStore mock_blob.MockStore
+	clock     timeutil.SimulatedClock
 
 	node fsNode
 
@@ -124,7 +126,26 @@ func (t *VisitorTest) call() (err error) {
 ////////////////////////////////////////////////////////////////////////
 
 func (t *VisitorTest) PresentInScoreMap_Empty() {
-	AssertTrue(false, "TODO")
+	var err error
+
+	// Node setup
+	t.node.RelPath = "foo"
+	t.node.Info.Type = fs.TypeFile
+	t.node.Info.MTime = t.clock.Now().Add(-100 * time.Hour)
+
+	// Add an entry to the score map.
+	key := makeScoreMapKey(&t.node, &t.clock)
+	AssertNe(nil, key)
+
+	scores := []blob.Score{}
+	t.scoreMap.Set(*key, scores)
+
+	// Call
+	err = t.call()
+	AssertEq(nil, err)
+
+	AssertNe(nil, t.node.Info.Scores)
+	ExpectThat(t.node.Info.Scores, DeepEquals(scores))
 }
 
 func (t *VisitorTest) PresentInScoreMap_NonEmpty() {
