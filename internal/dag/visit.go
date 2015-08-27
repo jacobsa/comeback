@@ -105,7 +105,10 @@ func Visit(
 			break
 		}
 
-		err = fmt.Errorf("Graph contains a cycle involving node %#v", someNode)
+		err = fmt.Errorf(
+			"Graph contains a cycle causing unsatisfied node: %#v",
+			someNode)
+
 		return
 	}
 

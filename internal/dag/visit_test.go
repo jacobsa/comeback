@@ -468,16 +468,68 @@ func (t *VisitTest) RedundantRoots() {
 }
 
 func (t *VisitTest) SelfCycle() {
-	AssertTrue(false, "TODO")
+	// Graph structure:
+	//
+	//        A
+	//      / | \
+	//     B  C↩  D
+	//        |
+	//        E
+	//
+	edges := map[string][]string{
+		"A": {"B", "C", "D"},
+		"B": {},
+		"C": {"C", "E"},
+		"D": {},
+		"E": {},
+	}
+	startNodes := []string{"A"}
+
+	// Functions
+	var mu sync.Mutex
+	resolved := make(map[string]struct{})
+	visited := make(map[string]struct{})
+
+	findDependencies := func(
+		ctx context.Context,
+		n string) (deps []string, err error) {
+		mu.Lock()
+		defer mu.Unlock()
+
+		if _, ok := resolved[n]; ok {
+			log.Fatalf("Resolved twice: %q", n)
+		}
+
+		resolved[n] = struct{}{}
+		deps = edges[n]
+		return
+	}
+
+	visit := func(ctx context.Context, n string) (err error) {
+		mu.Lock()
+		defer mu.Unlock()
+
+		if _, ok := visited[n]; ok {
+			log.Fatalf("Visited twice: %q", n)
+		}
+
+		visited[n] = struct{}{}
+
+		return
+	}
+
+	// Call
+	err := t.call(startNodes, findDependencies, visit)
+	ExpectThat(err, Error(HasSubstr("cycle")))
 }
 
 func (t *VisitTest) LargerCycle() {
 	// Graph structure:
 	//
 	//        A
-	//      / ^\
-	//     B  | C
-	//      \ |/
+	//      / ^ \
+	//     B  |  C
+	//      \ | /
 	//        D
 	//
 	edges := map[string][]string{
