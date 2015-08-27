@@ -19,51 +19,30 @@ import (
 	"fmt"
 
 	"github.com/jacobsa/comeback/internal/blob"
+	"github.com/jacobsa/comeback/internal/dag"
 	"github.com/jacobsa/comeback/internal/fs"
-	"github.com/jacobsa/comeback/internal/graph"
 	"github.com/jacobsa/comeback/internal/repr"
-	"github.com/jacobsa/timeutil"
 	"golang.org/x/net/context"
 )
 
-// Create a successor finder for the DAG of blobs in the supplied bucket. Nodes
-// are expected to be of type Node.
+// Create a dependency resolver for the DAG of blobs in the supplied bucket.
+// Nodes are expected to be of type Node.
 //
-// The successor finder reads directory blobs, parses them, and returns their
-// children as adjacent nodes. For file nodes, the successor finder verifies
-// that their score exists (according to allScores), and verifies that the blob
-// can be loaded if readFiles is true. A record is written to the supplied
-// channel for everything that is verified. This makes this SuccessorFinder a
-// bit weird, in that it has side effects.
-//
-// If work is to be preserved across runs, knownStructure should be filled in
-// with parenthood information from previously-generated records (for both
-// files and directories). Nodes that exist as keys in this map will not be
-// re-verified, except to confirm that their content still exists in allScores.
+// The resolver reads directory blobs, parses them, and returns their children
+// as dependencies. (File nodes have no dependencies.) If work is to be
+// preserved across runs, knownStructure should be filled in with parenthood
+// information from previous verification runs.
 //
 // It is expected that the blob store's Load method does score verification for
 // us.
-func newSuccessorFinder(
-	readFiles bool,
-	allScores []blob.Score,
+func newDependencyResolver(
 	knownStructure map[Node][]Node,
-	records chan<- Record,
-	clock timeutil.Clock,
-	bs blob.Store) (sf graph.SuccessorFinder) {
-	typed := &successorFinder{
-		readFiles:      readFiles,
-		records:        records,
-		clock:          clock,
-		blobStore:      bs,
-		knownScores:    make(map[blob.Score]struct{}),
+	bs blob.Store) (dr dag.DependencyResolver) {
+	dr = &dependencyResolver{
 		knownStructure: knownStructure,
+		blobStore:      bs,
 	}
 
-	for _, score := range allScores {
-		typed.knownScores[score] = struct{}{}
-	}
-
-	sf = typed
 	return
 }
 
@@ -71,13 +50,9 @@ func newSuccessorFinder(
 // Implementation
 ////////////////////////////////////////////////////////////////////////
 
-type successorFinder struct {
-	readFiles      bool
-	records        chan<- Record
-	clock          timeutil.Clock
-	blobStore      blob.Store
-	knownScores    map[blob.Score]struct{}
+type dependencyResolver struct {
 	knownStructure map[Node][]Node
+	blobStore      blob.Store
 }
 
 func (sf *successorFinder) processFile(
