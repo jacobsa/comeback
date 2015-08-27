@@ -39,11 +39,15 @@ func (s *encryptingStore) Store(
 	ctx context.Context,
 	req *StoreRequest) (score Score, err error) {
 	// Encrypt the plaintext blob.
-	req.Blob, err = s.crypter.Encrypt(req.Blob)
+	ciphertext := req.ciphertext[:0]
+	ciphertext, err = s.crypter.Encrypt(ciphertext, req.Blob)
 	if err != nil {
 		err = fmt.Errorf("Encrypt: %v", err)
 		return
 	}
+
+	req.ciphertext = ciphertext
+	req.Blob = ciphertext
 
 	// Pass on the encrypted blob.
 	score, err = s.wrapped.Store(ctx, req)

@@ -40,6 +40,10 @@ type StoreRequest struct {
 	// The score of the blob, used in a conspiracy between existingScoresStore
 	// and downstream stores.
 	score Score
+
+	// A buffer for holding the result of encryption. If the user reuses the
+	// request struct, we can reuse this buffer.
+	ciphertext []byte
 }
 
 // Create a blob store that stores blobs in the supplied bucket under the given
