@@ -26,7 +26,6 @@ import (
 
 	"github.com/jacobsa/comeback/internal/blob"
 	"github.com/jacobsa/comeback/internal/fs"
-	"github.com/jacobsa/comeback/internal/graph"
 	"github.com/jacobsa/comeback/internal/repr"
 	"github.com/jacobsa/comeback/internal/state"
 )

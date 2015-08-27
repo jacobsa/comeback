@@ -25,7 +25,6 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/jacobsa/comeback/internal/fs"
-	"github.com/jacobsa/comeback/internal/graph"
 )
 
 // Create a graph.SuccessorFinder that models the directory hierarchy rooted at
