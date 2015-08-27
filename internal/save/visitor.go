@@ -25,6 +25,7 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/jacobsa/comeback/internal/blob"
+	"github.com/jacobsa/comeback/internal/dag"
 	"github.com/jacobsa/comeback/internal/fs"
 	"github.com/jacobsa/comeback/internal/repr"
 	"github.com/jacobsa/comeback/internal/state"
@@ -49,7 +50,7 @@ func newVisitor(
 	scoreMap state.ScoreMap,
 	blobStore blob.Store,
 	logger *log.Logger,
-	visitedNodes chan<- *fsNode) (v graph.Visitor) {
+	visitedNodes chan<- *fsNode) (v dag.Visitor) {
 	v = &visitor{
 		chunkSize:    chunkSize,
 		basePath:     basePath,
@@ -69,7 +70,7 @@ type visitor struct {
 	visitedNodes chan<- *fsNode
 }
 
-func (v *visitor) Visit(ctx context.Context, untyped graph.Node) (err error) {
+func (v *visitor) Visit(ctx context.Context, untyped dag.Node) (err error) {
 	// Check the type of the node.
 	n, ok := untyped.(*fsNode)
 	if !ok {
@@ -216,26 +217,5 @@ func (v *visitor) saveDir(
 	}
 
 	scores = []blob.Score{s}
-	return
-}
-
-// A successor finder for the inverted file system graph, where children have
-// arrows to their parents.
-type parentSuccessorFinder struct {
-}
-
-func (sf *parentSuccessorFinder) FindDirectSuccessors(
-	ctx context.Context,
-	untyped graph.Node) (successors []graph.Node, err error) {
-	n, ok := untyped.(*fsNode)
-	if !ok {
-		err = fmt.Errorf("Unexpected node type: %T", untyped)
-		return
-	}
-
-	if n.Parent != nil {
-		successors = []graph.Node{n.Parent}
-	}
-
 	return
 }
