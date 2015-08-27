@@ -95,6 +95,7 @@ func (t *VisitorTest) SetUp(ti *TestInfo) {
 	t.chunkSize = 8
 	t.scoreMap = state.NewScoreMap()
 	t.blobStore = mock_blob.NewMockStore(ti.MockController, "blobStore")
+	t.clock.SetTime(time.Now())
 
 	// Set up the directory.
 	t.dir, err = ioutil.TempDir("", "score_map_test")
@@ -339,9 +340,55 @@ func (t *VisitorTest) File_LastChunkIsPartial() {
 }
 
 func (t *VisitorTest) File_IneligibleForScoreMap() {
-	AssertTrue(false, "TODO")
+	var err error
+
+	// Set up an empty file.
+	t.node.RelPath = "foo"
+	t.node.Info.Type = fs.TypeFile
+	p := path.Join(t.dir, t.node.RelPath)
+
+	err = ioutil.WriteFile(p, []byte(""), 0700)
+	AssertEq(nil, err)
+
+	// Make the mtime appear recent so that it is ineligible for the score map.
+	t.node.Info.MTime = t.clock.Now()
+	key := makeScoreMapKey(&t.node, &t.clock)
+	AssertEq(nil, key)
+
+	// Call the visitor. An empty list of scores should be filled in, and nothing
+	// bad should happen.
+	err = t.call()
+	AssertEq(nil, err)
+
+	AssertNe(nil, t.node.Info.Scores)
+	ExpectThat(t.node.Info.Scores, ElementsAre())
 }
 
 func (t *VisitorTest) File_UpdatesScoreMap() {
-	AssertTrue(false, "TODO")
+	var err error
+
+	// Set up an empty file.
+	t.node.RelPath = "foo"
+	t.node.Info.Type = fs.TypeFile
+	p := path.Join(t.dir, t.node.RelPath)
+
+	err = ioutil.WriteFile(p, []byte(""), 0700)
+	AssertEq(nil, err)
+
+	// Make sure the the node is eligible for the score map.
+	t.node.Info.MTime = t.clock.Now().Add(-100 * time.Hour)
+	key := makeScoreMapKey(&t.node, &t.clock)
+	AssertNe(nil, key)
+
+	// Call the visitor. An empty list of scores should be filled in.
+	err = t.call()
+	AssertEq(nil, err)
+
+	AssertNe(nil, t.node.Info.Scores)
+	ExpectThat(t.node.Info.Scores, ElementsAre())
+
+	// The score maps hould have been updated.
+	scores := t.scoreMap.Get(*key)
+	AssertNe(nil, scores)
+	ExpectThat(t.node.Info.Scores, ElementsAre())
 }
