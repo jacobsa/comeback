@@ -24,7 +24,6 @@ import (
 
 	"github.com/jacobsa/comeback/internal/fs"
 	"github.com/jacobsa/comeback/internal/state"
-	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
 	"github.com/jacobsa/timeutil"
 )

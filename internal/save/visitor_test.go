@@ -32,6 +32,7 @@ import (
 	"github.com/jacobsa/comeback/internal/blob/mock"
 	"github.com/jacobsa/comeback/internal/fs"
 	"github.com/jacobsa/comeback/internal/repr"
+	"github.com/jacobsa/comeback/internal/state"
 	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/oglemock"
 	. "github.com/jacobsa/ogletest"
@@ -71,6 +72,7 @@ func blobEquals(expected []byte) Matcher {
 type VisitorTest struct {
 	ctx       context.Context
 	chunkSize int
+	scoreMap  state.ScoreMap
 	blobStore mock_blob.MockStore
 
 	node fsNode
@@ -89,6 +91,7 @@ func (t *VisitorTest) SetUp(ti *TestInfo) {
 
 	t.ctx = ti.Ctx
 	t.chunkSize = 8
+	t.scoreMap = state.NewScoreMap()
 	t.blobStore = mock_blob.NewMockStore(ti.MockController, "blobStore")
 
 	// Set up the directory.
@@ -107,6 +110,7 @@ func (t *VisitorTest) call() (err error) {
 	visitor := newVisitor(
 		t.chunkSize,
 		t.dir,
+		t.scoreMap,
 		t.blobStore,
 		log.New(ioutil.Discard, "", 0),
 		make(chan *fsNode, 1))
