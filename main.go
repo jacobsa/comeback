@@ -20,10 +20,14 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"runtime"
+	"runtime/pprof"
 	"syscall"
 
 	"golang.org/x/net/context"
 )
+
+var fProfile = flag.Bool("profile", false, "Write pprof profiles to /tmp.")
 
 ////////////////////////////////////////////////////////////////////////
 // Helpers
@@ -69,6 +73,26 @@ func runCmd(
 	ctx context.Context,
 	cmdName string,
 	cmdArgs []string) (err error) {
+	// Enable profiling, if requested.
+	if *fProfile {
+		// Memory
+		defer writeMemProfile("/tmp/mem.pprof")
+
+		// CPU
+		var f *os.File
+		f, err = os.Create("/tmp/cpu.pprof")
+		if err != nil {
+			err = fmt.Errorf("Create: %v", err)
+			return
+		}
+
+		defer f.Close()
+
+		// Profile.
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
+	}
+
 	// Find and run the appropriate command.
 	for _, cmd := range commands {
 		if cmd.Name == cmdName {
@@ -79,6 +103,40 @@ func runCmd(
 	}
 
 	err = fmt.Errorf("Unknown command: %q", cmdName)
+	return
+}
+
+////////////////////////////////////////////////////////////////////////
+// Profiling
+////////////////////////////////////////////////////////////////////////
+
+func writeMemProfile(path string) (err error) {
+	// Trigger a garbage collection to get up to date information (cf.
+	// https://goo.gl/aXVQfL).
+	runtime.GC()
+
+	// Open the file.
+	var f *os.File
+	f, err = os.Create(path)
+	if err != nil {
+		err = fmt.Errorf("Create: %v", err)
+		return
+	}
+
+	defer func() {
+		closeErr := f.Close()
+		if err == nil {
+			err = closeErr
+		}
+	}()
+
+	// Dump to the file.
+	err = pprof.Lookup("heap").WriteTo(f, 0)
+	if err != nil {
+		err = fmt.Errorf("WriteTo: %v", err)
+		return
+	}
+
 	return
 }
 

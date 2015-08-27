@@ -27,29 +27,29 @@
 			"canonical": "github.com/jacobsa/crypto/cmac",
 			"comment": "",
 			"local": "vendor/github.com/jacobsa/crypto/cmac",
-			"revision": "662882df7bd06026c0d69dd12a572020d556c59e",
-			"revisionTime": "2015-05-26T09:02:12+10:00"
+			"revision": "61fbfe16bbddd8aa7f925049a82dd3955b07e2a6",
+			"revisionTime": "2015-08-27T16:01:06+10:00"
 		},
 		{
 			"canonical": "github.com/jacobsa/crypto/common",
 			"comment": "",
 			"local": "vendor/github.com/jacobsa/crypto/common",
-			"revision": "662882df7bd06026c0d69dd12a572020d556c59e",
-			"revisionTime": "2015-05-26T09:02:12+10:00"
+			"revision": "61fbfe16bbddd8aa7f925049a82dd3955b07e2a6",
+			"revisionTime": "2015-08-27T16:01:06+10:00"
 		},
 		{
 			"canonical": "github.com/jacobsa/crypto/siv",
 			"comment": "",
 			"local": "vendor/github.com/jacobsa/crypto/siv",
-			"revision": "662882df7bd06026c0d69dd12a572020d556c59e",
-			"revisionTime": "2015-05-26T09:02:12+10:00"
+			"revision": "61fbfe16bbddd8aa7f925049a82dd3955b07e2a6",
+			"revisionTime": "2015-08-27T16:01:06+10:00"
 		},
 		{
 			"canonical": "github.com/jacobsa/crypto/testing",
 			"comment": "",
 			"local": "vendor/github.com/jacobsa/crypto/testing",
-			"revision": "662882df7bd06026c0d69dd12a572020d556c59e",
-			"revisionTime": "2015-05-26T09:02:12+10:00"
+			"revision": "61fbfe16bbddd8aa7f925049a82dd3955b07e2a6",
+			"revisionTime": "2015-08-27T16:01:06+10:00"
 		},
 		{
 			"canonical": "github.com/jacobsa/fuse",
