@@ -174,8 +174,8 @@
 			"canonical": "github.com/jacobsa/syncutil",
 			"comment": "",
 			"local": "vendor/github.com/jacobsa/syncutil",
-			"revision": "bcec119027cd5d9dba5061cc3180e382f608ef47",
-			"revisionTime": "2015-07-20T10:07:43+10:00"
+			"revision": "c39ef5c1aa0b8fae9504e0146ba34c3922d69dc0",
+			"revisionTime": "2015-08-27T10:16:42+10:00"
 		},
 		{
 			"canonical": "github.com/jacobsa/timeutil",

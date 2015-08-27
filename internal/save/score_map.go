@@ -21,56 +21,7 @@ import (
 	"github.com/jacobsa/comeback/internal/fs"
 	"github.com/jacobsa/comeback/internal/state"
 	"github.com/jacobsa/timeutil"
-
-	"golang.org/x/net/context"
 )
-
-// Attempt to fill in fsNode.Info.Scores fields for files arriving on nodesIn
-// based on the contents of a state.ScoreMap.
-func consultScoreMap(
-	ctx context.Context,
-	scoreMap state.ScoreMap,
-	clock timeutil.Clock,
-	nodesIn <-chan *fsNode,
-	nodesOut chan<- *fsNode) (err error) {
-	for n := range nodesIn {
-		// Consult the score map if it makes sense to do so.
-		key := makeScoreMapKey(n, clock)
-		if key != nil {
-			n.Info.Scores = scoreMap.Get(*key)
-			if n.Info.Scores == nil {
-				n.ScoreMapKey = key
-			}
-		}
-
-		// Pass on the node.
-		select {
-		case nodesOut <- n:
-		case <-ctx.Done():
-			err = ctx.Err()
-			return
-		}
-	}
-
-	return
-}
-
-// For each incoming file node n that consultScoreMap did not mark as having
-// hit in its score map, update the score map based on n.Info.Scores.
-func updateScoreMap(
-	ctx context.Context,
-	scoreMap state.ScoreMap,
-	nodes <-chan *fsNode) (err error) {
-	for n := range nodes {
-		if n.ScoreMapKey == nil {
-			continue
-		}
-
-		scoreMap.Set(*n.ScoreMapKey, n.Info.Scores)
-	}
-
-	return
-}
 
 // Return an appropriate score map key for the node, or nil if the score map
 // should not be used.

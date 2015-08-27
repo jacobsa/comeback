@@ -24,6 +24,8 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/jacobsa/comeback/internal/blob"
+	"github.com/jacobsa/comeback/internal/dag"
+	"github.com/jacobsa/comeback/internal/fs"
 	"github.com/jacobsa/comeback/internal/state"
 	"github.com/jacobsa/syncutil"
 	"github.com/jacobsa/timeutil"
@@ -42,84 +44,43 @@ func Save(
 	clock timeutil.Clock) (score blob.Score, err error) {
 	b := syncutil.NewBundle(ctx)
 
-	// List the directory hierarchy, applying exclusions.
-	listedNodes := make(chan *fsNode, 100)
+	// Visit each node in the graph, writing the processed nodes to a channel.
+	processedNodes := make(chan *fsNode, 100)
 	b.Add(func(ctx context.Context) (err error) {
-		defer close(listedNodes)
-		err = listNodes(ctx, dir, exclusions, listedNodes)
-		if err != nil {
-			err = fmt.Errorf("listNodes: %v", err)
-			return
-		}
+		defer close(processedNodes)
 
-		return
-	})
+		// Hopefully enough parallelism to keep our CPUs saturated (for encryption,
+		// SHA-1 computation, etc.) or our NIC saturated (for GCS traffic),
+		// depending on which is the current bottleneck.
+		const parallelism = 128
 
-	// Fill in scores for files that don't appear to have changed since the last
-	// run.
-	postScoreMap := make(chan *fsNode, 100)
-	b.Add(func(ctx context.Context) (err error) {
-		defer close(postScoreMap)
-		err = consultScoreMap(ctx, scoreMap, clock, listedNodes, postScoreMap)
-		if err != nil {
-			err = fmt.Errorf("consultScoreMap: %v", err)
-			return
-		}
-
-		return
-	})
-
-	// Fill in scores for those nodes that didn't hit in the cache. Do this
-	// safely, respecting dependency order (children complete before parents
-	// start).
-	postDAGTraversal := make(chan *fsNode, 100)
-	b.Add(func(ctx context.Context) (err error) {
-		defer close(postDAGTraversal)
-		err = fillInScores(
-			ctx,
+		visitor := newVisitor(
+			fileChunkSize,
 			dir,
+			scoreMap,
 			blobStore,
+			clock,
 			logger,
-			postScoreMap,
-			postDAGTraversal)
+			processedNodes)
+
+		err = dag.Visit(
+			ctx,
+			[]dag.Node{makeRootNode()},
+			newDependencyResolver(dir, exclusions),
+			visitor,
+			parallelism)
 
 		if err != nil {
-			err = fmt.Errorf("fillInScores: %v", err)
+			err = fmt.Errorf("dag.Visit: %v", err)
 			return
 		}
 
 		return
 	})
-
-	// Update the score map with the results of the previous stage.
-	postScoreMapUpdate := make(chan *fsNode, 100)
-	{
-		// Tee the channel; updateScoreMap doesn't give output, nor does it modify
-		// nodes.
-		tmp := make(chan *fsNode, 100)
-		b.Add(func(ctx context.Context) (err error) {
-			defer close(tmp)
-			defer close(postScoreMapUpdate)
-
-			err = teeNodes(ctx, postDAGTraversal, tmp, postScoreMapUpdate)
-			return
-		})
-
-		// Run updateScoreMap.
-		b.Add(func(ctx context.Context) (err error) {
-			err = updateScoreMap(ctx, scoreMap, tmp)
-			if err != nil {
-				err = fmt.Errorf("updateScoreMap: %v", err)
-				return
-			}
-
-			return
-		})
-	}
 
 	// Find the root score.
 	b.Add(func(ctx context.Context) (err error) {
-		score, err = findRootScore(postScoreMapUpdate)
+		score, err = findRootScore(processedNodes)
 		if err != nil {
 			err = fmt.Errorf("findRootScore: %v", err)
 			return
@@ -165,28 +126,13 @@ func findRootScore(nodes <-chan *fsNode) (score blob.Score, err error) {
 	return
 }
 
-func teeNodes(
-	ctx context.Context,
-	in <-chan *fsNode,
-	out1 chan<- *fsNode,
-	out2 chan<- *fsNode) (err error) {
-	for n := range in {
-		// Write to first output.
-		select {
-		case out1 <- n:
-		case <-ctx.Done():
-			err = ctx.Err()
-			return
-		}
-
-		// And the second.
-		select {
-		case out2 <- n:
-		case <-ctx.Done():
-			err = ctx.Err()
-			return
-		}
+// Create a node appropriate to pass as a start node to dag.Visit.
+func makeRootNode() *fsNode {
+	return &fsNode{
+		RelPath: "",
+		Info: fs.DirectoryEntry{
+			Type: fs.TypeDirectory,
+		},
+		Parent: nil,
 	}
-
-	return
 }
