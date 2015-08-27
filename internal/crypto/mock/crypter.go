@@ -71,7 +71,7 @@ func (m *mockCrypter) Decrypt(p0 []uint8) (o0 []uint8, o1 error) {
 	return
 }
 
-func (m *mockCrypter) Encrypt(p0 []uint8) (o0 []uint8, o1 error) {
+func (m *mockCrypter) Encrypt(p0 []uint8, p1 []uint8) (o0 []uint8, o1 error) {
 	// Get a file name and line number for the caller.
 	_, file, line, _ := runtime.Caller(1)
 
@@ -81,7 +81,7 @@ func (m *mockCrypter) Encrypt(p0 []uint8) (o0 []uint8, o1 error) {
 		"Encrypt",
 		file,
 		line,
-		[]interface{}{p0})
+		[]interface{}{p0, p1})
 
 	if len(retVals) != 2 {
 		panic(fmt.Sprintf("mockCrypter.Encrypt: invalid return values: %v", retVals))
