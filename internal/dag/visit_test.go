@@ -467,7 +467,11 @@ func (t *VisitTest) RedundantRoots() {
 	t.runTest(edges, startNodes)
 }
 
-func (t *VisitTest) Cycle() {
+func (t *VisitTest) SelfCycle() {
+	AssertTrue(false, "TODO")
+}
+
+func (t *VisitTest) LargerCycle() {
 	// Graph structure:
 	//
 	//        A

@@ -92,6 +92,23 @@ func Visit(
 	err = state.firstErr
 	state.mu.Unlock()
 
+	if err != nil {
+		return
+	}
+
+	// If we ran out of work to do while some nodes still had unsatisfied
+	// dependencies, the graph has a cycle.
+	if len(state.unsatisfied) > 0 {
+		var someNode Node
+		for ni, _ := range state.unsatisfied {
+			someNode = ni.node
+			break
+		}
+
+		err = fmt.Errorf("Graph contains a cycle involving node %#v", someNode)
+		return
+	}
+
 	return
 }
 
@@ -187,8 +204,8 @@ type visitState struct {
 	// GUARDED_BY(mu)
 	toResolve []*nodeInfo
 
-	// The set of all nodes in state_DependenciesUnsatisfied. If this is
-	// non-empty when we're done, the graph must contain a cycle.
+	// The set of all nodes in state_DependenciesUnsatisfied. The graph contains
+	// a cycle iff this is non-empty when we run out of work to do.
 	//
 	// INVARIANT: For each k, k.state == state_DependenciesUnsatisfied
 	// INVARIANT: For each k, k.node is a key in nodes
