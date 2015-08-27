@@ -1,7 +1,3 @@
-# Don't commit tests of dependencies.
-# Cf. https://github.com/kardianos/govendor/issues/37
-vendor/**/*_test.go
-
 # Binaries
 comeback
 
