@@ -41,7 +41,7 @@ func List(
 	const parallelism = 1
 	err = dag.Visit(
 		ctx,
-		[]dag.Node{gRootNode},
+		[]dag.Node{makeRootNode()},
 		dr,
 		v,
 		parallelism)

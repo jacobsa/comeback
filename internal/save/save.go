@@ -31,16 +31,6 @@ import (
 	"github.com/jacobsa/timeutil"
 )
 
-// A node that can be passed to dag.Visit to visit everything rooted at a
-// particular path.
-var gRootNode = &fsNode{
-	RelPath: "",
-	Info: fs.DirectoryEntry{
-		Type: fs.TypeDirectory,
-	},
-	Parent: nil,
-}
-
 // Save a backup of the given directory, applying the supplied exclusions and
 // using the supplied score map to avoid reading file content when possible.
 // Return a score for the root of the backup.
@@ -75,7 +65,7 @@ func Save(
 
 		err = dag.Visit(
 			ctx,
-			[]dag.Node{gRootNode},
+			[]dag.Node{makeRootNode()},
 			newDependencyResolver(dir, exclusions),
 			visitor,
 			parallelism)
@@ -134,4 +124,15 @@ func findRootScore(nodes <-chan *fsNode) (score blob.Score, err error) {
 	}
 
 	return
+}
+
+// Create a node appropriate to pass as a start node to dag.Visit.
+func makeRootNode() *fsNode {
+	return &fsNode{
+		RelPath: "",
+		Info: fs.DirectoryEntry{
+			Type: fs.TypeDirectory,
+		},
+		Parent: nil,
+	}
 }
