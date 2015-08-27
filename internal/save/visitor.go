@@ -56,6 +56,7 @@ func newVisitor(
 	v = &visitor{
 		chunkSize:    chunkSize,
 		basePath:     basePath,
+		scoreMap:     scoreMap,
 		blobStore:    blobStore,
 		clock:        clock,
 		logger:       logger,
@@ -68,6 +69,7 @@ func newVisitor(
 type visitor struct {
 	chunkSize    int
 	basePath     string
+	scoreMap     state.ScoreMap
 	blobStore    blob.Store
 	clock        timeutil.Clock
 	logger       *log.Logger
@@ -113,7 +115,7 @@ func (v *visitor) setScores(
 	// Files and directories are the only interesting cases.
 	switch n.Info.Type {
 	case fs.TypeFile:
-		n.Info.Scores, err = v.saveFile(ctx, path.Join(v.basePath, n.RelPath))
+		n.Info.Scores, err = v.saveFile(ctx, n)
 		if err != nil {
 			err = fmt.Errorf("saveFile: %v", err)
 			return
@@ -133,11 +135,21 @@ func (v *visitor) setScores(
 // Guarantees non-nil result when successful, even for empty list of scores.
 func (v *visitor) saveFile(
 	ctx context.Context,
-	path string) (scores []blob.Score, err error) {
+	n *fsNode) (scores []blob.Score, err error) {
+	// Can we short circuit here using the score map?
+	scoreMapKey := makeScoreMapKey(n, v.clock)
+	if scoreMapKey != nil {
+		scores = v.scoreMap.Get(*scoreMapKey)
+		if scores != nil {
+			return
+		}
+	}
+
+	// Ensure that our result will be non-nil, even for the empty list.
 	scores = make([]blob.Score, 0, 1)
 
 	// Open the file for reading.
-	f, err := os.Open(path)
+	f, err := os.Open(path.Join(v.basePath, n.RelPath))
 	if err != nil {
 		err = fmt.Errorf("Open: %v", err)
 		return
