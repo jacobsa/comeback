@@ -24,25 +24,27 @@ import (
 
 	"golang.org/x/net/context"
 
+	"github.com/jacobsa/comeback/internal/dag"
 	"github.com/jacobsa/comeback/internal/fs"
 )
 
-// Create a graph.SuccessorFinder that models the directory hierarchy rooted at
-// the given base path, excluding all relative paths that matches any of the
-// supplied exclusions, along with all of their descendants.
+// Create a dag.DependencyResolver that models the directory hierarchy rooted
+// at the given base path, excluding all relative paths that matches any of the
+// supplied exclusions, along with all of their descendants. Children are
+// dependencies of parents.
 //
-// The nodes involved are of type *fsNode. The successor finder fills in the
-// RelPath, Info and Parent fields of the successors, and the Children field of
-// the node on which it is called. The Scores field of Info is left as nil,
+// The nodes involved are of type *fsNode. The resolver fills in the RelPath,
+// Info and Parent fields of the dependencies, and the Children field of the
+// node on which it is called. The Scores field of Info is left as nil,
 // however.
 //
 // Results are guaranteed to be sorted by name, for stability and for
 // compatibility with old backup corpora. This is stricter than the
 // case-insensitive order apparently automatically offered on OS X.
-func newSuccessorFinder(
+func newDependencyResolver(
 	basePath string,
-	exclusions []*regexp.Regexp) (sf graph.SuccessorFinder) {
-	sf = &fsSuccessorFinder{
+	exclusions []*regexp.Regexp) (dr dag.DependencyResolver) {
+	dr = &dependencyResolver{
 		basePath:   basePath,
 		exclusions: exclusions,
 	}
@@ -54,14 +56,14 @@ func newSuccessorFinder(
 // Implementation
 ////////////////////////////////////////////////////////////////////////
 
-type fsSuccessorFinder struct {
+type dependencyResolver struct {
 	basePath   string
 	exclusions []*regexp.Regexp
 }
 
-func (sf *fsSuccessorFinder) FindDirectSuccessors(
+func (dr *dependencyResolver) FindDependencies(
 	ctx context.Context,
-	node graph.Node) (successors []graph.Node, err error) {
+	node dag.Node) (deps []dag.Node, err error) {
 	// Ensure the input is of the correct type.
 	n, ok := node.(*fsNode)
 	if !ok {
@@ -69,31 +71,31 @@ func (sf *fsSuccessorFinder) FindDirectSuccessors(
 		return
 	}
 
-	// Skip non-directories; they have no successors.
+	// Skip non-directories; they have no dependencies.
 	if n.Info.Type != fs.TypeDirectory {
 		return
 	}
 
 	// Read and lstat all of the names in the directory.
-	listing, err := sf.readDir(n.RelPath)
+	listing, err := dr.readDir(n.RelPath)
 	if err != nil {
 		err = fmt.Errorf("readDir: %v", err)
 		return
 	}
 
 	// Filter out excluded entries, converting the rest to *fs.DirectoryEntry and
-	// returning them as successors.
+	// returning them as dependencies.
 	for _, fi := range listing {
 		// Skip?
 		childRelPath := path.Join(n.RelPath, fi.Name())
-		if sf.shouldSkip(childRelPath) {
+		if dr.shouldSkip(childRelPath) {
 			continue
 		}
 
 		// Read a symlink target if necesssary.
 		var symlinkTarget string
 		if fi.Mode()&os.ModeSymlink != 0 {
-			symlinkTarget, err = os.Readlink(path.Join(sf.basePath, childRelPath))
+			symlinkTarget, err = os.Readlink(path.Join(dr.basePath, childRelPath))
 			if err != nil {
 				err = fmt.Errorf("Readlink: %v", err)
 				return
@@ -108,14 +110,14 @@ func (sf *fsSuccessorFinder) FindDirectSuccessors(
 			return
 		}
 
-		// Return a successor.
+		// Return a dependency.
 		child := &fsNode{
 			RelPath: childRelPath,
 			Info:    *entry,
 			Parent:  n,
 		}
 
-		successors = append(successors, child)
+		deps = append(deps, child)
 		n.Children = append(n.Children, child)
 	}
 
@@ -124,15 +126,15 @@ func (sf *fsSuccessorFinder) FindDirectSuccessors(
 
 // Read and lstat everything in the directory with the given relative path.
 // Sort by name.
-func (sf *fsSuccessorFinder) readDir(
+func (dr *dependencyResolver) readDir(
 	relPath string) (entries []os.FileInfo, err error) {
 	// Note that ioutil.ReadDir guarantees that the output is sorted by name.
-	entries, err = ioutil.ReadDir(path.Join(sf.basePath, relPath))
+	entries, err = ioutil.ReadDir(path.Join(dr.basePath, relPath))
 	return
 }
 
-func (sf *fsSuccessorFinder) shouldSkip(relPath string) bool {
-	for _, re := range sf.exclusions {
+func (dr *dependencyResolver) shouldSkip(relPath string) bool {
+	for _, re := range dr.exclusions {
 		if re.MatchString(relPath) {
 			return true
 		}
