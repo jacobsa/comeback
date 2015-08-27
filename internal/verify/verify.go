@@ -19,7 +19,7 @@ import (
 	"fmt"
 
 	"github.com/jacobsa/comeback/internal/blob"
-	"github.com/jacobsa/syncutil"
+	"github.com/jacobsa/comeback/internal/dag"
 	"github.com/jacobsa/timeutil"
 	"golang.org/x/net/context"
 )
@@ -48,61 +48,43 @@ func Verify(
 	allScores []blob.Score,
 	knownStructure map[Node][]Node,
 	records chan<- Record,
-	bs blob.Store) (err error) {
-	b := syncutil.NewBundle(ctx)
+	blobStore blob.Store) (err error) {
+	clock := timeutil.RealClock()
 
-	// Explore the graph starting at the specified roots. Use an "experimentally
-	// determined" parallelism, which in theory should depend on bandwidth-delay
-	// products but in practice comes down to when the OS gets cranky about open
-	// files.
-	graphNodes := make(chan graph.Node, 100)
-	b.Add(func(ctx context.Context) (err error) {
-		defer close(graphNodes)
-		const parallelism = 128
+	// Set up a dependency resolver that reads directory listings. It also takes
+	// care of confirming that all scores (for files and directories) exist.
+	dr := newDependencyResolver(
+		allScores,
+		knownStructure,
+		records,
+		blobStore,
+		clock)
 
-		sf := newSuccessorFinder(
-			readFiles,
-			allScores,
-			knownStructure,
-			records,
-			timeutil.RealClock(),
-			bs)
+	// Do we need to do anything for file nodes?
+	var visitor dag.Visitor
+	if readFiles {
+		visitor = newVisitor(records, blobStore, clock)
+	} else {
+		visitor = &doNothingVisitor{}
+	}
 
-		var graphRoots []graph.Node
-		for _, s := range rootScores {
-			n := Node{
-				Score: s,
-				Dir:   true,
-			}
-
-			graphRoots = append(graphRoots, n)
+	// Traverse the graph.
+	var rootNodes []dag.Node
+	for _, s := range rootScores {
+		n := Node{
+			Score: s,
+			Dir:   true,
 		}
 
-		err = graph.ExploreDirectedGraph(
-			ctx,
-			sf,
-			graphRoots,
-			graphNodes,
-			parallelism)
+		rootNodes = append(rootNodes, n)
+	}
 
-		if err != nil {
-			err = fmt.Errorf("ExploreDirectedGraph: %v", err)
-			return
-		}
-
+	const parallelism = 128
+	err = dag.Visit(ctx, rootNodes, dr, visitor, parallelism)
+	if err != nil {
+		err = fmt.Errorf("dag.Visit: %v", err)
 		return
-	})
+	}
 
-	// Throw away the graph nodes returned by ExploreDirectedGraph. We don't need
-	// them; the successor finder mints records and writes them to the channel
-	// for us.
-	b.Add(func(ctx context.Context) (err error) {
-		for _ = range graphNodes {
-		}
-
-		return
-	})
-
-	err = b.Join()
 	return
 }
