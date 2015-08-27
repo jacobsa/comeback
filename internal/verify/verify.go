@@ -19,7 +19,6 @@ import (
 	"fmt"
 
 	"github.com/jacobsa/comeback/internal/blob"
-	"github.com/jacobsa/comeback/internal/graph"
 	"github.com/jacobsa/syncutil"
 	"github.com/jacobsa/timeutil"
 	"golang.org/x/net/context"
