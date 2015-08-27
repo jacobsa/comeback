@@ -28,6 +28,7 @@ import (
 	"github.com/jacobsa/comeback/internal/fs"
 	"github.com/jacobsa/comeback/internal/graph"
 	"github.com/jacobsa/comeback/internal/repr"
+	"github.com/jacobsa/comeback/internal/state"
 )
 
 const fileChunkSize = 1 << 24
@@ -46,6 +47,7 @@ const fileChunkSize = 1 << 24
 func newVisitor(
 	chunkSize int,
 	basePath string,
+	scoreMap state.ScoreMap,
 	blobStore blob.Store,
 	logger *log.Logger,
 	visitedNodes chan<- *fsNode) (v graph.Visitor) {
