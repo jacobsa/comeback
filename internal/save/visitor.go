@@ -159,24 +159,26 @@ func (v *visitor) saveFile(
 
 	// Process a chunk at a time.
 	buf := make([]byte, v.chunkSize)
+
+loop:
 	for {
 		// Read some data.
 		var n int
-		n, err = f.Read(buf)
+		n, err = io.ReadFull(f, buf)
 
 		switch {
 		case err == io.EOF:
-			// Ignore EOF.
+			// EOF means we're done.
+			err = nil
+			break loop
+
+		case err == io.ErrUnexpectedEOF:
+			// A short read is fine.
 			err = nil
 
 		case err != nil:
 			err = fmt.Errorf("Read: %v", err)
 			return
-		}
-
-		// Are we done?
-		if n == 0 {
-			break
 		}
 
 		// Encapsulate the data so it can be identified as a file chunk.
