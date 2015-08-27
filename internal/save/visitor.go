@@ -21,6 +21,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"sync"
 
 	"golang.org/x/net/context"
 
@@ -74,6 +75,26 @@ type visitor struct {
 	clock        timeutil.Clock
 	logger       *log.Logger
 	visitedNodes chan<- *fsNode
+
+	mu sync.Mutex
+
+	// A freelist of objects that it may be beneficial to reuse from call to
+	// call.
+	//
+	// GUARDED_BY(mu)
+	freelist []*reusableObjects
+}
+
+type reusableObjects struct {
+	// A buffer into which we read file chunks.
+	//
+	// INVARIANT: len(buf) is always the visitor's chunk size, and cap(buf) is a
+	// bit more, to cover magic bytes added by repr.MarshalFile.
+	buf []byte
+
+	// A request for storing a blob. Reusing this allows us to reuse any internal
+	// state that the blob store may cache.
+	storeReq blob.StoreRequest
 }
 
 func (v *visitor) Visit(ctx context.Context, untyped dag.Node) (err error) {
@@ -158,7 +179,11 @@ func (v *visitor) saveFile(
 	defer f.Close()
 
 	// Process a chunk at a time.
-	buf := make([]byte, v.chunkSize)
+	ro := v.getReusableObjects()
+	defer v.putReusableObjects(ro)
+
+	buf := ro.buf
+	storeReq := &ro.storeReq
 
 loop:
 	for {
@@ -190,12 +215,10 @@ loop:
 		}
 
 		// Write out the blob.
-		req := &blob.StoreRequest{
-			Blob: chunk,
-		}
+		storeReq.Blob = chunk
 
 		var s blob.Score
-		s, err = v.blobStore.Store(ctx, req)
+		s, err = v.blobStore.Store(ctx, storeReq)
 		if err != nil {
 			err = fmt.Errorf("Store: %v", err)
 			return
@@ -215,6 +238,11 @@ loop:
 func (v *visitor) saveDir(
 	ctx context.Context,
 	children []*fsNode) (scores []blob.Score, err error) {
+	ro := v.getReusableObjects()
+	defer v.putReusableObjects(ro)
+
+	storeReq := &ro.storeReq
+
 	// Set up a list of directory entries.
 	var entries []*fs.DirectoryEntry
 	for _, child := range children {
@@ -229,11 +257,9 @@ func (v *visitor) saveDir(
 	}
 
 	// Write out the blob.
-	req := &blob.StoreRequest{
-		Blob: b,
-	}
+	storeReq.Blob = b
 
-	s, err := v.blobStore.Store(ctx, req)
+	s, err := v.blobStore.Store(ctx, storeReq)
 	if err != nil {
 		err = fmt.Errorf("Store: %v", err)
 		return
@@ -241,4 +267,36 @@ func (v *visitor) saveDir(
 
 	scores = []blob.Score{s}
 	return
+}
+
+// LOCKS_EXCLUDED(v.mu)
+func (v *visitor) getReusableObjects() (ro *reusableObjects) {
+	// Check the freelist.
+	{
+		v.mu.Lock()
+		l := len(v.freelist)
+		if l > 0 {
+			ro = v.freelist[l-1]
+			v.freelist = v.freelist[:l-1]
+		}
+		v.mu.Unlock()
+	}
+
+	if ro != nil {
+		return
+	}
+
+	// Otherwise, allocate.
+	ro = &reusableObjects{
+		buf: make([]byte, v.chunkSize, v.chunkSize+v.chunkSize/2),
+	}
+
+	return
+}
+
+// LOCKS_EXCLUDED(v.mu)
+func (v *visitor) putReusableObjects(ro *reusableObjects) {
+	v.mu.Lock()
+	v.freelist = append(v.freelist, ro)
+	v.mu.Unlock()
 }
