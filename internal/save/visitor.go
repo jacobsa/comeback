@@ -29,6 +29,7 @@ import (
 	"github.com/jacobsa/comeback/internal/fs"
 	"github.com/jacobsa/comeback/internal/repr"
 	"github.com/jacobsa/comeback/internal/state"
+	"github.com/jacobsa/timeutil"
 )
 
 const fileChunkSize = 1 << 24
@@ -49,12 +50,14 @@ func newVisitor(
 	basePath string,
 	scoreMap state.ScoreMap,
 	blobStore blob.Store,
+	clock timeutil.Clock,
 	logger *log.Logger,
 	visitedNodes chan<- *fsNode) (v dag.Visitor) {
 	v = &visitor{
 		chunkSize:    chunkSize,
 		basePath:     basePath,
 		blobStore:    blobStore,
+		clock:        clock,
 		logger:       logger,
 		visitedNodes: visitedNodes,
 	}
@@ -66,6 +69,7 @@ type visitor struct {
 	chunkSize    int
 	basePath     string
 	blobStore    blob.Store
+	clock        timeutil.Clock
 	logger       *log.Logger
 	visitedNodes chan<- *fsNode
 }
