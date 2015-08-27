@@ -561,7 +561,84 @@ func (t *VisitTest) LargeRootedTree_Inverted() {
 }
 
 func (t *VisitTest) DependencyResolverReturnsError() {
-	AssertTrue(false, "TODO")
+	AssertGt(visitParallelism, 1)
+
+	// Graph structure:
+	//
+	//     A  B   C
+	//      \ |   |
+	//        D   E
+	//         \ /
+	//          F
+	//
+	edges := map[string][]string{
+		"A": {"D"},
+		"B": {"D"},
+		"C": {"E"},
+		"D": {"F"},
+		"E": {"F"},
+		"F": {},
+	}
+	startNodes := []string{"A", "B", "C"}
+
+	// Resolver behavior:
+	//
+	//  *  For D, wait until told and then return an error.
+	//
+	//  *  For E:
+	//     *   Tell D to proceed.
+	//     *   Block until cancelled.
+	//     *   Close a channel indicating that the context was cancelled.
+	//
+	dErr := errors.New("taco")
+	eSeen := make(chan struct{})
+	eCancelled := make(chan struct{})
+
+	findDependencies := func(
+		ctx context.Context,
+		n string) (deps []string, err error) {
+		deps = edges[n]
+
+		switch n {
+		case "D":
+			<-eSeen
+			err = dErr
+
+		case "E":
+			close(eSeen)
+
+			done := ctx.Done()
+			AssertNe(nil, done)
+			<-done
+			close(eCancelled)
+		}
+
+		return
+	}
+
+	// Visitor: record the nodes visited.
+	visited := make(chan string, len(edges))
+	visit := func(ctx context.Context, n string) (err error) {
+		visited <- n
+		return
+	}
+
+	// Call.
+	err := t.call(startNodes, findDependencies, visit)
+	ExpectThat(err, Error(HasSubstr(dErr.Error())))
+
+	// E should have seen cancellation.
+	<-eCancelled
+
+	// Nothing should have been visited, since we never made it to the bottom of
+	// the graph.
+	close(visited)
+	var nodes []string
+	for n := range visited {
+		nodes = append(nodes, n)
+	}
+
+	ExpectThat(nodes, ElementsAre())
 }
 
 func (t *VisitTest) VisitorReturnsError() {
