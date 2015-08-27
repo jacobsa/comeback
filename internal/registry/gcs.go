@@ -265,7 +265,7 @@ func newGCSRegistry(
 	}
 
 	// Encrypt the plaintext.
-	ciphertext, err := crypter.Encrypt(plaintext)
+	ciphertext, err := crypter.Encrypt(nil, plaintext)
 	if err != nil {
 		err = fmt.Errorf("Encrypt: %v", err)
 		return
