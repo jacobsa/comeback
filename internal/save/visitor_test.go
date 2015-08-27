@@ -119,22 +119,12 @@ func (t *VisitorTest) call() (err error) {
 // Tests
 ////////////////////////////////////////////////////////////////////////
 
-func (t *VisitorTest) ScoresAlreadyPresent_Empty() {
-	scores := []blob.Score{}
-	t.node.Info.Scores = scores
-
-	err := t.call()
-	AssertEq(nil, err)
-	ExpectThat(t.node.Info.Scores, DeepEquals(scores))
+func (t *VisitorTest) PresentInScoreMap_Empty() {
+	AssertTrue(false, "TODO")
 }
 
-func (t *VisitorTest) ScoresAlreadyPresent_NonEmpty() {
-	scores := []blob.Score{blob.ComputeScore([]byte("taco"))}
-	t.node.Info.Scores = scores
-
-	err := t.call()
-	AssertEq(nil, err)
-	ExpectThat(t.node.Info.Scores, DeepEquals(scores))
+func (t *VisitorTest) PresentInScoreMap_NonEmpty() {
+	AssertTrue(false, "TODO")
 }
 
 func (t *VisitorTest) Symlink() {
@@ -299,4 +289,12 @@ func (t *VisitorTest) File_LastChunkIsPartial() {
 	AssertEq(nil, err)
 
 	ExpectThat(t.node.Info.Scores, ElementsAre(score0, score1))
+}
+
+func (t *VisitorTest) File_IneligibleForScoreMap() {
+	AssertTrue(false, "TODO")
+}
+
+func (t *VisitorTest) File_UpdatesScoreMap() {
+	AssertTrue(false, "TODO")
 }
