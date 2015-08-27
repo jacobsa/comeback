@@ -22,25 +22,42 @@ import (
 	"github.com/jacobsa/comeback/internal/dag"
 	"github.com/jacobsa/comeback/internal/fs"
 	"github.com/jacobsa/comeback/internal/repr"
+	"github.com/jacobsa/timeutil"
 	"golang.org/x/net/context"
 )
 
 // Create a dependency resolver for the DAG of blobs in the supplied bucket.
 // Nodes are expected to be of type Node.
 //
-// The resolver reads directory blobs, parses them, and returns their children
-// as dependencies. (File nodes have no dependencies.) If work is to be
-// preserved across runs, knownStructure should be filled in with parenthood
-// information from previous verification runs.
+// For all nodes N, the resolver confirms that N.Score is in allScores.
+// The resolver further does the following for directories:
+//
+//  *  If N is in knownStructure, return dependencies according to its entry
+//     there.
+//
+//  *  Otherwise, load N.Score from the blob store, parse the listing, and
+//     return appropriate dependencies. Write a record reflecting this to the
+//     supplied channel.
 //
 // It is expected that the blob store's Load method does score verification for
 // us.
 func newDependencyResolver(
+	allScores []blob.Score,
 	knownStructure map[Node][]Node,
-	bs blob.Store) (dr dag.DependencyResolver) {
+	records chan<- Record,
+	bs blob.Store,
+	clock timeutil.Clock) (dr dag.DependencyResolver) {
+	scoreSet := make(map[blob.Score]struct{})
+	for _, s := range allScores {
+		scoreSet[s] = struct{}{}
+	}
+
 	dr = &dependencyResolver{
+		allScores:      scoreSet,
 		knownStructure: knownStructure,
+		records:        records,
 		blobStore:      bs,
+		clock:          clock,
 	}
 
 	return
@@ -51,8 +68,11 @@ func newDependencyResolver(
 ////////////////////////////////////////////////////////////////////////
 
 type dependencyResolver struct {
+	allScores      map[blob.Score]struct{}
 	knownStructure map[Node][]Node
+	records        chan<- Record
 	blobStore      blob.Store
+	clock          timeutil.Clock
 }
 
 func (dr *dependencyResolver) FindDependencies(
@@ -62,6 +82,12 @@ func (dr *dependencyResolver) FindDependencies(
 	n, ok := untyped.(Node)
 	if !ok {
 		err = fmt.Errorf("Unexpected node type: %T", untyped)
+		return
+	}
+
+	// Confirm that the score actually exists.
+	if _, ok := dr.allScores[n.Score]; !ok {
+		err = fmt.Errorf("Unknown score for node: %s", n.String())
 		return
 	}
 
@@ -93,7 +119,12 @@ func (dr *dependencyResolver) FindDependencies(
 		return
 	}
 
-	// Fill in dependencies.
+	// Build a record containing a child node for each score in each entry.
+	r := Record{
+		Time: dr.clock.Now(),
+		Node: n,
+	}
+
 	for _, entry := range listing {
 		var child Node
 
@@ -126,8 +157,22 @@ func (dr *dependencyResolver) FindDependencies(
 		// Add a node for each score.
 		for _, score := range entry.Scores {
 			child.Score = score
-			deps = append(deps, child)
+			r.Children = append(r.Children, child)
 		}
+	}
+
+	// Certify that we verified the directory.
+	select {
+	case <-ctx.Done():
+		err = ctx.Err()
+		return
+
+	case dr.records <- r:
+	}
+
+	// Copy the directory's children to our return value.
+	for _, child := range r.Children {
+		deps = append(deps, child)
 	}
 
 	return
