@@ -23,7 +23,9 @@ import (
 
 // A Crypter knows how to encrypt and decrypt arbitrary byte strings.
 type Crypter interface {
-	Encrypt(plaintext []byte) (ciphertext []byte, err error)
+	// Append to dst and return updated slice.
+	Encrypt(dst, plaintext []byte) (result []byte, err error)
+
 	Decrypt(ciphertext []byte) (plaintext []byte, err error)
 }
 
@@ -55,8 +57,8 @@ type sivCrypter struct {
 	key []byte
 }
 
-func (c *sivCrypter) Encrypt(plaintext []byte) ([]byte, error) {
-	return siv.Encrypt(c.key, plaintext, nil)
+func (c *sivCrypter) Encrypt(dst, plaintext []byte) ([]byte, error) {
+	return siv.Encrypt(dst, c.key, plaintext, nil)
 }
 
 func (c *sivCrypter) Decrypt(ciphertext []byte) ([]byte, error) {

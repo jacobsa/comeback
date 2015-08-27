@@ -66,7 +66,7 @@ func (t *CrypterTest) RoundTrip() {
 	msg := []byte{0xde, 0xad, 0xbe, 0xef}
 
 	// Encrypt
-	ciphertext, err := crypter.Encrypt(msg)
+	ciphertext, err := crypter.Encrypt(nil, msg)
 	AssertEq(nil, err)
 
 	// Decrypt
@@ -84,7 +84,7 @@ func (t *CrypterTest) CorruptedCiphertext() {
 	msg := []byte{0xde, 0xad, 0xbe, 0xef}
 
 	// Encrypt
-	ciphertext, err := crypter.Encrypt(msg)
+	ciphertext, err := crypter.Encrypt(nil, msg)
 	AssertEq(nil, err)
 
 	AssertGt(len(ciphertext), 2)
