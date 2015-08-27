@@ -55,62 +55,45 @@ type dependencyResolver struct {
 	blobStore      blob.Store
 }
 
-func (sf *successorFinder) processFile(
+func (dr *dependencyResolver) FindDependencies(
 	ctx context.Context,
-	n Node) (err error) {
-	// If reading files is disabled, there is nothing further to do.
-	if !sf.readFiles {
+	untyped dag.Node) (deps []dag.Node, err error) {
+	// Make sure the node is of the appropriate type.
+	n, ok := untyped.(Node)
+	if !ok {
+		err = fmt.Errorf("Unexpected node type: %T", untyped)
 		return
 	}
 
-	// Make sure we can load the blob contents. Presumably the blob store
-	// verifies the score (of the ciphertext) on the way through.
-	_, err = sf.blobStore.Load(ctx, n.Score)
-	if err != nil {
-		err = fmt.Errorf("Load(%s): %sf", n.Score.Hex(), err)
+	// There is nothing further to do unless this is a directory.
+	if !n.Dir {
 		return
 	}
 
-	// Certify that we verified the file piece.
-	r := Record{
-		Time: sf.clock.Now(),
-		Node: n,
-	}
+	// Do we already have the answer for this node?
+	if children, ok := dr.knownStructure[n]; ok {
+		for _, child := range children {
+			deps = append(deps, child)
+		}
 
-	select {
-	case <-ctx.Done():
-		err = ctx.Err()
 		return
-
-	case sf.records <- r:
 	}
 
-	return
-}
-
-func (sf *successorFinder) processDir(
-	ctx context.Context,
-	parent Node) (successors []graph.Node, err error) {
 	// Load the blob contents.
-	contents, err := sf.blobStore.Load(ctx, parent.Score)
+	contents, err := dr.blobStore.Load(ctx, n.Score)
 	if err != nil {
-		err = fmt.Errorf("Load(%s): %v", parent.Score.Hex(), err)
+		err = fmt.Errorf("Load(%s): %v", n.Score.Hex(), err)
 		return
 	}
 
 	// Parse the listing.
 	listing, err := repr.UnmarshalDir(contents)
 	if err != nil {
-		err = fmt.Errorf("UnmarshalDir(%s): %v", parent.Score.Hex(), err)
+		err = fmt.Errorf("UnmarshalDir(%s): %v", n.Score.Hex(), err)
 		return
 	}
 
-	// Build a record containing a child node for each score in each entry.
-	r := Record{
-		Time: sf.clock.Now(),
-		Node: parent,
-	}
-
+	// Fill in dependencies.
 	for _, entry := range listing {
 		var child Node
 
@@ -126,7 +109,7 @@ func (sf *successorFinder) processDir(
 			if len(entry.Scores) != 0 {
 				err = fmt.Errorf(
 					"Dir %s: symlink unexpectedly contains scores",
-					parent.Score.Hex())
+					n.Score.Hex())
 
 				return
 			}
@@ -134,7 +117,7 @@ func (sf *successorFinder) processDir(
 		default:
 			err = fmt.Errorf(
 				"Dir %s: unknown entry type %v",
-				parent.Score.Hex(),
+				n.Score.Hex(),
 				entry.Type)
 
 			return
@@ -143,59 +126,9 @@ func (sf *successorFinder) processDir(
 		// Add a node for each score.
 		for _, score := range entry.Scores {
 			child.Score = score
-			r.Children = append(r.Children, child)
+			deps = append(deps, child)
 		}
-	}
-
-	// Certify that we verified the directory.
-	select {
-	case <-ctx.Done():
-		err = ctx.Err()
-		return
-
-	case sf.records <- r:
-	}
-
-	// Copy the directory's children to our return value.
-	for _, child := range r.Children {
-		successors = append(successors, child)
 	}
 
 	return
-}
-
-func (sf *successorFinder) FindDirectSuccessors(
-	ctx context.Context,
-	untyped graph.Node) (successors []graph.Node, err error) {
-	// Make sure the node is of the appropriate type.
-	n, ok := untyped.(Node)
-	if !ok {
-		err = fmt.Errorf("Unexpected node type: %T", untyped)
-		return
-	}
-
-	// Make sure the score actually exists.
-	if _, ok := sf.knownScores[n.Score]; !ok {
-		err = fmt.Errorf("Unknown score for node: %s", n.String())
-		return
-	}
-
-	// If we have already verified this node, there is nothing further to verify.
-	// Return the appropriate successors.
-	if children, ok := sf.knownStructure[n]; ok {
-		for _, child := range children {
-			successors = append(successors, child)
-		}
-
-		return
-	}
-
-	// Perform file or directory-specific logic.
-	if n.Dir {
-		successors, err = sf.processDir(ctx, n)
-		return
-	} else {
-		err = sf.processFile(ctx, n)
-		return
-	}
 }
