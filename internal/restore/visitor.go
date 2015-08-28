@@ -20,7 +20,9 @@ import (
 	"log"
 	"os"
 	"path"
+	"syscall"
 	"time"
+	"unsafe"
 
 	"golang.org/x/net/context"
 
@@ -96,9 +98,9 @@ func (v *visitor) Visit(ctx context.Context, untyped dag.Node) (err error) {
 	}
 
 	// Fix up permissions.
-	err = os.Chmod(absPath, n.Info.Permissions)
+	err = chmod(absPath, n.Info.Permissions)
 	if err != nil {
-		err = fmt.Errorf("os.Chmod: %v", err)
+		err = fmt.Errorf("chmod: %v", err)
 		return
 	}
 
@@ -121,3 +123,64 @@ func (v *visitor) handleSymlink(absPath string, target string) (err error) {
 
 	return
 }
+
+// Like os.Chmod, but operates on symlinks rather than their targets.
+func chmod(name string, mode os.FileMode) (err error) {
+	err = fchmodat(
+		AT_FDCWD,
+		name,
+		uint32(mode.Perm()),
+		AT_SYMLINK_NOFOLLOW)
+
+	if err != nil {
+		err = fmt.Errorf("fchmodat: %v", err)
+		return
+	}
+
+	return
+}
+
+// Constants missing from package syscall and package unux.
+const (
+	SYS_FCHMODAT        = 467
+	AT_FDCWD            = -2
+	AT_SYMLINK_NOFOLLOW = 0x0020
+)
+
+// Work around the lack of syscall.Fchmodat.
+func fchmodat(
+	fd int,
+	path string,
+	mode uint32,
+	flag int) (err error) {
+	// Convert to the string format expected by the syscall.
+	p, err := syscall.BytePtrFromString(path)
+	if err != nil {
+		err = fmt.Errorf("BytePtrFromString(%q): %v", path, err)
+		return
+	}
+
+	// Call through.
+	_, _, e := syscall.Syscall6(
+		SYS_FCHMODAT,
+		uintptr(fd),
+		uintptr(unsafe.Pointer(p)),
+		uintptr(mode),
+		uintptr(flag),
+		0, 0)
+
+	use(unsafe.Pointer(p))
+
+	if e != 0 {
+		err = e
+		return
+	}
+
+	return
+}
+
+// Ensure that the supplied pointer stays alive until the call to use.
+// Cf. https://github.com/golang/go/commit/cf622d7
+//
+//go:noescape
+func use(p unsafe.Pointer)
