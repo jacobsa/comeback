@@ -20,6 +20,7 @@ import (
 	"io/ioutil"
 	"log"
 	"testing"
+	"time"
 
 	"golang.org/x/net/context"
 
@@ -148,7 +149,7 @@ func (t *DependencyResolverTest) BlobMissing() {
 	// Call
 	_, err := t.call(n)
 
-	ExpectThat(err, Error(HasSubstr("TODO")))
+	ExpectThat(err, Error(HasSubstr("not found")))
 	ExpectThat(err, Error(HasSubstr(s.Hex())))
 }
 
@@ -211,11 +212,13 @@ func (t *DependencyResolverTest) SomeChildren() {
 			Type:        fs.TypeFile,
 			Name:        "foo",
 			Permissions: 0754,
+			MTime:       time.Now().Round(time.Millisecond),
 		},
 		&fs.DirectoryEntry{
 			Type:   fs.TypeDirectory,
 			Name:   "bar",
 			Scores: []blob.Score{blob.ComputeScore([]byte(""))},
+			MTime:  time.Now().Round(time.Millisecond),
 		},
 	}
 
