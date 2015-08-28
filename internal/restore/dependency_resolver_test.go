@@ -113,15 +113,34 @@ func (t *DependencyResolverTest) File() {
 }
 
 func (t *DependencyResolverTest) Symlink() {
-	AssertTrue(false, "TODO")
-}
+	node := &node{
+		Info: fs.DirectoryEntry{
+			Type: fs.TypeSymlink,
+		},
+	}
 
-func (t *DependencyResolverTest) UnhandledType() {
-	AssertTrue(false, "TODO")
+	// Call
+	deps, err := t.call(node)
+
+	AssertEq(nil, err)
+	ExpectThat(deps, ElementsAre())
+	ExpectThat(node.Children, ElementsAre())
 }
 
 func (t *DependencyResolverTest) BlobMissing() {
-	AssertTrue(false, "TODO")
+	s := blob.ComputeScore([]byte(""))
+	node := &node{
+		Info: fs.DirectoryEntry{
+			Type:   fs.TypeDirectory,
+			Scores: []blob.Score{s},
+		},
+	}
+
+	// Call
+	_, err := t.call(node)
+
+	ExpectThat(err, Error(HasSubstr("TODO")))
+	ExpectThat(err, Error(HasSubstr(s.Hex())))
 }
 
 func (t *DependencyResolverTest) BlobCorrupted() {
