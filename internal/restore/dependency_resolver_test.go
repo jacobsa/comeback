@@ -80,6 +80,30 @@ func (t *DependencyResolverTest) SetUp(ti *TestInfo) {
 // Tests
 ////////////////////////////////////////////////////////////////////////
 
-func (t *DependencyResolverTest) DoesFoo() {
+func (t *DependencyResolverTest) File() {
+	AssertTrue(false, "TODO")
+}
+
+func (t *DependencyResolverTest) Symlink() {
+	AssertTrue(false, "TODO")
+}
+
+func (t *DependencyResolverTest) UnhandledType() {
+	AssertTrue(false, "TODO")
+}
+
+func (t *DependencyResolverTest) BlobMissing() {
+	AssertTrue(false, "TODO")
+}
+
+func (t *DependencyResolverTest) BlobCorrupted() {
+	AssertTrue(false, "TODO")
+}
+
+func (t *DependencyResolverTest) NoChildren() {
+	AssertTrue(false, "TODO")
+}
+
+func (t *DependencyResolverTest) SomeChildren() {
 	AssertTrue(false, "TODO")
 }
