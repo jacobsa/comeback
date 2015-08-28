@@ -16,10 +16,16 @@
 package restore
 
 import (
+	"fmt"
 	"log"
+	"path"
+
+	"golang.org/x/net/context"
 
 	"github.com/jacobsa/comeback/internal/blob"
 	"github.com/jacobsa/comeback/internal/dag"
+	"github.com/jacobsa/comeback/internal/fs"
+	"github.com/jacobsa/comeback/internal/repr"
 )
 
 // Create a dag.DependencyResolver for *node.
@@ -32,5 +38,70 @@ import (
 func newDependencyResolver(
 	blobStore blob.Store,
 	logger *log.Logger) (dr dag.DependencyResolver) {
-	panic("TODO")
+	dr = &dependencyResolver{
+		blobStore: blobStore,
+		logger:    logger,
+	}
+
+	return
+}
+
+type dependencyResolver struct {
+	blobStore blob.Store
+	logger    *log.Logger
+}
+
+func (dr *dependencyResolver) FindDependencies(
+	ctx context.Context,
+	untyped dag.Node) (deps []dag.Node, err error) {
+	// Ensure the input is of the correct type.
+	n, ok := untyped.(*node)
+	if !ok {
+		err = fmt.Errorf("Node has unexpected type: %T", untyped)
+		return
+	}
+
+	// Non-directories have no dependencies.
+	if n.Info.Type != fs.TypeDirectory {
+		return
+	}
+
+	// We expect exactly one score for the listing.
+	if len(n.Info.Scores) != 1 {
+		err = fmt.Errorf(
+			"Unexpected score count for %q: %d",
+			n.RelPath,
+			len(n.Info.Scores))
+
+		return
+	}
+
+	score := n.Info.Scores[0]
+
+	// Load the listing blob.
+	b, err := dr.blobStore.Load(ctx, score)
+	if err != nil {
+		err = fmt.Errorf("Load(%s): %v", score.Hex(), err)
+		return
+	}
+
+	// Parse the listing.
+	listing, err := repr.UnmarshalDir(b)
+	if err != nil {
+		err = fmt.Errorf("UnmarshalDir(%s): %v", score.Hex(), err)
+		return
+	}
+
+	// Fill in the node's children and dependencies.
+	for _, entry := range listing {
+		child := &node{
+			RelPath: path.Join(n.RelPath, entry.Name),
+			Info:    *entry,
+		}
+
+		n.Children = append(n.Children, child)
+		deps = append(deps, child)
+	}
+
+	return
 }
