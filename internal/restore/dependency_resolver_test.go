@@ -93,6 +93,15 @@ func (t *DependencyResolverTest) call(n *node) (deps []*node, err error) {
 	return
 }
 
+func (t *DependencyResolverTest) storeOrDie(b []byte) (s blob.Score) {
+	s, err := t.blobStore.Store(
+		t.ctx,
+		&blob.StoreRequest{Blob: b})
+
+	AssertEq(nil, err)
+	return
+}
+
 ////////////////////////////////////////////////////////////////////////
 // Tests
 ////////////////////////////////////////////////////////////////////////
@@ -144,7 +153,22 @@ func (t *DependencyResolverTest) BlobMissing() {
 }
 
 func (t *DependencyResolverTest) BlobCorrupted() {
-	AssertTrue(false, "TODO")
+	var err error
+
+	// Store some junk and set up a node with the junk's score as its contents.
+	junk := t.storeOrDie([]byte("foobar"))
+	node := &node{
+		Info: fs.DirectoryEntry{
+			Type:   fs.TypeDirectory,
+			Scores: []blob.Score{junk},
+		},
+	}
+
+	// Call
+	_, err = t.call(node)
+
+	ExpectThat(err, Error(HasSubstr("UnmarshalDir")))
+	ExpectThat(err, Error(HasSubstr(junk.Hex())))
 }
 
 func (t *DependencyResolverTest) NoChildren() {
