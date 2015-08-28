@@ -107,38 +107,38 @@ func (t *DependencyResolverTest) store(b []byte) (s blob.Score, err error) {
 ////////////////////////////////////////////////////////////////////////
 
 func (t *DependencyResolverTest) File() {
-	node := &node{
+	n := &node{
 		Info: fs.DirectoryEntry{
 			Type: fs.TypeFile,
 		},
 	}
 
 	// Call
-	deps, err := t.call(node)
+	deps, err := t.call(n)
 
 	AssertEq(nil, err)
 	ExpectThat(deps, ElementsAre())
-	ExpectThat(node.Children, ElementsAre())
+	ExpectThat(n.Children, ElementsAre())
 }
 
 func (t *DependencyResolverTest) Symlink() {
-	node := &node{
+	n := &node{
 		Info: fs.DirectoryEntry{
 			Type: fs.TypeSymlink,
 		},
 	}
 
 	// Call
-	deps, err := t.call(node)
+	deps, err := t.call(n)
 
 	AssertEq(nil, err)
 	ExpectThat(deps, ElementsAre())
-	ExpectThat(node.Children, ElementsAre())
+	ExpectThat(n.Children, ElementsAre())
 }
 
 func (t *DependencyResolverTest) BlobMissing() {
 	s := blob.ComputeScore([]byte(""))
-	node := &node{
+	n := &node{
 		Info: fs.DirectoryEntry{
 			Type:   fs.TypeDirectory,
 			Scores: []blob.Score{s},
@@ -146,7 +146,7 @@ func (t *DependencyResolverTest) BlobMissing() {
 	}
 
 	// Call
-	_, err := t.call(node)
+	_, err := t.call(n)
 
 	ExpectThat(err, Error(HasSubstr("TODO")))
 	ExpectThat(err, Error(HasSubstr(s.Hex())))
@@ -159,7 +159,7 @@ func (t *DependencyResolverTest) BlobCorrupted() {
 	junk, err := t.store([]byte("foobar"))
 	AssertEq(nil, err)
 
-	node := &node{
+	n := &node{
 		Info: fs.DirectoryEntry{
 			Type:   fs.TypeDirectory,
 			Scores: []blob.Score{junk},
@@ -167,7 +167,7 @@ func (t *DependencyResolverTest) BlobCorrupted() {
 	}
 
 	// Call
-	_, err = t.call(node)
+	_, err = t.call(n)
 
 	ExpectThat(err, Error(HasSubstr("UnmarshalDir")))
 	ExpectThat(err, Error(HasSubstr(junk.Hex())))
@@ -186,7 +186,7 @@ func (t *DependencyResolverTest) NoChildren() {
 	AssertEq(nil, err)
 
 	// Set up the node.
-	node := &node{
+	n := &node{
 		RelPath: "taco/burrito",
 		Info: fs.DirectoryEntry{
 			Type:   fs.TypeDirectory,
@@ -195,13 +195,58 @@ func (t *DependencyResolverTest) NoChildren() {
 	}
 
 	// Call
-	deps, err := t.call(node)
+	deps, err := t.call(n)
 
 	AssertEq(nil, err)
 	ExpectThat(deps, ElementsAre())
-	ExpectThat(node.Children, ElementsAre())
+	ExpectThat(n.Children, ElementsAre())
 }
 
 func (t *DependencyResolverTest) SomeChildren() {
-	AssertTrue(false, "TODO")
+	var err error
+
+	// Set up a listing.
+	listing := []*fs.DirectoryEntry{
+		&fs.DirectoryEntry{
+			Type:        fs.TypeFile,
+			Name:        "foo",
+			Permissions: 0754,
+		},
+		&fs.DirectoryEntry{
+			Type:   fs.TypeDirectory,
+			Name:   "bar",
+			Scores: []blob.Score{blob.ComputeScore([]byte(""))},
+		},
+	}
+
+	serialized, err := repr.MarshalDir(listing)
+	AssertEq(nil, err)
+
+	score, err := t.store(serialized)
+	AssertEq(nil, err)
+
+	// Set up the node.
+	n := &node{
+		RelPath: "taco/burrito",
+		Info: fs.DirectoryEntry{
+			Type:   fs.TypeDirectory,
+			Scores: []blob.Score{score},
+		},
+	}
+
+	// Call
+	deps, err := t.call(n)
+
+	AssertEq(nil, err)
+	AssertEq(2, len(deps))
+	AssertThat(n.Children, DeepEquals(deps))
+	var child *node
+
+	child = n.Children[0]
+	ExpectEq("taco/burrito/foo", child.RelPath)
+	ExpectThat(child.Info, DeepEquals(*listing[0]))
+
+	child = n.Children[1]
+	ExpectEq("taco/burrito/bar", child.RelPath)
+	ExpectThat(child.Info, DeepEquals(*listing[1]))
 }
