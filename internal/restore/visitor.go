@@ -17,12 +17,16 @@ package restore
 
 import (
 	"errors"
+	"fmt"
 	"log"
+	"os"
+	"path"
 
 	"golang.org/x/net/context"
 
 	"github.com/jacobsa/comeback/internal/blob"
 	"github.com/jacobsa/comeback/internal/dag"
+	"github.com/jacobsa/comeback/internal/fs"
 )
 
 // Create a dag.Visitor for *node.
@@ -61,6 +65,41 @@ type visitor struct {
 }
 
 func (v *visitor) Visit(ctx context.Context, untyped dag.Node) (err error) {
+	// Ensure the input is of the correct type.
+	n, ok := untyped.(*node)
+	if !ok {
+		err = fmt.Errorf("Node has unexpected type: %T", untyped)
+		return
+	}
+
+	absPath := path.Join(v.basePath, n.RelPath)
+
+	// Make sure the leading directories exist so that we can write into them.
+	err = os.MkdirAll(path.Dir(absPath), 0700)
+	if err != nil {
+		err = fmt.Errorf("MkdirAll: %v", err)
+		return
+	}
+
+	// Perform type-specific logic.
+	switch n.Info.Type {
+	case fs.TypeSymlink:
+		err = v.handleSymlink(n)
+		if err != nil {
+			err = fmt.Errorf("handleSymlink: %v", err)
+			return
+		}
+
+	default:
+		err = fmt.Errorf("Unhandled type %d for node: %q", n.Info.Type, n.RelPath)
+		return
+	}
+
+	err = errors.New("TODO")
+	return
+}
+
+func (v *visitor) handleSymlink(n *node) (err error) {
 	err = errors.New("TODO")
 	return
 }
