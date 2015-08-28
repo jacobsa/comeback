@@ -84,7 +84,7 @@ func (v *visitor) Visit(ctx context.Context, untyped dag.Node) (err error) {
 	// Perform type-specific logic.
 	switch n.Info.Type {
 	case fs.TypeSymlink:
-		err = v.handleSymlink(n)
+		err = v.handleSymlink(absPath, n.Info.Target)
 		if err != nil {
 			err = fmt.Errorf("handleSymlink: %v", err)
 			return
@@ -99,7 +99,12 @@ func (v *visitor) Visit(ctx context.Context, untyped dag.Node) (err error) {
 	return
 }
 
-func (v *visitor) handleSymlink(n *node) (err error) {
-	err = errors.New("TODO")
+func (v *visitor) handleSymlink(absPath string, target string) (err error) {
+	err = os.Symlink(target, absPath)
+	if err != nil {
+		err = fmt.Errorf("os.Symlink: %v", err)
+		return
+	}
+
 	return
 }
