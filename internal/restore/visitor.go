@@ -105,9 +105,9 @@ func (v *visitor) Visit(ctx context.Context, untyped dag.Node) (err error) {
 	}
 
 	// Fix up mtime.
-	err = os.Chtimes(absPath, time.Now(), n.Info.MTime)
+	err = chtimes(absPath, time.Now(), n.Info.MTime)
 	if err != nil {
-		err = fmt.Errorf("Chtimes: %v", err)
+		err = fmt.Errorf("chtimes: %v", err)
 		return
 	}
 
@@ -184,3 +184,28 @@ func fchmodat(
 //
 //go:noescape
 func use(p unsafe.Pointer)
+
+// Like os.Chtimes, but doesn't follow symlinks.
+// Cf. http://stackoverflow.com/a/10611073/1505451
+func chtimes(path string, atime time.Time, mtime time.Time) (err error) {
+	// Open the file without following symlinks.
+	fd, err := syscall.Open(path, syscall.O_SYMLINK, 0)
+	if err != nil {
+		return err
+	}
+
+	defer syscall.Close(fd)
+
+	// Call futimes.
+	var utimes [2]syscall.Timeval
+	utimes[0] = syscall.NsecToTimeval(atime.UnixNano())
+	utimes[1] = syscall.NsecToTimeval(mtime.UnixNano())
+
+	err = syscall.Futimes(fd, utimes[:])
+	if err != nil {
+		err = fmt.Errorf("syscall.Futimes: %v", err)
+		return
+	}
+
+	return nil
+}
