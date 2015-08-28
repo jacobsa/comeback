@@ -31,7 +31,9 @@ import (
 //
 //  *  Ensure that the directory path.Dir(n.RelPath) exists.
 //  *  <Perform type-specific action.>
-//  *  Set the appropriate permissions, times, and owners for n.RelPath.
+//  *  Set the appropriate permissions and times for n.RelPath.
+//
+// Restoring ownership is not supported.
 //
 // The type-specific actions are as follows:
 //

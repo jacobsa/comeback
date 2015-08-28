@@ -19,13 +19,17 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path"
 	"testing"
+	"time"
 
 	"golang.org/x/net/context"
 
 	"github.com/jacobsa/comeback/internal/blob"
 	"github.com/jacobsa/comeback/internal/dag"
+	"github.com/jacobsa/comeback/internal/fs"
 	. "github.com/jacobsa/ogletest"
+	"github.com/jacobsa/timeutil"
 )
 
 func TestVisitor(t *testing.T) { RunTests(t) }
@@ -73,6 +77,11 @@ func (t *VisitorTest) TearDown() {
 	AssertEq(nil, err)
 }
 
+func (t *VisitorTest) call(n *node) (err error) {
+	err = t.visitor.Visit(t.ctx, n)
+	return
+}
+
 ////////////////////////////////////////////////////////////////////////
 // Tests
 ////////////////////////////////////////////////////////////////////////
@@ -97,7 +106,7 @@ func (t *VisitorTest) File_NonEmpty() {
 	AssertTrue(false, "TODO")
 }
 
-func (t *VisitorTest) File_PermsTimesOwners() {
+func (t *VisitorTest) File_PermsAndModTime() {
 	AssertTrue(false, "TODO")
 }
 
@@ -114,5 +123,35 @@ func (t *VisitorTest) Directory() {
 }
 
 func (t *VisitorTest) Symlink() {
-	AssertTrue(false, "TODO")
+	var err error
+
+	n := &node{
+		RelPath: "foo/bar/baz",
+		Info: fs.DirectoryEntry{
+			Type:        fs.TypeSymlink,
+			Name:        "baz",
+			Permissions: 0741,
+			MTime:       time.Date(2012, time.August, 15, 12, 56, 00, 0, time.Local),
+			Target:      "taco/burrito",
+		},
+	}
+
+	// Call
+	err = t.call(n)
+	AssertEq(nil, err)
+
+	// Stat
+	p := path.Join(t.dir, n.RelPath)
+	fi, err := os.Lstat(p)
+	AssertEq(nil, err)
+
+	ExpectEq("baz", fi.Name())
+	ExpectEq(0741|os.ModeSymlink, fi.Mode())
+	ExpectThat(fi.ModTime(), timeutil.TimeEq(n.Info.MTime))
+
+	// Readlink
+	target, err := os.Readlink(p)
+
+	AssertEq(nil, err)
+	ExpectEq("taco/burrito", target)
 }
