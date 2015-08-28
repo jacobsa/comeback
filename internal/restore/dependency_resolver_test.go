@@ -16,6 +16,7 @@
 package restore
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"testing"
@@ -24,9 +25,11 @@ import (
 
 	"github.com/jacobsa/comeback/internal/blob"
 	"github.com/jacobsa/comeback/internal/dag"
+	"github.com/jacobsa/comeback/internal/fs"
 	"github.com/jacobsa/comeback/internal/util"
 	"github.com/jacobsa/comeback/internal/wiring"
 	"github.com/jacobsa/gcloud/gcs/gcsfake"
+	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
 	"github.com/jacobsa/timeutil"
 )
@@ -76,12 +79,37 @@ func (t *DependencyResolverTest) SetUp(ti *TestInfo) {
 	t.dr = newDependencyResolver(t.blobStore, log.New(ioutil.Discard, "", 0))
 }
 
+func (t *DependencyResolverTest) call(n *node) (deps []*node, err error) {
+	untyped, err := t.dr.FindDependencies(t.ctx, n)
+	if err != nil {
+		err = fmt.Errorf("FindDependencies: %v", err)
+		return
+	}
+
+	for _, u := range untyped {
+		deps = append(deps, u.(*node))
+	}
+
+	return
+}
+
 ////////////////////////////////////////////////////////////////////////
 // Tests
 ////////////////////////////////////////////////////////////////////////
 
 func (t *DependencyResolverTest) File() {
-	AssertTrue(false, "TODO")
+	node := &node{
+		Info: fs.DirectoryEntry{
+			Type: fs.TypeFile,
+		},
+	}
+
+	// Call
+	deps, err := t.call(node)
+
+	AssertEq(nil, err)
+	ExpectThat(deps, ElementsAre())
+	ExpectThat(node.Children, ElementsAre())
 }
 
 func (t *DependencyResolverTest) Symlink() {
