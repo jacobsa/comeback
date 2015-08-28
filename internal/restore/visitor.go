@@ -29,7 +29,7 @@ import (
 //
 // For each node n, the visitor does the following:
 //
-//  *  Ensure that the directory path.Dir(n.RelPath) exists and is writeable.
+//  *  Ensure that the directory path.Dir(n.RelPath) exists.
 //  *  <Perform type-specific action.>
 //  *  Set the appropriate permissions, times, and owners for n.RelPath.
 //

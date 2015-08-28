@@ -77,6 +77,42 @@ func (t *VisitorTest) TearDown() {
 // Tests
 ////////////////////////////////////////////////////////////////////////
 
-func (t *VisitorTest) DoesFoo() {
+func (t *VisitorTest) ParentDirsAlreadyExist() {
+	AssertTrue(false, "TODO")
+}
+
+func (t *VisitorTest) File_MissingBlob() {
+	AssertTrue(false, "TODO")
+}
+
+func (t *VisitorTest) File_CorruptBlob() {
+	AssertTrue(false, "TODO")
+}
+
+func (t *VisitorTest) File_Empty() {
+	AssertTrue(false, "TODO")
+}
+
+func (t *VisitorTest) File_NonEmpty() {
+	AssertTrue(false, "TODO")
+}
+
+func (t *VisitorTest) File_PermsTimesOwners() {
+	AssertTrue(false, "TODO")
+}
+
+func (t *VisitorTest) Directory_MissingBlob() {
+	AssertTrue(false, "TODO")
+}
+
+func (t *VisitorTest) Directory_CorruptBlob() {
+	AssertTrue(false, "TODO")
+}
+
+func (t *VisitorTest) Directory() {
+	AssertTrue(false, "TODO")
+}
+
+func (t *VisitorTest) Symlink() {
 	AssertTrue(false, "TODO")
 }
