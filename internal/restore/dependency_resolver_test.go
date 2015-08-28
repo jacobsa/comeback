@@ -26,6 +26,7 @@ import (
 	"github.com/jacobsa/comeback/internal/blob"
 	"github.com/jacobsa/comeback/internal/dag"
 	"github.com/jacobsa/comeback/internal/fs"
+	"github.com/jacobsa/comeback/internal/repr"
 	"github.com/jacobsa/comeback/internal/util"
 	"github.com/jacobsa/comeback/internal/wiring"
 	"github.com/jacobsa/gcloud/gcs/gcsfake"
@@ -93,12 +94,11 @@ func (t *DependencyResolverTest) call(n *node) (deps []*node, err error) {
 	return
 }
 
-func (t *DependencyResolverTest) storeOrDie(b []byte) (s blob.Score) {
-	s, err := t.blobStore.Store(
+func (t *DependencyResolverTest) store(b []byte) (s blob.Score, err error) {
+	s, err = t.blobStore.Store(
 		t.ctx,
 		&blob.StoreRequest{Blob: b})
 
-	AssertEq(nil, err)
 	return
 }
 
@@ -156,7 +156,9 @@ func (t *DependencyResolverTest) BlobCorrupted() {
 	var err error
 
 	// Store some junk and set up a node with the junk's score as its contents.
-	junk := t.storeOrDie([]byte("foobar"))
+	junk, err := t.store([]byte("foobar"))
+	AssertEq(nil, err)
+
 	node := &node{
 		Info: fs.DirectoryEntry{
 			Type:   fs.TypeDirectory,
@@ -172,7 +174,32 @@ func (t *DependencyResolverTest) BlobCorrupted() {
 }
 
 func (t *DependencyResolverTest) NoChildren() {
-	AssertTrue(false, "TODO")
+	var err error
+
+	// Set up an empty listing.
+	listing := []*fs.DirectoryEntry{}
+
+	serialized, err := repr.MarshalDir(listing)
+	AssertEq(nil, err)
+
+	score, err := t.store(serialized)
+	AssertEq(nil, err)
+
+	// Set up the node.
+	node := &node{
+		RelPath: "taco/burrito",
+		Info: fs.DirectoryEntry{
+			Type:   fs.TypeDirectory,
+			Scores: []blob.Score{score},
+		},
+	}
+
+	// Call
+	deps, err := t.call(node)
+
+	AssertEq(nil, err)
+	ExpectThat(deps, ElementsAre())
+	ExpectThat(node.Children, ElementsAre())
 }
 
 func (t *DependencyResolverTest) SomeChildren() {
