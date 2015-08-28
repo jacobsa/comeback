@@ -27,6 +27,8 @@ import (
 // For directories, dependencies are resolved by loading a listing from
 // n.Info.Scores[0], which must exist and be the only score. No other nodes
 // have dependencies.
+//
+// Child nodes returned are filled into node.Children fields.
 func newDependencyResolver(
 	blobStore blob.Store,
 	logger *log.Logger) (dr dag.DependencyResolver) {
