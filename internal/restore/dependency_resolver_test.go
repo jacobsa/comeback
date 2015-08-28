@@ -39,6 +39,31 @@ import (
 func TestDependencyResolver(t *testing.T) { RunTests(t) }
 
 ////////////////////////////////////////////////////////////////////////
+// Helpers
+////////////////////////////////////////////////////////////////////////
+
+func newFakeBlobStore(ctx context.Context) (blobStore blob.Store, err error) {
+	// Create a bucket.
+	bucket := gcsfake.NewFakeBucket(timeutil.RealClock(), "some_bucket")
+
+	// And a cryptoer.
+	_, crypter, err := wiring.MakeRegistryAndCrypter(ctx, "password", bucket)
+	if err != nil {
+		err = fmt.Errorf("MakeRegistryAndCrypter: %v", err)
+		return
+	}
+
+	// And the blob store.
+	blobStore, err = wiring.MakeBlobStore(bucket, crypter, util.NewStringSet())
+	if err != nil {
+		err = fmt.Errorf("MakeBlobStore: %v", err)
+		return
+	}
+
+	return
+}
+
+////////////////////////////////////////////////////////////////////////
 // Boilerplate
 ////////////////////////////////////////////////////////////////////////
 
@@ -57,12 +82,7 @@ func (t *DependencyResolverTest) SetUp(ti *TestInfo) {
 	t.ctx = ti.Ctx
 
 	// Create the blob store.
-	bucket := gcsfake.NewFakeBucket(timeutil.RealClock(), "some_bucket")
-
-	_, crypter, err := wiring.MakeRegistryAndCrypter(t.ctx, "password", bucket)
-	AssertEq(nil, err)
-
-	t.blobStore, err = wiring.MakeBlobStore(bucket, crypter, util.NewStringSet())
+	t.blobStore, err = newFakeBlobStore(t.ctx)
 	AssertEq(nil, err)
 
 	// Create the dependency resolver.

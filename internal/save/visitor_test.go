@@ -98,7 +98,7 @@ func (t *VisitorTest) SetUp(ti *TestInfo) {
 	t.clock.SetTime(time.Now())
 
 	// Set up the directory.
-	t.dir, err = ioutil.TempDir("", "score_map_test")
+	t.dir, err = ioutil.TempDir("", "visitor_test")
 	AssertEq(nil, err)
 }
 
