@@ -16,7 +16,10 @@
 package restore
 
 import (
+	"errors"
 	"log"
+
+	"golang.org/x/net/context"
 
 	"github.com/jacobsa/comeback/internal/blob"
 	"github.com/jacobsa/comeback/internal/dag"
@@ -40,5 +43,22 @@ func newVisitor(
 	basePath string,
 	blobStore blob.Store,
 	logger *log.Logger) (v dag.Visitor) {
-	panic("TODO")
+	v = &visitor{
+		basePath:  basePath,
+		blobStore: blobStore,
+		logger:    logger,
+	}
+
+	return
+}
+
+type visitor struct {
+	basePath  string
+	blobStore blob.Store
+	logger    *log.Logger
+}
+
+func (v *visitor) Visit(ctx context.Context, untyped dag.Node) (err error) {
+	err = errors.New("TODO")
+	return
 }
