@@ -16,11 +16,11 @@
 package restore
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"os"
 	"path"
+	"time"
 
 	"golang.org/x/net/context"
 
@@ -95,7 +95,20 @@ func (v *visitor) Visit(ctx context.Context, untyped dag.Node) (err error) {
 		return
 	}
 
-	err = errors.New("TODO")
+	// Fix up permissions.
+	err = os.Chmod(absPath, n.Info.Permissions)
+	if err != nil {
+		err = fmt.Errorf("os.Chmod: %v", err)
+		return
+	}
+
+	// Fix up mtime.
+	err = os.Chtimes(absPath, time.Now(), n.Info.MTime)
+	if err != nil {
+		err = fmt.Errorf("Chtimes: %v", err)
+		return
+	}
+
 	return
 }
 
