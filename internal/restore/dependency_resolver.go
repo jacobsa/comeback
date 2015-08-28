@@ -16,7 +16,10 @@
 package restore
 
 import (
+	"errors"
 	"log"
+
+	"golang.org/x/net/context"
 
 	"github.com/jacobsa/comeback/internal/blob"
 	"github.com/jacobsa/comeback/internal/dag"
@@ -32,5 +35,22 @@ import (
 func newDependencyResolver(
 	blobStore blob.Store,
 	logger *log.Logger) (dr dag.DependencyResolver) {
-	panic("TODO")
+	dr = &dependencyResolver{
+		blobStore: blobStore,
+		logger:    logger,
+	}
+
+	return
+}
+
+type dependencyResolver struct {
+	blobStore blob.Store
+	logger    *log.Logger
+}
+
+func (dr *dependencyResolver) FindDependencies(
+	ctx context.Context,
+	untyped dag.Node) (deps []dag.Node, err error) {
+	err = errors.New("TODO")
+	return
 }
