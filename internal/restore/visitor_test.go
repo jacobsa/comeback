@@ -28,11 +28,23 @@ import (
 	"github.com/jacobsa/comeback/internal/blob"
 	"github.com/jacobsa/comeback/internal/dag"
 	"github.com/jacobsa/comeback/internal/fs"
+	"github.com/jacobsa/comeback/internal/repr"
+	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
 	"github.com/jacobsa/timeutil"
 )
 
 func TestVisitor(t *testing.T) { RunTests(t) }
+
+////////////////////////////////////////////////////////////////////////
+// Helpers
+////////////////////////////////////////////////////////////////////////
+
+func marshalFileOrDie(content []byte) (chunk []byte) {
+	chunk, err := repr.MarshalFile(content)
+	AssertEq(nil, err)
+	return
+}
 
 ////////////////////////////////////////////////////////////////////////
 // Boilerplate
@@ -82,12 +94,49 @@ func (t *VisitorTest) call(n *node) (err error) {
 	return
 }
 
+func (t *VisitorTest) store(b []byte) (s blob.Score, err error) {
+	s, err = t.blobStore.Store(
+		t.ctx,
+		&blob.StoreRequest{Blob: b})
+
+	return
+}
+
 ////////////////////////////////////////////////////////////////////////
 // Tests
 ////////////////////////////////////////////////////////////////////////
 
 func (t *VisitorTest) File_MissingBlob() {
-	AssertTrue(false, "TODO")
+	var err error
+
+	// Blobs
+	chunk0 := marshalFileOrDie([]byte("taco"))
+	score0, err := t.store(chunk0)
+	AssertEq(nil, err)
+
+	chunk1 := marshalFileOrDie([]byte("burrito"))
+	score1 := blob.ComputeScore(chunk1)
+
+	chunk2 := marshalFileOrDie([]byte("enchilada"))
+	score2, err := t.store(chunk2)
+	AssertEq(nil, err)
+
+	// Node
+	n := &node{
+		RelPath: "foo/bar/baz",
+		Info: fs.DirectoryEntry{
+			Type:        fs.TypeFile,
+			Name:        "baz",
+			Permissions: 0700,
+			Scores:      []blob.Score{score0, score1, score2},
+		},
+	}
+
+	// Call
+	err = t.call(n)
+
+	ExpectThat(err, Error(HasSubstr(score1.Hex())))
+	ExpectThat(err, Error(HasSubstr("not found")))
 }
 
 func (t *VisitorTest) File_CorruptBlob() {
