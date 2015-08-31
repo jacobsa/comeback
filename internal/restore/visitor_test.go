@@ -119,7 +119,30 @@ func (t *VisitorTest) Directory_CorruptBlob() {
 }
 
 func (t *VisitorTest) Directory() {
-	AssertTrue(false, "TODO")
+	var err error
+
+	n := &node{
+		RelPath: "foo/bar/baz",
+		Info: fs.DirectoryEntry{
+			Type:        fs.TypeDirectory,
+			Name:        "baz",
+			Permissions: 0741,
+			MTime:       time.Date(2012, time.August, 15, 12, 56, 00, 0, time.Local),
+		},
+	}
+
+	// Call
+	err = t.call(n)
+	AssertEq(nil, err)
+
+	// Stat
+	p := path.Join(t.dir, n.RelPath)
+	fi, err := os.Lstat(p)
+	AssertEq(nil, err)
+
+	ExpectEq("baz", fi.Name())
+	ExpectEq(0741|os.ModeDir, fi.Mode())
+	ExpectThat(fi.ModTime(), timeutil.TimeEq(n.Info.MTime))
 }
 
 func (t *VisitorTest) Symlink() {
