@@ -110,14 +110,6 @@ func (t *VisitorTest) File_PermsAndModTime() {
 	AssertTrue(false, "TODO")
 }
 
-func (t *VisitorTest) Directory_MissingBlob() {
-	AssertTrue(false, "TODO")
-}
-
-func (t *VisitorTest) Directory_CorruptBlob() {
-	AssertTrue(false, "TODO")
-}
-
 func (t *VisitorTest) Directory() {
 	var err error
 
