@@ -83,29 +83,29 @@
 			"canonical": "github.com/jacobsa/gcloud/gcs",
 			"comment": "",
 			"local": "vendor/github.com/jacobsa/gcloud/gcs",
-			"revision": "a49fd56fbbeb6288d0ff40fa8b4fd9c8e0df8c1b",
-			"revisionTime": "2015-08-31T11:02:33+10:00"
+			"revision": "da4c219088ce3b36b1582232669286ba40fa21c6",
+			"revisionTime": "2015-08-31T14:47:11+10:00"
 		},
 		{
 			"canonical": "github.com/jacobsa/gcloud/gcs/gcsfake",
 			"comment": "",
 			"local": "vendor/github.com/jacobsa/gcloud/gcs/gcsfake",
-			"revision": "a49fd56fbbeb6288d0ff40fa8b4fd9c8e0df8c1b",
-			"revisionTime": "2015-08-31T11:02:33+10:00"
+			"revision": "da4c219088ce3b36b1582232669286ba40fa21c6",
+			"revisionTime": "2015-08-31T14:47:11+10:00"
 		},
 		{
 			"canonical": "github.com/jacobsa/gcloud/gcs/gcsutil",
 			"comment": "",
 			"local": "vendor/github.com/jacobsa/gcloud/gcs/gcsutil",
-			"revision": "a49fd56fbbeb6288d0ff40fa8b4fd9c8e0df8c1b",
-			"revisionTime": "2015-08-31T11:02:33+10:00"
+			"revision": "da4c219088ce3b36b1582232669286ba40fa21c6",
+			"revisionTime": "2015-08-31T14:47:11+10:00"
 		},
 		{
 			"canonical": "github.com/jacobsa/gcloud/httputil",
 			"comment": "",
 			"local": "vendor/github.com/jacobsa/gcloud/httputil",
-			"revision": "a49fd56fbbeb6288d0ff40fa8b4fd9c8e0df8c1b",
-			"revisionTime": "2015-08-31T11:02:33+10:00"
+			"revision": "da4c219088ce3b36b1582232669286ba40fa21c6",
+			"revisionTime": "2015-08-31T14:47:11+10:00"
 		},
 		{
 			"canonical": "github.com/jacobsa/oglematchers",
