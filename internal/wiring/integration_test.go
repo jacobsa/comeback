@@ -33,6 +33,7 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/jacobsa/comeback/internal/blob"
+	"github.com/jacobsa/comeback/internal/restore"
 	"github.com/jacobsa/comeback/internal/save"
 	"github.com/jacobsa/comeback/internal/state"
 	"github.com/jacobsa/comeback/internal/util"
@@ -172,10 +173,6 @@ func (t *WiringTest) WrongPassword() {
 	// Using a different password to do the same should fail.
 	_, _, err = wiring.MakeRegistryAndCrypter(t.ctx, wrongPassword, t.bucket)
 	ExpectThat(err, Error(HasSubstr("password is incorrect")))
-
-	// Ditto with the dir restorer.
-	_, err = wiring.MakeDirRestorer(t.ctx, wrongPassword, t.bucket)
-	ExpectThat(err, Error(HasSubstr("password is incorrect")))
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -239,7 +236,7 @@ func (t *SaveAndRestoreTest) save() (score blob.Score, err error) {
 		t.exclusions,
 		state.NewScoreMap(),
 		bs,
-		log.New(ioutil.Discard, "", 0),
+		gDiscardLogger,
 		timeutil.RealClock())
 
 	if err != nil {
@@ -252,19 +249,27 @@ func (t *SaveAndRestoreTest) save() (score blob.Score, err error) {
 
 // Restore a backup with the given root listing into t.dst.
 func (t *SaveAndRestoreTest) restore(score blob.Score) (err error) {
-	// Create the dir restorer.
-	dirRestorer, err := wiring.MakeDirRestorer(t.ctx, password, t.bucket)
+	// Create the crypter.
+	_, crypter, err := wiring.MakeRegistryAndCrypter(t.ctx, password, t.bucket)
 	if err != nil {
-		err = fmt.Errorf("MakeDirRestorer: %v", err)
+		err = fmt.Errorf("MakeRegistryAndCrypter: %v", err)
 		return
 	}
 
-	// Call it.
-	err = dirRestorer.RestoreDirectory(t.ctx, score, t.dst, "")
+	// Create the blob store.
+	blobStore, err := wiring.MakeBlobStore(t.bucket, crypter, t.existingScores)
 	if err != nil {
-		err = fmt.Errorf("RestoreDirectory: %v", err)
+		err = fmt.Errorf("MakeBlobStore: %v", err)
 		return
 	}
+
+	// Restore.
+	err = restore.Restore(
+		t.ctx,
+		t.dst,
+		score,
+		blobStore,
+		gDiscardLogger)
 
 	return
 }
@@ -568,14 +573,6 @@ func (t *SaveAndRestoreTest) Symlinks() {
 }
 
 func (t *SaveAndRestoreTest) Permissions() {
-	// This test currently fails because of a known bug: we restore the
-	// directory's permissions (killing write access) before we restore the file
-	// within it.
-	//
-	// TODO(jacobsa): Re-enable this test when issue #21 is fixed.
-	log.Println("SKIPPING TEST DUE TO KNOWN BUG")
-	return
-
 	const contents = "taco"
 
 	var fi os.FileInfo
