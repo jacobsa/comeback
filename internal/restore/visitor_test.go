@@ -140,7 +140,37 @@ func (t *VisitorTest) File_MissingBlob() {
 }
 
 func (t *VisitorTest) File_CorruptBlob() {
-	AssertTrue(false, "TODO")
+	var err error
+
+	// Blobs
+	chunk0 := marshalFileOrDie([]byte("taco"))
+	score0, err := t.store(chunk0)
+	AssertEq(nil, err)
+
+	chunk1 := []byte("burrito")
+	score1, err := t.store(chunk1)
+	AssertEq(nil, err)
+
+	chunk2 := marshalFileOrDie([]byte("enchilada"))
+	score2, err := t.store(chunk2)
+	AssertEq(nil, err)
+
+	// Node
+	n := &node{
+		RelPath: "foo/bar/baz",
+		Info: fs.DirectoryEntry{
+			Type:        fs.TypeFile,
+			Name:        "baz",
+			Permissions: 0700,
+			Scores:      []blob.Score{score0, score1, score2},
+		},
+	}
+
+	// Call
+	err = t.call(n)
+
+	ExpectThat(err, Error(HasSubstr(score1.Hex())))
+	ExpectThat(err, Error(HasSubstr("UnmarshalFile")))
 }
 
 func (t *VisitorTest) File_Empty() {
