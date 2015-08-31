@@ -85,6 +85,13 @@ func (v *visitor) Visit(ctx context.Context, untyped dag.Node) (err error) {
 
 	// Perform type-specific logic.
 	switch n.Info.Type {
+	case fs.TypeDirectory:
+		err = os.MkdirAll(absPath, 0700)
+		if err != nil {
+			err = fmt.Errorf("MkdirAll (for node): %v", err)
+			return
+		}
+
 	case fs.TypeSymlink:
 		err = v.handleSymlink(absPath, n.Info.Target)
 		if err != nil {
