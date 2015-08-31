@@ -206,7 +206,7 @@ func (t *VisitorTest) File_NonEmpty() {
 	score0, err := t.store(chunk0)
 	AssertEq(nil, err)
 
-	chunk1 := []byte("burrito")
+	chunk1 := marshalFileOrDie([]byte("burrito"))
 	score1, err := t.store(chunk1)
 	AssertEq(nil, err)
 

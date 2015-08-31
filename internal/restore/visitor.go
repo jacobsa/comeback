@@ -29,6 +29,7 @@ import (
 	"github.com/jacobsa/comeback/internal/blob"
 	"github.com/jacobsa/comeback/internal/dag"
 	"github.com/jacobsa/comeback/internal/fs"
+	"github.com/jacobsa/comeback/internal/repr"
 )
 
 // Create a dag.Visitor for *node.
@@ -85,6 +86,13 @@ func (v *visitor) Visit(ctx context.Context, untyped dag.Node) (err error) {
 
 	// Perform type-specific logic.
 	switch n.Info.Type {
+	case fs.TypeFile:
+		err = v.writeFileContents(ctx, absPath, n.Info.Scores)
+		if err != nil {
+			err = fmt.Errorf("writeFileContents: %v", err)
+			return
+		}
+
 	case fs.TypeDirectory:
 		err = os.MkdirAll(absPath, 0700)
 		if err != nil {
@@ -115,6 +123,59 @@ func (v *visitor) Visit(ctx context.Context, untyped dag.Node) (err error) {
 	err = chtimes(absPath, time.Now(), n.Info.MTime)
 	if err != nil {
 		err = fmt.Errorf("chtimes: %v", err)
+		return
+	}
+
+	return
+}
+
+func (v *visitor) writeFileContents(
+	ctx context.Context,
+	absPath string,
+	scores []blob.Score) (err error) {
+	// Create the file.
+	f, err := os.OpenFile(
+		absPath,
+		os.O_WRONLY|os.O_CREATE|os.O_EXCL,
+		0400)
+
+	if err != nil {
+		err = fmt.Errorf("OpenFile: %v", err)
+		return
+	}
+
+	defer f.Close()
+
+	// Load and write out each chunk.
+	for _, s := range scores {
+		var chunk []byte
+
+		// Load.
+		chunk, err = v.blobStore.Load(ctx, s)
+		if err != nil {
+			err = fmt.Errorf("Load(%s): %v", s.Hex(), err)
+			return
+		}
+
+		// Unmarshal.
+		chunk, err = repr.UnmarshalFile(chunk)
+		if err != nil {
+			err = fmt.Errorf("UnmarshalFile(%s): %v", s.Hex(), err)
+			return
+		}
+
+		// Write.
+		_, err = f.Write(chunk)
+		if err != nil {
+			err = fmt.Errorf("Write: %v", err)
+			return
+		}
+	}
+
+	// Finish off the file.
+	err = f.Close()
+	if err != nil {
+		err = fmt.Errorf("Close: %v", err)
 		return
 	}
 
