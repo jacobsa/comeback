@@ -586,9 +586,12 @@ func (t *SaveAndRestoreTest) Permissions() {
 	err = ioutil.WriteFile(path.Join(t.src, "foo/bar"), []byte(contents), 0540)
 	AssertEq(nil, err)
 
-	// Seal off the directory.
+	// Seal off the directory. When we're done with the test, restore permissions
+	// so that we can clean up.
 	err = os.Chmod(path.Join(t.src, "foo"), 0540)
 	AssertEq(nil, err)
+
+	defer os.Chmod(path.Join(t.src, "foo"), 0700)
 
 	// Save and restore.
 	score, err := t.save()
@@ -596,6 +599,8 @@ func (t *SaveAndRestoreTest) Permissions() {
 
 	err = t.restore(score)
 	AssertEq(nil, err)
+
+	defer os.Chmod(path.Join(t.dst, "foo"), 0700)
 
 	// Check permissions.
 	fi, err = os.Stat(path.Join(t.dst, "foo"))
