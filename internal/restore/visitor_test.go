@@ -233,7 +233,32 @@ func (t *VisitorTest) File_NonEmpty() {
 }
 
 func (t *VisitorTest) File_PermsAndModTime() {
-	AssertTrue(false, "TODO")
+	var err error
+
+	// Node
+	n := &node{
+		RelPath: "foo/bar/baz",
+		Info: fs.DirectoryEntry{
+			Type:        fs.TypeFile,
+			Name:        "baz",
+			Permissions: 0741,
+			MTime:       time.Date(2012, time.August, 15, 12, 56, 00, 0, time.Local),
+		},
+	}
+
+	p := path.Join(t.dir, n.RelPath)
+
+	// Call
+	err = t.call(n)
+	AssertEq(nil, err)
+
+	// Stat
+	fi, err := os.Lstat(p)
+	AssertEq(nil, err)
+
+	ExpectEq("baz", fi.Name())
+	ExpectEq(os.FileMode(0741), fi.Mode())
+	ExpectThat(fi.ModTime(), timeutil.TimeEq(n.Info.MTime))
 }
 
 func (t *VisitorTest) Directory() {
