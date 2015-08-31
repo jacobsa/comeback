@@ -136,8 +136,8 @@ func invertRelation(r map[string][]string) (inverted map[string][]string) {
 	return
 }
 
-// Create a rand.Rand seeded with a good source.
-func makeRandSource() (src *rand.Rand) {
+// Create a rand.Source seeded with a good source.
+func makeRandSource() (src rand.Source) {
 	// Read a seed from a good source.
 	var seed int64
 	err := binary.Read(cryptorand.Reader, binary.LittleEndian, &seed)
@@ -145,7 +145,7 @@ func makeRandSource() (src *rand.Rand) {
 		log.Fatalln(err)
 	}
 
-	src = rand.New(rand.NewSource(seed))
+	src = rand.NewSource(seed)
 	return
 }
 
@@ -159,6 +159,25 @@ func (v *visitor) Visit(
 	untyped dag.Node) (err error) {
 	err = v.F(ctx, untyped.(string))
 	return
+}
+
+type lockedRandSrc struct {
+	mu      sync.Mutex
+	Wrapped rand.Source
+}
+
+func (src *lockedRandSrc) Int63() (x int64) {
+	src.mu.Lock()
+	x = src.Wrapped.Int63()
+	src.mu.Unlock()
+
+	return
+}
+
+func (src *lockedRandSrc) Seed(seed int64) {
+	src.mu.Lock()
+	src.Wrapped.Seed(seed)
+	src.mu.Unlock()
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -220,7 +239,7 @@ func (t *VisitTest) runTest(
 
 	// Set up a visit function that ensures that a visit hasn't happened out of
 	// order, sleeps for awhile, then marks the node as visited.
-	randSrc := makeRandSource()
+	randSrc := rand.New(&lockedRandSrc{Wrapped: makeRandSource()})
 
 	var mu sync.Mutex
 	resolved := make(map[string]struct{}) // GUARDED_BY(mu)
@@ -306,7 +325,7 @@ func (t *VisitTest) runTest(
 // node is random. The root node is "root".
 func randomTree(depth int) (edges map[string][]string) {
 	edges = make(map[string][]string)
-	randSrc := makeRandSource()
+	randSrc := rand.New(makeRandSource())
 
 	nextID := 0
 	nextLevel := []string{"root"}
