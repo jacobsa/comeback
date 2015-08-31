@@ -174,7 +174,28 @@ func (t *VisitorTest) File_CorruptBlob() {
 }
 
 func (t *VisitorTest) File_Empty() {
-	AssertTrue(false, "TODO")
+	var err error
+
+	// Node
+	n := &node{
+		RelPath: "foo/bar/baz",
+		Info: fs.DirectoryEntry{
+			Type:        fs.TypeFile,
+			Name:        "baz",
+			Permissions: 0400,
+			Scores:      []blob.Score{},
+		},
+	}
+
+	p := path.Join(t.dir, n.RelPath)
+
+	// Call
+	err = t.call(n)
+	AssertEq(nil, err)
+
+	contents, err := ioutil.ReadFile(p)
+	AssertEq(nil, err)
+	ExpectEq("", string(contents))
 }
 
 func (t *VisitorTest) File_NonEmpty() {
