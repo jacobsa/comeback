@@ -210,7 +210,7 @@ func (b *bucket) mintObject(
 		MD5:             &md5Sum,
 		CRC32C:          crc32.Checksum(contents, crc32cTable),
 		MediaLink:       "http://localhost/download/storage/fake/" + req.Name,
-		Metadata:        req.Metadata,
+		Metadata:        copyMetadata(req.Metadata),
 		Generation:      b.prevGeneration,
 		MetaGeneration:  1,
 		StorageClass:    "STANDARD",
@@ -310,6 +310,27 @@ func (b *bucket) createObjectLocked(
 		}
 	}
 
+	if req.MetaGenerationPrecondition != nil {
+		if existingRecord == nil {
+			err = &gcs.PreconditionError{
+				Err: errors.New("Precondition failed: object doesn't exist"),
+			}
+
+			return
+		}
+
+		existingMetaGen := existingRecord.metadata.MetaGeneration
+		if existingMetaGen != *req.MetaGenerationPrecondition {
+			err = &gcs.PreconditionError{
+				Err: fmt.Errorf(
+					"Precondition failed: object has meta-generation %v",
+					existingMetaGen),
+			}
+
+			return
+		}
+	}
+
 	// Create an object record from the given attributes.
 	var fo fakeObject = b.mintObject(req, contents)
 	o = &fo.metadata
@@ -389,6 +410,19 @@ func minInt(a, b int) int {
 	}
 
 	return b
+}
+
+func copyMetadata(in map[string]string) (out map[string]string) {
+	if in == nil {
+		return
+	}
+
+	out = make(map[string]string)
+	for k, v := range in {
+		out[k] = v
+	}
+
+	return
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -556,6 +590,21 @@ func (b *bucket) CopyObject(
 		return
 	}
 
+	// Does it have the correct meta-generation?
+	if req.SrcMetaGenerationPrecondition != nil {
+		p := *req.SrcMetaGenerationPrecondition
+		if b.objects[srcIndex].metadata.MetaGeneration != p {
+			err = &gcs.PreconditionError{
+				Err: fmt.Errorf(
+					"Object %q has meta-generation %d",
+					req.SrcName,
+					b.objects[srcIndex].metadata.MetaGeneration),
+			}
+
+			return
+		}
+	}
+
 	// Copy it and assign a new generation number, to ensure that the generation
 	// number for the destination name is strictly increasing.
 	dst := b.objects[srcIndex]
@@ -627,8 +676,10 @@ func (b *bucket) ComposeObjects(
 	// Create the new object.
 	createReq := &gcs.CreateObjectRequest{
 		Name: req.DstName,
-		GenerationPrecondition: req.DstGenerationPrecondition,
-		Contents:               io.MultiReader(srcReaders...),
+		GenerationPrecondition:     req.DstGenerationPrecondition,
+		MetaGenerationPrecondition: req.DstMetaGenerationPrecondition,
+		Contents:                   io.MultiReader(srcReaders...),
+		Metadata:                   req.Metadata,
 	}
 
 	_, err = b.createObjectLocked(createReq)
@@ -700,6 +751,31 @@ func (b *bucket) UpdateObject(
 
 	var obj *gcs.Object = &b.objects[index].metadata
 
+	// Does the generation number match the request?
+	if req.Generation != 0 && obj.Generation != req.Generation {
+		err = &gcs.NotFoundError{
+			Err: fmt.Errorf(
+				"Object %q generation %d not found",
+				req.Name,
+				req.Generation),
+		}
+
+		return
+	}
+
+	// Does the meta-generation precondition check out?
+	if req.MetaGenerationPrecondition != nil &&
+		obj.MetaGeneration != *req.MetaGenerationPrecondition {
+		err = &gcs.PreconditionError{
+			Err: fmt.Errorf(
+				"Object %q has meta-generation %d",
+				obj.Name,
+				obj.MetaGeneration),
+		}
+
+		return
+	}
+
 	// Update the entry's basic fields according to the request.
 	if req.ContentType != nil {
 		obj.ContentType = *req.ContentType
@@ -760,6 +836,21 @@ func (b *bucket) DeleteObject(
 	if req.Generation != 0 &&
 		b.objects[index].metadata.Generation != req.Generation {
 		return
+	}
+
+	// Check the meta-generation if requested.
+	if req.MetaGenerationPrecondition != nil {
+		p := *req.MetaGenerationPrecondition
+		if b.objects[index].metadata.MetaGeneration != p {
+			err = &gcs.PreconditionError{
+				Err: fmt.Errorf(
+					"Object %q has meta-generation %d",
+					req.Name,
+					b.objects[index].metadata.MetaGeneration),
+			}
+
+			return
+		}
 	}
 
 	// Remove the object.

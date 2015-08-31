@@ -14,14 +14,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"golang.org/x/net/context"
+	"google.golang.org/api/googleapi"
 	"io"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
-
-	"golang.org/x/net/context"
-	"google.golang.org/api/googleapi"
 )
 
 // Always reference these packages, just in case the auto-generated code
@@ -46,6 +45,10 @@ const basePath = "https://www.googleapis.com/storage/v1/"
 const (
 	// View and manage your data across Google Cloud Platform services
 	CloudPlatformScope = "https://www.googleapis.com/auth/cloud-platform"
+
+	// MESSAGE UNDER CONSTRUCTION View your data across Google Cloud
+	// Platform services
+	CloudPlatformReadOnlyScope = "https://www.googleapis.com/auth/cloud-platform.read-only"
 
 	// Manage your data and permissions in Google Cloud Storage
 	DevstorageFullControlScope = "https://www.googleapis.com/auth/devstorage.full_control"
@@ -1512,6 +1515,7 @@ func (c *BucketsGetCall) Do() (*Bucket, error) {
 	//   },
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/cloud-platform",
+	//     "https://www.googleapis.com/auth/cloud-platform.read-only",
 	//     "https://www.googleapis.com/auth/devstorage.full_control",
 	//     "https://www.googleapis.com/auth/devstorage.read_only",
 	//     "https://www.googleapis.com/auth/devstorage.read_write"
@@ -1875,6 +1879,7 @@ func (c *BucketsListCall) Do() (*Buckets, error) {
 	//   },
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/cloud-platform",
+	//     "https://www.googleapis.com/auth/cloud-platform.read-only",
 	//     "https://www.googleapis.com/auth/devstorage.full_control",
 	//     "https://www.googleapis.com/auth/devstorage.read_only",
 	//     "https://www.googleapis.com/auth/devstorage.read_write"
@@ -2430,6 +2435,7 @@ func (c *ChannelsStopCall) Do() error {
 	//   },
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/cloud-platform",
+	//     "https://www.googleapis.com/auth/cloud-platform.read-only",
 	//     "https://www.googleapis.com/auth/devstorage.full_control",
 	//     "https://www.googleapis.com/auth/devstorage.read_only",
 	//     "https://www.googleapis.com/auth/devstorage.read_write"
@@ -4691,6 +4697,7 @@ func (c *ObjectsGetCall) Do() (*Object, error) {
 	//   },
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/cloud-platform",
+	//     "https://www.googleapis.com/auth/cloud-platform.read-only",
 	//     "https://www.googleapis.com/auth/devstorage.full_control",
 	//     "https://www.googleapis.com/auth/devstorage.read_only",
 	//     "https://www.googleapis.com/auth/devstorage.read_write"
@@ -5248,6 +5255,7 @@ func (c *ObjectsListCall) Do() (*Objects, error) {
 	//   },
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/cloud-platform",
+	//     "https://www.googleapis.com/auth/cloud-platform.read-only",
 	//     "https://www.googleapis.com/auth/devstorage.full_control",
 	//     "https://www.googleapis.com/auth/devstorage.read_only",
 	//     "https://www.googleapis.com/auth/devstorage.read_write"
@@ -6391,6 +6399,7 @@ func (c *ObjectsWatchAllCall) Do() (*Channel, error) {
 	//   },
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/cloud-platform",
+	//     "https://www.googleapis.com/auth/cloud-platform.read-only",
 	//     "https://www.googleapis.com/auth/devstorage.full_control",
 	//     "https://www.googleapis.com/auth/devstorage.read_only",
 	//     "https://www.googleapis.com/auth/devstorage.read_write"
