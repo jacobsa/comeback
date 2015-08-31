@@ -86,10 +86,6 @@ func (t *VisitorTest) call(n *node) (err error) {
 // Tests
 ////////////////////////////////////////////////////////////////////////
 
-func (t *VisitorTest) ParentDirsAlreadyExist() {
-	AssertTrue(false, "TODO")
-}
-
 func (t *VisitorTest) File_MissingBlob() {
 	AssertTrue(false, "TODO")
 }
@@ -167,6 +163,35 @@ func (t *VisitorTest) Symlink() {
 	// Readlink
 	target, err := os.Readlink(p)
 
+	AssertEq(nil, err)
+	ExpectEq("taco/burrito", target)
+}
+
+func (t *VisitorTest) ParentDirsAlreadyExist() {
+	var err error
+
+	n := &node{
+		RelPath: "foo/bar/baz",
+		Info: fs.DirectoryEntry{
+			Type:        fs.TypeSymlink,
+			Name:        "baz",
+			Permissions: 0741,
+			MTime:       time.Date(2012, time.August, 15, 12, 56, 00, 0, time.Local),
+			Target:      "taco/burrito",
+		},
+	}
+
+	p := path.Join(t.dir, n.RelPath)
+
+	// Create leading directories.
+	err = os.MkdirAll(path.Dir(p), 0700)
+	AssertEq(nil, err)
+
+	// Call. Everything should work as usual.
+	err = t.call(n)
+	AssertEq(nil, err)
+
+	target, err := os.Readlink(p)
 	AssertEq(nil, err)
 	ExpectEq("taco/burrito", target)
 }
