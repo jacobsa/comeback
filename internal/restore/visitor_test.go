@@ -127,7 +127,7 @@ func (t *VisitorTest) File_MissingBlob() {
 		Info: fs.DirectoryEntry{
 			Type:        fs.TypeFile,
 			Name:        "baz",
-			Permissions: 0700,
+			Permissions: 0400,
 			Scores:      []blob.Score{score0, score1, score2},
 		},
 	}
@@ -161,7 +161,7 @@ func (t *VisitorTest) File_CorruptBlob() {
 		Info: fs.DirectoryEntry{
 			Type:        fs.TypeFile,
 			Name:        "baz",
-			Permissions: 0700,
+			Permissions: 0400,
 			Scores:      []blob.Score{score0, score1, score2},
 		},
 	}
@@ -178,7 +178,37 @@ func (t *VisitorTest) File_Empty() {
 }
 
 func (t *VisitorTest) File_NonEmpty() {
-	AssertTrue(false, "TODO")
+	var err error
+
+	// Blobs
+	chunk0 := marshalFileOrDie([]byte("taco"))
+	score0, err := t.store(chunk0)
+	AssertEq(nil, err)
+
+	chunk1 := []byte("burrito")
+	score1, err := t.store(chunk1)
+	AssertEq(nil, err)
+
+	// Node
+	n := &node{
+		RelPath: "foo/bar/baz",
+		Info: fs.DirectoryEntry{
+			Type:        fs.TypeFile,
+			Name:        "baz",
+			Permissions: 0400,
+			Scores:      []blob.Score{score0, score1},
+		},
+	}
+
+	p := path.Join(t.dir, n.RelPath)
+
+	// Call
+	err = t.call(n)
+	AssertEq(nil, err)
+
+	contents, err := ioutil.ReadFile(p)
+	AssertEq(nil, err)
+	ExpectEq("tacoburrito", string(contents))
 }
 
 func (t *VisitorTest) File_PermsAndModTime() {
