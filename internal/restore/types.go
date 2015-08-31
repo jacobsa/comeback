@@ -13,25 +13,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package wiring
+package restore
 
-import (
-	"fmt"
+import "github.com/jacobsa/comeback/internal/fs"
 
-	"github.com/jacobsa/comeback/internal/backup"
-	"github.com/jacobsa/comeback/internal/blob"
-	"github.com/jacobsa/comeback/internal/fs"
-)
+// A node within the tree to be restored, rooted at the score of the backup job
+// selected by the user.
+type node struct {
+	// The path of the file (or directory, etc.) relative to the root of the
+	// backup.
+	RelPath string
 
-// Create a file restorer that uses the supplied file system and blob store.
-func makeFileRestorer(
-	bs blob.Store,
-	fs fs.FileSystem) (fr backup.FileRestorer, err error) {
-	fr, err = backup.NewFileRestorer(bs, fs)
-	if err != nil {
-		err = fmt.Errorf("NewFileRestorer: %v", err)
-		return
-	}
+	// Type, size, etc. information about the file, directory, etc. Also contains
+	// a list of scores from which its contents can be loaded.
+	Info fs.DirectoryEntry
 
-	return
+	// The nodes comprising the children of this directory. Empty for
+	// non-directories.
+	Children []*node
 }

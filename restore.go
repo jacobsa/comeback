@@ -22,6 +22,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/jacobsa/comeback/internal/restore"
+
 	"golang.org/x/net/context"
 )
 
@@ -56,10 +58,9 @@ func runRestore(ctx context.Context, args []string) (err error) {
 		return
 	}
 
-	// Grab dependencies. Make sure to get the registry first, because it takes
-	// less time to construct.
+	// Grab dependencies.
 	reg := getRegistry(ctx)
-	dirRestorer := getDirRestorer(ctx)
+	blobStore := getBlobStore(ctx)
 
 	// Find the requested job.
 	job, err := reg.FindBackup(ctx, startTime)
@@ -83,11 +84,12 @@ func runRestore(ctx context.Context, args []string) (err error) {
 	}
 
 	// Attempt a restore.
-	err = dirRestorer.RestoreDirectory(
+	err = restore.Restore(
 		ctx,
-		job.Score,
 		*g_target,
-		"",
+		job.Score,
+		blobStore,
+		log.New(os.Stderr, "Restore progress: ", 0),
 	)
 
 	if err != nil {
