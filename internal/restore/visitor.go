@@ -93,9 +93,9 @@ func (v *visitor) Visit(ctx context.Context, untyped dag.Node) (err error) {
 		}
 
 	case fs.TypeSymlink:
-		err = v.handleSymlink(absPath, n.Info.Target)
+		err = os.Symlink(n.Info.Target, absPath)
 		if err != nil {
-			err = fmt.Errorf("handleSymlink: %v", err)
+			err = fmt.Errorf("os.Symlink: %v", err)
 			return
 		}
 
@@ -115,16 +115,6 @@ func (v *visitor) Visit(ctx context.Context, untyped dag.Node) (err error) {
 	err = chtimes(absPath, time.Now(), n.Info.MTime)
 	if err != nil {
 		err = fmt.Errorf("chtimes: %v", err)
-		return
-	}
-
-	return
-}
-
-func (v *visitor) handleSymlink(absPath string, target string) (err error) {
-	err = os.Symlink(target, absPath)
-	if err != nil {
-		err = fmt.Errorf("os.Symlink: %v", err)
 		return
 	}
 
