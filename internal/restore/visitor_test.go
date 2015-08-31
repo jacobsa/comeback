@@ -133,6 +133,33 @@ func (t *VisitorTest) Directory() {
 	ExpectThat(fi.ModTime(), timeutil.TimeEq(n.Info.MTime))
 }
 
+func (t *VisitorTest) Directory_AlreadyExists() {
+	var err error
+
+	n := &node{
+		RelPath: "foo",
+		Info: fs.DirectoryEntry{
+			Type:        fs.TypeDirectory,
+			Name:        "foo",
+			Permissions: 0741,
+		},
+	}
+
+	p := path.Join(t.dir, n.RelPath)
+
+	// Create the directory.
+	err = os.Mkdir(p, 0700)
+	AssertEq(nil, err)
+
+	// The call should succeed and the permissions should be updated as usual.
+	err = t.call(n)
+	AssertEq(nil, err)
+
+	fi, err := os.Lstat(p)
+	AssertEq(nil, err)
+	ExpectEq(0741|os.ModeDir, fi.Mode())
+}
+
 func (t *VisitorTest) Symlink() {
 	var err error
 
@@ -175,8 +202,7 @@ func (t *VisitorTest) ParentDirsAlreadyExist() {
 		Info: fs.DirectoryEntry{
 			Type:        fs.TypeSymlink,
 			Name:        "baz",
-			Permissions: 0741,
-			MTime:       time.Date(2012, time.August, 15, 12, 56, 00, 0, time.Local),
+			Permissions: 0700,
 			Target:      "taco/burrito",
 		},
 	}
