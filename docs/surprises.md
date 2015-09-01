@@ -15,6 +15,18 @@ The following things may be surprising:
     is [here][restore.newVisitor], and fuse file system code is
     [here][comebackfs.NewFileSystem].
 
+*   Only regular files, directories, and symlinks are supported. Devices, named
+    pipes, and sockets are not supported.
+
+*   Out of a file's mode bits, the following are supported:
+
+    *   The usual Unix permissions bits (`0777`).
+    *   The setuid bit.
+    *   The setgid bit.
+    *   The sticky bit.
+
+    No other mode bits are supported.
+
 
 [save.dependencyResolver.FindDependencies]: https://github.com/jacobsa/comeback/blob/2ead6ca/internal/save/dependency_resolver.go#L107
 [restore.newVisitor]: https://github.com/jacobsa/comeback/blob/016abc4/internal/restore/visitor.go#L42
