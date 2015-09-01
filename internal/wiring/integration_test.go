@@ -799,3 +799,27 @@ func (t *SaveAndRestoreTest) IdenticalDirectoryContents() {
 		ExpectFalse(fi.IsDir())
 	}
 }
+
+func (t *SaveAndRestoreTest) SetuidBit() {
+	AssertTrue(false, "TODO")
+}
+
+func (t *SaveAndRestoreTest) SetgidBit() {
+	AssertTrue(false, "TODO")
+}
+
+func (t *SaveAndRestoreTest) StickyBit() {
+	AssertTrue(false, "TODO")
+}
+
+func (t *SaveAndRestoreTest) Device() {
+	AssertTrue(false, "TODO")
+}
+
+func (t *SaveAndRestoreTest) NamedPipe() {
+	AssertTrue(false, "TODO")
+}
+
+func (t *SaveAndRestoreTest) Socket() {
+	AssertTrue(false, "TODO")
+}
