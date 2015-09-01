@@ -801,7 +801,29 @@ func (t *SaveAndRestoreTest) IdenticalDirectoryContents() {
 }
 
 func (t *SaveAndRestoreTest) SetuidBit() {
-	AssertTrue(false, "TODO")
+	var fi os.FileInfo
+	var err error
+
+	// Create a file with the bit set.
+	err = ioutil.WriteFile(
+		path.Join(t.src, "foo"),
+		[]byte{},
+		0500|os.ModeSetuid)
+
+	AssertEq(nil, err)
+
+	// Save and restore.
+	score, err := t.save()
+	AssertEq(nil, err)
+
+	err = t.restore(score)
+	AssertEq(nil, err)
+
+	// Check the destination.
+	fi, err = os.Lstat(path.Join(t.dst, "foo"))
+
+	AssertEq(nil, err)
+	ExpectEq(0500|os.ModeSetuid, fi.Mode())
 }
 
 func (t *SaveAndRestoreTest) SetgidBit() {
