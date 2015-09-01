@@ -99,8 +99,7 @@ const (
 )
 
 // MarshalDir turns a list of directory entries into bytes that can later be
-// used with IsDir and UnmarshalDir. Note that ContainingDevice fields are
-// lost.
+// used with UnmarshalDir. Note that ContainingDevice fields are lost.
 //
 // The input array may be modified.
 func MarshalDir(entries []*fs.DirectoryEntry) (d []byte, err error) {
@@ -124,26 +123,17 @@ func MarshalDir(entries []*fs.DirectoryEntry) (d []byte, err error) {
 		return
 	}
 
-	// Append a magic byte so IsDir can recognize this as a directory.
+	// Append a magic byte so we can recognize this as a directory without
+	// context.
 	d = append(d, magicByte_Dir)
 
 	return
 }
 
 // MarshalFile encodes the supplied file contents into bytes that can later be
-// used with IsDir and UnmarshalFile. The input array may be modified.
+// used with UnmarshalFile. The input array may be modified.
 func MarshalFile(contents []byte) (f []byte, err error) {
-	// Append a magic byte so IsDir can recognize this as a file.
+	// Append a magic byte so we can recognize this as a file without context.
 	f = append(contents, magicByte_File)
-	return
-}
-
-// IsDir returns true if the supplied data should be decoded with UnmarshalDir,
-// and false if it should be decoded with UnmarshalFile. In either case, the
-// error code should be checked because this function does not check for valid
-// data.
-func IsDir(buf []byte) (dir bool) {
-	l := len(buf)
-	dir = l > 0 && buf[l-1] == magicByte_Dir
 	return
 }
