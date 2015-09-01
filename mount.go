@@ -108,9 +108,6 @@ func runMount(ctx context.Context, args []string) (err error) {
 	// Enable invariant checking for the file system.
 	syncutil.EnableInvariantChecking()
 
-	// Grab dependencies.
-	blobStore := getBlobStore(ctx)
-
 	// Check usage.
 	if len(args) < 1 || len(args) > 2 {
 		err = fmt.Errorf("Usage: %s mount_point [score]", os.Args[0])
@@ -118,6 +115,9 @@ func runMount(ctx context.Context, args []string) (err error) {
 	}
 
 	mountPoint := args[0]
+
+	// Grab dependencies.
+	blobStore := getBlobStore(ctx)
 
 	var hexScore string
 	if len(args) > 1 {
