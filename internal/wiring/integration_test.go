@@ -877,10 +877,6 @@ func (t *SaveAndRestoreTest) StickyBit() {
 	ExpectEq(0700|os.ModeSticky|os.ModeDir, fi.Mode())
 }
 
-func (t *SaveAndRestoreTest) Device() {
-	AssertTrue(false, "TODO")
-}
-
 func (t *SaveAndRestoreTest) NamedPipe() {
 	var err error
 

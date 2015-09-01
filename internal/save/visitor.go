@@ -37,6 +37,8 @@ const fileChunkSize = 1 << 24
 
 // Create a dag.Visitor for *fsNode that does the following for each node N:
 //
+//  *  Ensure that nodes are only regular files, directories, and symlinks.
+//
 //  *  For files, consult the supplied score map to find a list of scores. If
 //     the score map doesn't hit, write the file to the blob store to obtain a
 //     list of scores, and update the score map.
@@ -106,6 +108,17 @@ func (v *visitor) Visit(ctx context.Context, untyped dag.Node) (err error) {
 	}
 
 	v.logger.Print(n.RelPath)
+
+	// Check that the node is of a supported type.
+	switch n.Info.Type {
+	case fs.TypeFile:
+	case fs.TypeDirectory:
+	case fs.TypeSymlink:
+
+	default:
+		err = fmt.Errorf("Unsupported node type: %v", n.Info.Type)
+		return
+	}
 
 	// Ensure that the node has scores set, if it needs to.
 	err = v.setScores(ctx, n)

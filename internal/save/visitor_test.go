@@ -393,3 +393,19 @@ func (t *VisitorTest) File_UpdatesScoreMap() {
 	AssertNe(nil, scores)
 	ExpectThat(t.node.Info.Scores, ElementsAre())
 }
+
+func (t *VisitorTest) OtherType() {
+	var err error
+
+	// Node setup
+	t.node.RelPath = "foo"
+	t.node.Info = fs.FileInfo{
+		Type: fs.TypeSocket,
+	}
+
+	// Call
+	err = t.call()
+
+	ExpectThat(err, Error(HasSubstr("Unsupported")))
+	ExpectThat(err, Error(HasSubstr(fmt.Sprintf("%v", fs.TypeSocket))))
+}
