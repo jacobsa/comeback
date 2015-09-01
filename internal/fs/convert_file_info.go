@@ -116,37 +116,3 @@ func convertFileInfo(
 
 	return entry, nil
 }
-
-func (fs *fileSystem) Stat(path string) (entry DirectoryEntry, err error) {
-	// Call lstat.
-	fi, err := os.Lstat(path)
-	if err != nil {
-		err = fmt.Errorf("Lstat: %v", err)
-		return
-	}
-
-	// Read the symlink target, if any.
-	var symlinkTarget string
-	if fi.Mode()&os.ModeSymlink != 0 {
-		symlinkTarget, err = os.Readlink(path)
-		if err != nil {
-			err = fmt.Errorf("Readlink: %v", err)
-			return
-		}
-	}
-
-	// Convert to an entry.
-	entryPtr, err := convertFileInfo(
-		fi,
-		symlinkTarget,
-		fs.userRegistry,
-		fs.groupRegistry)
-
-	if err != nil {
-		err = fmt.Errorf("convertFileInfo: %v", err)
-		return
-	}
-
-	entry = *entryPtr
-	return
-}
