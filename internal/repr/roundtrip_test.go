@@ -33,8 +33,8 @@ func TestRoundtripTest(t *testing.T) { RunTests(t) }
 // Helpers
 ////////////////////////////////////////////////////////////////////////
 
-func makeLegalEntry() *fs.DirectoryEntry {
-	entry := new(fs.DirectoryEntry)
+func makeLegalEntry() *fs.FileInfo {
+	entry := new(fs.FileInfo)
 	entry.Type = fs.TypeDirectory
 	return entry
 }
@@ -50,7 +50,7 @@ func init() { RegisterTestSuite(&RoundtripTest{}) }
 
 func (t *RoundtripTest) NoEntries() {
 	// Input
-	in := []*fs.DirectoryEntry{}
+	in := []*fs.FileInfo{}
 
 	// Marshal
 	d, err := repr.MarshalDir(in)
@@ -68,7 +68,7 @@ func (t *RoundtripTest) NoEntries() {
 
 func (t *RoundtripTest) UnknownType() {
 	// Input
-	in := []*fs.DirectoryEntry{
+	in := []*fs.FileInfo{
 		makeLegalEntry(),
 		makeLegalEntry(),
 		makeLegalEntry(),
@@ -85,7 +85,7 @@ func (t *RoundtripTest) UnknownType() {
 
 func (t *RoundtripTest) PreservesInode() {
 	// Input
-	in := []*fs.DirectoryEntry{
+	in := []*fs.FileInfo{
 		makeLegalEntry(),
 		makeLegalEntry(),
 	}
@@ -112,7 +112,7 @@ func (t *RoundtripTest) PreservesInode() {
 
 func (t *RoundtripTest) PreservesSize() {
 	// Input
-	in := []*fs.DirectoryEntry{
+	in := []*fs.FileInfo{
 		makeLegalEntry(),
 		makeLegalEntry(),
 	}
@@ -139,7 +139,7 @@ func (t *RoundtripTest) PreservesSize() {
 
 func (t *RoundtripTest) PreservesTypes() {
 	// Input
-	in := []*fs.DirectoryEntry{
+	in := []*fs.FileInfo{
 		makeLegalEntry(),
 		makeLegalEntry(),
 		makeLegalEntry(),
@@ -178,7 +178,7 @@ func (t *RoundtripTest) PreservesTypes() {
 
 func (t *RoundtripTest) PreservesNames() {
 	// Input
-	in := []*fs.DirectoryEntry{
+	in := []*fs.FileInfo{
 		makeLegalEntry(),
 		makeLegalEntry(),
 	}
@@ -205,7 +205,7 @@ func (t *RoundtripTest) PreservesNames() {
 
 func (t *RoundtripTest) PreservesPermissions() {
 	// Input
-	in := []*fs.DirectoryEntry{
+	in := []*fs.FileInfo{
 		makeLegalEntry(),
 		makeLegalEntry(),
 	}
@@ -232,7 +232,7 @@ func (t *RoundtripTest) PreservesPermissions() {
 
 func (t *RoundtripTest) PreservesUids() {
 	// Input
-	in := []*fs.DirectoryEntry{
+	in := []*fs.FileInfo{
 		makeLegalEntry(),
 		makeLegalEntry(),
 	}
@@ -259,7 +259,7 @@ func (t *RoundtripTest) PreservesUids() {
 
 func (t *RoundtripTest) PreservesUsernames() {
 	// Input
-	in := []*fs.DirectoryEntry{
+	in := []*fs.FileInfo{
 		makeLegalEntry(),
 		makeLegalEntry(),
 	}
@@ -287,7 +287,7 @@ func (t *RoundtripTest) PreservesUsernames() {
 
 func (t *RoundtripTest) PreservesGids() {
 	// Input
-	in := []*fs.DirectoryEntry{
+	in := []*fs.FileInfo{
 		makeLegalEntry(),
 		makeLegalEntry(),
 	}
@@ -314,7 +314,7 @@ func (t *RoundtripTest) PreservesGids() {
 
 func (t *RoundtripTest) PreservesGroupnames() {
 	// Input
-	in := []*fs.DirectoryEntry{
+	in := []*fs.FileInfo{
 		makeLegalEntry(),
 		makeLegalEntry(),
 	}
@@ -342,7 +342,7 @@ func (t *RoundtripTest) PreservesGroupnames() {
 
 func (t *RoundtripTest) PreservesModTimes() {
 	// Input
-	in := []*fs.DirectoryEntry{
+	in := []*fs.FileInfo{
 		makeLegalEntry(),
 		makeLegalEntry(),
 	}
@@ -369,7 +369,7 @@ func (t *RoundtripTest) PreservesModTimes() {
 
 func (t *RoundtripTest) PreservesScores() {
 	// Input
-	in := []*fs.DirectoryEntry{
+	in := []*fs.FileInfo{
 		makeLegalEntry(),
 		makeLegalEntry(),
 	}
@@ -404,7 +404,7 @@ func (t *RoundtripTest) PreservesScores() {
 
 func (t *RoundtripTest) PreservesHardLinkTargets() {
 	// Input
-	in := []*fs.DirectoryEntry{
+	in := []*fs.FileInfo{
 		makeLegalEntry(),
 		makeLegalEntry(),
 	}
@@ -432,7 +432,7 @@ func (t *RoundtripTest) PreservesHardLinkTargets() {
 
 func (t *RoundtripTest) PreservesSymlinkTargets() {
 	// Input
-	in := []*fs.DirectoryEntry{
+	in := []*fs.FileInfo{
 		makeLegalEntry(),
 		makeLegalEntry(),
 	}
@@ -462,7 +462,7 @@ func (t *RoundtripTest) PreservesSymlinkTargets() {
 
 func (t *RoundtripTest) PreservesDeviceNumbers() {
 	// Input
-	in := []*fs.DirectoryEntry{
+	in := []*fs.FileInfo{
 		makeLegalEntry(),
 		makeLegalEntry(),
 	}

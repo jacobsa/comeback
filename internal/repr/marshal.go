@@ -24,27 +24,27 @@ import (
 	"github.com/jacobsa/comeback/internal/repr/proto"
 )
 
-func convertType(t fs.EntryType) (repr_proto.DirectoryEntryProto_Type, error) {
+func convertType(t fs.Type) (repr_proto.FileInfoProto_Type, error) {
 	switch t {
 	case fs.TypeFile:
-		return repr_proto.DirectoryEntryProto_TYPE_FILE, nil
+		return repr_proto.FileInfoProto_TYPE_FILE, nil
 	case fs.TypeDirectory:
-		return repr_proto.DirectoryEntryProto_TYPE_DIRECTORY, nil
+		return repr_proto.FileInfoProto_TYPE_DIRECTORY, nil
 	case fs.TypeSymlink:
-		return repr_proto.DirectoryEntryProto_TYPE_SYMLINK, nil
+		return repr_proto.FileInfoProto_TYPE_SYMLINK, nil
 	case fs.TypeBlockDevice:
-		return repr_proto.DirectoryEntryProto_TYPE_BLOCK_DEVICE, nil
+		return repr_proto.FileInfoProto_TYPE_BLOCK_DEVICE, nil
 	case fs.TypeCharDevice:
-		return repr_proto.DirectoryEntryProto_TYPE_CHAR_DEVICE, nil
+		return repr_proto.FileInfoProto_TYPE_CHAR_DEVICE, nil
 	case fs.TypeNamedPipe:
-		return repr_proto.DirectoryEntryProto_TYPE_NAMED_PIPE, nil
+		return repr_proto.FileInfoProto_TYPE_NAMED_PIPE, nil
 	}
 
 	return 0, fmt.Errorf("Unrecognized EntryType: %v", t)
 }
 
 func makeEntryProto(
-	entry *fs.DirectoryEntry) (*repr_proto.DirectoryEntryProto, error) {
+	entry *fs.FileInfo) (*repr_proto.FileInfoProto, error) {
 	blobs := []*repr_proto.BlobInfoProto{}
 	for i, _ := range entry.Scores {
 		// Make a copy of the score (a value type, not a reference type), for
@@ -55,7 +55,7 @@ func makeEntryProto(
 		blobs = append(blobs, proto)
 	}
 
-	entryProto := &repr_proto.DirectoryEntryProto{
+	entryProto := &repr_proto.FileInfoProto{
 		Permissions:    proto.Uint32(uint32(entry.Permissions)),
 		Uid:            proto.Uint32(uint32(entry.Uid)),
 		Username:       entry.Username,
@@ -102,9 +102,9 @@ const (
 // used with UnmarshalDir. Note that ContainingDevice fields are lost.
 //
 // The input array may be modified.
-func MarshalDir(entries []*fs.DirectoryEntry) (d []byte, err error) {
+func MarshalDir(entries []*fs.FileInfo) (d []byte, err error) {
 	// Set entry proto buffers.
-	entryProtos := []*repr_proto.DirectoryEntryProto{}
+	entryProtos := []*repr_proto.FileInfoProto{}
 	for _, entry := range entries {
 		entryProto, err := makeEntryProto(entry)
 		if err != nil {

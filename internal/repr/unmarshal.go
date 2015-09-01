@@ -29,23 +29,23 @@ import (
 )
 
 func convertProtoType(
-	t repr_proto.DirectoryEntryProto_Type) (fs.EntryType, error) {
+	t repr_proto.FileInfoProto_Type) (fs.Type, error) {
 	switch t {
-	case repr_proto.DirectoryEntryProto_TYPE_FILE:
+	case repr_proto.FileInfoProto_TYPE_FILE:
 		return fs.TypeFile, nil
-	case repr_proto.DirectoryEntryProto_TYPE_DIRECTORY:
+	case repr_proto.FileInfoProto_TYPE_DIRECTORY:
 		return fs.TypeDirectory, nil
-	case repr_proto.DirectoryEntryProto_TYPE_SYMLINK:
+	case repr_proto.FileInfoProto_TYPE_SYMLINK:
 		return fs.TypeSymlink, nil
-	case repr_proto.DirectoryEntryProto_TYPE_BLOCK_DEVICE:
+	case repr_proto.FileInfoProto_TYPE_BLOCK_DEVICE:
 		return fs.TypeBlockDevice, nil
-	case repr_proto.DirectoryEntryProto_TYPE_CHAR_DEVICE:
+	case repr_proto.FileInfoProto_TYPE_CHAR_DEVICE:
 		return fs.TypeCharDevice, nil
-	case repr_proto.DirectoryEntryProto_TYPE_NAMED_PIPE:
+	case repr_proto.FileInfoProto_TYPE_NAMED_PIPE:
 		return fs.TypeNamedPipe, nil
 	}
 
-	return 0, fmt.Errorf("Unrecognized DirectoryEntryProto_Type: %v", t)
+	return 0, fmt.Errorf("Unrecognized FileInfoProto_Type: %v", t)
 }
 
 func convertTimeProto(timeProto *repr_proto.TimeProto) (time.Time, error) {
@@ -64,10 +64,10 @@ func convertBlobInfoProto(
 }
 
 func convertEntryProto(
-	entryProto *repr_proto.DirectoryEntryProto) (
-	entry *fs.DirectoryEntry,
+	entryProto *repr_proto.FileInfoProto) (
+	entry *fs.FileInfo,
 	err error) {
-	entry = &fs.DirectoryEntry{}
+	entry = &fs.FileInfo{}
 
 	entry.Name = entryProto.GetName()
 	entry.Permissions = os.FileMode(entryProto.GetPermissions())
@@ -112,7 +112,7 @@ func convertEntryProto(
 
 // UnmarshalDir recovers a list of directory entries from bytes previously
 // returned by MarshalDir.
-func UnmarshalDir(d []byte) (entries []*fs.DirectoryEntry, err error) {
+func UnmarshalDir(d []byte) (entries []*fs.FileInfo, err error) {
 	// Verify and strip the magic byte.
 	l := len(d)
 	if l == 0 || d[l-1] != magicByte_Dir {
@@ -130,7 +130,7 @@ func UnmarshalDir(d []byte) (entries []*fs.DirectoryEntry, err error) {
 	}
 
 	// Convert each entry.
-	entries = []*fs.DirectoryEntry{}
+	entries = []*fs.FileInfo{}
 	for _, entryProto := range listingProto.Entry {
 		entry, err := convertEntryProto(entryProto)
 		if err != nil {
