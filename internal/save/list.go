@@ -38,13 +38,16 @@ func List(
 	dr := newDependencyResolver(basePath, exclusions)
 	v := &listVisitor{w: w}
 
-	const parallelism = 1
+	const resolverParallelism = 1
+	const visitorParallelism = 1
+
 	err = dag.Visit(
 		ctx,
 		[]dag.Node{makeRootNode()},
 		dr,
 		v,
-		parallelism)
+		resolverParallelism,
+		visitorParallelism)
 
 	if err != nil {
 		err = fmt.Errorf("dag.Visit: %v", err)

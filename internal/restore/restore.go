@@ -40,7 +40,8 @@ func Restore(
 	// Hopefully enough parallelism to keep our CPUs saturated (for decryption,
 	// SHA-1 computation, etc.) or our NIC saturated (for GCS traffic), depending
 	// on which is the current bottleneck.
-	const parallelism = 128
+	const resolverParallelism = 128
+	const visitorParallelism = 128
 
 	// Manufacture a root node.
 	fi, err := os.Stat(dir)
@@ -67,7 +68,8 @@ func Restore(
 		[]dag.Node{rootNode},
 		newDependencyResolver(blobStore, logger),
 		newVisitor(dir, blobStore, logger),
-		parallelism)
+		resolverParallelism,
+		visitorParallelism)
 
 	if err != nil {
 		err = fmt.Errorf("dag.Visit: %v", err)

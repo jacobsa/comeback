@@ -79,8 +79,17 @@ func Verify(
 		rootNodes = append(rootNodes, n)
 	}
 
-	const parallelism = 128
-	err = dag.Visit(ctx, rootNodes, dr, visitor, parallelism)
+	const resolverParallelism = 128
+	const visitorParallelism = 128
+
+	err = dag.Visit(
+		ctx,
+		rootNodes,
+		dr,
+		visitor,
+		resolverParallelism,
+		visitorParallelism)
+
 	if err != nil {
 		err = fmt.Errorf("dag.Visit: %v", err)
 		return

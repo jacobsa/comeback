@@ -49,10 +49,15 @@ func Save(
 	b.Add(func(ctx context.Context) (err error) {
 		defer close(processedNodes)
 
-		// Hopefully enough parallelism to keep our CPUs saturated (for encryption,
-		// SHA-1 computation, etc.) or our NIC saturated (for GCS traffic),
+		// The resolver only makes use of the local file system. It actually seems
+		// to hurt to have parallelism here, presumably because it ruins locality
+		// in what otherwise would be LIFO processing of file system nodes.
+		const resolverParallelism = 1
+
+		// The visitor reads contents, computes SHA-1s, encrypts, and talks to GCS.
+		// Hopefully this is enough parallelism to keep our CPUs or NIC saturated,
 		// depending on which is the current bottleneck.
-		const parallelism = 128
+		const visitorParallelism = 128
 
 		visitor := newVisitor(
 			fileChunkSize,
@@ -68,7 +73,8 @@ func Save(
 			[]dag.Node{makeRootNode()},
 			newDependencyResolver(dir, exclusions),
 			visitor,
-			parallelism)
+			resolverParallelism,
+			visitorParallelism)
 
 		if err != nil {
 			err = fmt.Errorf("dag.Visit: %v", err)
