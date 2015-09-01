@@ -16,159 +16,185 @@
 package fs_test
 
 import (
-	"errors"
+	"fmt"
 	"io/ioutil"
 	"net"
 	"os"
+	"os/user"
 	"path"
+	"strconv"
 	"syscall"
 	"testing"
 	"time"
 
 	"github.com/jacobsa/comeback/internal/fs"
 	"github.com/jacobsa/comeback/internal/sys"
-	"github.com/jacobsa/comeback/internal/sys/mock"
+	"github.com/jacobsa/comeback/internal/sys/group"
 	. "github.com/jacobsa/oglematchers"
-	"github.com/jacobsa/oglemock"
 	. "github.com/jacobsa/ogletest"
 )
 
-func TestStat(t *testing.T) { RunTests(t) }
+func TestConvertFileInfo(t *testing.T) { RunTests(t) }
 
 ////////////////////////////////////////////////////////////////////////
 // Helpers
 ////////////////////////////////////////////////////////////////////////
 
-type StatTest struct {
-	fileSystemTest
+// Like os.Chmod, but don't follow symlinks.
+func setPermissions(path string, permissions uint32) error {
+	// Open the file without following symlinks.
+	fd, err := syscall.Open(path, syscall.O_RDONLY|syscall.O_SYMLINK, 0)
+	if err != nil {
+		return err
+	}
 
-	path  string
-	entry fs.DirectoryEntry
-	err   error
+	defer syscall.Close(fd)
+
+	// Call fchmod.
+	err = syscall.Fchmod(fd, permissions)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func init() { RegisterTestSuite(&StatTest{}) }
+// Create a named pipe at the supplied path.
+func makeNamedPipe(path string, permissions uint32) error {
+	return syscall.Mkfifo(path, permissions)
+}
 
-func (t *StatTest) call() {
-	t.entry, t.err = t.fileSystem.Stat(t.path)
+// Set the modification time for the supplied path without following symlinks
+// (as syscall.Chtimes and therefore os.Chtimes do).
+//
+// Cf. http://stackoverflow.com/a/10611073
+func setModTime(path string, mtime time.Time) error {
+	// Open the file without following symlinks. Use O_NONBLOCK to allow opening
+	// of named pipes without a writer.
+	fd, err := syscall.Open(path, syscall.O_NONBLOCK|syscall.O_SYMLINK, 0)
+	if err != nil {
+		return err
+	}
+
+	defer syscall.Close(fd)
+
+	// Call futimes.
+	var utimes [2]syscall.Timeval
+	atime := time.Now()
+	atime_ns := atime.UnixNano()
+	mtime_ns := mtime.UnixNano()
+	utimes[0] = syscall.NsecToTimeval(atime_ns)
+	utimes[1] = syscall.NsecToTimeval(mtime_ns)
+
+	err = syscall.Futimes(fd, utimes[0:])
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+////////////////////////////////////////////////////////////////////////
+// Boilerplate
+////////////////////////////////////////////////////////////////////////
+
+type ConvertFileInfoTest struct {
+	// Information about the running process.
+	myUid       sys.UserId
+	myUsername  string
+	myGid       sys.GroupId
+	myGroupname string
+
+	// A temporary directory that will be deleted when the test completes.
+	baseDir                 string
+	baseDirContainingDevice int32
+
+	// The path to be stat'd, and the resulting entry.
+	path  string
+	entry *fs.DirectoryEntry
+}
+
+var _ SetUpInterface = &ConvertFileInfoTest{}
+var _ TearDownInterface = &ConvertFileInfoTest{}
+
+func init() { RegisterTestSuite(&ConvertFileInfoTest{}) }
+
+func (t *ConvertFileInfoTest) SetUp(ti *TestInfo) {
+	var err error
+
+	// Find user info.
+	currentUser, err := user.Current()
+	AssertEq(nil, err)
+
+	currentUserId, err := strconv.Atoi(currentUser.Uid)
+	AssertEq(nil, err)
+
+	t.myUid = sys.UserId(currentUserId)
+	t.myUsername = currentUser.Username
+	AssertNe(0, t.myUid)
+	AssertNe("", t.myUsername)
+
+	// Find group info.
+	currentGroup, err := group.Current()
+	AssertEq(nil, err)
+
+	currentGroupId, err := strconv.Atoi(currentGroup.Gid)
+	AssertEq(nil, err)
+
+	t.myGid = sys.GroupId(currentGroupId)
+	t.myGroupname = currentGroup.Groupname
+	AssertNe(0, t.myGid)
+	AssertNe("", t.myGroupname)
+
+	// Set up the temporary directory.
+	t.baseDir, err = ioutil.TempDir("", "convert_file_info_test")
+	AssertEq(nil, err)
+
+	// Find its containing device.
+	fi, err := os.Stat(t.baseDir)
+	AssertEq(nil, err)
+
+	t.baseDirContainingDevice = fi.Sys().(*syscall.Stat_t).Dev
+}
+
+func (t *ConvertFileInfoTest) TearDown() {
+	err := os.RemoveAll(t.baseDir)
+	AssertEq(nil, err)
+}
+
+func (t *ConvertFileInfoTest) call() (err error) {
+	// Stat the path.
+	fi, err := os.Lstat(t.path)
+	if err != nil {
+		err = fmt.Errorf("Stat: %v", err)
+		return
+	}
+
+	// Read the symlink target if necessary.
+	var symlinkTarget string
+	if fi.Mode()&os.ModeSymlink != 0 {
+		symlinkTarget, err = os.Readlink(t.path)
+		if err != nil {
+			err = fmt.Errorf("Readlink: %v", err)
+			return
+		}
+	}
+
+	// Call through.
+	t.entry, err = fs.ConvertFileInfo(fi, symlinkTarget)
+	if err != nil {
+		err = fmt.Errorf("ConvertFileInfo: %v", err)
+		return
+	}
+
+	return
 }
 
 ////////////////////////////////////////////////////////////////////////
 // Tests
 ////////////////////////////////////////////////////////////////////////
 
-func (t *StatTest) NonExistentPath() {
-	t.path = path.Join(t.baseDir, "foobar")
-
-	t.call()
-
-	ExpectThat(t.err, Error(HasSubstr("lstat")))
-	ExpectThat(t.err, Error(HasSubstr("no such")))
-}
-
-func (t *StatTest) ErrorLookingUpOwnerId() {
-	var err error
-
-	// Create a mock user registry, and a new file system that uses it.
-	mockRegistry := mock_sys.NewMockUserRegistry(t.mockController, "registry")
-	t.userRegistry = mockRegistry
-	t.setUpFileSystem()
-
-	// Create a file.
-	t.path = path.Join(t.baseDir, "burrito.txt")
-	err = ioutil.WriteFile(t.path, []byte(""), 0600)
-	AssertEq(nil, err)
-
-	// Registry
-	ExpectCall(mockRegistry, "FindById")(t.myUid).
-		WillOnce(oglemock.Return("", errors.New("taco")))
-
-	// Call
-	t.call()
-
-	ExpectThat(t.err, Error(HasSubstr("Looking up")))
-	ExpectThat(t.err, Error(HasSubstr("user")))
-	ExpectThat(t.err, Error(HasSubstr("taco")))
-}
-
-func (t *StatTest) ErrorLookingUpGroupId() {
-	var err error
-
-	// Create a mock group registry, and a new file system that uses it.
-	mockRegistry := mock_sys.NewMockGroupRegistry(t.mockController, "registry")
-	t.groupRegistry = mockRegistry
-	t.setUpFileSystem()
-
-	// Create a file.
-	t.path = path.Join(t.baseDir, "burrito.txt")
-	err = ioutil.WriteFile(t.path, []byte(""), 0600)
-	AssertEq(nil, err)
-
-	// Registry
-	ExpectCall(mockRegistry, "FindById")(t.myGid).
-		WillOnce(oglemock.Return("", errors.New("taco")))
-
-	// Call
-	t.call()
-
-	ExpectThat(t.err, Error(HasSubstr("Looking up")))
-	ExpectThat(t.err, Error(HasSubstr("group")))
-	ExpectThat(t.err, Error(HasSubstr("taco")))
-}
-
-func (t *StatTest) UnknownOwnerId() {
-	var err error
-
-	// Create a mock user registry, and a new file system that uses it.
-	mockRegistry := mock_sys.NewMockUserRegistry(t.mockController, "registry")
-	t.userRegistry = mockRegistry
-	t.setUpFileSystem()
-
-	// Create a file.
-	t.path = path.Join(t.baseDir, "burrito.txt")
-	err = ioutil.WriteFile(t.path, []byte(""), 0600)
-	AssertEq(nil, err)
-
-	// Registry
-	ExpectCall(mockRegistry, "FindById")(t.myUid).
-		WillOnce(oglemock.Return("", sys.NotFoundError("taco")))
-
-	// Call
-	t.call()
-
-	AssertEq(nil, t.err)
-
-	ExpectEq(t.myUid, t.entry.Uid)
-	ExpectEq(nil, t.entry.Username)
-}
-
-func (t *StatTest) UnknownGroupId() {
-	var err error
-
-	// Create a mock group registry, and a new file system that uses it.
-	mockRegistry := mock_sys.NewMockGroupRegistry(t.mockController, "registry")
-	t.groupRegistry = mockRegistry
-	t.setUpFileSystem()
-
-	// Create a file.
-	t.path = path.Join(t.baseDir, "burrito.txt")
-	err = ioutil.WriteFile(t.path, []byte(""), 0600)
-	AssertEq(nil, err)
-
-	// Registry
-	ExpectCall(mockRegistry, "FindById")(t.myGid).
-		WillOnce(oglemock.Return("", sys.NotFoundError("taco")))
-
-	// Call
-	t.call()
-
-	AssertEq(nil, t.err)
-
-	ExpectEq(t.myGid, t.entry.Gid)
-	ExpectEq(nil, t.entry.Groupname)
-}
-
-func (t *StatTest) RegularFile() {
+func (t *ConvertFileInfoTest) RegularFile() {
 	var err error
 
 	// File
@@ -184,9 +210,9 @@ func (t *StatTest) RegularFile() {
 	AssertEq(nil, err)
 
 	// Call
-	t.call()
+	err = t.call()
 
-	AssertEq(nil, t.err)
+	AssertEq(nil, err)
 
 	ExpectEq(fs.TypeFile, t.entry.Type)
 	ExpectEq("burrito.txt", t.entry.Name)
@@ -203,10 +229,9 @@ func (t *StatTest) RegularFile() {
 
 	AssertNe(0, t.entry.Inode)
 	ExpectEq(t.baseDirContainingDevice, t.entry.ContainingDevice)
-	ExpectNe(t.baseDirInode, t.entry.Inode)
 }
 
-func (t *StatTest) Directory() {
+func (t *ConvertFileInfoTest) Directory() {
 	var err error
 
 	// Dir
@@ -227,9 +252,9 @@ func (t *StatTest) Directory() {
 	AssertNe(0, stat.Ino)
 
 	// Call
-	t.call()
+	err = t.call()
 
-	AssertEq(nil, t.err)
+	AssertEq(nil, err)
 
 	ExpectEq(fs.TypeDirectory, t.entry.Type)
 	ExpectEq("burrito", t.entry.Name)
@@ -247,7 +272,7 @@ func (t *StatTest) Directory() {
 	ExpectThat(t.entry.Scores, ElementsAre())
 }
 
-func (t *StatTest) Symlinks() {
+func (t *ConvertFileInfoTest) Symlinks() {
 	var err error
 
 	// Link
@@ -263,9 +288,9 @@ func (t *StatTest) Symlinks() {
 	AssertEq(nil, err)
 
 	// Call
-	t.call()
+	err = t.call()
 
-	AssertEq(nil, t.err)
+	AssertEq(nil, err)
 
 	ExpectEq(fs.TypeSymlink, t.entry.Type)
 	ExpectEq("burrito", t.entry.Name)
@@ -280,13 +305,14 @@ func (t *StatTest) Symlinks() {
 	ExpectThat(t.entry.Scores, ElementsAre())
 }
 
-func (t *StatTest) CharDevices() {
+func (t *ConvertFileInfoTest) CharDevices() {
+	var err error
 	t.path = "/dev/urandom"
 
 	// Call
-	t.call()
+	err = t.call()
 
-	AssertEq(nil, t.err)
+	AssertEq(nil, err)
 
 	ExpectEq(fs.TypeCharDevice, t.entry.Type)
 	ExpectEq("urandom", t.entry.Name)
@@ -300,13 +326,14 @@ func (t *StatTest) CharDevices() {
 	ExpectLt(time.Since(t.entry.MTime), 365*24*time.Hour)
 }
 
-func (t *StatTest) BlockDevices() {
+func (t *ConvertFileInfoTest) BlockDevices() {
+	var err error
 	t.path = "/dev/disk0"
 
 	// Call
-	t.call()
+	err = t.call()
 
-	AssertEq(nil, t.err)
+	AssertEq(nil, err)
 
 	ExpectEq(fs.TypeBlockDevice, t.entry.Type)
 	ExpectEq("disk0", t.entry.Name)
@@ -320,7 +347,7 @@ func (t *StatTest) BlockDevices() {
 	ExpectLt(time.Since(t.entry.MTime), 365*24*time.Hour)
 }
 
-func (t *StatTest) NamedPipes() {
+func (t *ConvertFileInfoTest) NamedPipes() {
 	var err error
 
 	// Pipe
@@ -333,9 +360,9 @@ func (t *StatTest) NamedPipes() {
 	AssertEq(nil, err)
 
 	// Call
-	t.call()
+	err = t.call()
 
-	AssertEq(nil, t.err)
+	AssertEq(nil, err)
 
 	ExpectEq(fs.TypeNamedPipe, t.entry.Type)
 	ExpectEq("burrito", t.entry.Name)
@@ -349,7 +376,7 @@ func (t *StatTest) NamedPipes() {
 	ExpectThat(t.entry.Scores, ElementsAre())
 }
 
-func (t *StatTest) Sockets() {
+func (t *ConvertFileInfoTest) Sockets() {
 	var err error
 
 	// Create
@@ -359,9 +386,9 @@ func (t *StatTest) Sockets() {
 	defer listener.Close()
 
 	// Call
-	t.call()
+	err = t.call()
 
-	AssertEq(nil, t.err)
+	AssertEq(nil, err)
 
 	ExpectEq(fs.TypeSocket, t.entry.Type)
 	ExpectEq("burrito", t.entry.Name)
