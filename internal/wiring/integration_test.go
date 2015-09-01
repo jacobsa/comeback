@@ -22,6 +22,7 @@ import (
 	"io/ioutil"
 	"log"
 	"math/rand"
+	"net"
 	"os"
 	"path"
 	"regexp"
@@ -894,5 +895,15 @@ func (t *SaveAndRestoreTest) NamedPipe() {
 }
 
 func (t *SaveAndRestoreTest) Socket() {
-	AssertTrue(false, "TODO")
+	var err error
+
+	// Create a socket.
+	listener, err := net.Listen("unix", path.Join(t.src, "foo"))
+	AssertEq(nil, err)
+	defer listener.Close()
+
+	// Attempt to save.
+	_, err = t.save()
+	ExpectThat(err, Error(HasSubstr("Unsupported")))
+	ExpectThat(err, Error(HasSubstr(fmt.Sprintf("%v", fs.TypeSocket))))
 }
