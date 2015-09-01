@@ -1,9 +1,9 @@
 The following things may be surprising:
 
 *   Hard links between files in a backup are not preserved—if you restore the
-backup or mount it using `comeback mount`, files that previously shared the
-same inode will appear as independent files that happen to have the same
-content.
+    backup or mount it using `comeback mount`, files that previously shared the
+    same inode will appear as independent files that happen to have the same
+    content.
 
 *   Although ownership information is recorded when saving a backup, it is not
     currently restored when restoring a backup and is not exposed through the
