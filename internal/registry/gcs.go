@@ -174,6 +174,13 @@ func (r *gcsRegistry) ListBackups(
 
 	// Process each object.
 	for _, o := range objects {
+		// Skip the object whose name is exactly the prefix, if any. This lets us
+		// tolerate a "directory marker" with gcsfuse.
+		if o.Name == gcsJobKeyPrefix {
+			continue
+		}
+
+		// Parse.
 		var j CompletedJob
 		j, err = parseObjectAsJob(o)
 		if err != nil {
