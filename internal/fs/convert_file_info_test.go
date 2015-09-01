@@ -40,6 +40,64 @@ func TestConvertFileInfo(t *testing.T) { RunTests(t) }
 // Helpers
 ////////////////////////////////////////////////////////////////////////
 
+// Like os.Chmod, but don't follow symlinks.
+func setPermissions(path string, permissions uint32) error {
+	// Open the file without following symlinks.
+	fd, err := syscall.Open(path, syscall.O_RDONLY|syscall.O_SYMLINK, 0)
+	if err != nil {
+		return err
+	}
+
+	defer syscall.Close(fd)
+
+	// Call fchmod.
+	err = syscall.Fchmod(fd, permissions)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Create a named pipe at the supplied path.
+func makeNamedPipe(path string, permissions uint32) error {
+	return syscall.Mkfifo(path, permissions)
+}
+
+// Set the modification time for the supplied path without following symlinks
+// (as syscall.Chtimes and therefore os.Chtimes do).
+//
+// Cf. http://stackoverflow.com/a/10611073
+func setModTime(path string, mtime time.Time) error {
+	// Open the file without following symlinks. Use O_NONBLOCK to allow opening
+	// of named pipes without a writer.
+	fd, err := syscall.Open(path, syscall.O_NONBLOCK|syscall.O_SYMLINK, 0)
+	if err != nil {
+		return err
+	}
+
+	defer syscall.Close(fd)
+
+	// Call futimes.
+	var utimes [2]syscall.Timeval
+	atime := time.Now()
+	atime_ns := atime.UnixNano()
+	mtime_ns := mtime.UnixNano()
+	utimes[0] = syscall.NsecToTimeval(atime_ns)
+	utimes[1] = syscall.NsecToTimeval(mtime_ns)
+
+	err = syscall.Futimes(fd, utimes[0:])
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+////////////////////////////////////////////////////////////////////////
+// Boilerplate
+////////////////////////////////////////////////////////////////////////
+
 type ConvertFileInfoTest struct {
 	// Information about the running process.
 	myUid       sys.UserId
