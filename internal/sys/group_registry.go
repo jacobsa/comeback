@@ -13,8 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package sys contains types and functions useful for finding system
-// information.
 package sys
 
 import (
