@@ -27,12 +27,14 @@ import (
 	"regexp"
 	"runtime"
 	"strings"
+	"syscall"
 	"testing"
 	"time"
 
 	"golang.org/x/net/context"
 
 	"github.com/jacobsa/comeback/internal/blob"
+	"github.com/jacobsa/comeback/internal/fs"
 	"github.com/jacobsa/comeback/internal/restore"
 	"github.com/jacobsa/comeback/internal/save"
 	"github.com/jacobsa/comeback/internal/state"
@@ -879,7 +881,16 @@ func (t *SaveAndRestoreTest) Device() {
 }
 
 func (t *SaveAndRestoreTest) NamedPipe() {
-	AssertTrue(false, "TODO")
+	var err error
+
+	// Create a named pipe.
+	err = syscall.Mkfifo(path.Join(t.src, "foo"), 0400)
+	AssertEq(nil, err)
+
+	// Attempt to save.
+	_, err = t.save()
+	ExpectThat(err, Error(HasSubstr("Unsupported")))
+	ExpectThat(err, Error(HasSubstr(fmt.Sprintf("%v", fs.TypeNamedPipe))))
 }
 
 func (t *SaveAndRestoreTest) Socket() {
