@@ -26,7 +26,7 @@ import (
 // Return a blob store that wraps the supplied one, encrypting and decrypting
 // data as it passes through. The supplied crypter should have deterministic
 // output.
-func NewEncryptingStore(crypter crypto.Crypter, wrapped Store) Store {
+func Internal_NewEncryptingStore(crypter crypto.Crypter, wrapped Store) Store {
 	return &encryptingStore{crypter, wrapped}
 }
 
@@ -37,15 +37,21 @@ type encryptingStore struct {
 
 func (s *encryptingStore) Store(
 	ctx context.Context,
-	blob []byte) (Score, error) {
+	req *StoreRequest) (score Score, err error) {
 	// Encrypt the plaintext blob.
-	ciphertext, err := s.crypter.Encrypt(blob)
+	ciphertext := req.ciphertext[:0]
+	ciphertext, err = s.crypter.Encrypt(ciphertext, req.Blob)
 	if err != nil {
-		return Score{}, fmt.Errorf("Encrypt: %v", err)
+		err = fmt.Errorf("Encrypt: %v", err)
+		return
 	}
 
+	req.ciphertext = ciphertext
+	req.Blob = ciphertext
+
 	// Pass on the encrypted blob.
-	return s.wrapped.Store(ctx, ciphertext)
+	score, err = s.wrapped.Store(ctx, req)
+	return
 }
 
 func (s *encryptingStore) Load(
@@ -64,14 +70,4 @@ func (s *encryptingStore) Load(
 	}
 
 	return plaintext, nil
-}
-
-func (s *encryptingStore) Flush(ctx context.Context) (err error) {
-	err = s.wrapped.Flush(ctx)
-	return
-}
-
-func (s *encryptingStore) Contains(ctx context.Context, score Score) (b bool) {
-	b = s.wrapped.Contains(ctx, score)
-	return
 }

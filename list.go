@@ -17,7 +17,8 @@ package main
 
 import (
 	"fmt"
-	"log"
+	"os"
+	"text/tabwriter"
 	"time"
 
 	"golang.org/x/net/context"
@@ -38,25 +39,29 @@ func runList(ctx context.Context, args []string) (err error) {
 	}
 
 	// Print each.
-	log.Println("")
-	log.Println("")
-	log.Println("Previous backups:")
-	log.Println("")
-	log.Printf(
-		"  %-38s   %-40s   %s\n",
-		"START TIME",
-		"JOB NAME",
-		"SCORE",
-	)
+	const minwidth = 0
+	const tabwidth = 8
+	const padding = 4
+	const padchar = '\t'
+	const flags = 0
+
+	w := new(tabwriter.Writer)
+	w.Init(os.Stdout, minwidth, tabwidth, padding, padchar, flags)
+
+	fmt.Fprintln(w)
+	fmt.Fprintln(w, "Start time\tJob name\tScore")
 
 	for _, job := range jobs {
-		log.Printf(
-			"  %-38s   %-40s   %s\n",
+		fmt.Fprintf(
+			w,
+			"%s\t%s\t%s\n",
 			job.StartTime.Format(time.RFC3339Nano),
 			job.Name,
 			job.Score.Hex(),
 		)
 	}
+
+	w.Flush()
 
 	return
 }

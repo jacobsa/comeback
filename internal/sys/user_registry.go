@@ -34,8 +34,8 @@ type UserRegistry interface {
 }
 
 // Return a user registry hooked up to the system's real user registry.
-func NewUserRegistry() (UserRegistry, error) {
-	return &userRegistry{}, nil
+func NewUserRegistry() UserRegistry {
+	return &userRegistry{}
 }
 
 type userRegistry struct{}

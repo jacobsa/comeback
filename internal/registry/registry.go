@@ -29,11 +29,6 @@ type Registry interface {
 
 	// Return a list of all completed backups.
 	ListBackups(ctx context.Context) (jobs []CompletedJob, err error)
-
-	// Find a particular completed job by start time.
-	FindBackup(
-		ctx context.Context,
-		startTime time.Time) (job CompletedJob, err error)
 }
 
 // A record in the backup registry describing a successful backup job.

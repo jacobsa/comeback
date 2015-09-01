@@ -18,7 +18,6 @@ package blob
 import (
 	"bytes"
 	"crypto/md5"
-	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
 	"io/ioutil"
@@ -32,13 +31,13 @@ import (
 	"github.com/jacobsa/syncutil"
 )
 
-// A key placed in GCS object metadata by GCSStore containing the hex SHA-1
+// A key placed in GCS object metadata by gcsStore containing the hex SHA-1
 // expected for the object contents. This is of course redundant with the
 // object name; we use it as a paranoid check against GCS returning the
 // metadata or contents for the wrong object.
 const metadataKey_SHA1 = "comeback_sha1"
 
-// A key placed in GCS object metadata by GCSStore containing the CRC32C
+// A key placed in GCS object metadata by gcsStore containing the CRC32C
 // checksum expected for the object contents. If GCS reports a different
 // checksum or returns contents with a different checksum, we know something
 // screwy has happened.
@@ -46,7 +45,7 @@ const metadataKey_SHA1 = "comeback_sha1"
 // See here for more info: https://github.com/jacobsa/comeback/issues/18
 const metadataKey_CRC32C = "comeback_crc32c"
 
-// A key placed in GCS object metadata by GCSStore containing the hex MD5 sum
+// A key placed in GCS object metadata by gcsStore containing the hex MD5 sum
 // expected for the object contents. If GCS reports a different MD5 sum or
 // returns contents with a different MD5 sum, we know something screwy has
 // happened.
@@ -65,12 +64,12 @@ const metadataKey_MD5 = "comeback_md5"
 // bucket's namespace -- if a score name exists, then it points to the correct
 // data.
 //
-// The returned store does not support Flush or Contains; these methods must
-// not be called.
-func NewGCSStore(
+// The resulting store requires StoreRequest.score fields to be filled in by
+// the caller.
+func Internal_NewGCSStore(
 	bucket gcs.Bucket,
-	prefix string) (store *GCSStore) {
-	store = &GCSStore{
+	prefix string) (store Store) {
+	store = &gcsStore{
 		bucket:     bucket,
 		namePrefix: prefix,
 	}
@@ -78,13 +77,15 @@ func NewGCSStore(
 	return
 }
 
-type GCSStore struct {
+type gcsStore struct {
 	bucket     gcs.Bucket
 	namePrefix string
 }
 
+var _ Store = &gcsStore{}
+
 // Parse and verify the internal consistency of the supplied object record in
-// the same manner that a GCSStore configured with the supplied object name
+// the same manner that a gcsStore configured with the supplied object name
 // prefix would. Return the score of the blob that the object contains.
 func ParseObjectRecord(
 	o *gcs.Object,
@@ -280,7 +281,7 @@ func ListScores(
 // Helpers
 ////////////////////////////////////////////////////////////////////////
 
-func (s *GCSStore) makeName(score Score) (name string) {
+func (s *gcsStore) makeName(score Score) (name string) {
 	name = s.namePrefix + score.Hex()
 	return
 }
@@ -289,32 +290,37 @@ func (s *GCSStore) makeName(score Score) (name string) {
 // Public interface
 ////////////////////////////////////////////////////////////////////////
 
-func (s *GCSStore) Store(
+func (s *gcsStore) Store(
 	ctx context.Context,
-	blob []byte) (score Score, err error) {
-	// Compute a score and an object name.
-	score = ComputeScore(blob)
+	req *StoreRequest) (score Score, err error) {
+	blob := req.Blob
+
+	// Pull out the score and choose an object name.
+	score = req.score
 	name := s.makeName(score)
+
+	// Optimization: we know that the score is the SHA-1 hash of the blob, so
+	// don't need to compute it again.
+	var sha1 []byte = score[:]
 
 	// Create the object.
 	crc32c := *gcsutil.CRC32C(blob)
 	md5 := *gcsutil.MD5(blob)
-	sha1 := sha1.Sum(blob)
 
-	req := &gcs.CreateObjectRequest{
+	createReq := &gcs.CreateObjectRequest{
 		Name:     name,
 		Contents: bytes.NewReader(blob),
 		CRC32C:   &crc32c,
 		MD5:      &md5,
 
 		Metadata: map[string]string{
-			metadataKey_SHA1:   hex.EncodeToString(sha1[:]),
+			metadataKey_SHA1:   hex.EncodeToString(sha1),
 			metadataKey_CRC32C: fmt.Sprintf("%#08x", crc32c),
 			metadataKey_MD5:    hex.EncodeToString(md5[:]),
 		},
 	}
 
-	o, err := s.bucket.CreateObject(ctx, req)
+	o, err := s.bucket.CreateObject(ctx, createReq)
 	if err != nil {
 		err = fmt.Errorf("CreateObject: %v", err)
 		return
@@ -344,15 +350,7 @@ func (s *GCSStore) Store(
 	return
 }
 
-func (s *GCSStore) Flush(ctx context.Context) (err error) {
-	panic("GCSStore.Flush not supported; wiring code bug?")
-}
-
-func (s *GCSStore) Contains(ctx context.Context, score Score) (b bool) {
-	panic("GCSStore.Contains not supported; wiring code bug?")
-}
-
-func (s *GCSStore) Load(
+func (s *gcsStore) Load(
 	ctx context.Context,
 	score Score) (blob []byte, err error) {
 	// Create a ReadCloser.

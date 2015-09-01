@@ -4,14 +4,16 @@
 language: go
 os: osx
 
+# Ask for OS X 10.10, since we require fchmodat(2) to be available.
+osx_image: xcode6.4
+
 # We don't use `sudo`, so opt in to Travis's faster container-based infrastructure.
 # Cf. http://docs.travis-ci.com/user/migrating-from-legacy/
 sudo: false
 
-# We can't build with 1.4.2 (the default as of 2015-07-27), because it doesn't
+# We can't build with 1.4.1 (the default as of 2015-09-01), because it doesn't
 # support vendoring.
-go:
-  - tip
+go: 1.5
 
 # Ensure that we get vendoring support in `go test`.
 env:

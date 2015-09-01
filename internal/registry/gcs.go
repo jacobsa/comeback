@@ -187,13 +187,6 @@ func (r *gcsRegistry) ListBackups(
 	return
 }
 
-func (r *gcsRegistry) FindBackup(
-	ctx context.Context,
-	startTime time.Time) (job CompletedJob, err error) {
-	err = fmt.Errorf("gcsRegistry.FindBackup is not implemented.")
-	return
-}
-
 // Like NewGCSRegistry, but with more injected.
 func newGCSRegistry(
 	ctx context.Context,
@@ -265,7 +258,7 @@ func newGCSRegistry(
 	}
 
 	// Encrypt the plaintext.
-	ciphertext, err := crypter.Encrypt(plaintext)
+	ciphertext, err := crypter.Encrypt(nil, plaintext)
 	if err != nil {
 		err = fmt.Errorf("Encrypt: %v", err)
 		return

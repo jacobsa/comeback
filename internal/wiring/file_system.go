@@ -24,19 +24,8 @@ import (
 
 // Create a FileSystem that writes to the real file system.
 func makeFileSystem() (fileSystem fs.FileSystem, err error) {
-	// Create a user registry.
-	userRegistry, err := sys.NewUserRegistry()
-	if err != nil {
-		err = fmt.Errorf("NewUserRegistry: %v", err)
-		return
-	}
-
-	// Create a group registry.
-	groupRegistry, err := sys.NewGroupRegistry()
-	if err != nil {
-		err = fmt.Errorf("NewGroupRegistry: %v", err)
-		return
-	}
+	userRegistry := sys.NewUserRegistry()
+	groupRegistry := sys.NewGroupRegistry()
 
 	// Create the file system.
 	fileSystem, err = fs.NewFileSystem(userRegistry, groupRegistry)

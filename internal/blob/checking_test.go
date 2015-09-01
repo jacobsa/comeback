@@ -43,74 +43,7 @@ type checkingStoreTest struct {
 func (t *checkingStoreTest) SetUp(ti *TestInfo) {
 	t.ctx = ti.Ctx
 	t.wrapped = mock_blob.NewMockStore(ti.MockController, "wrapped")
-	t.store = blob.NewCheckingStore(t.wrapped)
-}
-
-////////////////////////////////////////////////////////////////////////
-// Store
-////////////////////////////////////////////////////////////////////////
-
-type CheckingStore_StoreTest struct {
-	checkingStoreTest
-}
-
-func init() { RegisterTestSuite(&CheckingStore_StoreTest{}) }
-
-func (t *CheckingStore_StoreTest) CallsWrapped() {
-	b := []byte{0xde, 0xad}
-
-	// Wrapped
-	ExpectCall(t.wrapped, "Store")(Any(), DeepEquals(b)).
-		WillOnce(oglemock.Return(blob.Score{}, errors.New("")))
-
-	// Call
-	t.store.Store(t.ctx, b)
-}
-
-func (t *CheckingStore_StoreTest) WrappedReturnsError() {
-	b := []byte{}
-
-	// Wrapped
-	ExpectCall(t.wrapped, "Store")(Any(), Any()).
-		WillOnce(oglemock.Return(blob.Score{}, errors.New("taco")))
-
-	// Call
-	_, err := t.store.Store(t.ctx, b)
-
-	ExpectThat(err, Error(Equals("taco")))
-}
-
-func (t *CheckingStore_StoreTest) WrappedReturnsIncorrectScore() {
-	b := []byte{0xde, 0xad}
-	correctScore := blob.ComputeScore(b)
-	incorrectScore := blob.ComputeScore([]byte{0xbe, 0xef})
-
-	// Wrapped
-	ExpectCall(t.wrapped, "Store")(Any(), Any()).
-		WillOnce(oglemock.Return(incorrectScore, nil))
-
-	// Call
-	_, err := t.store.Store(t.ctx, b)
-
-	ExpectThat(err, Error(HasSubstr("Incorrect")))
-	ExpectThat(err, Error(HasSubstr("score")))
-	ExpectThat(err, Error(HasSubstr(correctScore.Hex())))
-	ExpectThat(err, Error(HasSubstr(incorrectScore.Hex())))
-}
-
-func (t *CheckingStore_StoreTest) WrappedReturnsCorrectScore() {
-	b := []byte{0xde, 0xad}
-	correctScore := blob.ComputeScore(b)
-
-	// Wrapped
-	ExpectCall(t.wrapped, "Store")(Any(), Any()).
-		WillOnce(oglemock.Return(correctScore, nil))
-
-	// Call
-	score, err := t.store.Store(t.ctx, b)
-
-	AssertEq(nil, err)
-	ExpectThat(score, DeepEquals(correctScore))
+	t.store = blob.Internal_NewCheckingStore(t.wrapped)
 }
 
 ////////////////////////////////////////////////////////////////////////

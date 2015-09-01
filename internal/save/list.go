@@ -22,8 +22,7 @@ import (
 
 	"golang.org/x/net/context"
 
-	"github.com/jacobsa/comeback/internal/graph"
-	"github.com/jacobsa/syncutil"
+	"github.com/jacobsa/comeback/internal/dag"
 )
 
 // Given a base directory and a set of exclusions, list the files and
@@ -34,55 +33,50 @@ func List(
 	w io.Writer,
 	basePath string,
 	exclusions []*regexp.Regexp) (err error) {
-	b := syncutil.NewBundle(ctx)
+	// Visit all nodes in the graph with a visitor that prints info about the
+	// node.
+	dr := newDependencyResolver(basePath, exclusions)
+	v := &listVisitor{w: w}
 
-	// Explore the file system graph, writing all non-excluded nodes into a
-	// channel.
-	graphNodes := make(chan graph.Node, 100)
-	b.Add(func(ctx context.Context) (err error) {
-		defer close(graphNodes)
-		sf := newSuccessorFinder(basePath, exclusions)
+	const resolverParallelism = 1
+	const visitorParallelism = 1
 
-		const parallelism = 8
-		err = graph.ExploreDirectedGraph(
-			ctx,
-			sf,
-			[]graph.Node{(*pathAndFileInfo)(nil)},
-			graphNodes,
-			parallelism)
+	err = dag.Visit(
+		ctx,
+		[]dag.Node{makeRootNode()},
+		dr,
+		v,
+		resolverParallelism,
+		visitorParallelism)
 
-		if err != nil {
-			err = fmt.Errorf("ExploreDirectedGraph: %v", err)
-			return
-		}
-
+	if err != nil {
+		err = fmt.Errorf("dag.Visit: %v", err)
 		return
-	})
+	}
 
-	// Print out info about each node.
-	b.Add(func(ctx context.Context) (err error) {
-		for n := range graphNodes {
-			pfi, ok := n.(*pathAndFileInfo)
-			if !ok {
-				err = fmt.Errorf("Unexpected node type: %T", n)
-				return
-			}
+	return
+}
 
-			// Skip the root node.
-			if pfi == nil {
-				continue
-			}
+type listVisitor struct {
+	w io.Writer
+}
 
-			_, err = fmt.Fprintf(w, "%s %d\n", pfi.Path, pfi.Info.Size())
-			if err != nil {
-				err = fmt.Errorf("Fprintf: %v", err)
-				return
-			}
-		}
+var _ dag.Visitor = &listVisitor{}
 
+func (v *listVisitor) Visit(ctx context.Context, untyped dag.Node) (err error) {
+	// Check the type of the node.
+	n, ok := untyped.(*fsNode)
+	if !ok {
+		err = fmt.Errorf("Unexpected node type: %T", untyped)
 		return
-	})
+	}
 
-	err = b.Join()
+	// Print info about the node.
+	_, err = fmt.Fprintf(v.w, "%q %d\n", n.RelPath, n.Info.Size)
+	if err != nil {
+		err = fmt.Errorf("Fprintf: %v", err)
+		return
+	}
+
 	return
 }

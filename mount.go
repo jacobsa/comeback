@@ -29,8 +29,6 @@ import (
 	"github.com/jacobsa/comeback/internal/blob"
 	"github.com/jacobsa/comeback/internal/comebackfs"
 	"github.com/jacobsa/comeback/internal/registry"
-	"github.com/jacobsa/comeback/internal/util"
-	"github.com/jacobsa/comeback/internal/wiring"
 	"github.com/jacobsa/fuse"
 	"github.com/jacobsa/fuse/fuseutil"
 	"github.com/jacobsa/syncutil"
@@ -110,10 +108,6 @@ func runMount(ctx context.Context, args []string) (err error) {
 	// Enable invariant checking for the file system.
 	syncutil.EnableInvariantChecking()
 
-	// Grab dependencies.
-	bucket := getBucket(ctx)
-	crypter := getCrypter(ctx)
-
 	// Check usage.
 	if len(args) < 1 || len(args) > 2 {
 		err = fmt.Errorf("Usage: %s mount_point [score]", os.Args[0])
@@ -121,6 +115,9 @@ func runMount(ctx context.Context, args []string) (err error) {
 	}
 
 	mountPoint := args[0]
+
+	// Grab dependencies.
+	blobStore := getBlobStore(ctx)
 
 	var hexScore string
 	if len(args) > 1 {
@@ -163,12 +160,6 @@ func runMount(ctx context.Context, args []string) (err error) {
 	}
 
 	log.Printf("Mounting score %s.", score.Hex())
-
-	// Create the blob store.
-	blobStore, err := wiring.MakeBlobStore(
-		bucket,
-		crypter,
-		util.NewStringSet())
 
 	// Choose permission settings.
 	uid, gid, err := currentUser()

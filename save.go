@@ -16,7 +16,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -27,16 +26,12 @@ import (
 	"github.com/jacobsa/comeback/internal/config"
 	"github.com/jacobsa/comeback/internal/registry"
 	"github.com/jacobsa/comeback/internal/save"
+	"github.com/jacobsa/timeutil"
 )
 
 var cmdSave = &Command{
 	Name: "save",
 }
-
-var g_jobName = cmdSave.Flags.String(
-	"job",
-	"",
-	"Job name within the config file.")
 
 var g_discardScoreCache = cmdSave.Flags.Bool(
 	"discard_score_cache",
@@ -80,15 +75,18 @@ func doList(ctx context.Context, job *config.Job) (err error) {
 func runSave(ctx context.Context, args []string) (err error) {
 	cfg := getConfig()
 
-	// Look for the specified job.
-	if *g_jobName == "" {
-		err = errors.New("You must set the -job flag.")
+	// Extract arguments.
+	if len(args) != 1 {
+		err = fmt.Errorf("Usage: %s save job_name", os.Args[0])
 		return
 	}
 
-	job, ok := cfg.Jobs[*g_jobName]
+	jobName := args[0]
+
+	// Look for the specified job.
+	job, ok := cfg.Jobs[jobName]
 	if !ok {
-		err = fmt.Errorf("Unknown job: %q", *g_jobName)
+		err = fmt.Errorf("Unknown job: %q", jobName)
 		return
 	}
 
@@ -113,7 +111,9 @@ func runSave(ctx context.Context, args []string) (err error) {
 	// Make sure to do this before setting up state saving below, because these
 	// calls may modify the state struct.
 	reg := getRegistry(ctx)
-	dirSaver := getDirSaver(ctx)
+	blobStore := getBlobStore(ctx)
+	state := getState(ctx)
+	clock := timeutil.RealClock()
 
 	// Periodically save state.
 	const saveStatePeriod = 15 * time.Second
@@ -121,26 +121,27 @@ func runSave(ctx context.Context, args []string) (err error) {
 	go saveStatePeriodically(ctx, saveStateTicker.C)
 
 	// Choose a start time for the job.
-	startTime := time.Now()
+	startTime := clock.Now()
 
-	// Call the directory saver.
-	score, err := dirSaver.Save(job.BasePath, "", job.Excludes)
-	if err != nil {
-		err = fmt.Errorf("dirSaver.Save: %v", err)
-		return
-	}
+	// Call the saving pipeline.
+	score, err := save.Save(
+		ctx,
+		job.BasePath,
+		job.Excludes,
+		state.ScoresForFiles,
+		blobStore,
+		log.New(os.Stderr, "Save progress: ", 0),
+		clock)
 
-	// Ensure the backup is durable.
-	err = dirSaver.Flush()
 	if err != nil {
-		err = fmt.Errorf("dirSaver.Flush: %v", err)
+		err = fmt.Errorf("save.Save: %v", err)
 		return
 	}
 
 	// Register the successful backup.
 	completedJob := registry.CompletedJob{
 		StartTime: startTime,
-		Name:      *g_jobName,
+		Name:      jobName,
 		Score:     score,
 	}
 

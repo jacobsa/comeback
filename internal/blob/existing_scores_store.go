@@ -20,25 +20,14 @@ import (
 	"golang.org/x/net/context"
 )
 
-// Create a blob store that wraps another, responding to calls as follows:
+// Create a blob store that wraps another, responding immediately to calls to
+// Store for content that already exists in the wrapped blob store. For calls
+// that are passed on, this store will fill in StoreRequest.score.
 //
-//  *  Flush will panic; it is assumed that any buffering and early returning
-//     is in front of this store, and that the wrapped store responds to Store
-//     only when the blob is durable.
-//
-//  *  Contains will be responded to directly by this store based on the
-//     contents of existingScores. It is assumed that existingScores initially
-//     contains only scores that are durable in the wrapped store.
-//
-//  *  Store will be forwarded to the wrapped store. When it succeeds,
-//     existingScores will be updated.
-//
-//  *  Load will be forwarded to the wrapped store.
-//
-// In other words, assuming that wrapped.Store returns successfully only when
-// durable, this store maintains the invariant that existingScores contains
-// only durable scores.
-func NewExistingScoresStore(
+// existingScores must initially be a subset of the scores contained by the
+// wrapped store, in hex form. It will be updated upon successful calls to
+// wrapped.Store.
+func Internal_NewExistingScoresStore(
 	existingScores util.StringSet,
 	wrapped Store) (store Store) {
 	store = &existingScoresStore{
@@ -56,23 +45,22 @@ type existingScoresStore struct {
 
 func (bs *existingScoresStore) Store(
 	ctx context.Context,
-	blob []byte) (s Score, err error) {
-	s, err = bs.wrapped.Store(ctx, blob)
+	req *StoreRequest) (s Score, err error) {
+	s = ComputeScore(req.Blob)
+
+	// Do we need to do anything?
+	if bs.scores.Contains(s.Hex()) {
+		return
+	}
+
+	// Pass on the blob to the wrapped store, saving it the trouble of
+	// recomputing the score. If it is successful, remember that fact.
+	req.score = s
+	_, err = bs.wrapped.Store(ctx, req)
 	if err == nil {
 		bs.scores.Add(s.Hex())
 	}
 
-	return
-}
-
-func (bs *existingScoresStore) Flush(ctx context.Context) (err error) {
-	panic("We expect buffering to happen outside of here")
-}
-
-func (bs *existingScoresStore) Contains(
-	ctx context.Context,
-	score Score) (b bool) {
-	b = bs.scores.Contains(score.Hex())
 	return
 }
 
