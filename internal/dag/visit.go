@@ -16,7 +16,6 @@
 package dag
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"sync"
@@ -45,7 +44,8 @@ func Visit(
 	startNodes []Node,
 	dr DependencyResolver,
 	v Visitor,
-	parallelism int) (err error) {
+	resolverParallelism int,
+	visitorParallelism int) (err error) {
 	b := syncutil.NewBundle(ctx)
 
 	// Set up a state struct.
@@ -57,19 +57,32 @@ func Visit(
 	}
 
 	state.mu = syncutil.NewInvariantMutex(state.checkInvariants)
-	state.cond.L = &state.mu
+	state.wakeResolvers.L = &state.mu
+	state.wakeVisitors.L = &state.mu
 
 	// Add each of the start nodes.
 	state.mu.Lock()
 	state.addNodes(startNodes)
 	state.mu.Unlock()
 
-	// Run multiple workers.
-	for i := 0; i < parallelism; i++ {
+	// Run workers.
+	for i := 0; i < resolverParallelism; i++ {
 		b.Add(func(ctx context.Context) (err error) {
-			err = state.processNodes(ctx)
+			err = state.resolveNodes(ctx)
 			if err != nil {
-				err = fmt.Errorf("processNodes: %v", err)
+				err = fmt.Errorf("resolveNodes: %v", err)
+				return
+			}
+
+			return
+		})
+	}
+
+	for i := 0; i < visitorParallelism; i++ {
+		b.Add(func(ctx context.Context) (err error) {
+			err = state.visitNodes(ctx)
+			if err != nil {
+				err = fmt.Errorf("visitNodes: %v", err)
 				return
 			}
 
@@ -236,26 +249,33 @@ type visitState struct {
 	// GUARDED_BY(mu)
 	firstErr error
 
-	// The number of workers that are doing something besides waiting on work. If
-	// this hits zero with toResolve and toVisit both empty, it means that there
-	// is nothing further to do.
+	// The number of resolve workers that are doing something besides waiting on
+	// work.
 	//
-	// INVARIANT: busyWorkers >= 0
+	// INVARIANT: busyResolvers >= 0
 	//
 	// GUARDED_BY(mu)
-	busyWorkers int64
+	busyResolvers int64
 
-	// Broadcasted to with mu held with any of the following state changes:
+	// The number of visitor workers that are doing something besides waiting on
+	// work.
 	//
-	//  *  toResolve becomes non-empty
-	//  *  toVisit becomes non-empty
-	//  *  firstErr is set
-	//  *  busyWorkers hits zero
-	//
-	// See also visitState.shouldWake, with which this list must be kept in sync.
+	// INVARIANT: busyVisitors >= 0
 	//
 	// GUARDED_BY(mu)
-	cond sync.Cond
+	busyVisitors int64
+
+	// Broadcasted to with mu held when there may be an action that can be taken
+	// by currently-sleeping resolvers.
+	//
+	// GUARDED_BY(mu)
+	wakeResolvers sync.Cond
+
+	// Broadcasted to with mu held when there may be an action that can be taken
+	// by currently-sleeping visitors.
+	//
+	// GUARDED_BY(mu)
+	wakeVisitors sync.Cond
 }
 
 // LOCKS_REQUIRED(s.mu)
@@ -329,33 +349,143 @@ func (s *visitState) checkInvariants() {
 		}
 	}
 
-	// INVARIANT: busyWorkers >= 0
-	if !(s.busyWorkers >= 0) {
-		log.Panicf("busyWorkers: %d", s.busyWorkers)
+	// INVARIANT: busyResolvers >= 0
+	if !(s.busyResolvers >= 0) {
+		log.Panicf("busyResolvers: %d", s.busyResolvers)
+	}
+
+	// INVARIANT: busyVisitors >= 0
+	if !(s.busyVisitors >= 0) {
+		log.Panicf("busyVisitors: %d", s.busyVisitors)
 	}
 }
 
-// Is there anything that needs a worker's attention?
+// Run the supplied function, which updates the state struct in some way under
+// the state's lock. If the update causes a wakeup event, signal the
+// appropriate condition variable.
 //
 // LOCKS_REQUIRED(state.mu)
-func (state *visitState) shouldWake() bool {
-	return len(state.toResolve) != 0 ||
-		len(state.toVisit) != 0 ||
-		state.firstErr != nil ||
-		state.busyWorkers == 0
+func (state *visitState) update(f func()) {
+	resolversAwakeBefore := state.resolversShouldWake()
+	visitorsAwakeBefore := state.visitorsShouldWake()
+
+	f()
+
+	if !resolversAwakeBefore && state.resolversShouldWake() {
+		state.wakeResolvers.Broadcast()
+	}
+
+	if !visitorsAwakeBefore && state.visitorsShouldWake() {
+		state.wakeVisitors.Broadcast()
+	}
 }
 
-// Sleep until there's something interesting for a worker to do.
+// Run the supplied function, which may fail. If it fails and is the first such
+// action to fail, update state.firstErr using state.update.
+//
+// The lock will be held on entry to the action, and must be held on exit from
+// the action.
 //
 // LOCKS_REQUIRED(state.mu)
-func (state *visitState) waitForSomethingToDo() {
-	for !state.shouldWake() {
-		state.cond.Wait()
+func (state *visitState) runAction(f func() error) (err error) {
+	err = f()
+	if err != nil && state.firstErr == nil {
+		state.update(func() { state.firstErr = err })
+	}
+
+	return
+}
+
+// Should the resolver workers stop processing work?
+//
+// LOCKS_REQUIRED(state.mu)
+func (state *visitState) resolversShouldExit() bool {
+	// If some other worker has seen an error, we stop immediately.
+	if state.firstErr != nil {
+		return true
+	}
+
+	// If there is something for us to do, we should not exit.
+	if len(state.toResolve) != 0 {
+		return false
+	}
+
+	// If there is a worker that may soon provide something further to resolve,
+	// we must not stop.
+	if state.busyResolvers != 0 {
+		return false
+	}
+
+	// At this point we know there can be nothing further for us to do.
+	return true
+}
+
+// Should the visitor workers stop processing work?
+//
+// LOCKS_REQUIRED(state.mu)
+func (state *visitState) visitorsShouldExit() bool {
+	// If some other worker has seen an error, we stop immediately.
+	if state.firstErr != nil {
+		return true
+	}
+
+	// If there is something for us to do, we should not exit.
+	if len(state.toVisit) != 0 {
+		return false
+	}
+
+	// If there is some visit in process, it may cause an unsatisfied node to
+	// become satisfied, so we must wait.
+	if state.busyVisitors != 0 {
+		return false
+	}
+
+	// If the dependency resolvers may yet provide more work for us, we must
+	// wait.
+	if !state.resolversShouldExit() {
+		return false
+	}
+
+	// At this point we know there can be nothing further for us to do.
+	return true
+}
+
+// Is there anything that needs a resolver worker's attention?
+//
+// LOCKS_REQUIRED(state.mu)
+func (state *visitState) resolversShouldWake() bool {
+	return len(state.toResolve) != 0 || state.resolversShouldExit()
+}
+
+// Is there anything that needs a visitor worker's attention?
+//
+// LOCKS_REQUIRED(state.mu)
+func (state *visitState) visitorsShouldWake() bool {
+	return len(state.toVisit) != 0 || state.visitorsShouldExit()
+}
+
+// Sleep until there's something interesting for a resolver worker to do.
+//
+// LOCKS_REQUIRED(state.mu)
+func (state *visitState) waitForResolverWork() {
+	for !state.resolversShouldWake() {
+		state.wakeResolvers.Wait()
+	}
+}
+
+// Sleep until there's something interesting for a visitor worker to do.
+//
+// LOCKS_REQUIRED(state.mu)
+func (state *visitState) waitForVisitorWork() {
+	for !state.visitorsShouldWake() {
+		state.wakeVisitors.Wait()
 	}
 }
 
 // Add any nodes from the list that we haven't yet seen as new nodeInfo structs
 // in state_DependenciesUnresolved. Ignore those that we have seen.
+//
+// Must be run under state.update.
 //
 // LOCKS_REQUIRED(state.mu)
 func (state *visitState) addNodes(nodes []Node) {
@@ -377,6 +507,10 @@ func (state *visitState) addNodes(nodes []Node) {
 
 // Given a node that was removed from toResolve, unsatisfied, or toVisit and
 // then updated, re-insert it in the appropriate place.
+//
+// Must be run under state.update.
+//
+// LOCKS_REQUIRED(state.mu)
 func (state *visitState) reinsert(ni *nodeInfo) {
 	switch ni.state {
 	default:
@@ -384,73 +518,82 @@ func (state *visitState) reinsert(ni *nodeInfo) {
 
 	case state_DependenciesUnresolved:
 		state.toResolve = append(state.toResolve, ni)
-		if len(state.toResolve) == 1 {
-			state.cond.Broadcast()
-		}
 
 	case state_DependenciesUnsatisfied:
 		state.unsatisfied[ni] = struct{}{}
 
 	case state_Unvisited:
 		state.toVisit = append(state.toVisit, ni)
-		if len(state.toVisit) == 1 {
-			state.cond.Broadcast()
-		}
 
 	case state_Visited:
 		// Nothing to do.
 	}
 }
 
-// Watch for nodes that can be resolved or visited and do so. Return when it's
-// guaranteed that there's nothing further to do.
-func (state *visitState) processNodes(ctx context.Context) (err error) {
+// Watch for nodes that can be resolved and do so. Return when it's guaranteed
+// that there's nothing further to do.
+//
+// LOCKS_EXCLUDED(state.mu)
+func (state *visitState) resolveNodes(ctx context.Context) error {
 	state.mu.Lock()
 	defer state.mu.Unlock()
 
-	defer func() {
-		// Record our error if it's the first.
-		if state.firstErr == nil && err != nil {
-			state.firstErr = err
-			state.cond.Broadcast()
-		}
-	}()
+	return state.runAction(func() (err error) {
+		for {
+			// Wait for something to do.
+			state.waitForResolverWork()
 
-	for {
-		// Wait for something to do.
-		state.waitForSomethingToDo()
-
-		// Why were we awoken?
-		switch {
-		// Return immediately if another worker has seen an error.
-		case state.firstErr != nil:
-			err = errors.New("Cancelled")
-			return
-
-		// Is there a node that can be visited?
-		case len(state.toVisit) > 0:
-			err = state.visitOne(ctx)
-			if err != nil {
-				err = fmt.Errorf("visitOne: %v", err)
+			// Why were we awoken?
+			switch {
+			// Should we exit?
+			case state.resolversShouldExit():
 				return
+
+			// Is there a node that needs to be resolved?
+			case len(state.toResolve) > 0:
+				err = state.resolveOne(ctx)
+				if err != nil {
+					err = fmt.Errorf("resolveOne: %v", err)
+					return
+				}
+
+			default:
+				panic("Unexpected wake-up")
 			}
-
-		// Is there a node that needs to be resolved?
-		case len(state.toResolve) > 0:
-			err = state.resolveOne(ctx)
-			if err != nil {
-				err = fmt.Errorf("resolveOne: %v", err)
-				return
-			}
-
-		// Otherwise, are we done?
-		case state.busyWorkers == 0:
-			return
-
-		default:
-			panic("Unexpected wake-up")
 		}
-	}
+	})
+}
+
+// Watch for nodes that can be visited and do so. Return when it's guaranteed
+// that there's nothing further to do.
+func (state *visitState) visitNodes(ctx context.Context) error {
+	state.mu.Lock()
+	defer state.mu.Unlock()
+
+	return state.runAction(func() (err error) {
+		for {
+			// Wait for something to do.
+			state.waitForVisitorWork()
+
+			// Why were we awoken?
+			switch {
+			// Should we exit?
+			case state.visitorsShouldExit():
+				return
+
+			// Is there a node that can be visited?
+			case len(state.toVisit) > 0:
+				err = state.visitOne(ctx)
+				if err != nil {
+					err = fmt.Errorf("visitOne: %v", err)
+					return
+				}
+
+			default:
+				panic("Unexpected wake-up")
+			}
+		}
+	})
 }
 
 // REQUIRES: len(state.toVisit) > 0
@@ -458,19 +601,16 @@ func (state *visitState) processNodes(ctx context.Context) (err error) {
 // LOCKS_REQUIRED(state.mu)
 func (state *visitState) visitOne(ctx context.Context) (err error) {
 	// Mark this worker as busy for the duration of this function.
-	state.busyWorkers++
-
-	defer func() {
-		state.busyWorkers--
-		if state.busyWorkers == 0 {
-			state.cond.Broadcast()
-		}
-	}()
+	state.busyVisitors++
+	defer state.update(func() { state.busyVisitors-- })
 
 	// Extract the node to visit.
-	l := len(state.toVisit)
-	ni := state.toVisit[l-1]
-	state.toVisit = state.toVisit[:l-1]
+	var ni *nodeInfo
+	state.update(func() {
+		l := len(state.toVisit)
+		ni = state.toVisit[l-1]
+		state.toVisit = state.toVisit[:l-1]
+	})
 
 	// Unlock while visiting.
 	state.mu.Unlock()
@@ -482,20 +622,23 @@ func (state *visitState) visitOne(ctx context.Context) (err error) {
 		return
 	}
 
-	// Update each dependant, now that this node has been visited.
-	for _, dep := range ni.dependants {
-		dep.depsUnsatisfied--
-		if dep.depsUnsatisfied == 0 {
-			dep.state = state_Unvisited
-			delete(state.unsatisfied, dep)
-			state.reinsert(dep)
+	// Perform state updates.
+	state.update(func() {
+		// Update each dependant, now that this node has been visited.
+		for _, dep := range ni.dependants {
+			dep.depsUnsatisfied--
+			if dep.depsUnsatisfied == 0 {
+				dep.state = state_Unvisited
+				delete(state.unsatisfied, dep)
+				state.reinsert(dep)
+			}
 		}
-	}
 
-	// Update and reinsert the node itself.
-	ni.dependants = nil
-	ni.state = state_Visited
-	state.reinsert(ni)
+		// Update and reinsert the node itself.
+		ni.dependants = nil
+		ni.state = state_Visited
+		state.reinsert(ni)
+	})
 
 	return
 }
@@ -505,19 +648,16 @@ func (state *visitState) visitOne(ctx context.Context) (err error) {
 // LOCKS_REQUIRED(state.mu)
 func (state *visitState) resolveOne(ctx context.Context) (err error) {
 	// Mark this worker as busy for the duration of this function.
-	state.busyWorkers++
-
-	defer func() {
-		state.busyWorkers--
-		if state.busyWorkers == 0 {
-			state.cond.Broadcast()
-		}
-	}()
+	state.busyResolvers++
+	defer state.update(func() { state.busyResolvers-- })
 
 	// Extract the node to resolve.
-	l := len(state.toResolve)
-	ni := state.toResolve[l-1]
-	state.toResolve = state.toResolve[:l-1]
+	var ni *nodeInfo
+	state.update(func() {
+		l := len(state.toResolve)
+		ni = state.toResolve[l-1]
+		state.toResolve = state.toResolve[:l-1]
+	})
 
 	// Unlock while resolving.
 	state.mu.Unlock()
@@ -529,29 +669,32 @@ func (state *visitState) resolveOne(ctx context.Context) (err error) {
 		return
 	}
 
-	// Ensure that we have a record for every dependency.
-	state.addNodes(deps)
+	// Perform state updates.
+	state.update(func() {
+		// Ensure that we have a record for every dependency.
+		state.addNodes(deps)
 
-	// Add this node to the list of dependants for each dependency that hasn't
-	// yet been visited. Count them as we go.
-	for _, dep := range deps {
-		depNi := state.nodes[dep]
-		if depNi.state == state_Visited {
-			continue
+		// Add this node to the list of dependants for each dependency that hasn't
+		// yet been visited. Count them as we go.
+		for _, dep := range deps {
+			depNi := state.nodes[dep]
+			if depNi.state == state_Visited {
+				continue
+			}
+
+			ni.depsUnsatisfied++
+			depNi.dependants = append(depNi.dependants, ni)
 		}
 
-		ni.depsUnsatisfied++
-		depNi.dependants = append(depNi.dependants, ni)
-	}
+		// Update and reinsert the node itself.
+		if ni.depsUnsatisfied > 0 {
+			ni.state = state_DependenciesUnsatisfied
+		} else {
+			ni.state = state_Unvisited
+		}
 
-	// Update and reinsert the node itself.
-	if ni.depsUnsatisfied > 0 {
-		ni.state = state_DependenciesUnsatisfied
-	} else {
-		ni.state = state_Unvisited
-	}
-
-	state.reinsert(ni)
+		state.reinsert(ni)
+	})
 
 	return
 }
