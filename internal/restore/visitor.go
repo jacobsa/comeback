@@ -20,11 +20,11 @@ import (
 	"log"
 	"os"
 	"path"
-	"syscall"
 	"time"
 	"unsafe"
 
 	"golang.org/x/net/context"
+	"golang.org/x/sys/unix"
 
 	"github.com/jacobsa/comeback/internal/blob"
 	"github.com/jacobsa/comeback/internal/dag"
@@ -185,10 +185,10 @@ func (v *visitor) writeFileContents(
 // Like os.Chmod, but operates on symlinks rather than their targets.
 func chmod(name string, mode os.FileMode) (err error) {
 	err = fchmodat(
-		AT_FDCWD,
+		at_FDCWD,
 		name,
 		uint32(mode.Perm()),
-		AT_SYMLINK_NOFOLLOW)
+		at_SYMLINK_NOFOLLOW)
 
 	if err != nil {
 		err = fmt.Errorf("fchmodat: %v", err)
@@ -198,29 +198,28 @@ func chmod(name string, mode os.FileMode) (err error) {
 	return
 }
 
-// Constants missing from package syscall and package unux.
+// Constants missing from package unix.
 const (
-	SYS_FCHMODAT        = 467
-	AT_FDCWD            = -2
-	AT_SYMLINK_NOFOLLOW = 0x0020
+	at_FDCWD            = -2
+	at_SYMLINK_NOFOLLOW = 0x0020
 )
 
-// Work around the lack of syscall.Fchmodat.
+// Work around the lack of unix.Fchmodat.
 func fchmodat(
 	fd int,
 	path string,
 	mode uint32,
 	flag int) (err error) {
 	// Convert to the string format expected by the syscall.
-	p, err := syscall.BytePtrFromString(path)
+	p, err := unix.BytePtrFromString(path)
 	if err != nil {
 		err = fmt.Errorf("BytePtrFromString(%q): %v", path, err)
 		return
 	}
 
 	// Call through.
-	_, _, e := syscall.Syscall6(
-		SYS_FCHMODAT,
+	_, _, e := unix.Syscall6(
+		unix.SYS_FCHMODAT,
 		uintptr(fd),
 		uintptr(unsafe.Pointer(p)),
 		uintptr(mode),
@@ -247,21 +246,21 @@ func use(p unsafe.Pointer)
 // Cf. http://stackoverflow.com/a/10611073/1505451
 func chtimes(path string, atime time.Time, mtime time.Time) (err error) {
 	// Open the file without following symlinks.
-	fd, err := syscall.Open(path, syscall.O_SYMLINK, 0)
+	fd, err := unix.Open(path, unix.O_SYMLINK, 0)
 	if err != nil {
 		return err
 	}
 
-	defer syscall.Close(fd)
+	defer unix.Close(fd)
 
 	// Call futimes.
-	var utimes [2]syscall.Timeval
-	utimes[0] = syscall.NsecToTimeval(atime.UnixNano())
-	utimes[1] = syscall.NsecToTimeval(mtime.UnixNano())
+	var utimes [2]unix.Timeval
+	utimes[0] = unix.NsecToTimeval(atime.UnixNano())
+	utimes[1] = unix.NsecToTimeval(mtime.UnixNano())
 
-	err = syscall.Futimes(fd, utimes[:])
+	err = unix.Futimes(fd, utimes[:])
 	if err != nil {
-		err = fmt.Errorf("syscall.Futimes: %v", err)
+		err = fmt.Errorf("unix.Futimes: %v", err)
 		return
 	}
 

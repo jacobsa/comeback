@@ -220,6 +220,13 @@
 			"revisionTime": "2015-06-03T16:14:52-07:00"
 		},
 		{
+			"canonical": "golang.org/x/sys/unix",
+			"comment": "",
+			"local": "vendor/golang.org/x/sys/unix",
+			"revision": "2d510369c839be75ca91bac0d9d4ecd207bb9bad",
+			"revisionTime": "2015-09-01T13:37:16+10:00"
+		},
+		{
 			"canonical": "google.golang.org/api/googleapi",
 			"comment": "",
 			"local": "vendor/google.golang.org/api/googleapi",
