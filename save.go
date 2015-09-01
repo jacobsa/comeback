@@ -16,7 +16,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -33,11 +32,6 @@ import (
 var cmdSave = &Command{
 	Name: "save",
 }
-
-var g_jobName = cmdSave.Flags.String(
-	"job",
-	"",
-	"Job name within the config file.")
 
 var g_discardScoreCache = cmdSave.Flags.Bool(
 	"discard_score_cache",
@@ -81,15 +75,18 @@ func doList(ctx context.Context, job *config.Job) (err error) {
 func runSave(ctx context.Context, args []string) (err error) {
 	cfg := getConfig()
 
-	// Look for the specified job.
-	if *g_jobName == "" {
-		err = errors.New("You must set the -job flag.")
+	// Extract arguments.
+	if len(args) != 1 {
+		err = fmt.Errorf("Usage: %s save job_name", os.Args[0])
 		return
 	}
 
-	job, ok := cfg.Jobs[*g_jobName]
+	jobName := args[0]
+
+	// Look for the specified job.
+	job, ok := cfg.Jobs[jobName]
 	if !ok {
-		err = fmt.Errorf("Unknown job: %q", *g_jobName)
+		err = fmt.Errorf("Unknown job: %q", jobName)
 		return
 	}
 
@@ -144,7 +141,7 @@ func runSave(ctx context.Context, args []string) (err error) {
 	// Register the successful backup.
 	completedJob := registry.CompletedJob{
 		StartTime: startTime,
-		Name:      *g_jobName,
+		Name:      jobName,
 		Score:     score,
 	}
 
