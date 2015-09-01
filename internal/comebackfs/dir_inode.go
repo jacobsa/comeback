@@ -155,7 +155,7 @@ func (d *dirInode) ensureChildren(ctx context.Context) (err error) {
 	return
 }
 
-func convertEntryType(t fs.EntryType) fuseutil.DirentType {
+func convertEntryType(t fs.Type) fuseutil.DirentType {
 	switch t {
 	case fs.TypeFile:
 		return fuseutil.DT_File

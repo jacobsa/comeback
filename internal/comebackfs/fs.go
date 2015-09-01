@@ -56,7 +56,7 @@ func NewFileSystem(
 	typed.Lock()
 	defer typed.Unlock()
 
-	rootEntry := &pkgfs.DirectoryEntry{
+	rootEntry := &pkgfs.FileInfo{
 		Type:        pkgfs.TypeDirectory,
 		Name:        "",
 		Permissions: 0500,
