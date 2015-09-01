@@ -52,7 +52,7 @@ func Restore(
 
 	rootNode := &node{
 		RelPath: "",
-		Info: fs.DirectoryEntry{
+		Info: fs.FileInfo{
 			Type:        fs.TypeDirectory,
 			Permissions: fi.Mode() & os.ModePerm,
 			Uid:         sys.UserId(fi.Sys().(*syscall.Stat_t).Uid),

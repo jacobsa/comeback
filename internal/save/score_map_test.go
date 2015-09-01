@@ -75,7 +75,7 @@ func (t *MakeScoreMapKeyTest) Directory() {
 func (t *MakeScoreMapKeyTest) Symlink() {
 	// Set up
 	t.node.RelPath = "foo"
-	t.node.Info = fs.DirectoryEntry{
+	t.node.Info = fs.FileInfo{
 		Type: fs.TypeSymlink,
 	}
 
@@ -89,7 +89,7 @@ func (t *MakeScoreMapKeyTest) RecentlyModified() {
 
 	// Set up
 	t.node.RelPath = "foo"
-	t.node.Info = fs.DirectoryEntry{
+	t.node.Info = fs.FileInfo{
 		Type: fs.TypeFile,
 	}
 
@@ -117,7 +117,7 @@ func (t *MakeScoreMapKeyTest) RecentlyModified() {
 func (t *MakeScoreMapKeyTest) Valid() {
 	// Set up
 	t.node.RelPath = "foo"
-	t.node.Info = fs.DirectoryEntry{
+	t.node.Info = fs.FileInfo{
 		Permissions: 0745,
 		Uid:         17,
 		Gid:         19,

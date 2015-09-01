@@ -30,7 +30,7 @@ message TimeProto {
   optional uint32 nanosecond = 2;
 }
 
-message DirectoryEntryProto {
+message FileInfoProto {
   enum Type {
     // Sentinel for a missing value.
     TYPE_UNKNOWN      = -1;
@@ -44,8 +44,8 @@ message DirectoryEntryProto {
   }
   optional Type type = 1;
 
-  // The permissions bits for this entry, as described in the documentation for
-  // fs.DirectoryEntry, with values as in the golang os package.
+  // The permissions bits for this file, as described in the documentation for
+  // fs.FileInfo, with values as in the golang os package.
   optional uint32 permissions = 2;
 
   // The owning user's UID, and their username if known.
@@ -56,7 +56,7 @@ message DirectoryEntryProto {
   optional uint32 gid = 5;
   optional string groupname = 6;
 
-  // The name of this entry.
+  // The name of this child within its parent directory.
   optional string name = 7;
 
   // The modification time.
@@ -67,9 +67,7 @@ message DirectoryEntryProto {
   // present.
   repeated BlobInfoProto blob = 9;
 
-  // If this entry belongs to a backup containing another file to which it is
-  // hard linked, this is the target of the hard link relative to the root of
-  // the backup.
+  // DEPRECATED: See notes on fs.FileInfo.HardLinkTarget.
   optional string hard_link_target = 10;
 
   // The target, if this is a symlink.
@@ -86,5 +84,5 @@ message DirectoryEntryProto {
 }
 
 message DirectoryListingProto {
-  repeated DirectoryEntryProto entry = 1;
+  repeated FileInfoProto entry = 1;
 }

@@ -43,9 +43,9 @@ func computeScoreSlice(b []byte) (score []byte) {
 	return s[:]
 }
 
-func makeLegalEntryProto() *repr_proto.DirectoryEntryProto {
-	return &repr_proto.DirectoryEntryProto{
-		Type: repr_proto.DirectoryEntryProto_TYPE_FILE.Enum(),
+func makeLegalEntryProto() *repr_proto.FileInfoProto {
+	return &repr_proto.FileInfoProto{
+		Type: repr_proto.FileInfoProto_TYPE_FILE.Enum(),
 	}
 }
 
@@ -72,14 +72,14 @@ func (t *UnmarshalTest) JunkWireData() {
 func (t *UnmarshalTest) InvalidTypeValue() {
 	// Input
 	listingProto := &repr_proto.DirectoryListingProto{
-		Entry: []*repr_proto.DirectoryEntryProto{
+		Entry: []*repr_proto.FileInfoProto{
 			makeLegalEntryProto(),
 			makeLegalEntryProto(),
 			makeLegalEntryProto(),
 		},
 	}
 
-	listingProto.Entry[1].Type = repr_proto.DirectoryEntryProto_Type(17).Enum()
+	listingProto.Entry[1].Type = repr_proto.FileInfoProto_Type(17).Enum()
 
 	data, err := proto.Marshal(listingProto)
 	AssertEq(nil, err)
@@ -89,21 +89,21 @@ func (t *UnmarshalTest) InvalidTypeValue() {
 	_, err = repr.UnmarshalDir(data)
 
 	ExpectThat(err, Error(HasSubstr("Unrecognized")))
-	ExpectThat(err, Error(HasSubstr("DirectoryEntryProto_Type")))
+	ExpectThat(err, Error(HasSubstr("FileInfoProto_Type")))
 	ExpectThat(err, Error(HasSubstr("17")))
 }
 
 func (t *UnmarshalTest) UnknownTypeValue() {
 	// Input
 	listingProto := &repr_proto.DirectoryListingProto{
-		Entry: []*repr_proto.DirectoryEntryProto{
+		Entry: []*repr_proto.FileInfoProto{
 			makeLegalEntryProto(),
 			makeLegalEntryProto(),
 			makeLegalEntryProto(),
 		},
 	}
 
-	listingProto.Entry[1].Type = repr_proto.DirectoryEntryProto_TYPE_UNKNOWN.Enum()
+	listingProto.Entry[1].Type = repr_proto.FileInfoProto_TYPE_UNKNOWN.Enum()
 
 	data, err := proto.Marshal(listingProto)
 	AssertEq(nil, err)
@@ -113,14 +113,14 @@ func (t *UnmarshalTest) UnknownTypeValue() {
 	_, err = repr.UnmarshalDir(data)
 
 	ExpectThat(err, Error(HasSubstr("Unrecognized")))
-	ExpectThat(err, Error(HasSubstr("DirectoryEntryProto_Type")))
+	ExpectThat(err, Error(HasSubstr("FileInfoProto_Type")))
 	ExpectThat(err, Error(HasSubstr("TYPE_UNKNOWN")))
 }
 
 func (t *UnmarshalTest) HashIsTooShort() {
 	// Input
 	listingProto := &repr_proto.DirectoryListingProto{
-		Entry: []*repr_proto.DirectoryEntryProto{
+		Entry: []*repr_proto.FileInfoProto{
 			makeLegalEntryProto(),
 			makeLegalEntryProto(),
 			makeLegalEntryProto(),
@@ -150,7 +150,7 @@ func (t *UnmarshalTest) HashIsTooShort() {
 func (t *UnmarshalTest) HashIsTooLong() {
 	// Input
 	listingProto := &repr_proto.DirectoryListingProto{
-		Entry: []*repr_proto.DirectoryEntryProto{
+		Entry: []*repr_proto.FileInfoProto{
 			makeLegalEntryProto(),
 			makeLegalEntryProto(),
 			makeLegalEntryProto(),
@@ -184,7 +184,7 @@ func (t *UnmarshalTest) PermissionsRegressionTest() {
 
 	// Input
 	listingProto := &repr_proto.DirectoryListingProto{
-		Entry: []*repr_proto.DirectoryEntryProto{
+		Entry: []*repr_proto.FileInfoProto{
 			makeLegalEntryProto(),
 			makeLegalEntryProto(),
 			makeLegalEntryProto(),

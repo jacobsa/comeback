@@ -99,7 +99,7 @@ func (t *DependencyResolverTest) resetResolver() {
 func (t *DependencyResolverTest) NonExistentPath() {
 	node := &fsNode{
 		RelPath: "foo/bar",
-		Info: fs.DirectoryEntry{
+		Info: fs.FileInfo{
 			Type: fs.TypeDirectory,
 		},
 	}
@@ -122,7 +122,7 @@ func (t *DependencyResolverTest) VisitRootNode() {
 	// Visit the root.
 	node := &fsNode{
 		RelPath: "",
-		Info: fs.DirectoryEntry{
+		Info: fs.FileInfo{
 			Type: fs.TypeDirectory,
 		},
 	}
@@ -159,7 +159,7 @@ func (t *DependencyResolverTest) VisitNonRootNode() {
 	// Visit the directory.
 	node := &fsNode{
 		RelPath: "sub/dirs",
-		Info: fs.DirectoryEntry{
+		Info: fs.FileInfo{
 			Type: fs.TypeDirectory,
 		},
 	}
@@ -183,7 +183,7 @@ func (t *DependencyResolverTest) VisitFileNode() {
 	// Call
 	node := &fsNode{
 		RelPath: "foo",
-		Info: fs.DirectoryEntry{
+		Info: fs.FileInfo{
 			Type: fs.TypeFile,
 		},
 	}
@@ -215,7 +215,7 @@ func (t *DependencyResolverTest) Files() {
 	// Visit.
 	node := &fsNode{
 		RelPath: "dir",
-		Info: fs.DirectoryEntry{
+		Info: fs.FileInfo{
 			Type: fs.TypeDirectory,
 		},
 	}
@@ -262,7 +262,7 @@ func (t *DependencyResolverTest) Directories() {
 	// Visit.
 	node := &fsNode{
 		RelPath: "dir",
-		Info: fs.DirectoryEntry{
+		Info: fs.FileInfo{
 			Type: fs.TypeDirectory,
 		},
 	}
@@ -306,7 +306,7 @@ func (t *DependencyResolverTest) Symlinks() {
 	// Visit.
 	node := &fsNode{
 		RelPath: "dir",
-		Info: fs.DirectoryEntry{
+		Info: fs.FileInfo{
 			Type: fs.TypeDirectory,
 		},
 	}
@@ -356,7 +356,7 @@ func (t *DependencyResolverTest) Exclusions() {
 	// Visit.
 	node := &fsNode{
 		RelPath: "dir",
-		Info: fs.DirectoryEntry{
+		Info: fs.FileInfo{
 			Type: fs.TypeDirectory,
 		},
 	}
@@ -395,7 +395,7 @@ func (t *DependencyResolverTest) SortsByName() {
 	// Visit.
 	node := &fsNode{
 		RelPath: "",
-		Info: fs.DirectoryEntry{
+		Info: fs.FileInfo{
 			Type: fs.TypeDirectory,
 		},
 	}

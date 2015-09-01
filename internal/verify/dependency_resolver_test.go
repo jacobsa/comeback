@@ -109,7 +109,7 @@ type DirsTest struct {
 	knownNode   Node
 	unknownNode Node
 
-	listing  []*fs.DirectoryEntry
+	listing  []*fs.FileInfo
 	contents []byte
 	score    blob.Score
 	node     Node
@@ -121,8 +121,8 @@ func init() { RegisterTestSuite(&DirsTest{}) }
 
 func (t *DirsTest) SetUp(ti *TestInfo) {
 	// Set up canned data for a valid listing.
-	t.listing = []*fs.DirectoryEntry{
-		&fs.DirectoryEntry{
+	t.listing = []*fs.FileInfo{
+		&fs.FileInfo{
 			Type: fs.TypeFile,
 			Name: "foo",
 			Scores: []blob.Score{
@@ -131,7 +131,7 @@ func (t *DirsTest) SetUp(ti *TestInfo) {
 			},
 		},
 
-		&fs.DirectoryEntry{
+		&fs.FileInfo{
 			Type: fs.TypeDirectory,
 			Name: "bar",
 			Scores: []blob.Score{
@@ -139,7 +139,7 @@ func (t *DirsTest) SetUp(ti *TestInfo) {
 			},
 		},
 
-		&fs.DirectoryEntry{
+		&fs.FileInfo{
 			Type:   fs.TypeSymlink,
 			Name:   "baz",
 			Target: "asdf",
@@ -241,8 +241,8 @@ func (t *DirsTest) BlobIsJunk() {
 
 func (t *DirsTest) UnknownEntryType() {
 	// Set up a listing with an unsupported entry type.
-	t.listing = []*fs.DirectoryEntry{
-		&fs.DirectoryEntry{
+	t.listing = []*fs.FileInfo{
+		&fs.FileInfo{
 			Type: fs.TypeCharDevice,
 			Name: "foo",
 			Scores: []blob.Score{
@@ -273,8 +273,8 @@ func (t *DirsTest) UnknownEntryType() {
 
 func (t *DirsTest) SymlinkWithScores() {
 	// Set up a listing with a symlink that unexpectedly has associated scores.
-	t.listing = []*fs.DirectoryEntry{
-		&fs.DirectoryEntry{
+	t.listing = []*fs.FileInfo{
+		&fs.FileInfo{
 			Type: fs.TypeSymlink,
 			Name: "foo",
 			Scores: []blob.Score{

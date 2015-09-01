@@ -136,7 +136,7 @@ func findRootScore(nodes <-chan *fsNode) (score blob.Score, err error) {
 func makeRootNode() *fsNode {
 	return &fsNode{
 		RelPath: "",
-		Info: fs.DirectoryEntry{
+		Info: fs.FileInfo{
 			Type: fs.TypeDirectory,
 		},
 		Parent: nil,

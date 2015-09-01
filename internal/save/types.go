@@ -27,7 +27,7 @@ type fsNode struct {
 	RelPath string
 
 	// Type, size, etc. information about the file.
-	Info fs.DirectoryEntry
+	Info fs.FileInfo
 
 	// The node for the parent of this file, or nil if this is the root of the
 	// tree of interest.

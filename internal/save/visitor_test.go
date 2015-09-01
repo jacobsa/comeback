@@ -181,7 +181,7 @@ func (t *VisitorTest) Symlink() {
 
 	// Node setup
 	t.node.RelPath = "foo"
-	t.node.Info = fs.DirectoryEntry{
+	t.node.Info = fs.FileInfo{
 		Type: fs.TypeSymlink,
 	}
 
@@ -197,14 +197,14 @@ func (t *VisitorTest) Directory() {
 
 	// Children
 	child0 := &fsNode{
-		Info: fs.DirectoryEntry{
+		Info: fs.FileInfo{
 			Name:  "taco",
 			MTime: time.Date(2012, time.August, 15, 12, 56, 00, 0, time.Local),
 		},
 	}
 
 	child1 := &fsNode{
-		Info: fs.DirectoryEntry{
+		Info: fs.FileInfo{
 			Name:  "burrito",
 			MTime: time.Date(2015, 4, 5, 2, 15, 0, 0, time.Local),
 		},
@@ -212,7 +212,7 @@ func (t *VisitorTest) Directory() {
 
 	// Node setup
 	t.node.RelPath = ""
-	t.node.Info = fs.DirectoryEntry{
+	t.node.Info = fs.FileInfo{
 		Type: fs.TypeDirectory,
 	}
 

@@ -43,9 +43,9 @@ func init() { RegisterTestSuite(&MarshalTest{}) }
 
 func (t *MarshalTest) LeavesOutTargetForNonSymlinks() {
 	// Input
-	entries := []*fs.DirectoryEntry{
-		&fs.DirectoryEntry{Type: fs.TypeFile},
-		&fs.DirectoryEntry{Type: fs.TypeDirectory},
+	entries := []*fs.FileInfo{
+		&fs.FileInfo{Type: fs.TypeFile},
+		&fs.FileInfo{Type: fs.TypeDirectory},
 	}
 
 	// Call
@@ -64,9 +64,9 @@ func (t *MarshalTest) LeavesOutTargetForNonSymlinks() {
 
 func (t *MarshalTest) LeavesOutDeviceNumberForNonDevices() {
 	// Input
-	entries := []*fs.DirectoryEntry{
-		&fs.DirectoryEntry{Type: fs.TypeFile},
-		&fs.DirectoryEntry{Type: fs.TypeDirectory},
+	entries := []*fs.FileInfo{
+		&fs.FileInfo{Type: fs.TypeFile},
+		&fs.FileInfo{Type: fs.TypeDirectory},
 	}
 
 	// Call
