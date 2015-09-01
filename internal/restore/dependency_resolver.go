@@ -79,6 +79,8 @@ func (dr *dependencyResolver) FindDependencies(
 	score := n.Info.Scores[0]
 
 	// Load the listing blob.
+	dr.logger.Printf("Loading listing: %s", n.RelPath)
+
 	b, err := dr.blobStore.Load(ctx, score)
 	if err != nil {
 		err = fmt.Errorf("Load(%s): %v", score.Hex(), err)

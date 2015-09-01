@@ -87,6 +87,8 @@ func (v *visitor) Visit(ctx context.Context, untyped dag.Node) (err error) {
 	// Perform type-specific logic.
 	switch n.Info.Type {
 	case fs.TypeFile:
+		v.logger.Printf("Loading contents: %s", n.RelPath)
+
 		err = v.writeFileContents(ctx, absPath, n.Info.Scores)
 		if err != nil {
 			err = fmt.Errorf("writeFileContents: %v", err)
