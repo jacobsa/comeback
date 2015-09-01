@@ -184,7 +184,8 @@ func (src *lockedRandSrc) Seed(seed int64) {
 // Boilerplate
 ////////////////////////////////////////////////////////////////////////
 
-const visitParallelism = 8
+const resolverParallelism = 8
+const visitorParallelism = 8
 
 type VisitTest struct {
 	ctx context.Context
@@ -222,7 +223,8 @@ func (t *VisitTest) call(
 		startDAGNodes,
 		&dependencyResolver{F: findDependencies},
 		&visitor{F: visit},
-		visitParallelism)
+		resolverParallelism,
+		visitorParallelism)
 
 	return
 }
@@ -636,7 +638,7 @@ func (t *VisitTest) LargeRootedTree_Inverted() {
 }
 
 func (t *VisitTest) DependencyResolverReturnsError() {
-	AssertGt(visitParallelism, 1)
+	AssertGt(resolverParallelism, 1)
 
 	// Graph structure:
 	//
@@ -717,7 +719,7 @@ func (t *VisitTest) DependencyResolverReturnsError() {
 }
 
 func (t *VisitTest) VisitorReturnsError() {
-	AssertGt(visitParallelism, 1)
+	AssertGt(visitorParallelism, 1)
 
 	// Graph structure:
 	//
