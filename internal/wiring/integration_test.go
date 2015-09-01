@@ -853,7 +853,25 @@ func (t *SaveAndRestoreTest) SetgidBit() {
 }
 
 func (t *SaveAndRestoreTest) StickyBit() {
-	AssertTrue(false, "TODO")
+	var fi os.FileInfo
+	var err error
+
+	// Create a directory with the bit set.
+	err = os.Mkdir(path.Join(t.src, "foo"), 0700|os.ModeSticky)
+	AssertEq(nil, err)
+
+	// Save and restore.
+	score, err := t.save()
+	AssertEq(nil, err)
+
+	err = t.restore(score)
+	AssertEq(nil, err)
+
+	// Check the destination.
+	fi, err = os.Lstat(path.Join(t.dst, "foo"))
+
+	AssertEq(nil, err)
+	ExpectEq(0700|os.ModeSticky|os.ModeDir, fi.Mode())
 }
 
 func (t *SaveAndRestoreTest) Device() {
