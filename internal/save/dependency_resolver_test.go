@@ -232,14 +232,12 @@ func (t *DependencyResolverTest) Files() {
 	ExpectEq("bar", pfi.Info.Name)
 	ExpectEq("", pfi.Info.Target)
 	ExpectEq(len("burrito"), pfi.Info.Size)
-	ExpectEq(node, pfi.Parent)
 
 	pfi = pfis[1]
 	ExpectEq("dir/foo", pfi.RelPath)
 	ExpectEq("foo", pfi.Info.Name)
 	ExpectEq("", pfi.Info.Target)
 	ExpectEq(len("taco"), pfi.Info.Size)
-	ExpectEq(node, pfi.Parent)
 }
 
 func (t *DependencyResolverTest) Directories() {
@@ -279,14 +277,12 @@ func (t *DependencyResolverTest) Directories() {
 	ExpectEq("bar", pfi.Info.Name)
 	ExpectEq("", pfi.Info.Target)
 	ExpectEq(fs.TypeDirectory, pfi.Info.Type)
-	ExpectEq(node, pfi.Parent)
 
 	pfi = pfis[1]
 	ExpectEq("dir/foo", pfi.RelPath)
 	ExpectEq("foo", pfi.Info.Name)
 	ExpectEq("", pfi.Info.Target)
 	ExpectEq(fs.TypeDirectory, pfi.Info.Type)
-	ExpectEq(node, pfi.Parent)
 }
 
 func (t *DependencyResolverTest) Symlinks() {
@@ -323,7 +319,6 @@ func (t *DependencyResolverTest) Symlinks() {
 	ExpectEq("foo", pfi.Info.Name)
 	ExpectEq("blah/blah", pfi.Info.Target)
 	ExpectEq(fs.TypeSymlink, pfi.Info.Type)
-	ExpectEq(node, pfi.Parent)
 }
 
 func (t *DependencyResolverTest) Exclusions() {

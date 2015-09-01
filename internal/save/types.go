@@ -29,10 +29,6 @@ type fsNode struct {
 	// Type, size, etc. information about the file.
 	Info fs.FileInfo
 
-	// The node for the parent of this file, or nil if this is the root of the
-	// tree of interest.
-	Parent *fsNode
-
 	// The nodes comprising the children of this directory. Empty for
 	// non-directories.
 	Children []*fsNode

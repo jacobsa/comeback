@@ -33,10 +33,9 @@ import (
 // supplied exclusions, along with all of their descendants. Children are
 // dependencies of parents.
 //
-// The nodes involved are of type *fsNode. The resolver fills in the RelPath,
-// Info and Parent fields of the dependencies, and the Children field of the
-// node on which it is called. The Scores field of Info is left as nil,
-// however.
+// The nodes involved are of type *fsNode. The resolver fills in the RelPath
+// and Info fields of the dependencies, and the Children field of the node on
+// which it is called. The Scores field of Info is left as nil, however.
 //
 // Results are guaranteed to be sorted by name, for stability and for
 // compatibility with old backup corpora. This is stricter than the
@@ -114,7 +113,6 @@ func (dr *dependencyResolver) FindDependencies(
 		child := &fsNode{
 			RelPath: childRelPath,
 			Info:    *entry,
-			Parent:  n,
 		}
 
 		deps = append(deps, child)

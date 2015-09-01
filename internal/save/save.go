@@ -103,7 +103,7 @@ func findRootScore(nodes <-chan *fsNode) (score blob.Score, err error) {
 	found := false
 	for n := range nodes {
 		// Skip non-root nodes.
-		if n.Parent != nil {
+		if n.RelPath != "" {
 			continue
 		}
 
@@ -139,6 +139,5 @@ func makeRootNode() *fsNode {
 		Info: fs.FileInfo{
 			Type: fs.TypeDirectory,
 		},
-		Parent: nil,
 	}
 }
