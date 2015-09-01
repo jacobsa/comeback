@@ -16,12 +16,11 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"os"
-	"time"
 
+	"github.com/jacobsa/comeback/internal/blob"
 	"github.com/jacobsa/comeback/internal/restore"
 
 	"golang.org/x/net/context"
@@ -29,55 +28,35 @@ import (
 
 var cmdRestore = &Command{
 	Name: "restore",
-}
-
-var g_jobTime = cmdRestore.Flags.String(
-	"job_time", "", "The start time of the job to restore.")
-var g_target = cmdRestore.Flags.String("target", "", "The target directory.")
-
-func init() {
-	cmdRestore.Run = runRestore // Break flag-related dependency loop.
+	Run:  runRestore,
 }
 
 func runRestore(ctx context.Context, args []string) (err error) {
-	// Parse the job start time.
-	if len(*g_jobTime) == 0 {
-		err = errors.New("You must set the --job_time flag.")
+	// Extract and parse arguments.
+	if len(args) != 2 {
+		err = fmt.Errorf("Usage: %s restore dst_dir score", os.Args[0])
 		return
 	}
 
-	startTime, err := time.Parse(time.RFC3339Nano, *g_jobTime)
+	dstDir := args[0]
+	score, err := blob.ParseHexScore(args[1])
 	if err != nil {
-		err = fmt.Errorf("Parsing --job_time: %v", err)
-		return
-	}
-
-	// Check the target.
-	if *g_target == "" {
-		err = errors.New("You must set the -target flag.")
+		err = fmt.Errorf("ParseHexScore(%q): %v", args[1], err)
 		return
 	}
 
 	// Grab dependencies.
-	reg := getRegistry(ctx)
 	blobStore := getBlobStore(ctx)
 
-	// Find the requested job.
-	job, err := reg.FindBackup(ctx, startTime)
-	if err != nil {
-		err = fmt.Errorf("FindBackup: %v", err)
-		return
-	}
-
 	// Make sure the target doesn't exist.
-	err = os.RemoveAll(*g_target)
+	err = os.RemoveAll(dstDir)
 	if err != nil {
 		err = fmt.Errorf("os.RemoveAll: %v", err)
 		return
 	}
 
-	// Create the target.
-	err = os.Mkdir(*g_target, 0700)
+	// Create the destination.
+	err = os.Mkdir(dstDir, 0700)
 	if err != nil {
 		err = fmt.Errorf("os.Mkdir: %v", err)
 		return
@@ -86,8 +65,8 @@ func runRestore(ctx context.Context, args []string) (err error) {
 	// Attempt a restore.
 	err = restore.Restore(
 		ctx,
-		*g_target,
-		job.Score,
+		dstDir,
+		score,
 		blobStore,
 		log.New(os.Stderr, "Restore progress: ", 0),
 	)
@@ -97,6 +76,6 @@ func runRestore(ctx context.Context, args []string) (err error) {
 		return
 	}
 
-	log.Println("Successfully restored to target:", *g_target)
+	log.Printf("Successfully restored to ", dstDir)
 	return
 }
