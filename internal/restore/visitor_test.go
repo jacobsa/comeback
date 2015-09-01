@@ -241,7 +241,7 @@ func (t *VisitorTest) File_PermsAndModTime() {
 		Info: fs.FileInfo{
 			Type:        fs.TypeFile,
 			Name:        "baz",
-			Permissions: 0741,
+			Permissions: 0741 | os.ModeSetuid | os.ModeSetgid | os.ModeSticky,
 			MTime:       time.Date(2012, time.August, 15, 12, 56, 00, 0, time.Local),
 		},
 	}
@@ -257,7 +257,7 @@ func (t *VisitorTest) File_PermsAndModTime() {
 	AssertEq(nil, err)
 
 	ExpectEq("baz", fi.Name())
-	ExpectEq(os.FileMode(0741), fi.Mode())
+	ExpectEq(0741|os.ModeSetuid|os.ModeSetgid|os.ModeSticky, fi.Mode())
 	ExpectThat(fi.ModTime(), timeutil.TimeEq(n.Info.MTime))
 }
 

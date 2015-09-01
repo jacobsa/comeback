@@ -22,17 +22,20 @@ import (
 	"io/ioutil"
 	"log"
 	"math/rand"
+	"net"
 	"os"
 	"path"
 	"regexp"
 	"runtime"
 	"strings"
+	"syscall"
 	"testing"
 	"time"
 
 	"golang.org/x/net/context"
 
 	"github.com/jacobsa/comeback/internal/blob"
+	"github.com/jacobsa/comeback/internal/fs"
 	"github.com/jacobsa/comeback/internal/restore"
 	"github.com/jacobsa/comeback/internal/save"
 	"github.com/jacobsa/comeback/internal/state"
@@ -798,4 +801,105 @@ func (t *SaveAndRestoreTest) IdenticalDirectoryContents() {
 		ExpectEq(4, fi.Size())
 		ExpectFalse(fi.IsDir())
 	}
+}
+
+func (t *SaveAndRestoreTest) SetuidBit() {
+	var fi os.FileInfo
+	var err error
+
+	// Create a file with the bit set.
+	p := path.Join(t.src, "foo")
+	err = ioutil.WriteFile(p, []byte{}, 0600)
+	AssertEq(nil, err)
+
+	err = os.Chmod(p, 0741|os.ModeSetuid)
+	AssertEq(nil, err)
+
+	// Save and restore.
+	score, err := t.save()
+	AssertEq(nil, err)
+
+	err = t.restore(score)
+	AssertEq(nil, err)
+
+	// Check the destination.
+	fi, err = os.Lstat(path.Join(t.dst, "foo"))
+
+	AssertEq(nil, err)
+	ExpectEq(0741|os.ModeSetuid, fi.Mode())
+}
+
+func (t *SaveAndRestoreTest) SetgidBit() {
+	var fi os.FileInfo
+	var err error
+
+	// Create a file with the bit set.
+	p := path.Join(t.src, "foo")
+	err = ioutil.WriteFile(p, []byte{}, 0600)
+	AssertEq(nil, err)
+
+	err = os.Chmod(p, 0741|os.ModeSetgid)
+	AssertEq(nil, err)
+
+	// Save and restore.
+	score, err := t.save()
+	AssertEq(nil, err)
+
+	err = t.restore(score)
+	AssertEq(nil, err)
+
+	// Check the destination.
+	fi, err = os.Lstat(path.Join(t.dst, "foo"))
+
+	AssertEq(nil, err)
+	ExpectEq(0741|os.ModeSetgid, fi.Mode())
+}
+
+func (t *SaveAndRestoreTest) StickyBit() {
+	var fi os.FileInfo
+	var err error
+
+	// Create a directory with the bit set.
+	err = os.Mkdir(path.Join(t.src, "foo"), 0700|os.ModeSticky)
+	AssertEq(nil, err)
+
+	// Save and restore.
+	score, err := t.save()
+	AssertEq(nil, err)
+
+	err = t.restore(score)
+	AssertEq(nil, err)
+
+	// Check the destination.
+	fi, err = os.Lstat(path.Join(t.dst, "foo"))
+
+	AssertEq(nil, err)
+	ExpectEq(0700|os.ModeSticky|os.ModeDir, fi.Mode())
+}
+
+func (t *SaveAndRestoreTest) NamedPipe() {
+	var err error
+
+	// Create a named pipe.
+	err = syscall.Mkfifo(path.Join(t.src, "foo"), 0400)
+	AssertEq(nil, err)
+
+	// Attempt to save.
+	_, err = t.save()
+	ExpectThat(err, Error(HasSubstr("Unsupported")))
+	ExpectThat(err, Error(HasSubstr(fmt.Sprintf("%v", fs.TypeNamedPipe))))
+}
+
+func (t *SaveAndRestoreTest) Socket() {
+	var err error
+
+	// Create a socket.
+	listener, err := net.Listen("unix", path.Join(t.src, "foo"))
+	AssertEq(nil, err)
+	defer listener.Close()
+
+	// Attempt to save.
+	_, err = t.save()
+	ExpectThat(err, Error(HasSubstr("Unsupported")))
+	ExpectThat(err, Error(HasSubstr(fmt.Sprintf("%v", fs.TypeSocket))))
 }

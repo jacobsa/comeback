@@ -184,12 +184,28 @@ func (v *visitor) writeFileContents(
 	return
 }
 
+// Cf. os.syscallMode
+func syscallMode(i os.FileMode) (o uint32) {
+	o |= uint32(i.Perm())
+	if i&os.ModeSetuid != 0 {
+		o |= unix.S_ISUID
+	}
+	if i&os.ModeSetgid != 0 {
+		o |= unix.S_ISGID
+	}
+	if i&os.ModeSticky != 0 {
+		o |= unix.S_ISVTX
+	}
+
+	return
+}
+
 // Like os.Chmod, but operates on symlinks rather than their targets.
 func chmod(name string, mode os.FileMode) (err error) {
 	err = fchmodat(
 		at_FDCWD,
 		name,
-		uint32(mode.Perm()),
+		syscallMode(mode),
 		at_SYMLINK_NOFOLLOW)
 
 	if err != nil {
