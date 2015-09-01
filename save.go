@@ -91,9 +91,6 @@ func runSave(ctx context.Context, args []string) (err error) {
 	}
 
 	// Special case: visit the file system only if --list_only is set.
-	//
-	// TODO(jacobsa): Integrate this into the pipeline when it exists. See issue
-	// #21.
 	if *fListOnly {
 		err = doList(ctx, job)
 		if err != nil {
