@@ -43,7 +43,7 @@ func convertType(t fs.Type) (repr_proto.FileInfoProto_Type, error) {
 	return 0, fmt.Errorf("Unrecognized EntryType: %v", t)
 }
 
-func makeEntryProto(
+func makeInfoProto(
 	entry *fs.FileInfo) (*repr_proto.FileInfoProto, error) {
 	blobs := []*repr_proto.BlobInfoProto{}
 	for i, _ := range entry.Scores {
@@ -98,24 +98,24 @@ const (
 	magicByte_File byte = 'f'
 )
 
-// MarshalDir turns a list of directory entries into bytes that can later be
-// used with UnmarshalDir. Note that ContainingDevice fields are lost.
+// MarshalDir turns a directory listing into bytes that can later be used with
+// UnmarshalDir. Note that ContainingDevice fields are lost.
 //
 // The input array may be modified.
-func MarshalDir(entries []*fs.FileInfo) (d []byte, err error) {
-	// Set entry proto buffers.
-	entryProtos := []*repr_proto.FileInfoProto{}
-	for _, entry := range entries {
-		entryProto, err := makeEntryProto(entry)
+func MarshalDir(listing []*fs.FileInfo) (d []byte, err error) {
+	// Convert to proto buffers.
+	protos := []*repr_proto.FileInfoProto{}
+	for _, fi := range listing {
+		proto, err := makeInfoProto(fi)
 		if err != nil {
 			return nil, err
 		}
 
-		entryProtos = append(entryProtos, entryProto)
+		protos = append(protos, proto)
 	}
 
 	// Encapsulate the entries into a listing proto and serialize that.
-	listingProto := &repr_proto.DirectoryListingProto{Entry: entryProtos}
+	listingProto := &repr_proto.DirectoryListingProto{Entry: protos}
 
 	d, err = proto.Marshal(listingProto)
 	if err != nil {

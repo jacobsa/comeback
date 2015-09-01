@@ -112,7 +112,7 @@ func convertEntryProto(
 
 // UnmarshalDir recovers a list of directory entries from bytes previously
 // returned by MarshalDir.
-func UnmarshalDir(d []byte) (entries []*fs.FileInfo, err error) {
+func UnmarshalDir(d []byte) (listing []*fs.FileInfo, err error) {
 	// Verify and strip the magic byte.
 	l := len(d)
 	if l == 0 || d[l-1] != magicByte_Dir {
@@ -130,14 +130,14 @@ func UnmarshalDir(d []byte) (entries []*fs.FileInfo, err error) {
 	}
 
 	// Convert each entry.
-	entries = []*fs.FileInfo{}
+	listing = []*fs.FileInfo{}
 	for _, entryProto := range listingProto.Entry {
 		entry, err := convertEntryProto(entryProto)
 		if err != nil {
 			return nil, err
 		}
 
-		entries = append(entries, entry)
+		listing = append(listing, entry)
 	}
 
 	return
