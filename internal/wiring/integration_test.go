@@ -808,11 +808,11 @@ func (t *SaveAndRestoreTest) SetuidBit() {
 	var err error
 
 	// Create a file with the bit set.
-	err = ioutil.WriteFile(
-		path.Join(t.src, "foo"),
-		[]byte{},
-		0500|os.ModeSetuid)
+	p := path.Join(t.src, "foo")
+	err = ioutil.WriteFile(p, []byte{}, 0600)
+	AssertEq(nil, err)
 
+	err = os.Chmod(p, 0741|os.ModeSetuid)
 	AssertEq(nil, err)
 
 	// Save and restore.
@@ -826,7 +826,7 @@ func (t *SaveAndRestoreTest) SetuidBit() {
 	fi, err = os.Lstat(path.Join(t.dst, "foo"))
 
 	AssertEq(nil, err)
-	ExpectEq(0500|os.ModeSetuid, fi.Mode())
+	ExpectEq(0741|os.ModeSetuid, fi.Mode())
 }
 
 func (t *SaveAndRestoreTest) SetgidBit() {
@@ -834,11 +834,11 @@ func (t *SaveAndRestoreTest) SetgidBit() {
 	var err error
 
 	// Create a file with the bit set.
-	err = ioutil.WriteFile(
-		path.Join(t.src, "foo"),
-		[]byte{},
-		0500|os.ModeSetgid)
+	p := path.Join(t.src, "foo")
+	err = ioutil.WriteFile(p, []byte{}, 0600)
+	AssertEq(nil, err)
 
+	err = os.Chmod(p, 0741|os.ModeSetgid)
 	AssertEq(nil, err)
 
 	// Save and restore.
@@ -852,7 +852,7 @@ func (t *SaveAndRestoreTest) SetgidBit() {
 	fi, err = os.Lstat(path.Join(t.dst, "foo"))
 
 	AssertEq(nil, err)
-	ExpectEq(0500|os.ModeSetgid, fi.Mode())
+	ExpectEq(0741|os.ModeSetgid, fi.Mode())
 }
 
 func (t *SaveAndRestoreTest) StickyBit() {
