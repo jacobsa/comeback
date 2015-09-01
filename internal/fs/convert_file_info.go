@@ -31,38 +31,38 @@ const (
 var gUserRegistry = sys.NewUserRegistry()
 var gGroupRegistry = sys.NewGroupRegistry()
 
-// Convert the result of os.Lstat or os.Stat to a directory entry.
+// Convert the result of os.Lstat or os.Stat to a local FileInfo struct.
 // symlinkTarget should be empty if this is not a symlink.
 func ConvertFileInfo(
-	fi os.FileInfo,
-	symlinkTarget string) (entry *DirectoryEntry, err error) {
-	entry, err = convertFileInfo(fi, symlinkTarget, gUserRegistry, gGroupRegistry)
+	in os.FileInfo,
+	symlinkTarget string) (out *FileInfo, err error) {
+	out, err = convertFileInfo(in, symlinkTarget, gUserRegistry, gGroupRegistry)
 	return
 }
 
 // Like ConvertFileInfo, but allows injecting registries.
 func convertFileInfo(
-	fi os.FileInfo,
+	in os.FileInfo,
 	symlinkTarget string,
 	userRegistry sys.UserRegistry,
-	groupRegistry sys.GroupRegistry) (entry *DirectoryEntry, err error) {
+	groupRegistry sys.GroupRegistry) (out *FileInfo, err error) {
 	// Grab system-specific info.
-	statT, ok := fi.Sys().(*syscall.Stat_t)
+	statT, ok := in.Sys().(*syscall.Stat_t)
 	if !ok {
-		return nil, fmt.Errorf("Unexpected sys value: %v", fi.Sys())
+		return nil, fmt.Errorf("Unexpected sys value: %v", in.Sys())
 	}
 
 	if statT.Size < 0 {
 		panic(fmt.Sprintf("Unexpected size: %d", statT.Size))
 	}
 
-	// Create the basic entry.
-	entry = &DirectoryEntry{
-		Name:             fi.Name(),
-		Permissions:      fi.Mode() & permissionBits,
+	// Create the basic struct.
+	out = &FileInfo{
+		Name:             in.Name(),
+		Permissions:      in.Mode() & permissionBits,
 		Uid:              sys.UserId(statT.Uid),
 		Gid:              sys.GroupId(statT.Gid),
-		MTime:            fi.ModTime(),
+		MTime:            in.ModTime(),
 		Size:             uint64(statT.Size),
 		ContainingDevice: statT.Dev,
 		Inode:            statT.Ino,
@@ -70,49 +70,49 @@ func convertFileInfo(
 	}
 
 	// Attempt to look up user info.
-	username, err := userRegistry.FindById(entry.Uid)
+	username, err := userRegistry.FindById(out.Uid)
 
 	if _, ok := err.(sys.NotFoundError); ok {
 		err = nil
 	} else if err != nil {
 		return nil, fmt.Errorf("Looking up user: %v", err)
 	} else {
-		entry.Username = &username
+		out.Username = &username
 	}
 
 	// Attempt to look up group info.
-	groupname, err := groupRegistry.FindById(entry.Gid)
+	groupname, err := groupRegistry.FindById(out.Gid)
 
 	if _, ok := err.(sys.NotFoundError); ok {
 		err = nil
 	} else if err != nil {
 		return nil, fmt.Errorf("Looking up group: %v", err)
 	} else {
-		entry.Groupname = &groupname
+		out.Groupname = &groupname
 	}
 
 	// Convert the type.
-	typeBits := fi.Mode() & (os.ModeType | os.ModeCharDevice)
+	typeBits := in.Mode() & (os.ModeType | os.ModeCharDevice)
 	switch typeBits {
 	case 0:
-		entry.Type = TypeFile
+		out.Type = TypeFile
 	case os.ModeDir:
-		entry.Type = TypeDirectory
+		out.Type = TypeDirectory
 	case os.ModeSymlink:
-		entry.Type = TypeSymlink
+		out.Type = TypeSymlink
 	case os.ModeDevice:
-		entry.Type = TypeBlockDevice
-		entry.DeviceNumber = statT.Rdev
+		out.Type = TypeBlockDevice
+		out.DeviceNumber = statT.Rdev
 	case os.ModeDevice | os.ModeCharDevice:
-		entry.Type = TypeCharDevice
-		entry.DeviceNumber = statT.Rdev
+		out.Type = TypeCharDevice
+		out.DeviceNumber = statT.Rdev
 	case os.ModeNamedPipe:
-		entry.Type = TypeNamedPipe
+		out.Type = TypeNamedPipe
 	case os.ModeSocket:
-		entry.Type = TypeSocket
+		out.Type = TypeSocket
 	default:
-		return entry, fmt.Errorf("Unhandled mode: %v %u", fi.Mode(), fi.Mode())
+		return out, fmt.Errorf("Unhandled mode: %v %u", in.Mode(), in.Mode())
 	}
 
-	return entry, nil
+	return out, nil
 }

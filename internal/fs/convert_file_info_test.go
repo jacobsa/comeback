@@ -109,9 +109,9 @@ type ConvertFileInfoTest struct {
 	baseDir                 string
 	baseDirContainingDevice int32
 
-	// The path to be stat'd, and the resulting entry.
-	path  string
-	entry *fs.DirectoryEntry
+	// The path to be stat'd, and the resulting struct.
+	path string
+	info *fs.FileInfo
 }
 
 var _ SetUpInterface = &ConvertFileInfoTest{}
@@ -181,7 +181,7 @@ func (t *ConvertFileInfoTest) call() (err error) {
 	}
 
 	// Call through.
-	t.entry, err = fs.ConvertFileInfo(fi, symlinkTarget)
+	t.info, err = fs.ConvertFileInfo(fi, symlinkTarget)
 	if err != nil {
 		err = fmt.Errorf("ConvertFileInfo: %v", err)
 		return
@@ -214,21 +214,21 @@ func (t *ConvertFileInfoTest) RegularFile() {
 
 	AssertEq(nil, err)
 
-	ExpectEq(fs.TypeFile, t.entry.Type)
-	ExpectEq("burrito.txt", t.entry.Name)
-	ExpectEq("", t.entry.Target)
-	ExpectEq(0, t.entry.DeviceNumber)
-	ExpectEq(0714|os.ModeSetgid, t.entry.Permissions)
-	ExpectEq(t.myUid, t.entry.Uid)
-	ExpectThat(t.entry.Username, Pointee(Equals(t.myUsername)))
-	ExpectEq(t.myGid, t.entry.Gid)
-	ExpectThat(t.entry.Groupname, Pointee(Equals(t.myGroupname)))
-	ExpectTrue(t.entry.MTime.Equal(mtime), "%v", t.entry.MTime)
-	ExpectEq(len("queso"), t.entry.Size)
-	ExpectThat(t.entry.Scores, ElementsAre())
+	ExpectEq(fs.TypeFile, t.info.Type)
+	ExpectEq("burrito.txt", t.info.Name)
+	ExpectEq("", t.info.Target)
+	ExpectEq(0, t.info.DeviceNumber)
+	ExpectEq(0714|os.ModeSetgid, t.info.Permissions)
+	ExpectEq(t.myUid, t.info.Uid)
+	ExpectThat(t.info.Username, Pointee(Equals(t.myUsername)))
+	ExpectEq(t.myGid, t.info.Gid)
+	ExpectThat(t.info.Groupname, Pointee(Equals(t.myGroupname)))
+	ExpectTrue(t.info.MTime.Equal(mtime), "%v", t.info.MTime)
+	ExpectEq(len("queso"), t.info.Size)
+	ExpectThat(t.info.Scores, ElementsAre())
 
-	AssertNe(0, t.entry.Inode)
-	ExpectEq(t.baseDirContainingDevice, t.entry.ContainingDevice)
+	AssertNe(0, t.info.Inode)
+	ExpectEq(t.baseDirContainingDevice, t.info.ContainingDevice)
 }
 
 func (t *ConvertFileInfoTest) Directory() {
@@ -256,20 +256,20 @@ func (t *ConvertFileInfoTest) Directory() {
 
 	AssertEq(nil, err)
 
-	ExpectEq(fs.TypeDirectory, t.entry.Type)
-	ExpectEq("burrito", t.entry.Name)
-	ExpectEq("", t.entry.Target)
-	ExpectEq(0, t.entry.DeviceNumber)
-	ExpectEq(0751|os.ModeSetgid, t.entry.Permissions)
-	ExpectEq(t.myUid, t.entry.Uid)
-	ExpectThat(t.entry.Username, Pointee(Equals(t.myUsername)))
-	ExpectEq(t.myGid, t.entry.Gid)
-	ExpectThat(t.entry.Groupname, Pointee(Equals(t.myGroupname)))
-	ExpectTrue(t.entry.MTime.Equal(mtime), "%v", t.entry.MTime)
-	ExpectEq(stat.Size, t.entry.Size)
-	ExpectEq(stat.Dev, t.entry.ContainingDevice)
-	ExpectEq(stat.Ino, t.entry.Inode)
-	ExpectThat(t.entry.Scores, ElementsAre())
+	ExpectEq(fs.TypeDirectory, t.info.Type)
+	ExpectEq("burrito", t.info.Name)
+	ExpectEq("", t.info.Target)
+	ExpectEq(0, t.info.DeviceNumber)
+	ExpectEq(0751|os.ModeSetgid, t.info.Permissions)
+	ExpectEq(t.myUid, t.info.Uid)
+	ExpectThat(t.info.Username, Pointee(Equals(t.myUsername)))
+	ExpectEq(t.myGid, t.info.Gid)
+	ExpectThat(t.info.Groupname, Pointee(Equals(t.myGroupname)))
+	ExpectTrue(t.info.MTime.Equal(mtime), "%v", t.info.MTime)
+	ExpectEq(stat.Size, t.info.Size)
+	ExpectEq(stat.Dev, t.info.ContainingDevice)
+	ExpectEq(stat.Ino, t.info.Inode)
+	ExpectThat(t.info.Scores, ElementsAre())
 }
 
 func (t *ConvertFileInfoTest) Symlinks() {
@@ -292,17 +292,17 @@ func (t *ConvertFileInfoTest) Symlinks() {
 
 	AssertEq(nil, err)
 
-	ExpectEq(fs.TypeSymlink, t.entry.Type)
-	ExpectEq("burrito", t.entry.Name)
-	ExpectEq("/foo/burrito", t.entry.Target)
-	ExpectEq(0, t.entry.DeviceNumber)
-	ExpectEq(0714|os.ModeSetgid, t.entry.Permissions)
-	ExpectEq(t.myUid, t.entry.Uid)
-	ExpectThat(t.entry.Username, Pointee(Equals(t.myUsername)))
-	ExpectEq(t.myGid, t.entry.Gid)
-	ExpectThat(t.entry.Groupname, Pointee(Equals(t.myGroupname)))
-	ExpectTrue(t.entry.MTime.Equal(mtime), "%v", t.entry.MTime)
-	ExpectThat(t.entry.Scores, ElementsAre())
+	ExpectEq(fs.TypeSymlink, t.info.Type)
+	ExpectEq("burrito", t.info.Name)
+	ExpectEq("/foo/burrito", t.info.Target)
+	ExpectEq(0, t.info.DeviceNumber)
+	ExpectEq(0714|os.ModeSetgid, t.info.Permissions)
+	ExpectEq(t.myUid, t.info.Uid)
+	ExpectThat(t.info.Username, Pointee(Equals(t.myUsername)))
+	ExpectEq(t.myGid, t.info.Gid)
+	ExpectThat(t.info.Groupname, Pointee(Equals(t.myGroupname)))
+	ExpectTrue(t.info.MTime.Equal(mtime), "%v", t.info.MTime)
+	ExpectThat(t.info.Scores, ElementsAre())
 }
 
 func (t *ConvertFileInfoTest) CharDevices() {
@@ -314,16 +314,16 @@ func (t *ConvertFileInfoTest) CharDevices() {
 
 	AssertEq(nil, err)
 
-	ExpectEq(fs.TypeCharDevice, t.entry.Type)
-	ExpectEq("urandom", t.entry.Name)
-	ExpectEq("", t.entry.Target)
-	ExpectEq(os.FileMode(0666), t.entry.Permissions)
-	ExpectEq(0, t.entry.Uid)
-	ExpectThat(t.entry.Username, Pointee(Equals("root")))
-	ExpectEq(0, t.entry.Gid)
-	ExpectThat(t.entry.Groupname, Pointee(Equals("wheel")))
-	ExpectGe(time.Since(t.entry.MTime), 0)
-	ExpectLt(time.Since(t.entry.MTime), 365*24*time.Hour)
+	ExpectEq(fs.TypeCharDevice, t.info.Type)
+	ExpectEq("urandom", t.info.Name)
+	ExpectEq("", t.info.Target)
+	ExpectEq(os.FileMode(0666), t.info.Permissions)
+	ExpectEq(0, t.info.Uid)
+	ExpectThat(t.info.Username, Pointee(Equals("root")))
+	ExpectEq(0, t.info.Gid)
+	ExpectThat(t.info.Groupname, Pointee(Equals("wheel")))
+	ExpectGe(time.Since(t.info.MTime), 0)
+	ExpectLt(time.Since(t.info.MTime), 365*24*time.Hour)
 }
 
 func (t *ConvertFileInfoTest) BlockDevices() {
@@ -335,16 +335,16 @@ func (t *ConvertFileInfoTest) BlockDevices() {
 
 	AssertEq(nil, err)
 
-	ExpectEq(fs.TypeBlockDevice, t.entry.Type)
-	ExpectEq("disk0", t.entry.Name)
-	ExpectEq("", t.entry.Target)
-	ExpectEq(os.FileMode(0640), t.entry.Permissions)
-	ExpectEq(0, t.entry.Uid)
-	ExpectThat(t.entry.Username, Pointee(Equals("root")))
-	ExpectEq(5, t.entry.Gid)
-	ExpectThat(t.entry.Groupname, Pointee(Equals("operator")))
-	ExpectGe(time.Since(t.entry.MTime), 0)
-	ExpectLt(time.Since(t.entry.MTime), 365*24*time.Hour)
+	ExpectEq(fs.TypeBlockDevice, t.info.Type)
+	ExpectEq("disk0", t.info.Name)
+	ExpectEq("", t.info.Target)
+	ExpectEq(os.FileMode(0640), t.info.Permissions)
+	ExpectEq(0, t.info.Uid)
+	ExpectThat(t.info.Username, Pointee(Equals("root")))
+	ExpectEq(5, t.info.Gid)
+	ExpectThat(t.info.Groupname, Pointee(Equals("operator")))
+	ExpectGe(time.Since(t.info.MTime), 0)
+	ExpectLt(time.Since(t.info.MTime), 365*24*time.Hour)
 }
 
 func (t *ConvertFileInfoTest) NamedPipes() {
@@ -364,16 +364,16 @@ func (t *ConvertFileInfoTest) NamedPipes() {
 
 	AssertEq(nil, err)
 
-	ExpectEq(fs.TypeNamedPipe, t.entry.Type)
-	ExpectEq("burrito", t.entry.Name)
-	ExpectEq("", t.entry.Target)
-	ExpectEq(0714|os.ModeSetgid, t.entry.Permissions)
-	ExpectEq(t.myUid, t.entry.Uid)
-	ExpectThat(t.entry.Username, Pointee(Equals(t.myUsername)))
-	ExpectEq(t.myGid, t.entry.Gid)
-	ExpectThat(t.entry.Groupname, Pointee(Equals(t.myGroupname)))
-	ExpectTrue(t.entry.MTime.Equal(mtime), "%v", t.entry.MTime)
-	ExpectThat(t.entry.Scores, ElementsAre())
+	ExpectEq(fs.TypeNamedPipe, t.info.Type)
+	ExpectEq("burrito", t.info.Name)
+	ExpectEq("", t.info.Target)
+	ExpectEq(0714|os.ModeSetgid, t.info.Permissions)
+	ExpectEq(t.myUid, t.info.Uid)
+	ExpectThat(t.info.Username, Pointee(Equals(t.myUsername)))
+	ExpectEq(t.myGid, t.info.Gid)
+	ExpectThat(t.info.Groupname, Pointee(Equals(t.myGroupname)))
+	ExpectTrue(t.info.MTime.Equal(mtime), "%v", t.info.MTime)
+	ExpectThat(t.info.Scores, ElementsAre())
 }
 
 func (t *ConvertFileInfoTest) Sockets() {
@@ -390,12 +390,12 @@ func (t *ConvertFileInfoTest) Sockets() {
 
 	AssertEq(nil, err)
 
-	ExpectEq(fs.TypeSocket, t.entry.Type)
-	ExpectEq("burrito", t.entry.Name)
-	ExpectEq("", t.entry.Target)
-	ExpectEq(t.myUid, t.entry.Uid)
-	ExpectThat(t.entry.Username, Pointee(Equals(t.myUsername)))
-	ExpectEq(t.myGid, t.entry.Gid)
-	ExpectThat(t.entry.Groupname, Pointee(Equals(t.myGroupname)))
-	ExpectThat(t.entry.Scores, ElementsAre())
+	ExpectEq(fs.TypeSocket, t.info.Type)
+	ExpectEq("burrito", t.info.Name)
+	ExpectEq("", t.info.Target)
+	ExpectEq(t.myUid, t.info.Uid)
+	ExpectThat(t.info.Username, Pointee(Equals(t.myUsername)))
+	ExpectEq(t.myGid, t.info.Gid)
+	ExpectThat(t.info.Groupname, Pointee(Equals(t.myGroupname)))
+	ExpectThat(t.info.Scores, ElementsAre())
 }

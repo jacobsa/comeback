@@ -23,10 +23,10 @@ import (
 	"github.com/jacobsa/comeback/internal/sys"
 )
 
-type EntryType uint32
+type Type uint32
 
 const (
-	TypeFile EntryType = iota
+	TypeFile Type = iota
 	TypeDirectory
 	TypeSymlink
 	TypeBlockDevice
@@ -35,15 +35,15 @@ const (
 	TypeSocket
 )
 
-// DirectoryEntry gives enough information to reconstruct a single entry within
-// a backed up directory.
-type DirectoryEntry struct {
-	Type EntryType
+// FileInfo gives enough information to reconstruct a single child within a
+// backed up directory.
+type FileInfo struct {
+	Type Type
 
-	// The name of this entry within its directory.
+	// The name of this child within its parent directory.
 	Name string
 
-	// The permissions for this entry, including the {setuid,setgid,sticky} bits.
+	// The permissions for this file, including the {setuid,setgid,sticky} bits.
 	// That is, the things that chmod(2) cares about. This does *not* include
 	// type information such as os.ModeDevice or options such as os.ModeAppend.
 	Permissions os.FileMode
@@ -56,7 +56,7 @@ type DirectoryEntry struct {
 	Gid       sys.GroupId
 	Groupname *string
 
-	// The modification time of this entry.
+	// The modification time of this file.
 	MTime time.Time
 
 	// The size of regular files. Undefined for other types.
