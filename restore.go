@@ -76,6 +76,6 @@ func runRestore(ctx context.Context, args []string) (err error) {
 		return
 	}
 
-	log.Printf("Successfully restored to ", dstDir)
+	log.Printf("Successfully restored to %s", dstDir)
 	return
 }
