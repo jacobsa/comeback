@@ -73,7 +73,7 @@ type dirInode struct {
 	// INVARIANT: For each v, v.HardLinkTarget == nil
 	//
 	// GUARDED_BY(mu)
-	children map[string]*fs.DirectoryEntry
+	children map[string]*fs.FileInfo
 
 	// A listing for the directory, valid when children != nil.
 	//
@@ -120,7 +120,7 @@ func (d *dirInode) ensureChildren(ctx context.Context) (err error) {
 	}
 
 	// Index the entries by name.
-	children := make(map[string]*fs.DirectoryEntry)
+	children := make(map[string]*fs.FileInfo)
 	for _, e := range entries {
 		if e.HardLinkTarget != nil {
 			err = errors.New("Hard link enountered.")
@@ -234,7 +234,7 @@ func (d *dirInode) Read(
 // LOCKS_REQUIRED(d)
 func (d *dirInode) LookUpChild(
 	ctx context.Context,
-	name string) (e *fs.DirectoryEntry, err error) {
+	name string) (e *fs.FileInfo, err error) {
 	// Make sure the index of children is present.
 	err = d.ensureChildren(ctx)
 	if err != nil {

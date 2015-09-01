@@ -26,7 +26,7 @@ type node struct {
 
 	// Type, size, etc. information about the file, directory, etc. Also contains
 	// a list of scores from which its contents can be loaded.
-	Info fs.DirectoryEntry
+	Info fs.FileInfo
 
 	// The nodes comprising the children of this directory. Empty for
 	// non-directories.

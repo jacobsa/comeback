@@ -117,7 +117,7 @@ func (t *DependencyResolverTest) store(b []byte) (s blob.Score, err error) {
 
 func (t *DependencyResolverTest) File() {
 	n := &node{
-		Info: fs.DirectoryEntry{
+		Info: fs.FileInfo{
 			Type: fs.TypeFile,
 		},
 	}
@@ -132,7 +132,7 @@ func (t *DependencyResolverTest) File() {
 
 func (t *DependencyResolverTest) Symlink() {
 	n := &node{
-		Info: fs.DirectoryEntry{
+		Info: fs.FileInfo{
 			Type: fs.TypeSymlink,
 		},
 	}
@@ -148,7 +148,7 @@ func (t *DependencyResolverTest) Symlink() {
 func (t *DependencyResolverTest) BlobMissing() {
 	s := blob.ComputeScore([]byte(""))
 	n := &node{
-		Info: fs.DirectoryEntry{
+		Info: fs.FileInfo{
 			Type:   fs.TypeDirectory,
 			Scores: []blob.Score{s},
 		},
@@ -169,7 +169,7 @@ func (t *DependencyResolverTest) BlobCorrupted() {
 	AssertEq(nil, err)
 
 	n := &node{
-		Info: fs.DirectoryEntry{
+		Info: fs.FileInfo{
 			Type:   fs.TypeDirectory,
 			Scores: []blob.Score{junk},
 		},
@@ -186,7 +186,7 @@ func (t *DependencyResolverTest) NoChildren() {
 	var err error
 
 	// Set up an empty listing.
-	listing := []*fs.DirectoryEntry{}
+	listing := []*fs.FileInfo{}
 
 	serialized, err := repr.MarshalDir(listing)
 	AssertEq(nil, err)
@@ -197,7 +197,7 @@ func (t *DependencyResolverTest) NoChildren() {
 	// Set up the node.
 	n := &node{
 		RelPath: "taco/burrito",
-		Info: fs.DirectoryEntry{
+		Info: fs.FileInfo{
 			Type:   fs.TypeDirectory,
 			Scores: []blob.Score{score},
 		},
@@ -215,14 +215,14 @@ func (t *DependencyResolverTest) SomeChildren() {
 	var err error
 
 	// Set up a listing.
-	listing := []*fs.DirectoryEntry{
-		&fs.DirectoryEntry{
+	listing := []*fs.FileInfo{
+		&fs.FileInfo{
 			Type:        fs.TypeFile,
 			Name:        "foo",
 			Permissions: 0754,
 			MTime:       time.Now().Round(time.Millisecond),
 		},
-		&fs.DirectoryEntry{
+		&fs.FileInfo{
 			Type:   fs.TypeDirectory,
 			Name:   "bar",
 			Scores: []blob.Score{blob.ComputeScore([]byte(""))},
@@ -239,7 +239,7 @@ func (t *DependencyResolverTest) SomeChildren() {
 	// Set up the node.
 	n := &node{
 		RelPath: "taco/burrito",
-		Info: fs.DirectoryEntry{
+		Info: fs.FileInfo{
 			Type:   fs.TypeDirectory,
 			Scores: []blob.Score{score},
 		},

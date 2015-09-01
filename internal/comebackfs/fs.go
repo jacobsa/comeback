@@ -156,7 +156,7 @@ func (fs *fileSystem) checkInvariants() {
 // increment the lookup count.
 //
 // LOCKS_REQUIRED(fs)
-func (fs *fileSystem) lookUpOrCreateInode(e *fs.DirectoryEntry) (
+func (fs *fileSystem) lookUpOrCreateInode(e *fs.FileInfo) (
 	in inode,
 	err error) {
 	id := fuseops.InodeID(e.Inode)
@@ -186,7 +186,7 @@ func (fs *fileSystem) lookUpOrCreateInode(e *fs.DirectoryEntry) (
 // Create an inode for the supplied directory entry. The UID and GID are
 // ignored in favor of the the supplied values.
 func createInode(
-	e *fs.DirectoryEntry,
+	e *fs.FileInfo,
 	uid uint32,
 	gid uint32,
 	blobStore blob.Store) (in inode, err error) {

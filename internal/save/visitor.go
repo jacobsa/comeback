@@ -244,7 +244,7 @@ func (v *visitor) saveDir(
 	storeReq := &ro.storeReq
 
 	// Set up a list of directory entries.
-	var entries []*fs.DirectoryEntry
+	var entries []*fs.FileInfo
 	for _, child := range children {
 		entries = append(entries, &child.Info)
 	}

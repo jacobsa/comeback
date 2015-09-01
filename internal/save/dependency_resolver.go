@@ -83,7 +83,7 @@ func (dr *dependencyResolver) FindDependencies(
 		return
 	}
 
-	// Filter out excluded entries, converting the rest to *fs.DirectoryEntry and
+	// Filter out excluded entries, converting the rest to *fs.FileInfo and
 	// returning them as dependencies.
 	for _, fi := range listing {
 		// Skip?
@@ -103,7 +103,7 @@ func (dr *dependencyResolver) FindDependencies(
 		}
 
 		// Convert.
-		var entry *fs.DirectoryEntry
+		var entry *fs.FileInfo
 		entry, err = fs.ConvertFileInfo(fi, symlinkTarget)
 		if err != nil {
 			err = fmt.Errorf("ConvertFileInfo: %v", err)

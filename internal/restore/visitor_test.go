@@ -124,7 +124,7 @@ func (t *VisitorTest) File_MissingBlob() {
 	// Node
 	n := &node{
 		RelPath: "foo/bar/baz",
-		Info: fs.DirectoryEntry{
+		Info: fs.FileInfo{
 			Type:        fs.TypeFile,
 			Name:        "baz",
 			Permissions: 0400,
@@ -158,7 +158,7 @@ func (t *VisitorTest) File_CorruptBlob() {
 	// Node
 	n := &node{
 		RelPath: "foo/bar/baz",
-		Info: fs.DirectoryEntry{
+		Info: fs.FileInfo{
 			Type:        fs.TypeFile,
 			Name:        "baz",
 			Permissions: 0400,
@@ -179,7 +179,7 @@ func (t *VisitorTest) File_Empty() {
 	// Node
 	n := &node{
 		RelPath: "foo/bar/baz",
-		Info: fs.DirectoryEntry{
+		Info: fs.FileInfo{
 			Type:        fs.TypeFile,
 			Name:        "baz",
 			Permissions: 0400,
@@ -213,7 +213,7 @@ func (t *VisitorTest) File_NonEmpty() {
 	// Node
 	n := &node{
 		RelPath: "foo/bar/baz",
-		Info: fs.DirectoryEntry{
+		Info: fs.FileInfo{
 			Type:        fs.TypeFile,
 			Name:        "baz",
 			Permissions: 0400,
@@ -238,7 +238,7 @@ func (t *VisitorTest) File_PermsAndModTime() {
 	// Node
 	n := &node{
 		RelPath: "foo/bar/baz",
-		Info: fs.DirectoryEntry{
+		Info: fs.FileInfo{
 			Type:        fs.TypeFile,
 			Name:        "baz",
 			Permissions: 0741,
@@ -266,7 +266,7 @@ func (t *VisitorTest) Directory() {
 
 	n := &node{
 		RelPath: "foo/bar/baz",
-		Info: fs.DirectoryEntry{
+		Info: fs.FileInfo{
 			Type:        fs.TypeDirectory,
 			Name:        "baz",
 			Permissions: 0741,
@@ -293,7 +293,7 @@ func (t *VisitorTest) Directory_AlreadyExists() {
 
 	n := &node{
 		RelPath: "foo",
-		Info: fs.DirectoryEntry{
+		Info: fs.FileInfo{
 			Type:        fs.TypeDirectory,
 			Name:        "foo",
 			Permissions: 0741,
@@ -320,7 +320,7 @@ func (t *VisitorTest) Symlink() {
 
 	n := &node{
 		RelPath: "foo/bar/baz",
-		Info: fs.DirectoryEntry{
+		Info: fs.FileInfo{
 			Type:        fs.TypeSymlink,
 			Name:        "baz",
 			Permissions: 0741,
@@ -354,7 +354,7 @@ func (t *VisitorTest) ParentDirsAlreadyExist() {
 
 	n := &node{
 		RelPath: "foo/bar/baz",
-		Info: fs.DirectoryEntry{
+		Info: fs.FileInfo{
 			Type:        fs.TypeSymlink,
 			Name:        "baz",
 			Permissions: 0700,
