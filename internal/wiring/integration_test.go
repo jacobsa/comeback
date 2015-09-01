@@ -827,7 +827,29 @@ func (t *SaveAndRestoreTest) SetuidBit() {
 }
 
 func (t *SaveAndRestoreTest) SetgidBit() {
-	AssertTrue(false, "TODO")
+	var fi os.FileInfo
+	var err error
+
+	// Create a file with the bit set.
+	err = ioutil.WriteFile(
+		path.Join(t.src, "foo"),
+		[]byte{},
+		0500|os.ModeSetgid)
+
+	AssertEq(nil, err)
+
+	// Save and restore.
+	score, err := t.save()
+	AssertEq(nil, err)
+
+	err = t.restore(score)
+	AssertEq(nil, err)
+
+	// Check the destination.
+	fi, err = os.Lstat(path.Join(t.dst, "foo"))
+
+	AssertEq(nil, err)
+	ExpectEq(0500|os.ModeSetgid, fi.Mode())
 }
 
 func (t *SaveAndRestoreTest) StickyBit() {
