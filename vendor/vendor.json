@@ -1,6 +1,6 @@
 {
 	"comment": "",
-	"ignore": "test",
+	"ignore": "test appengine",
 	"package": [
 		{
 			"path": "github.com/golang/protobuf/proto",
