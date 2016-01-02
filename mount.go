@@ -281,7 +281,7 @@ func runMount(ctx context.Context, args []string) (err error) {
 	daemonize.SignalOutcome(nil)
 
 	// Watch for SIGINT.
-	registerSIGINTHandler(mountPoint)
+	registerSIGINTHandler(mfs.Dir())
 
 	// Wait for unmount.
 	err = mfs.Join(ctx)
