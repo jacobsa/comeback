@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math/rand"
 	"os"
 	"time"
 
@@ -160,6 +161,12 @@ func (fs *fileSystem) lookUpOrCreateInode(e *fs.FileInfo) (
 	in inode,
 	err error) {
 	id := fuseops.InodeID(e.Inode)
+
+	// HACK(jacobsa): Mint an inode ID if one wasn't stored, as for old backups.
+	// Use a random number, leaking inodes all over the place.
+	if id == 0 {
+		id = fuseops.InodeID(rand.Int63())
+	}
 
 	// Do we already have an inode with the given ID?
 	if rec, ok := fs.inodes[id]; ok {

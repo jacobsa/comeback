@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math/rand"
 
 	"golang.org/x/net/context"
 
@@ -138,6 +139,13 @@ func (d *dirInode) ensureChildren(ctx context.Context) (err error) {
 	// Also create a listing.
 	var listing []fuseutil.Dirent
 	for i, e := range entries {
+		// HACK(jacobsa): Mint an inode ID if one wasn't stored, as for old
+		// backups. Use a random number; it doesn't appear to matter what readdir
+		// returns.
+		if e.Inode == 0 {
+			e.Inode = uint64(rand.Int63())
+		}
+
 		de := fuseutil.Dirent{
 			Offset: fuseops.DirOffset(i + 1),
 			Inode:  fuseops.InodeID(e.Inode),
