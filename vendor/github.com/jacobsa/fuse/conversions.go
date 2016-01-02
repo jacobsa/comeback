@@ -134,6 +134,27 @@ func convertInMessage(
 			Mode: convertFileMode(in.Mode) | os.ModeDir,
 		}
 
+	case fusekernel.OpMknod:
+		in := (*fusekernel.MknodIn)(inMsg.Consume(fusekernel.MknodInSize(protocol)))
+		if in == nil {
+			err = errors.New("Corrupt OpMknod")
+			return
+		}
+
+		name := inMsg.ConsumeBytes(inMsg.Len())
+		i := bytes.IndexByte(name, '\x00')
+		if i < 0 {
+			err = errors.New("Corrupt OpMknod")
+			return
+		}
+		name = name[:i]
+
+		o = &fuseops.MkNodeOp{
+			Parent: fuseops.InodeID(inMsg.Header().Nodeid),
+			Name:   string(name),
+			Mode:   convertFileMode(in.Mode),
+		}
+
 	case fusekernel.OpCreate:
 		in := (*fusekernel.CreateIn)(inMsg.Consume(fusekernel.CreateInSize(protocol)))
 		if in == nil {
@@ -371,7 +392,7 @@ func convertInMessage(
 		}
 
 	case fusekernel.OpStatfs:
-		o = &statFSOp{}
+		o = &fuseops.StatFSOp{}
 
 	case fusekernel.OpInterrupt:
 		type input fusekernel.InterruptIn
@@ -448,7 +469,7 @@ func (c *Connection) kernelResponse(
 		// the header, because on OS X the kernel otherwise returns EINVAL when we
 		// attempt to write an error response with a length that extends beyond the
 		// header.
-		m.Shrink(uintptr(m.Len() - int(buffer.OutMessageInitialSize)))
+		m.ShrinkTo(buffer.OutMessageInitialSize)
 	}
 
 	// Otherwise, fill in the rest of the response.
@@ -491,6 +512,11 @@ func (c *Connection) kernelResponseForOp(
 		out := (*fusekernel.EntryOut)(m.Grow(size))
 		convertChildInodeEntry(&o.Entry, out)
 
+	case *fuseops.MkNodeOp:
+		size := fusekernel.EntryOutSize(c.protocol)
+		out := (*fusekernel.EntryOut)(m.Grow(size))
+		convertChildInodeEntry(&o.Entry, out)
+
 	case *fuseops.CreateFileOp:
 		eSize := fusekernel.EntryOutSize(c.protocol)
 
@@ -522,7 +548,7 @@ func (c *Connection) kernelResponseForOp(
 		// convertInMessage already set up the destination buffer to be at the end
 		// of the out message. We need only shrink to the right size based on how
 		// much the user read.
-		m.Shrink(uintptr(m.Len() - (int(buffer.OutMessageInitialSize) + o.BytesRead)))
+		m.ShrinkTo(buffer.OutMessageInitialSize + uintptr(o.BytesRead))
 
 	case *fuseops.ReleaseDirHandleOp:
 		// Empty response
@@ -539,7 +565,7 @@ func (c *Connection) kernelResponseForOp(
 		// convertInMessage already set up the destination buffer to be at the end
 		// of the out message. We need only shrink to the right size based on how
 		// much the user read.
-		m.Shrink(uintptr(m.Len() - (int(buffer.OutMessageInitialSize) + o.BytesRead)))
+		m.ShrinkTo(buffer.OutMessageInitialSize + uintptr(o.BytesRead))
 
 	case *fuseops.WriteFileOp:
 		out := (*fusekernel.WriteOut)(m.Grow(unsafe.Sizeof(fusekernel.WriteOut{})))
@@ -557,8 +583,41 @@ func (c *Connection) kernelResponseForOp(
 	case *fuseops.ReadSymlinkOp:
 		m.AppendString(o.Target)
 
-	case *statFSOp:
-		m.Grow(unsafe.Sizeof(fusekernel.StatfsOut{}))
+	case *fuseops.StatFSOp:
+		out := (*fusekernel.StatfsOut)(m.Grow(unsafe.Sizeof(fusekernel.StatfsOut{})))
+		out.St.Blocks = o.Blocks
+		out.St.Bfree = o.BlocksFree
+		out.St.Bavail = o.BlocksAvailable
+		out.St.Files = o.Inodes
+		out.St.Ffree = o.InodesFree
+
+		// The posix spec for sys/statvfs.h (http://goo.gl/LktgrF) defines the
+		// following fields of statvfs, among others:
+		//
+		//     f_bsize    File system block size.
+		//     f_frsize   Fundamental file system block size.
+		//     f_blocks   Total number of blocks on file system in units of f_frsize.
+		//
+		// It appears as though f_bsize was the only thing supported by most unixes
+		// originally, but then f_frsize was added when new sorts of file systems
+		// came about. Quoth The Linux Programming Interface by Michael Kerrisk
+		// (https://goo.gl/5LZMxQ):
+		//
+		//     For most Linux file systems, the values of f_bsize and f_frsize are
+		//     the same. However, some file systems support the notion of block
+		//     fragments, which can be used to allocate a smaller unit of storage
+		//     at the end of the file if if a full block is not required. This
+		//     avoids the waste of space that would otherwise occur if a full block
+		//     was allocated. On such file systems, f_frsize is the size of a
+		//     fragment, and f_bsize is the size of a whole block. (The notion of
+		//     fragments in UNIX file systems first appeared in the early 1980s
+		//     with the 4.2BSD Fast File System.)
+		//
+		// Confusingly, it appears as though osxfuse surfaces fuse_kstatfs::bsize
+		// as statfs::f_iosize (of advisory use only), and fuse_kstatfs::frsize as
+		// statfs::f_bsize (which affects free space display in the Finder).
+		out.St.Bsize = o.IoSize
+		out.St.Frsize = o.BlockSize
 
 	case *initOp:
 		out := (*fusekernel.InitOut)(m.Grow(unsafe.Sizeof(fusekernel.InitOut{})))
@@ -600,6 +659,8 @@ func convertAttributes(
 	out.Nlink = in.Nlink
 	out.Uid = in.Uid
 	out.Gid = in.Gid
+	// round up to the nearest 512 boundary
+	out.Blocks = (in.Size + 512 - 1) / 512
 
 	// Set the mode.
 	out.Mode = uint32(in.Mode) & 0777

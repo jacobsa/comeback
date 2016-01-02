@@ -20,6 +20,81 @@ import (
 )
 
 ////////////////////////////////////////////////////////////////////////
+// File system
+////////////////////////////////////////////////////////////////////////
+
+// Return statistics about the file system's capacity and available resources.
+//
+// Called by statfs(2) and friends:
+//
+//     * (https://goo.gl/Xi1lDr) sys_statfs called user_statfs, which calls
+//        vfs_statfs, which calls statfs_by_dentry.
+//
+//     * (https://goo.gl/VAIOwU) statfs_by_dentry calls the superblock
+//       operation statfs, which in our case points at
+//       fuse_statfs (cf. https://goo.gl/L7BTM3)
+//
+//     * (https://goo.gl/Zn7Sgl) fuse_statfs sends a statfs op, then uses
+//       convert_fuse_statfs to convert the response in a straightforward
+//       manner.
+//
+// This op is particularly important on OS X: if you don't implement it, the
+// file system will not successfully mount. If you don't model a sane amount of
+// free space, the Finder will refuse to copy files into the file system.
+type StatFSOp struct {
+	// The size of the file system's blocks. This may be used, in combination
+	// with the block counts below,  by callers of statfs(2) to infer the file
+	// system's capacity and space availability.
+	//
+	// On Linux this is surfaced as statfs::f_frsize, matching the posix standard
+	// (http://goo.gl/LktgrF), which says that f_blocks and friends are in units
+	// of f_frsize. On OS X this is surfaced as statfs::f_bsize, which plays the
+	// same roll.
+	//
+	// It appears as though the original intent of statvfs::f_frsize in the posix
+	// standard was to support a smaller addressable unit than statvfs::f_bsize
+	// (cf. The Linux Programming Interface by Michael Kerrisk,
+	// https://goo.gl/5LZMxQ). Therefore users should probably arrange for this
+	// to be no larger than IoSize.
+	//
+	// On Linux this can be any value, and will be faithfully returned to the
+	// caller of statfs(2) (see the code walk above). On OS X it appears that
+	// only powers of 2 in the range [2^9, 2^17] are preserved, and a value of
+	// zero is treated as 4096.
+	//
+	// This interface does not distinguish between blocks and block fragments.
+	BlockSize uint32
+
+	// The total number of blocks in the file system, the number of unused
+	// blocks, and the count of the latter that are available for use by non-root
+	// users.
+	//
+	// For each category, the corresponding number of bytes is derived by
+	// multiplying by BlockSize.
+	Blocks          uint64
+	BlocksFree      uint64
+	BlocksAvailable uint64
+
+	// The preferred size of writes to and reads from the file system, in bytes.
+	// This may affect clients that use statfs(2) to size buffers correctly. It
+	// does not appear to influence the size of writes sent from the kernel to
+	// the file system daemon.
+	//
+	// On Linux this is surfaced as statfs::f_bsize, and on OS X as
+	// statfs::f_iosize. Both are documented in `man 2 statfs` as "optimal
+	// transfer block size".
+	//
+	// On Linux this can be any value. On OS X it appears that only powers of 2
+	// in the range [2^12, 2^20] are faithfully preserved, and a value of zero is
+	// treated as 65536.
+	IoSize uint32
+
+	// The total number of inodes in the file system, and how many remain free.
+	Inodes     uint64
+	InodesFree uint64
+}
+
+////////////////////////////////////////////////////////////////////////
 // Inodes
 ////////////////////////////////////////////////////////////////////////
 
@@ -146,6 +221,33 @@ type ForgetInodeOp struct {
 //
 // Therefore the file system should return EEXIST if the name already exists.
 type MkDirOp struct {
+	// The ID of parent directory inode within which to create the child.
+	Parent InodeID
+
+	// The name of the child to create, and the mode with which to create it.
+	Name string
+	Mode os.FileMode
+
+	// Set by the file system: information about the inode that was created.
+	//
+	// The lookup count for the inode is implicitly incremented. See notes on
+	// ForgetInodeOp for more information.
+	Entry ChildInodeEntry
+}
+
+// Create a file inode as a child of an existing directory inode. The kernel
+// sends this in response to a mknod(2) call. It may also send it in special
+// cases such as an NFS export (cf. https://goo.gl/HiLfnK). It is more typical
+// to see CreateFileOp, which is received for an open(2) that creates a file.
+//
+// The Linux kernel appears to verify the name doesn't already exist (mknod
+// calls sys_mknodat calls user_path_create calls filename_create, which
+// verifies: http://goo.gl/FZpLu5). But osxfuse may not guarantee this, as with
+// mkdir(2). And if names may be created outside of the kernel's control, it
+// doesn't matter what the kernel does anyway.
+//
+// Therefore the file system should return EEXIST if the name already exists.
+type MkNodeOp struct {
 	// The ID of parent directory inode within which to create the child.
 	Parent InodeID
 
@@ -509,17 +611,8 @@ type ReadFileOp struct {
 //
 // Note that the kernel *will* ensure that writes are received and acknowledged
 // by the file system before sending a FlushFileOp when closing the file
-// descriptor to which they were written:
-//
-//  *  (http://goo.gl/PheZjf) fuse_flush calls write_inode_now, which appears
-//     to start a writeback in the background (it talks about a "flusher
-//     thread").
-//
-//  *  (http://goo.gl/1IiepM) fuse_flush then calls fuse_sync_writes, which
-//     "[waits] for all pending writepages on the inode to finish".
-//
-//  *  (http://goo.gl/zzvxWv) Only then does fuse_flush finally send the
-//     flush request.
+// descriptor to which they were written. Cf. the notes on
+// fuse.MountConfig.DisableWritebackCaching.
 //
 // (See also http://goo.gl/ocdTdM, fuse-devel thread "Fuse guarantees on
 // concurrent requests".)

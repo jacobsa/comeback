@@ -29,6 +29,13 @@ type NotImplementedFileSystem struct {
 
 var _ FileSystem = &NotImplementedFileSystem{}
 
+func (fs *NotImplementedFileSystem) StatFS(
+	ctx context.Context,
+	op *fuseops.StatFSOp) (err error) {
+	err = fuse.ENOSYS
+	return
+}
+
 func (fs *NotImplementedFileSystem) LookUpInode(
 	ctx context.Context,
 	op *fuseops.LookUpInodeOp) (err error) {
@@ -60,6 +67,13 @@ func (fs *NotImplementedFileSystem) ForgetInode(
 func (fs *NotImplementedFileSystem) MkDir(
 	ctx context.Context,
 	op *fuseops.MkDirOp) (err error) {
+	err = fuse.ENOSYS
+	return
+}
+
+func (fs *NotImplementedFileSystem) MkNode(
+	ctx context.Context,
+	op *fuseops.MkNodeOp) (err error) {
 	err = fuse.ENOSYS
 	return
 }
