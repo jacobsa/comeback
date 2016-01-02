@@ -123,19 +123,10 @@ func startDaemon(ctx context.Context, args []string) (err error) {
 	return
 }
 
-func runMount(ctx context.Context, args []string) (err error) {
-	// If we are not the file system daemon, we should start it and wait for it
-	// to mount successfully, then do no more.
-	if !isDaemon() {
-		err = startDaemon(ctx, args)
-		if err != nil {
-			err = fmt.Errorf("startDaemon: %v", err)
-			return
-		}
-
-		return
-	}
-
+func mount(
+	ctx context.Context,
+	args []string,
+	logger *log.Logger) (mfs *fuse.MountedFileSystem, err error) {
 	// Enable invariant checking for the file system.
 	syncutil.EnableInvariantChecking()
 
@@ -190,7 +181,7 @@ func runMount(ctx context.Context, args []string) (err error) {
 		score = j.Score
 	}
 
-	log.Printf("Mounting score %s.", score.Hex())
+	logger.Printf("Mounting score %s.", score.Hex())
 
 	// Choose permission settings.
 	uid, gid, err := currentUser()
@@ -220,17 +211,45 @@ func runMount(ctx context.Context, args []string) (err error) {
 		cfg.DebugLogger = log.New(os.Stderr, "debug_fuse: ", log.Flags())
 	}
 
-	mfs, err := fuse.Mount(
+	mfs, err = fuse.Mount(
 		mountPoint,
 		fuseutil.NewFileSystemServer(fs),
 		cfg)
 
 	if err != nil {
-		err = fmt.Errorf("Mount: %v", err)
+		err = fmt.Errorf("fuse.Mount: %v", err)
 		return
 	}
 
-	log.Println("File system mounted.")
+	return
+}
+
+func runMount(ctx context.Context, args []string) (err error) {
+	// If we are not the file system daemon, we should start it and wait for it
+	// to mount successfully, then do no more.
+	if !isDaemon() {
+		err = startDaemon(ctx, args)
+		if err != nil {
+			err = fmt.Errorf("startDaemon: %v", err)
+			return
+		}
+
+		return
+	}
+
+	// Otherwise, attempt to mount the file system. Communicate status to the
+	// program waiting on us to finish mounting.
+	logger := log.New(daemonize.StatusWriter, "", 0)
+
+	mfs, err := mount(ctx, args, logger)
+	if err != nil {
+		err = fmt.Errorf("mount: %v", err)
+		daemonize.SignalOutcome(err)
+		return
+	}
+
+	logger.Println("File system successfully mounted.")
+	daemonize.SignalOutcome(nil)
 
 	// Wait for unmount.
 	err = mfs.Join(ctx)
@@ -239,6 +258,5 @@ func runMount(ctx context.Context, args []string) (err error) {
 		return
 	}
 
-	log.Println("Exiting successfully.")
 	return
 }
