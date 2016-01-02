@@ -113,9 +113,15 @@ _* | *_ | _)
 	echo 'undefined $GOOS_$GOARCH:' "$GOOSARCH" 1>&2
 	exit 1
 	;;
+darwin_386)
+	mkerrors="$mkerrors -m32"
+	mksyscall="./mksyscall.pl -l32"
+	mksysnum="./mksysnum_darwin.pl $(xcrun --show-sdk-path --sdk macosx)/usr/include/sys/syscall.h"
+	mktypes="GOARCH=$GOARCH go tool cgo -godefs"
+	;;
 darwin_amd64)
 	mkerrors="$mkerrors -m64"
-	mksysnum="./mksysnum_darwin.pl /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.10.sdk/usr/include/sys/syscall.h"
+	mksysnum="./mksysnum_darwin.pl $(xcrun --show-sdk-path --sdk macosx)/usr/include/sys/syscall.h"
 	mktypes="GOARCH=$GOARCH go tool cgo -godefs"
 	;;
 darwin_arm)
@@ -125,7 +131,7 @@ darwin_arm)
 	;;
 darwin_arm64)
 	mkerrors="$mkerrors -m64"
-	mksysnum="./mksysnum_darwin.pl /usr/include/sys/syscall.h"
+	mksysnum="./mksysnum_darwin.pl $(xcrun --show-sdk-path --sdk iphoneos)/usr/include/sys/syscall.h"
 	mktypes="GOARCH=$GOARCH go tool cgo -godefs"
 	;;
 dragonfly_386)

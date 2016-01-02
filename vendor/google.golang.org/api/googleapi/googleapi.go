@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"golang.org/x/net/context"
+	"golang.org/x/net/context/ctxhttp"
 	"google.golang.org/api/googleapi/internal/uritemplates"
 )
 
@@ -40,6 +41,16 @@ type ContentTyper interface {
 type SizeReaderAt interface {
 	io.ReaderAt
 	Size() int64
+}
+
+// ServerResponse is embedded in each Do response and
+// provides the HTTP status code and header sent by the server.
+type ServerResponse struct {
+	// HTTPStatusCode is the server's response status code.
+	// When using a resource method's Do call, this will always be in the 2xx range.
+	HTTPStatusCode int
+	// Header contains the response header fields from the server.
+	Header http.Header
 }
 
 const (
@@ -65,6 +76,8 @@ type Error struct {
 	// Body is the raw response returned by the server.
 	// It is often but not always JSON, depending on how the request fails.
 	Body string
+	// Header contains the response header fields from the server.
+	Header http.Header
 
 	Errors []ErrorItem
 }
@@ -123,9 +136,22 @@ func CheckResponse(res *http.Response) error {
 		}
 	}
 	return &Error{
-		Code: res.StatusCode,
-		Body: string(slurp),
+		Code:   res.StatusCode,
+		Body:   string(slurp),
+		Header: res.Header,
 	}
+}
+
+// IsNotModified reports whether err is the result of the
+// server replying with http.StatusNotModified.
+// Such error values are sometimes returned by "Do" methods
+// on calls when If-None-Match is used.
+func IsNotModified(err error) bool {
+	if err == nil {
+		return false
+	}
+	ae, ok := err.(*Error)
+	return ok && ae.Code == http.StatusNotModified
 }
 
 // CheckMediaResponse returns an error (of type *Error) if the response
@@ -322,7 +348,6 @@ type ResumableUpload struct {
 
 	mu       sync.Mutex // guards progress
 	progress int64      // number of bytes uploaded so far
-	started  bool       // whether the upload has been started
 
 	// Callback is an optional function that will be called upon every progress update.
 	Callback ProgressUpdater
@@ -343,12 +368,12 @@ func (rx *ResumableUpload) Progress() int64 {
 	return rx.progress
 }
 
-func (rx *ResumableUpload) transferStatus() (int64, *http.Response, error) {
+func (rx *ResumableUpload) transferStatus(ctx context.Context) (int64, *http.Response, error) {
 	req, _ := http.NewRequest("POST", rx.URI, nil)
 	req.ContentLength = 0
 	req.Header.Set("User-Agent", rx.UserAgent)
 	req.Header.Set("Content-Range", fmt.Sprintf("bytes */%v", rx.ContentLength))
-	res, err := rx.Client.Do(req)
+	res, err := ctxhttp.Do(ctx, rx.Client, req)
 	if err != nil || res.StatusCode != statusResumeIncomplete {
 		return 0, res, err
 	}
@@ -370,16 +395,13 @@ type chunk struct {
 }
 
 func (rx *ResumableUpload) transferChunks(ctx context.Context) (*http.Response, error) {
-	var start int64
-	var err error
-	res := &http.Response{}
-	if rx.started {
-		start, res, err = rx.transferStatus()
-		if err != nil || res.StatusCode != statusResumeIncomplete {
-			return res, err
+	start, res, err := rx.transferStatus(ctx)
+	if err != nil || res.StatusCode != statusResumeIncomplete {
+		if err == context.Canceled {
+			return &http.Response{StatusCode: http.StatusRequestTimeout}, err
 		}
+		return res, err
 	}
-	rx.started = true
 
 	for {
 		select { // Check for cancellation
@@ -398,7 +420,7 @@ func (rx *ResumableUpload) transferChunks(ctx context.Context) (*http.Response, 
 		req.Header.Set("Content-Range", fmt.Sprintf("bytes %v-%v/%v", start, start+reqSize-1, rx.ContentLength))
 		req.Header.Set("Content-Type", rx.MediaType)
 		req.Header.Set("User-Agent", rx.UserAgent)
-		res, err = rx.Client.Do(req)
+		res, err = ctxhttp.Do(ctx, rx.Client, req)
 		start += reqSize
 		if err == nil && (res.StatusCode == statusResumeIncomplete || res.StatusCode == http.StatusOK) {
 			rx.mu.Lock()

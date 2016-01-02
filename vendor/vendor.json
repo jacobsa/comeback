@@ -4,8 +4,8 @@
 	"package": [
 		{
 			"path": "github.com/golang/protobuf/proto",
-			"revision": "68c687dc49948540b356a6b47931c9be4fcd0245",
-			"revisionTime": "2015-07-27T19:06:00+10:00"
+			"revision": "68415e7123da32b07eab49c96d2c4d6158360e9b",
+			"revisionTime": "2015-12-07T15:07:14+11:00"
 		},
 		{
 			"path": "github.com/jacobsa/crypto/cmac",
@@ -24,58 +24,58 @@
 		},
 		{
 			"path": "github.com/jacobsa/fuse",
-			"revision": "9a7512aac0fb7769d3475200e8b766cf85c15f49",
-			"revisionTime": "2015-08-06T16:25:43+10:00"
+			"revision": "895b8c415580ff864f707cc0016b08ff840cd23b",
+			"revisionTime": "2015-12-15T10:55:29+11:00"
 		},
 		{
 			"path": "github.com/jacobsa/fuse/fsutil",
-			"revision": "9a7512aac0fb7769d3475200e8b766cf85c15f49",
-			"revisionTime": "2015-08-06T16:25:43+10:00"
+			"revision": "895b8c415580ff864f707cc0016b08ff840cd23b",
+			"revisionTime": "2015-12-15T10:55:29+11:00"
 		},
 		{
 			"path": "github.com/jacobsa/fuse/fuseops",
-			"revision": "9a7512aac0fb7769d3475200e8b766cf85c15f49",
-			"revisionTime": "2015-08-06T16:25:43+10:00"
+			"revision": "895b8c415580ff864f707cc0016b08ff840cd23b",
+			"revisionTime": "2015-12-15T10:55:29+11:00"
 		},
 		{
 			"path": "github.com/jacobsa/fuse/fuseutil",
-			"revision": "9a7512aac0fb7769d3475200e8b766cf85c15f49",
-			"revisionTime": "2015-08-06T16:25:43+10:00"
+			"revision": "895b8c415580ff864f707cc0016b08ff840cd23b",
+			"revisionTime": "2015-12-15T10:55:29+11:00"
 		},
 		{
 			"path": "github.com/jacobsa/fuse/internal/buffer",
-			"revision": "9a7512aac0fb7769d3475200e8b766cf85c15f49",
-			"revisionTime": "2015-08-06T16:25:43+10:00"
+			"revision": "895b8c415580ff864f707cc0016b08ff840cd23b",
+			"revisionTime": "2015-12-15T10:55:29+11:00"
 		},
 		{
 			"path": "github.com/jacobsa/fuse/internal/freelist",
-			"revision": "9a7512aac0fb7769d3475200e8b766cf85c15f49",
-			"revisionTime": "2015-08-06T16:25:43+10:00"
+			"revision": "895b8c415580ff864f707cc0016b08ff840cd23b",
+			"revisionTime": "2015-12-15T10:55:29+11:00"
 		},
 		{
 			"path": "github.com/jacobsa/fuse/internal/fusekernel",
-			"revision": "9a7512aac0fb7769d3475200e8b766cf85c15f49",
-			"revisionTime": "2015-08-06T16:25:43+10:00"
+			"revision": "895b8c415580ff864f707cc0016b08ff840cd23b",
+			"revisionTime": "2015-12-15T10:55:29+11:00"
 		},
 		{
 			"path": "github.com/jacobsa/gcloud/gcs",
-			"revision": "da4c219088ce3b36b1582232669286ba40fa21c6",
-			"revisionTime": "2015-08-31T14:47:11+10:00"
+			"revision": "ca4fb085912aa5c6b40d76689547c9e327796398",
+			"revisionTime": "2015-10-01T00:27:58-07:00"
 		},
 		{
 			"path": "github.com/jacobsa/gcloud/gcs/gcsfake",
-			"revision": "da4c219088ce3b36b1582232669286ba40fa21c6",
-			"revisionTime": "2015-08-31T14:47:11+10:00"
+			"revision": "ca4fb085912aa5c6b40d76689547c9e327796398",
+			"revisionTime": "2015-10-01T00:27:58-07:00"
 		},
 		{
 			"path": "github.com/jacobsa/gcloud/gcs/gcsutil",
-			"revision": "da4c219088ce3b36b1582232669286ba40fa21c6",
-			"revisionTime": "2015-08-31T14:47:11+10:00"
+			"revision": "ca4fb085912aa5c6b40d76689547c9e327796398",
+			"revisionTime": "2015-10-01T00:27:58-07:00"
 		},
 		{
 			"path": "github.com/jacobsa/gcloud/httputil",
-			"revision": "da4c219088ce3b36b1582232669286ba40fa21c6",
-			"revisionTime": "2015-08-31T14:47:11+10:00"
+			"revision": "ca4fb085912aa5c6b40d76689547c9e327796398",
+			"revisionTime": "2015-10-01T00:27:58-07:00"
 		},
 		{
 			"path": "github.com/jacobsa/oglematchers",
@@ -84,8 +84,8 @@
 		},
 		{
 			"path": "github.com/jacobsa/oglemock",
-			"revision": "b320e9d68125bec1159ac587792648ff06eaa2cc",
-			"revisionTime": "2015-07-20T10:07:30+10:00"
+			"revision": "e94d794d06ffc6de42cb19d0dab3c219efdd6dcf",
+			"revisionTime": "2015-08-31T08:21:36+10:00"
 		},
 		{
 			"path": "github.com/jacobsa/ogletest",
@@ -124,68 +124,118 @@
 		},
 		{
 			"path": "golang.org/x/crypto/pbkdf2",
-			"revision": "81bf7719a6b7ce9b665598222362b50122dfc13b",
-			"revisionTime": "2015-07-28T14:18:45-07:00"
+			"revision": "f18420efc3b4f8e9f3d51f6bd2476e92c46260e9",
+			"revisionTime": "2015-12-15T11:40:13-07:00"
 		},
 		{
 			"path": "golang.org/x/net/context",
-			"revision": "7654728e381988afd88e58cabfd6363a5ea91810",
-			"revisionTime": "2015-08-24T10:39:13+10:00"
+			"revision": "0cb26f788dd4625d1956c6fd97ffc4c90669d129",
+			"revisionTime": "2015-12-21T16:56:49-08:00"
+		},
+		{
+			"path": "golang.org/x/net/context/ctxhttp",
+			"revision": "0cb26f788dd4625d1956c6fd97ffc4c90669d129",
+			"revisionTime": "2015-12-21T16:56:49-08:00"
 		},
 		{
 			"path": "golang.org/x/oauth2",
-			"revision": "397fe7649477ff2e8ced8fc0b2696f781e53745a",
-			"revisionTime": "2015-06-03T16:14:52-07:00"
+			"revision": "2baa8a1b9338cf13d9eeb27696d761155fa480be",
+			"revisionTime": "2015-12-03T13:21:41-08:00"
 		},
 		{
 			"path": "golang.org/x/oauth2/google",
-			"revision": "397fe7649477ff2e8ced8fc0b2696f781e53745a",
-			"revisionTime": "2015-06-03T16:14:52-07:00"
+			"revision": "2baa8a1b9338cf13d9eeb27696d761155fa480be",
+			"revisionTime": "2015-12-03T13:21:41-08:00"
 		},
 		{
 			"path": "golang.org/x/oauth2/internal",
-			"revision": "397fe7649477ff2e8ced8fc0b2696f781e53745a",
-			"revisionTime": "2015-06-03T16:14:52-07:00"
+			"revision": "2baa8a1b9338cf13d9eeb27696d761155fa480be",
+			"revisionTime": "2015-12-03T13:21:41-08:00"
 		},
 		{
 			"path": "golang.org/x/oauth2/jws",
-			"revision": "397fe7649477ff2e8ced8fc0b2696f781e53745a",
-			"revisionTime": "2015-06-03T16:14:52-07:00"
+			"revision": "2baa8a1b9338cf13d9eeb27696d761155fa480be",
+			"revisionTime": "2015-12-03T13:21:41-08:00"
 		},
 		{
 			"path": "golang.org/x/oauth2/jwt",
-			"revision": "397fe7649477ff2e8ced8fc0b2696f781e53745a",
-			"revisionTime": "2015-06-03T16:14:52-07:00"
+			"revision": "2baa8a1b9338cf13d9eeb27696d761155fa480be",
+			"revisionTime": "2015-12-03T13:21:41-08:00"
 		},
 		{
 			"path": "golang.org/x/sys/unix",
-			"revision": "2d510369c839be75ca91bac0d9d4ecd207bb9bad",
-			"revisionTime": "2015-09-01T13:37:16+10:00"
+			"revision": "833a04a10549a95dc34458c195cbad61bbb6cb4d",
+			"revisionTime": "2015-12-10T17:34:15-08:00"
+		},
+		{
+			"path": "google.golang.org/api/gensupport",
+			"revision": "dc6d2353af16e2a2b0ff6986af051d473a4ed468",
+			"revisionTime": "2015-12-16T13:09:16+11:00"
 		},
 		{
 			"path": "google.golang.org/api/googleapi",
-			"revision": "a5c3e2a4792aff40e59840d9ecdff0542a202a80",
-			"revisionTime": "2015-08-07T21:35:18-07:00"
+			"revision": "dc6d2353af16e2a2b0ff6986af051d473a4ed468",
+			"revisionTime": "2015-12-16T13:09:16+11:00"
 		},
 		{
 			"path": "google.golang.org/api/googleapi/internal/uritemplates",
-			"revision": "a5c3e2a4792aff40e59840d9ecdff0542a202a80",
-			"revisionTime": "2015-08-07T21:35:18-07:00"
+			"revision": "dc6d2353af16e2a2b0ff6986af051d473a4ed468",
+			"revisionTime": "2015-12-16T13:09:16+11:00"
 		},
 		{
 			"path": "google.golang.org/api/storage/v1",
-			"revision": "a5c3e2a4792aff40e59840d9ecdff0542a202a80",
-			"revisionTime": "2015-08-07T21:35:18-07:00"
+			"revision": "dc6d2353af16e2a2b0ff6986af051d473a4ed468",
+			"revisionTime": "2015-12-16T13:09:16+11:00"
+		},
+		{
+			"path": "google.golang.org/appengine",
+			"revision": "58c0e2a2044a8d1abd8dd1d97939cd74497d0806",
+			"revisionTime": "2015-12-16T21:03:11+11:00"
+		},
+		{
+			"path": "google.golang.org/appengine/internal",
+			"revision": "58c0e2a2044a8d1abd8dd1d97939cd74497d0806",
+			"revisionTime": "2015-12-16T21:03:11+11:00"
+		},
+		{
+			"path": "google.golang.org/appengine/internal/app_identity",
+			"revision": "58c0e2a2044a8d1abd8dd1d97939cd74497d0806",
+			"revisionTime": "2015-12-16T21:03:11+11:00"
+		},
+		{
+			"path": "google.golang.org/appengine/internal/base",
+			"revision": "58c0e2a2044a8d1abd8dd1d97939cd74497d0806",
+			"revisionTime": "2015-12-16T21:03:11+11:00"
+		},
+		{
+			"path": "google.golang.org/appengine/internal/datastore",
+			"revision": "58c0e2a2044a8d1abd8dd1d97939cd74497d0806",
+			"revisionTime": "2015-12-16T21:03:11+11:00"
+		},
+		{
+			"path": "google.golang.org/appengine/internal/log",
+			"revision": "58c0e2a2044a8d1abd8dd1d97939cd74497d0806",
+			"revisionTime": "2015-12-16T21:03:11+11:00"
+		},
+		{
+			"path": "google.golang.org/appengine/internal/modules",
+			"revision": "58c0e2a2044a8d1abd8dd1d97939cd74497d0806",
+			"revisionTime": "2015-12-16T21:03:11+11:00"
+		},
+		{
+			"path": "google.golang.org/appengine/internal/remote_api",
+			"revision": "58c0e2a2044a8d1abd8dd1d97939cd74497d0806",
+			"revisionTime": "2015-12-16T21:03:11+11:00"
 		},
 		{
 			"path": "google.golang.org/cloud/compute/metadata",
-			"revision": "e34a32f9b0ecbc0784865fb2d47f3818c09521d4",
-			"revisionTime": "2015-07-29T23:39:00-07:00"
+			"revision": "6fdcab499d2c45e2939521c4047855f12a745a1d",
+			"revisionTime": "2015-12-21T16:31:31+11:00"
 		},
 		{
 			"path": "google.golang.org/cloud/internal",
-			"revision": "e34a32f9b0ecbc0784865fb2d47f3818c09521d4",
-			"revisionTime": "2015-07-29T23:39:00-07:00"
+			"revision": "6fdcab499d2c45e2939521c4047855f12a745a1d",
+			"revisionTime": "2015-12-21T16:31:31+11:00"
 		}
 	]
 }

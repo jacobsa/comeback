@@ -35,11 +35,13 @@ import (
 // See NotImplementedFileSystem for a convenient way to embed default
 // implementations for methods you don't care about.
 type FileSystem interface {
+	StatFS(context.Context, *fuseops.StatFSOp) error
 	LookUpInode(context.Context, *fuseops.LookUpInodeOp) error
 	GetInodeAttributes(context.Context, *fuseops.GetInodeAttributesOp) error
 	SetInodeAttributes(context.Context, *fuseops.SetInodeAttributesOp) error
 	ForgetInode(context.Context, *fuseops.ForgetInodeOp) error
 	MkDir(context.Context, *fuseops.MkDirOp) error
+	MkNode(context.Context, *fuseops.MkNodeOp) error
 	CreateFile(context.Context, *fuseops.CreateFileOp) error
 	CreateSymlink(context.Context, *fuseops.CreateSymlinkOp) error
 	Rename(context.Context, *fuseops.RenameOp) error
@@ -119,6 +121,9 @@ func (s *fileSystemServer) handleOp(
 	default:
 		err = fuse.ENOSYS
 
+	case *fuseops.StatFSOp:
+		err = s.fs.StatFS(ctx, typed)
+
 	case *fuseops.LookUpInodeOp:
 		err = s.fs.LookUpInode(ctx, typed)
 
@@ -133,6 +138,9 @@ func (s *fileSystemServer) handleOp(
 
 	case *fuseops.MkDirOp:
 		err = s.fs.MkDir(ctx, typed)
+
+	case *fuseops.MkNodeOp:
+		err = s.fs.MkNode(ctx, typed)
 
 	case *fuseops.CreateFileOp:
 		err = s.fs.CreateFile(ctx, typed)
