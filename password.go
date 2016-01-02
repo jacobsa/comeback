@@ -17,6 +17,7 @@ package main
 
 import (
 	"log"
+	"os"
 	"sync"
 
 	"github.com/jacobsa/util/password"
@@ -25,7 +26,17 @@ import (
 var gPassword string
 var gPasswordOnce sync.Once
 
+// If set, the user will not be prompted.
+const passwordEnvVar = "COMEBACK_PASSWORD"
+
 func initPassword() {
+	// Is the environment variable set?
+	var ok bool
+	if gPassword, ok = os.LookupEnv(passwordEnvVar); ok {
+		return
+	}
+
+	// Prompt the user.
 	gPassword = password.ReadPassword("Enter crypto password: ")
 	if len(gPassword) == 0 {
 		log.Fatalln("You must enter a password.")
