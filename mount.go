@@ -29,14 +29,21 @@ import (
 	"github.com/jacobsa/comeback/internal/blob"
 	"github.com/jacobsa/comeback/internal/comebackfs"
 	"github.com/jacobsa/comeback/internal/registry"
+	"github.com/jacobsa/daemonize"
 	"github.com/jacobsa/fuse"
 	"github.com/jacobsa/fuse/fuseutil"
 	"github.com/jacobsa/syncutil"
+	"github.com/kardianos/osext"
 )
 
 var cmdMount = &Command{
 	Name: "mount",
 }
+
+var fForeground = cmdMount.Flags.Bool(
+	"foreground",
+	false,
+	"Stay in the foreground during and after mounting.")
 
 var fDebugFuse = cmdMount.Flags.Bool(
 	"debug_fuse",
@@ -100,11 +107,54 @@ func currentUser() (uid uint32, gid uint32, err error) {
 	return
 }
 
+// When the user runs `comeback mount`, the binary re-executes itself using the
+// daemonize package. This environment variable is set when invoking the daemon
+// so that it can tell itself apart from the foreground process.
+const daemonEnvVar = "COMEBACK_DAEMON"
+
+func isDaemon() (b bool) {
+	_, b = os.LookupEnv(daemonEnvVar)
+	return
+}
+
 ////////////////////////////////////////////////////////////////////////
 // Command
 ////////////////////////////////////////////////////////////////////////
 
-func runMount(ctx context.Context, args []string) (err error) {
+// Start the file system daemon and wait for it to mount successfully.
+func startDaemon(ctx context.Context, args []string) (err error) {
+	// Prompt the user for their password here instead of in the daemon.
+	password := getPassword()
+
+	// Find our executable.
+	path, err := osext.Executable()
+	if err != nil {
+		err = fmt.Errorf("osext.Executable: %v", err)
+		return
+	}
+
+	// Re-execute as the daemon, forwarding status output to stderr.
+	err = daemonize.Run(
+		path,
+		append([]string{"mount"}, args...),
+		[]string{
+			fmt.Sprintf("%s=%s", passwordEnvVar, password),
+			fmt.Sprintf("%s=", daemonEnvVar),
+		},
+		os.Stderr)
+
+	if err != nil {
+		err = fmt.Errorf("daemonize.Run: %v", err)
+		return
+	}
+
+	return
+}
+
+func mount(
+	ctx context.Context,
+	args []string,
+	logger *log.Logger) (mfs *fuse.MountedFileSystem, err error) {
 	// Enable invariant checking for the file system.
 	syncutil.EnableInvariantChecking()
 
@@ -159,7 +209,7 @@ func runMount(ctx context.Context, args []string) (err error) {
 		score = j.Score
 	}
 
-	log.Printf("Mounting score %s.", score.Hex())
+	logger.Printf("Mounting score %s.", score.Hex())
 
 	// Choose permission settings.
 	uid, gid, err := currentUser()
@@ -189,20 +239,49 @@ func runMount(ctx context.Context, args []string) (err error) {
 		cfg.DebugLogger = log.New(os.Stderr, "debug_fuse: ", log.Flags())
 	}
 
-	mfs, err := fuse.Mount(
+	mfs, err = fuse.Mount(
 		mountPoint,
 		fuseutil.NewFileSystemServer(fs),
 		cfg)
 
 	if err != nil {
-		err = fmt.Errorf("Mount: %v", err)
+		err = fmt.Errorf("fuse.Mount: %v", err)
 		return
 	}
 
-	log.Println("File system mounted.")
+	return
+}
+
+func runMount(ctx context.Context, args []string) (err error) {
+	// If we are not the file system daemon and we're supposed to be mounting in
+	// the background, we should start it and wait for it to mount successfully,
+	// then do no more.
+	if !isDaemon() && !*fForeground {
+		err = startDaemon(ctx, args)
+		if err != nil {
+			err = fmt.Errorf("startDaemon: %v", err)
+			return
+		}
+
+		return
+	}
+
+	// Otherwise, attempt to mount the file system. Communicate status to the
+	// program waiting on us to finish mounting.
+	logger := log.New(daemonize.StatusWriter, "", 0)
+
+	mfs, err := mount(ctx, args, logger)
+	if err != nil {
+		err = fmt.Errorf("mount: %v", err)
+		daemonize.SignalOutcome(err)
+		return
+	}
+
+	logger.Println("File system successfully mounted.")
+	daemonize.SignalOutcome(nil)
 
 	// Watch for SIGINT.
-	registerSIGINTHandler(mountPoint)
+	registerSIGINTHandler(mfs.Dir())
 
 	// Wait for unmount.
 	err = mfs.Join(ctx)
@@ -211,6 +290,5 @@ func runMount(ctx context.Context, args []string) (err error) {
 		return
 	}
 
-	log.Println("Exiting successfully.")
 	return
 }
