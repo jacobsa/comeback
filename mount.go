@@ -28,6 +28,7 @@ import (
 	"github.com/jacobsa/comeback/internal/blob"
 	"github.com/jacobsa/comeback/internal/comebackfs"
 	"github.com/jacobsa/comeback/internal/registry"
+	"github.com/jacobsa/daemonize"
 	"github.com/jacobsa/fuse"
 	"github.com/jacobsa/fuse/fuseutil"
 	"github.com/jacobsa/syncutil"
@@ -77,11 +78,56 @@ func currentUser() (uid uint32, gid uint32, err error) {
 	return
 }
 
+// When the user runs `comeback mount`, the binary re-executes itself using the
+// daemonize package. This environment variable is set when invoking the daemon
+// so that it can tell itself apart from the foreground process.
+const daemonEnvVar = "COMEBACK_DAEMON"
+
+func isDaemon() (b bool) {
+	_, b = os.LookupEnv(daemonEnvVar)
+	return
+}
+
 ////////////////////////////////////////////////////////////////////////
 // Command
 ////////////////////////////////////////////////////////////////////////
 
+// Start the file system daemon and wait for it to mount successfully.
+func startDaemon(ctx context.Context, args []string) (err error) {
+	// Prompt the user for their password here instead of in the daemon.
+	password := getPassword()
+
+	// Re-execute as the daemon, forwarding status output to stderr.
+	err = daemonize.Run(
+		os.Args[0],
+		append([]string{"mount"}, args...),
+		[]string{
+			fmt.Sprintf("%s=%s", passwordEnvVar, password),
+			fmt.Sprintf("%s=", daemonEnvVar),
+		},
+		os.Stderr)
+
+	if err != nil {
+		err = fmt.Errorf("daemonize.Run: %v", err)
+		return
+	}
+
+	return
+}
+
 func runMount(ctx context.Context, args []string) (err error) {
+	// If we are not the file system daemon, we should start it and wait for it
+	// to mount successfully, then do no more.
+	if !isDaemon() {
+		err = startDaemon(ctx, args)
+		if err != nil {
+			err = fmt.Errorf("startDaemon: %v", err)
+			return
+		}
+
+		return
+	}
+
 	// Enable invariant checking for the file system.
 	syncutil.EnableInvariantChecking()
 
