@@ -39,6 +39,11 @@ var cmdMount = &Command{
 	Name: "mount",
 }
 
+var fForeground = cmdMount.Flags.Bool(
+	"foreground",
+	false,
+	"Stay in the foreground during and after mounting.")
+
 var fDebugFuse = cmdMount.Flags.Bool(
 	"debug_fuse",
 	false,
@@ -225,9 +230,10 @@ func mount(
 }
 
 func runMount(ctx context.Context, args []string) (err error) {
-	// If we are not the file system daemon, we should start it and wait for it
-	// to mount successfully, then do no more.
-	if !isDaemon() {
+	// If we are not the file system daemon and we're supposed to be mounting in
+	// the background, we should start it and wait for it to mount successfully,
+	// then do no more.
+	if !isDaemon() && !*fForeground {
 		err = startDaemon(ctx, args)
 		if err != nil {
 			err = fmt.Errorf("startDaemon: %v", err)
