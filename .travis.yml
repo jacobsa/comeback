@@ -11,9 +11,9 @@ osx_image: xcode6.4
 # Cf. http://docs.travis-ci.com/user/migrating-from-legacy/
 sudo: false
 
-# We can't build with 1.4.1 (the default as of 2015-09-01), because it doesn't
+# We can't build with 1.4.1 (the default as of 2016-01-02), because it doesn't
 # support vendoring.
-go: 1.5
+go: 1.5.2
 
 # Ensure that we get vendoring support in `go test`.
 env:
