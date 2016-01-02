@@ -32,6 +32,7 @@ import (
 	"github.com/jacobsa/fuse"
 	"github.com/jacobsa/fuse/fuseutil"
 	"github.com/jacobsa/syncutil"
+	"github.com/kardianos/osext"
 )
 
 var cmdMount = &Command{
@@ -97,9 +98,16 @@ func startDaemon(ctx context.Context, args []string) (err error) {
 	// Prompt the user for their password here instead of in the daemon.
 	password := getPassword()
 
+	// Find our executable.
+	path, err := osext.Executable()
+	if err != nil {
+		err = fmt.Errorf("osext.Executable: %v", err)
+		return
+	}
+
 	// Re-execute as the daemon, forwarding status output to stderr.
 	err = daemonize.Run(
-		os.Args[0],
+		path,
 		append([]string{"mount"}, args...),
 		[]string{
 			fmt.Sprintf("%s=%s", passwordEnvVar, password),

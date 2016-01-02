@@ -128,6 +128,11 @@
 			"revisionTime": "2015-08-10T14:08:48+10:00"
 		},
 		{
+			"path": "github.com/kardianos/osext",
+			"revision": "29ae4ffbc9a6fe9fb2bc5029050ce6996ea1d3bc",
+			"revisionTime": "2015-12-22T07:32:29-08:00"
+		},
+		{
 			"path": "golang.org/x/crypto/pbkdf2",
 			"revision": "f18420efc3b4f8e9f3d51f6bd2476e92c46260e9",
 			"revisionTime": "2015-12-15T11:40:13-07:00"
