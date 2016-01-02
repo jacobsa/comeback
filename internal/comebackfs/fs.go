@@ -292,6 +292,13 @@ func (fs *fileSystem) GetInodeAttributes(
 	return
 }
 
+func (fs *fileSystem) StatFS(
+	ctx context.Context,
+	op *fuseops.StatFSOp) (err error) {
+	// We don't have anything interesting to say.
+	return
+}
+
 // LOCKS_EXCLUDED(fs)
 func (fs *fileSystem) LookUpInode(
 	ctx context.Context,
