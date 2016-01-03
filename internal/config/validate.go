@@ -21,7 +21,7 @@ import (
 	"unicode/utf8"
 )
 
-func validateJob(j *Job) error {
+func validateJob(j Job) error {
 	// Base paths must be non-empty valid UTF-8.
 	if j.BasePath == "" || !utf8.Valid([]byte(j.BasePath)) {
 		return fmt.Errorf("Base paths must be non-empty valid UTF-8.")

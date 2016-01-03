@@ -43,18 +43,16 @@ func Parse(data []byte) (*Config, error) {
 
 	// Convert to our public representation.
 	cfg := &Config{
-		Jobs:       make(map[string]*Job),
+		Jobs:       make(map[string]Job),
 		KeyFile:    jCfg.KeyFile,
 		BucketName: jCfg.BucketName,
 		StateFile:  jCfg.StateFile,
 	}
 
 	for name, jJob := range jCfg.Jobs {
-		// Create a public job and populate it.
-		job := new(Job)
-		cfg.Jobs[name] = job
-
+		var job Job
 		job.BasePath = jJob.BasePath
+
 		for _, reStr := range jJob.Excludes {
 			re, err := regexp.Compile(reStr)
 			if err != nil {
@@ -63,6 +61,8 @@ func Parse(data []byte) (*Config, error) {
 
 			job.Excludes = append(job.Excludes, re)
 		}
+
+		cfg.Jobs[name] = job
 	}
 
 	return cfg, nil
