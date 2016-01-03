@@ -28,6 +28,7 @@ import (
 	"github.com/jacobsa/comeback/internal/blob"
 	"github.com/jacobsa/comeback/internal/fs"
 	pkgfs "github.com/jacobsa/comeback/internal/fs"
+	"github.com/jacobsa/comeback/internal/repr"
 	"github.com/jacobsa/fuse"
 	"github.com/jacobsa/fuse/fuseops"
 	"github.com/jacobsa/fuse/fuseutil"
@@ -202,6 +203,30 @@ func createInode(
 	uid uint32,
 	gid uint32,
 	blobStore blob.Store) (in inode, err error) {
+	// HACK(jacobsa): Attempt to divine file sizes for old backups.
+	if e.Size == 0 && len(e.Scores) > 0 {
+		for _, s := range e.Scores {
+			var p []byte
+
+			// Load a chunk.
+			p, err = blobStore.Load(context.Background(), s)
+			if err != nil {
+				err = fmt.Errorf("Load(%s): %v", s.Hex(), err)
+				return
+			}
+
+			// Unmarshal it.
+			p, err = repr.UnmarshalFile(p)
+			if err != nil {
+				err = fmt.Errorf("UnmarshalFile: %v", err)
+				return
+			}
+
+			// Accumulate.
+			e.Size += uint64(len(p))
+		}
+	}
+
 	switch e.Type {
 	case fs.TypeDirectory:
 		// Check the score count.
