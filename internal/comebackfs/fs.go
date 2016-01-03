@@ -204,7 +204,7 @@ func createInode(
 	gid uint32,
 	blobStore blob.Store) (in inode, err error) {
 	// HACK(jacobsa): Attempt to divine file sizes for old backups.
-	if e.Size == 0 && len(e.Scores) > 0 {
+	if e.Type == fs.TypeFile && e.Size == 0 && len(e.Scores) > 0 {
 		for _, s := range e.Scores {
 			var p []byte
 
