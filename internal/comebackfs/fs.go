@@ -187,6 +187,11 @@ func (fs *fileSystem) lookUpOrCreateInode(e *fs.FileInfo) (
 		in:          in,
 	}
 
+	log.Printf("Created inode %d. Scores:", id)
+	for _, s := range e.Scores {
+		log.Printf("  %s", s.Hex())
+	}
+
 	return
 }
 
