@@ -22,6 +22,7 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/jacobsa/comeback/internal/blob"
+	"github.com/jacobsa/comeback/internal/repr"
 	"github.com/jacobsa/fuse/fsutil"
 	"github.com/jacobsa/syncutil"
 )
@@ -92,12 +93,22 @@ func (fh *fileHandle) ensureFile(ctx context.Context) (err error) {
 	// Copy in the contents.
 	for _, s := range fh.scores {
 		var p []byte
+
+		// Load a chunk.
 		p, err = fh.blobStore.Load(ctx, s)
 		if err != nil {
 			err = fmt.Errorf("Load(%s): %v", s.Hex(), err)
 			return
 		}
 
+		// Unmarshal it.
+		p, err = repr.UnmarshalFile(p)
+		if err != nil {
+			err = fmt.Errorf("UnmarshalFile: %v", err)
+			return
+		}
+
+		// Write it out.
 		_, err = f.Write(p)
 		if err != nil {
 			err = fmt.Errorf("Write: %v", err)

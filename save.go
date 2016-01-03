@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"time"
 
 	"golang.org/x/net/context"
@@ -57,7 +58,7 @@ func saveStatePeriodically(
 	}
 }
 
-func doList(ctx context.Context, job *config.Job) (err error) {
+func doList(ctx context.Context, job config.Job) (err error) {
 	err = save.List(
 		ctx,
 		os.Stdout,
@@ -89,6 +90,17 @@ func runSave(ctx context.Context, args []string) (err error) {
 		err = fmt.Errorf("Unknown job: %q", jobName)
 		return
 	}
+
+	// Resolve any symlinks in the job's base path. This saves us from a race in
+	// the particular case of copying from a Time Machine volume, where the
+	// 'Latest' symlink may be updated while we work.
+	job.BasePath, err = filepath.EvalSymlinks(job.BasePath)
+	if err != nil {
+		err = fmt.Errorf("EvalSymlinks(%q): %v", job.BasePath, err)
+		return
+	}
+
+	log.Printf("Using base path: %s", job.BasePath)
 
 	// Special case: visit the file system only if --list_only is set.
 	if *fListOnly {
