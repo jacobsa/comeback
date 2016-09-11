@@ -151,7 +151,7 @@ func (v *visitor) setScores(
 	case fs.TypeFile:
 		n.Info.Scores, err = v.saveFile(ctx, n)
 		if err != nil {
-			err = fmt.Errorf("saveFile: %v", err)
+			err = fmt.Errorf("saveFile(%q): %v", n.RelPath, err)
 			return
 		}
 
