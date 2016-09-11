@@ -158,7 +158,7 @@ func (v *visitor) setScores(
 	case fs.TypeDirectory:
 		n.Info.Scores, err = v.saveDir(ctx, n.Children)
 		if err != nil {
-			err = fmt.Errorf("saveDir: %v", err)
+			err = fmt.Errorf("saveDir(%q): : %v", n.RelPath, err)
 			return
 		}
 	}
