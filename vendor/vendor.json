@@ -63,28 +63,28 @@
 			"revisionTime": "2015-12-15T10:55:29+11:00"
 		},
 		{
-			"checksumSHA1": "v79niRn3bst9dPvawWXCi0BRYS8=",
+			"checksumSHA1": "/1IfqA99OUuyxyAeuD0It6YIwrI=",
 			"path": "github.com/jacobsa/gcloud/gcs",
-			"revision": "e9e54fcd1efc94e58b06aed435eca4b3f837da71",
-			"revisionTime": "2016-06-02T12:04:01Z"
+			"revision": "17f7008e69293a57067b3e9c0b7679ccae88bef1",
+			"revisionTime": "2016-09-14T03:01:19Z"
 		},
 		{
 			"checksumSHA1": "4eF64wIG1vvwDIWOUr355L7zpMQ=",
 			"path": "github.com/jacobsa/gcloud/gcs/gcsfake",
-			"revision": "e9e54fcd1efc94e58b06aed435eca4b3f837da71",
-			"revisionTime": "2016-06-02T12:04:01Z"
+			"revision": "17f7008e69293a57067b3e9c0b7679ccae88bef1",
+			"revisionTime": "2016-09-14T03:01:19Z"
 		},
 		{
 			"checksumSHA1": "1gvrpwRo8EnLnufGFGtzcyfUeIk=",
 			"path": "github.com/jacobsa/gcloud/gcs/gcsutil",
-			"revision": "e9e54fcd1efc94e58b06aed435eca4b3f837da71",
-			"revisionTime": "2016-06-02T12:04:01Z"
+			"revision": "17f7008e69293a57067b3e9c0b7679ccae88bef1",
+			"revisionTime": "2016-09-14T03:01:19Z"
 		},
 		{
-			"checksumSHA1": "ub1Nzd6BdY10XoHOu3YVdS/6Tok=",
+			"checksumSHA1": "CvMbUpCLXi1cfwNeQRCdUw1EaS8=",
 			"path": "github.com/jacobsa/gcloud/httputil",
-			"revision": "e9e54fcd1efc94e58b06aed435eca4b3f837da71",
-			"revisionTime": "2016-06-02T12:04:01Z"
+			"revision": "17f7008e69293a57067b3e9c0b7679ccae88bef1",
+			"revisionTime": "2016-09-14T03:01:19Z"
 		},
 		{
 			"path": "github.com/jacobsa/oglematchers",
