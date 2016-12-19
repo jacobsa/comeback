@@ -210,10 +210,13 @@ type Bucket struct {
 	// SelfLink: The URI of this bucket.
 	SelfLink string `json:"selfLink,omitempty"`
 
-	// StorageClass: The bucket's storage class. This defines how objects in
-	// the bucket are stored and determines the SLA and the cost of storage.
-	// Values include STANDARD, NEARLINE and DURABLE_REDUCED_AVAILABILITY.
-	// Defaults to STANDARD. For more information, see storage classes.
+	// StorageClass: The bucket's default storage class, used whenever no
+	// storageClass is specified for a newly-created object. This defines
+	// how objects in the bucket are stored and determines the SLA and the
+	// cost of storage. Values include MULTI_REGIONAL, REGIONAL, STANDARD,
+	// NEARLINE, COLDLINE, and DURABLE_REDUCED_AVAILABILITY. If this value
+	// is not specified when the bucket is created, it will default to
+	// STANDARD. For more information, see storage classes.
 	StorageClass string `json:"storageClass,omitempty"`
 
 	// TimeCreated: The creation time of the bucket in RFC 3339 format.
@@ -225,7 +228,9 @@ type Bucket struct {
 	// Versioning: The bucket's versioning configuration.
 	Versioning *BucketVersioning `json:"versioning,omitempty"`
 
-	// Website: The bucket's website configuration.
+	// Website: The bucket's website configuration, controlling how the
+	// service behaves when accessing bucket contents as a web site. See the
+	// Static Website Examples for more information.
 	Website *BucketWebsite `json:"website,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
@@ -239,12 +244,20 @@ type Bucket struct {
 	// server regardless of whether the field is empty or not. This may be
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Acl") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
 }
 
 func (s *Bucket) MarshalJSON() ([]byte, error) {
 	type noMethod Bucket
 	raw := noMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 type BucketCors struct {
@@ -274,12 +287,20 @@ type BucketCors struct {
 	// server regardless of whether the field is empty or not. This may be
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "MaxAgeSeconds") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
 }
 
 func (s *BucketCors) MarshalJSON() ([]byte, error) {
 	type noMethod BucketCors
 	raw := noMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 // BucketLifecycle: The bucket's lifecycle configuration. See lifecycle
@@ -296,12 +317,20 @@ type BucketLifecycle struct {
 	// server regardless of whether the field is empty or not. This may be
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Rule") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
 }
 
 func (s *BucketLifecycle) MarshalJSON() ([]byte, error) {
 	type noMethod BucketLifecycle
 	raw := noMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 type BucketLifecycleRule struct {
@@ -318,32 +347,53 @@ type BucketLifecycleRule struct {
 	// server regardless of whether the field is empty or not. This may be
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Action") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
 }
 
 func (s *BucketLifecycleRule) MarshalJSON() ([]byte, error) {
 	type noMethod BucketLifecycleRule
 	raw := noMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 // BucketLifecycleRuleAction: The action to take.
 type BucketLifecycleRuleAction struct {
-	// Type: Type of the action. Currently, only Delete is supported.
+	// StorageClass: Target storage class. Required iff the type of the
+	// action is SetStorageClass.
+	StorageClass string `json:"storageClass,omitempty"`
+
+	// Type: Type of the action. Currently, only Delete and SetStorageClass
+	// are supported.
 	Type string `json:"type,omitempty"`
 
-	// ForceSendFields is a list of field names (e.g. "Type") to
+	// ForceSendFields is a list of field names (e.g. "StorageClass") to
 	// unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
 	// non-interface field appearing in ForceSendFields will be sent to the
 	// server regardless of whether the field is empty or not. This may be
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "StorageClass") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
 }
 
 func (s *BucketLifecycleRuleAction) MarshalJSON() ([]byte, error) {
 	type noMethod BucketLifecycleRuleAction
 	raw := noMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 // BucketLifecycleRuleCondition: The condition(s) under which the action
@@ -363,6 +413,12 @@ type BucketLifecycleRuleCondition struct {
 	// matches archived objects.
 	IsLive bool `json:"isLive,omitempty"`
 
+	// MatchesStorageClass: Objects having any of the storage classes
+	// specified by this condition will be matched. Values include
+	// MULTI_REGIONAL, REGIONAL, NEARLINE, COLDLINE, STANDARD, and
+	// DURABLE_REDUCED_AVAILABILITY.
+	MatchesStorageClass []string `json:"matchesStorageClass,omitempty"`
+
 	// NumNewerVersions: Relevant only for versioned objects. If the value
 	// is N, this condition is satisfied when there are at least N versions
 	// (including the live version) newer than this version of the object.
@@ -375,12 +431,20 @@ type BucketLifecycleRuleCondition struct {
 	// server regardless of whether the field is empty or not. This may be
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Age") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
 }
 
 func (s *BucketLifecycleRuleCondition) MarshalJSON() ([]byte, error) {
 	type noMethod BucketLifecycleRuleCondition
 	raw := noMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 // BucketLogging: The bucket's logging configuration, which defines the
@@ -401,12 +465,20 @@ type BucketLogging struct {
 	// server regardless of whether the field is empty or not. This may be
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "LogBucket") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
 }
 
 func (s *BucketLogging) MarshalJSON() ([]byte, error) {
 	type noMethod BucketLogging
 	raw := noMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 // BucketOwner: The owner of the bucket. This is always the project
@@ -425,12 +497,20 @@ type BucketOwner struct {
 	// server regardless of whether the field is empty or not. This may be
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Entity") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
 }
 
 func (s *BucketOwner) MarshalJSON() ([]byte, error) {
 	type noMethod BucketOwner
 	raw := noMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 // BucketVersioning: The bucket's versioning configuration.
@@ -446,22 +526,36 @@ type BucketVersioning struct {
 	// server regardless of whether the field is empty or not. This may be
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Enabled") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
 }
 
 func (s *BucketVersioning) MarshalJSON() ([]byte, error) {
 	type noMethod BucketVersioning
 	raw := noMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// BucketWebsite: The bucket's website configuration.
+// BucketWebsite: The bucket's website configuration, controlling how
+// the service behaves when accessing bucket contents as a web site. See
+// the Static Website Examples for more information.
 type BucketWebsite struct {
-	// MainPageSuffix: Behaves as the bucket's directory index where missing
-	// objects are treated as potential directories.
+	// MainPageSuffix: If the requested object path is missing, the service
+	// will ensure the path has a trailing '/', append this suffix, and
+	// attempt to retrieve the resulting object. This allows the creation of
+	// index.html objects to represent directory pages.
 	MainPageSuffix string `json:"mainPageSuffix,omitempty"`
 
-	// NotFoundPage: The custom object to return when a requested resource
-	// is not found.
+	// NotFoundPage: If the requested object path is missing, and any
+	// mainPageSuffix object is missing, if applicable, the service will
+	// return the named object from this bucket as the content for a 404 Not
+	// Found result.
 	NotFoundPage string `json:"notFoundPage,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "MainPageSuffix") to
@@ -471,12 +565,21 @@ type BucketWebsite struct {
 	// server regardless of whether the field is empty or not. This may be
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "MainPageSuffix") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
 }
 
 func (s *BucketWebsite) MarshalJSON() ([]byte, error) {
 	type noMethod BucketWebsite
 	raw := noMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 // BucketAccessControl: An access-control entry.
@@ -523,8 +626,7 @@ type BucketAccessControl struct {
 	// ProjectTeam: The project team associated with the entity, if any.
 	ProjectTeam *BucketAccessControlProjectTeam `json:"projectTeam,omitempty"`
 
-	// Role: The access permission for the entity. Can be READER, WRITER, or
-	// OWNER.
+	// Role: The access permission for the entity.
 	Role string `json:"role,omitempty"`
 
 	// SelfLink: The link to this access-control entry.
@@ -541,12 +643,20 @@ type BucketAccessControl struct {
 	// server regardless of whether the field is empty or not. This may be
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Bucket") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
 }
 
 func (s *BucketAccessControl) MarshalJSON() ([]byte, error) {
 	type noMethod BucketAccessControl
 	raw := noMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 // BucketAccessControlProjectTeam: The project team associated with the
@@ -555,7 +665,7 @@ type BucketAccessControlProjectTeam struct {
 	// ProjectNumber: The project number.
 	ProjectNumber string `json:"projectNumber,omitempty"`
 
-	// Team: The team. Can be owners, editors, or viewers.
+	// Team: The team.
 	Team string `json:"team,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "ProjectNumber") to
@@ -565,12 +675,20 @@ type BucketAccessControlProjectTeam struct {
 	// server regardless of whether the field is empty or not. This may be
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "ProjectNumber") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
 }
 
 func (s *BucketAccessControlProjectTeam) MarshalJSON() ([]byte, error) {
 	type noMethod BucketAccessControlProjectTeam
 	raw := noMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 // BucketAccessControls: An access-control list.
@@ -593,12 +711,20 @@ type BucketAccessControls struct {
 	// server regardless of whether the field is empty or not. This may be
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Items") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
 }
 
 func (s *BucketAccessControls) MarshalJSON() ([]byte, error) {
 	type noMethod BucketAccessControls
 	raw := noMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 // Buckets: A list of buckets.
@@ -626,12 +752,20 @@ type Buckets struct {
 	// server regardless of whether the field is empty or not. This may be
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Items") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
 }
 
 func (s *Buckets) MarshalJSON() ([]byte, error) {
 	type noMethod Buckets
 	raw := noMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 // Channel: An notification channel used to watch for resource changes.
@@ -684,12 +818,20 @@ type Channel struct {
 	// server regardless of whether the field is empty or not. This may be
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Address") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
 }
 
 func (s *Channel) MarshalJSON() ([]byte, error) {
 	type noMethod Channel
 	raw := noMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 // ComposeRequest: A Compose request.
@@ -711,12 +853,20 @@ type ComposeRequest struct {
 	// server regardless of whether the field is empty or not. This may be
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Destination") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
 }
 
 func (s *ComposeRequest) MarshalJSON() ([]byte, error) {
 	type noMethod ComposeRequest
 	raw := noMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 type ComposeRequestSourceObjects struct {
@@ -738,12 +888,20 @@ type ComposeRequestSourceObjects struct {
 	// server regardless of whether the field is empty or not. This may be
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Generation") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
 }
 
 func (s *ComposeRequestSourceObjects) MarshalJSON() ([]byte, error) {
 	type noMethod ComposeRequestSourceObjects
 	raw := noMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 // ComposeRequestSourceObjectsObjectPreconditions: Conditions that must
@@ -762,12 +920,21 @@ type ComposeRequestSourceObjectsObjectPreconditions struct {
 	// server regardless of whether the field is empty or not. This may be
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "IfGenerationMatch") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
 }
 
 func (s *ComposeRequestSourceObjectsObjectPreconditions) MarshalJSON() ([]byte, error) {
 	type noMethod ComposeRequestSourceObjectsObjectPreconditions
 	raw := noMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 // Object: An object.
@@ -778,7 +945,9 @@ type Object struct {
 	// Bucket: The name of the bucket containing this object.
 	Bucket string `json:"bucket,omitempty"`
 
-	// CacheControl: Cache-Control directive for the object data.
+	// CacheControl: Cache-Control directive for the object data. If
+	// omitted, and the object is accessible to all anonymous users, the
+	// default will be public, max-age=3600.
 	CacheControl string `json:"cacheControl,omitempty"`
 
 	// ComponentCount: Number of underlying components that make up this
@@ -794,7 +963,9 @@ type Object struct {
 	// ContentLanguage: Content-Language of the object data.
 	ContentLanguage string `json:"contentLanguage,omitempty"`
 
-	// ContentType: Content-Type of the object data.
+	// ContentType: Content-Type of the object data. If contentType is not
+	// specified, object downloads will be served as
+	// application/octet-stream.
 	ContentType string `json:"contentType,omitempty"`
 
 	// Crc32c: CRC32c checksum, as described in RFC 4960, Appendix B;
@@ -863,6 +1034,11 @@ type Object struct {
 	// deleted.
 	TimeDeleted string `json:"timeDeleted,omitempty"`
 
+	// TimeStorageClassUpdated: The time at which the object's storage class
+	// was last changed. When the object is initially created, it will be
+	// set to timeCreated.
+	TimeStorageClassUpdated string `json:"timeStorageClassUpdated,omitempty"`
+
 	// Updated: The modification time of the object metadata in RFC 3339
 	// format.
 	Updated string `json:"updated,omitempty"`
@@ -878,12 +1054,20 @@ type Object struct {
 	// server regardless of whether the field is empty or not. This may be
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Acl") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
 }
 
 func (s *Object) MarshalJSON() ([]byte, error) {
 	type noMethod Object
 	raw := noMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 // ObjectCustomerEncryption: Metadata of customer-supplied encryption
@@ -902,12 +1086,21 @@ type ObjectCustomerEncryption struct {
 	// server regardless of whether the field is empty or not. This may be
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "EncryptionAlgorithm") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
 }
 
 func (s *ObjectCustomerEncryption) MarshalJSON() ([]byte, error) {
 	type noMethod ObjectCustomerEncryption
 	raw := noMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 // ObjectOwner: The owner of the object. This will always be the
@@ -926,12 +1119,20 @@ type ObjectOwner struct {
 	// server regardless of whether the field is empty or not. This may be
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Entity") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
 }
 
 func (s *ObjectOwner) MarshalJSON() ([]byte, error) {
 	type noMethod ObjectOwner
 	raw := noMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 // ObjectAccessControl: An access-control entry.
@@ -968,7 +1169,8 @@ type ObjectAccessControl struct {
 	// Etag: HTTP 1.1 Entity tag for the access-control entry.
 	Etag string `json:"etag,omitempty"`
 
-	// Generation: The content generation of the object.
+	// Generation: The content generation of the object, if applied to an
+	// object.
 	Generation int64 `json:"generation,omitempty,string"`
 
 	// Id: The ID of the access-control entry.
@@ -978,13 +1180,13 @@ type ObjectAccessControl struct {
 	// this is always storage#objectAccessControl.
 	Kind string `json:"kind,omitempty"`
 
-	// Object: The name of the object.
+	// Object: The name of the object, if applied to an object.
 	Object string `json:"object,omitempty"`
 
 	// ProjectTeam: The project team associated with the entity, if any.
 	ProjectTeam *ObjectAccessControlProjectTeam `json:"projectTeam,omitempty"`
 
-	// Role: The access permission for the entity. Can be READER or OWNER.
+	// Role: The access permission for the entity.
 	Role string `json:"role,omitempty"`
 
 	// SelfLink: The link to this access-control entry.
@@ -1001,12 +1203,20 @@ type ObjectAccessControl struct {
 	// server regardless of whether the field is empty or not. This may be
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Bucket") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
 }
 
 func (s *ObjectAccessControl) MarshalJSON() ([]byte, error) {
 	type noMethod ObjectAccessControl
 	raw := noMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 // ObjectAccessControlProjectTeam: The project team associated with the
@@ -1015,7 +1225,7 @@ type ObjectAccessControlProjectTeam struct {
 	// ProjectNumber: The project number.
 	ProjectNumber string `json:"projectNumber,omitempty"`
 
-	// Team: The team. Can be owners, editors, or viewers.
+	// Team: The team.
 	Team string `json:"team,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "ProjectNumber") to
@@ -1025,18 +1235,26 @@ type ObjectAccessControlProjectTeam struct {
 	// server regardless of whether the field is empty or not. This may be
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "ProjectNumber") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
 }
 
 func (s *ObjectAccessControlProjectTeam) MarshalJSON() ([]byte, error) {
 	type noMethod ObjectAccessControlProjectTeam
 	raw := noMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 // ObjectAccessControls: An access-control list.
 type ObjectAccessControls struct {
 	// Items: The list of items.
-	Items []interface{} `json:"items,omitempty"`
+	Items []*ObjectAccessControl `json:"items,omitempty"`
 
 	// Kind: The kind of item this is. For lists of object access control
 	// entries, this is always storage#objectAccessControls.
@@ -1053,12 +1271,20 @@ type ObjectAccessControls struct {
 	// server regardless of whether the field is empty or not. This may be
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Items") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
 }
 
 func (s *ObjectAccessControls) MarshalJSON() ([]byte, error) {
 	type noMethod ObjectAccessControls
 	raw := noMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 // Objects: A list of objects.
@@ -1090,12 +1316,20 @@ type Objects struct {
 	// server regardless of whether the field is empty or not. This may be
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Items") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
 }
 
 func (s *Objects) MarshalJSON() ([]byte, error) {
 	type noMethod Objects
 	raw := noMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 // RewriteResponse: A rewrite response.
@@ -1137,12 +1371,20 @@ type RewriteResponse struct {
 	// server regardless of whether the field is empty or not. This may be
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Done") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
 }
 
 func (s *RewriteResponse) MarshalJSON() ([]byte, error) {
 	type noMethod RewriteResponse
 	raw := noMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 // method id "storage.bucketAccessControls.delete":
@@ -1153,6 +1395,7 @@ type BucketAccessControlsDeleteCall struct {
 	entity     string
 	urlParams_ gensupport.URLParams
 	ctx_       context.Context
+	header_    http.Header
 }
 
 // Delete: Permanently deletes the ACL entry for the specified entity on
@@ -1161,23 +1404,6 @@ func (r *BucketAccessControlsService) Delete(bucket string, entity string) *Buck
 	c := &BucketAccessControlsDeleteCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.bucket = bucket
 	c.entity = entity
-	return c
-}
-
-// QuotaUser sets the optional parameter "quotaUser": Available to use
-// for quota purposes for server-side applications. Can be any arbitrary
-// string assigned to a user, but should not exceed 40 characters.
-// Overrides userIp if both are provided.
-func (c *BucketAccessControlsDeleteCall) QuotaUser(quotaUser string) *BucketAccessControlsDeleteCall {
-	c.urlParams_.Set("quotaUser", quotaUser)
-	return c
-}
-
-// UserIP sets the optional parameter "userIp": IP address of the site
-// where the request originates. Use this if you want to enforce
-// per-user limits.
-func (c *BucketAccessControlsDeleteCall) UserIP(userIP string) *BucketAccessControlsDeleteCall {
-	c.urlParams_.Set("userIp", userIP)
 	return c
 }
 
@@ -1197,25 +1423,37 @@ func (c *BucketAccessControlsDeleteCall) Context(ctx context.Context) *BucketAcc
 	return c
 }
 
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *BucketAccessControlsDeleteCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
 func (c *BucketAccessControlsDeleteCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	urls := googleapi.ResolveRelative(c.s.BasePath, "b/{bucket}/acl/{entity}")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("DELETE", urls, body)
+	req.Header = reqHeaders
 	googleapi.Expand(req.URL, map[string]string{
 		"bucket": c.bucket,
 		"entity": c.entity,
 	})
-	req.Header.Set("User-Agent", c.s.userAgent())
-	if c.ctx_ != nil {
-		return ctxhttp.Do(c.ctx_, c.s.client, req)
-	}
-	return c.s.client.Do(req)
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
 }
 
 // Do executes the "storage.bucketAccessControls.delete" call.
-func (c *BucketAccessControlsDeleteCall) Do() error {
+func (c *BucketAccessControlsDeleteCall) Do(opts ...googleapi.CallOption) error {
+	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("json")
 	if err != nil {
 		return err
@@ -1249,6 +1487,7 @@ func (c *BucketAccessControlsDeleteCall) Do() error {
 	//   },
 	//   "path": "b/{bucket}/acl/{entity}",
 	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform",
 	//     "https://www.googleapis.com/auth/devstorage.full_control"
 	//   ]
 	// }
@@ -1264,6 +1503,7 @@ type BucketAccessControlsGetCall struct {
 	urlParams_   gensupport.URLParams
 	ifNoneMatch_ string
 	ctx_         context.Context
+	header_      http.Header
 }
 
 // Get: Returns the ACL entry for the specified entity on the specified
@@ -1272,23 +1512,6 @@ func (r *BucketAccessControlsService) Get(bucket string, entity string) *BucketA
 	c := &BucketAccessControlsGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.bucket = bucket
 	c.entity = entity
-	return c
-}
-
-// QuotaUser sets the optional parameter "quotaUser": Available to use
-// for quota purposes for server-side applications. Can be any arbitrary
-// string assigned to a user, but should not exceed 40 characters.
-// Overrides userIp if both are provided.
-func (c *BucketAccessControlsGetCall) QuotaUser(quotaUser string) *BucketAccessControlsGetCall {
-	c.urlParams_.Set("quotaUser", quotaUser)
-	return c
-}
-
-// UserIP sets the optional parameter "userIp": IP address of the site
-// where the request originates. Use this if you want to enforce
-// per-user limits.
-func (c *BucketAccessControlsGetCall) UserIP(userIP string) *BucketAccessControlsGetCall {
-	c.urlParams_.Set("userIp", userIP)
 	return c
 }
 
@@ -1318,24 +1541,35 @@ func (c *BucketAccessControlsGetCall) Context(ctx context.Context) *BucketAccess
 	return c
 }
 
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *BucketAccessControlsGetCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
 func (c *BucketAccessControlsGetCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	urls := googleapi.ResolveRelative(c.s.BasePath, "b/{bucket}/acl/{entity}")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("GET", urls, body)
+	req.Header = reqHeaders
 	googleapi.Expand(req.URL, map[string]string{
 		"bucket": c.bucket,
 		"entity": c.entity,
 	})
-	req.Header.Set("User-Agent", c.s.userAgent())
-	if c.ifNoneMatch_ != "" {
-		req.Header.Set("If-None-Match", c.ifNoneMatch_)
-	}
-	if c.ctx_ != nil {
-		return ctxhttp.Do(c.ctx_, c.s.client, req)
-	}
-	return c.s.client.Do(req)
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
 }
 
 // Do executes the "storage.bucketAccessControls.get" call.
@@ -1345,7 +1579,8 @@ func (c *BucketAccessControlsGetCall) doRequest(alt string) (*http.Response, err
 // returned at all) in error.(*googleapi.Error).Header. Use
 // googleapi.IsNotModified to check whether the returned error was
 // because http.StatusNotModified was returned.
-func (c *BucketAccessControlsGetCall) Do() (*BucketAccessControl, error) {
+func (c *BucketAccessControlsGetCall) Do(opts ...googleapi.CallOption) (*BucketAccessControl, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("json")
 	if res != nil && res.StatusCode == http.StatusNotModified {
 		if res.Body != nil {
@@ -1369,7 +1604,8 @@ func (c *BucketAccessControlsGetCall) Do() (*BucketAccessControl, error) {
 			HTTPStatusCode: res.StatusCode,
 		},
 	}
-	if err := json.NewDecoder(res.Body).Decode(&ret); err != nil {
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1400,6 +1636,7 @@ func (c *BucketAccessControlsGetCall) Do() (*BucketAccessControl, error) {
 	//     "$ref": "BucketAccessControl"
 	//   },
 	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform",
 	//     "https://www.googleapis.com/auth/devstorage.full_control"
 	//   ]
 	// }
@@ -1414,6 +1651,7 @@ type BucketAccessControlsInsertCall struct {
 	bucketaccesscontrol *BucketAccessControl
 	urlParams_          gensupport.URLParams
 	ctx_                context.Context
+	header_             http.Header
 }
 
 // Insert: Creates a new ACL entry on the specified bucket.
@@ -1421,23 +1659,6 @@ func (r *BucketAccessControlsService) Insert(bucket string, bucketaccesscontrol 
 	c := &BucketAccessControlsInsertCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.bucket = bucket
 	c.bucketaccesscontrol = bucketaccesscontrol
-	return c
-}
-
-// QuotaUser sets the optional parameter "quotaUser": Available to use
-// for quota purposes for server-side applications. Can be any arbitrary
-// string assigned to a user, but should not exceed 40 characters.
-// Overrides userIp if both are provided.
-func (c *BucketAccessControlsInsertCall) QuotaUser(quotaUser string) *BucketAccessControlsInsertCall {
-	c.urlParams_.Set("quotaUser", quotaUser)
-	return c
-}
-
-// UserIP sets the optional parameter "userIp": IP address of the site
-// where the request originates. Use this if you want to enforce
-// per-user limits.
-func (c *BucketAccessControlsInsertCall) UserIP(userIP string) *BucketAccessControlsInsertCall {
-	c.urlParams_.Set("userIp", userIP)
 	return c
 }
 
@@ -1457,26 +1678,36 @@ func (c *BucketAccessControlsInsertCall) Context(ctx context.Context) *BucketAcc
 	return c
 }
 
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *BucketAccessControlsInsertCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
 func (c *BucketAccessControlsInsertCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
 	var body io.Reader = nil
 	body, err := googleapi.WithoutDataWrapper.JSONReader(c.bucketaccesscontrol)
 	if err != nil {
 		return nil, err
 	}
-	ctype := "application/json"
+	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
 	urls := googleapi.ResolveRelative(c.s.BasePath, "b/{bucket}/acl")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("POST", urls, body)
+	req.Header = reqHeaders
 	googleapi.Expand(req.URL, map[string]string{
 		"bucket": c.bucket,
 	})
-	req.Header.Set("Content-Type", ctype)
-	req.Header.Set("User-Agent", c.s.userAgent())
-	if c.ctx_ != nil {
-		return ctxhttp.Do(c.ctx_, c.s.client, req)
-	}
-	return c.s.client.Do(req)
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
 }
 
 // Do executes the "storage.bucketAccessControls.insert" call.
@@ -1486,7 +1717,8 @@ func (c *BucketAccessControlsInsertCall) doRequest(alt string) (*http.Response, 
 // returned at all) in error.(*googleapi.Error).Header. Use
 // googleapi.IsNotModified to check whether the returned error was
 // because http.StatusNotModified was returned.
-func (c *BucketAccessControlsInsertCall) Do() (*BucketAccessControl, error) {
+func (c *BucketAccessControlsInsertCall) Do(opts ...googleapi.CallOption) (*BucketAccessControl, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("json")
 	if res != nil && res.StatusCode == http.StatusNotModified {
 		if res.Body != nil {
@@ -1510,7 +1742,8 @@ func (c *BucketAccessControlsInsertCall) Do() (*BucketAccessControl, error) {
 			HTTPStatusCode: res.StatusCode,
 		},
 	}
-	if err := json.NewDecoder(res.Body).Decode(&ret); err != nil {
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1537,6 +1770,7 @@ func (c *BucketAccessControlsInsertCall) Do() (*BucketAccessControl, error) {
 	//     "$ref": "BucketAccessControl"
 	//   },
 	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform",
 	//     "https://www.googleapis.com/auth/devstorage.full_control"
 	//   ]
 	// }
@@ -1551,29 +1785,13 @@ type BucketAccessControlsListCall struct {
 	urlParams_   gensupport.URLParams
 	ifNoneMatch_ string
 	ctx_         context.Context
+	header_      http.Header
 }
 
 // List: Retrieves ACL entries on the specified bucket.
 func (r *BucketAccessControlsService) List(bucket string) *BucketAccessControlsListCall {
 	c := &BucketAccessControlsListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.bucket = bucket
-	return c
-}
-
-// QuotaUser sets the optional parameter "quotaUser": Available to use
-// for quota purposes for server-side applications. Can be any arbitrary
-// string assigned to a user, but should not exceed 40 characters.
-// Overrides userIp if both are provided.
-func (c *BucketAccessControlsListCall) QuotaUser(quotaUser string) *BucketAccessControlsListCall {
-	c.urlParams_.Set("quotaUser", quotaUser)
-	return c
-}
-
-// UserIP sets the optional parameter "userIp": IP address of the site
-// where the request originates. Use this if you want to enforce
-// per-user limits.
-func (c *BucketAccessControlsListCall) UserIP(userIP string) *BucketAccessControlsListCall {
-	c.urlParams_.Set("userIp", userIP)
 	return c
 }
 
@@ -1603,23 +1821,34 @@ func (c *BucketAccessControlsListCall) Context(ctx context.Context) *BucketAcces
 	return c
 }
 
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *BucketAccessControlsListCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
 func (c *BucketAccessControlsListCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	urls := googleapi.ResolveRelative(c.s.BasePath, "b/{bucket}/acl")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("GET", urls, body)
+	req.Header = reqHeaders
 	googleapi.Expand(req.URL, map[string]string{
 		"bucket": c.bucket,
 	})
-	req.Header.Set("User-Agent", c.s.userAgent())
-	if c.ifNoneMatch_ != "" {
-		req.Header.Set("If-None-Match", c.ifNoneMatch_)
-	}
-	if c.ctx_ != nil {
-		return ctxhttp.Do(c.ctx_, c.s.client, req)
-	}
-	return c.s.client.Do(req)
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
 }
 
 // Do executes the "storage.bucketAccessControls.list" call.
@@ -1629,7 +1858,8 @@ func (c *BucketAccessControlsListCall) doRequest(alt string) (*http.Response, er
 // returned at all) in error.(*googleapi.Error).Header. Use
 // googleapi.IsNotModified to check whether the returned error was
 // because http.StatusNotModified was returned.
-func (c *BucketAccessControlsListCall) Do() (*BucketAccessControls, error) {
+func (c *BucketAccessControlsListCall) Do(opts ...googleapi.CallOption) (*BucketAccessControls, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("json")
 	if res != nil && res.StatusCode == http.StatusNotModified {
 		if res.Body != nil {
@@ -1653,7 +1883,8 @@ func (c *BucketAccessControlsListCall) Do() (*BucketAccessControls, error) {
 			HTTPStatusCode: res.StatusCode,
 		},
 	}
-	if err := json.NewDecoder(res.Body).Decode(&ret); err != nil {
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1677,6 +1908,7 @@ func (c *BucketAccessControlsListCall) Do() (*BucketAccessControls, error) {
 	//     "$ref": "BucketAccessControls"
 	//   },
 	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform",
 	//     "https://www.googleapis.com/auth/devstorage.full_control"
 	//   ]
 	// }
@@ -1692,6 +1924,7 @@ type BucketAccessControlsPatchCall struct {
 	bucketaccesscontrol *BucketAccessControl
 	urlParams_          gensupport.URLParams
 	ctx_                context.Context
+	header_             http.Header
 }
 
 // Patch: Updates an ACL entry on the specified bucket. This method
@@ -1701,23 +1934,6 @@ func (r *BucketAccessControlsService) Patch(bucket string, entity string, bucket
 	c.bucket = bucket
 	c.entity = entity
 	c.bucketaccesscontrol = bucketaccesscontrol
-	return c
-}
-
-// QuotaUser sets the optional parameter "quotaUser": Available to use
-// for quota purposes for server-side applications. Can be any arbitrary
-// string assigned to a user, but should not exceed 40 characters.
-// Overrides userIp if both are provided.
-func (c *BucketAccessControlsPatchCall) QuotaUser(quotaUser string) *BucketAccessControlsPatchCall {
-	c.urlParams_.Set("quotaUser", quotaUser)
-	return c
-}
-
-// UserIP sets the optional parameter "userIp": IP address of the site
-// where the request originates. Use this if you want to enforce
-// per-user limits.
-func (c *BucketAccessControlsPatchCall) UserIP(userIP string) *BucketAccessControlsPatchCall {
-	c.urlParams_.Set("userIp", userIP)
 	return c
 }
 
@@ -1737,27 +1953,37 @@ func (c *BucketAccessControlsPatchCall) Context(ctx context.Context) *BucketAcce
 	return c
 }
 
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *BucketAccessControlsPatchCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
 func (c *BucketAccessControlsPatchCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
 	var body io.Reader = nil
 	body, err := googleapi.WithoutDataWrapper.JSONReader(c.bucketaccesscontrol)
 	if err != nil {
 		return nil, err
 	}
-	ctype := "application/json"
+	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
 	urls := googleapi.ResolveRelative(c.s.BasePath, "b/{bucket}/acl/{entity}")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("PATCH", urls, body)
+	req.Header = reqHeaders
 	googleapi.Expand(req.URL, map[string]string{
 		"bucket": c.bucket,
 		"entity": c.entity,
 	})
-	req.Header.Set("Content-Type", ctype)
-	req.Header.Set("User-Agent", c.s.userAgent())
-	if c.ctx_ != nil {
-		return ctxhttp.Do(c.ctx_, c.s.client, req)
-	}
-	return c.s.client.Do(req)
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
 }
 
 // Do executes the "storage.bucketAccessControls.patch" call.
@@ -1767,7 +1993,8 @@ func (c *BucketAccessControlsPatchCall) doRequest(alt string) (*http.Response, e
 // returned at all) in error.(*googleapi.Error).Header. Use
 // googleapi.IsNotModified to check whether the returned error was
 // because http.StatusNotModified was returned.
-func (c *BucketAccessControlsPatchCall) Do() (*BucketAccessControl, error) {
+func (c *BucketAccessControlsPatchCall) Do(opts ...googleapi.CallOption) (*BucketAccessControl, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("json")
 	if res != nil && res.StatusCode == http.StatusNotModified {
 		if res.Body != nil {
@@ -1791,7 +2018,8 @@ func (c *BucketAccessControlsPatchCall) Do() (*BucketAccessControl, error) {
 			HTTPStatusCode: res.StatusCode,
 		},
 	}
-	if err := json.NewDecoder(res.Body).Decode(&ret); err != nil {
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1825,6 +2053,7 @@ func (c *BucketAccessControlsPatchCall) Do() (*BucketAccessControl, error) {
 	//     "$ref": "BucketAccessControl"
 	//   },
 	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform",
 	//     "https://www.googleapis.com/auth/devstorage.full_control"
 	//   ]
 	// }
@@ -1840,6 +2069,7 @@ type BucketAccessControlsUpdateCall struct {
 	bucketaccesscontrol *BucketAccessControl
 	urlParams_          gensupport.URLParams
 	ctx_                context.Context
+	header_             http.Header
 }
 
 // Update: Updates an ACL entry on the specified bucket.
@@ -1848,23 +2078,6 @@ func (r *BucketAccessControlsService) Update(bucket string, entity string, bucke
 	c.bucket = bucket
 	c.entity = entity
 	c.bucketaccesscontrol = bucketaccesscontrol
-	return c
-}
-
-// QuotaUser sets the optional parameter "quotaUser": Available to use
-// for quota purposes for server-side applications. Can be any arbitrary
-// string assigned to a user, but should not exceed 40 characters.
-// Overrides userIp if both are provided.
-func (c *BucketAccessControlsUpdateCall) QuotaUser(quotaUser string) *BucketAccessControlsUpdateCall {
-	c.urlParams_.Set("quotaUser", quotaUser)
-	return c
-}
-
-// UserIP sets the optional parameter "userIp": IP address of the site
-// where the request originates. Use this if you want to enforce
-// per-user limits.
-func (c *BucketAccessControlsUpdateCall) UserIP(userIP string) *BucketAccessControlsUpdateCall {
-	c.urlParams_.Set("userIp", userIP)
 	return c
 }
 
@@ -1884,27 +2097,37 @@ func (c *BucketAccessControlsUpdateCall) Context(ctx context.Context) *BucketAcc
 	return c
 }
 
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *BucketAccessControlsUpdateCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
 func (c *BucketAccessControlsUpdateCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
 	var body io.Reader = nil
 	body, err := googleapi.WithoutDataWrapper.JSONReader(c.bucketaccesscontrol)
 	if err != nil {
 		return nil, err
 	}
-	ctype := "application/json"
+	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
 	urls := googleapi.ResolveRelative(c.s.BasePath, "b/{bucket}/acl/{entity}")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("PUT", urls, body)
+	req.Header = reqHeaders
 	googleapi.Expand(req.URL, map[string]string{
 		"bucket": c.bucket,
 		"entity": c.entity,
 	})
-	req.Header.Set("Content-Type", ctype)
-	req.Header.Set("User-Agent", c.s.userAgent())
-	if c.ctx_ != nil {
-		return ctxhttp.Do(c.ctx_, c.s.client, req)
-	}
-	return c.s.client.Do(req)
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
 }
 
 // Do executes the "storage.bucketAccessControls.update" call.
@@ -1914,7 +2137,8 @@ func (c *BucketAccessControlsUpdateCall) doRequest(alt string) (*http.Response, 
 // returned at all) in error.(*googleapi.Error).Header. Use
 // googleapi.IsNotModified to check whether the returned error was
 // because http.StatusNotModified was returned.
-func (c *BucketAccessControlsUpdateCall) Do() (*BucketAccessControl, error) {
+func (c *BucketAccessControlsUpdateCall) Do(opts ...googleapi.CallOption) (*BucketAccessControl, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("json")
 	if res != nil && res.StatusCode == http.StatusNotModified {
 		if res.Body != nil {
@@ -1938,7 +2162,8 @@ func (c *BucketAccessControlsUpdateCall) Do() (*BucketAccessControl, error) {
 			HTTPStatusCode: res.StatusCode,
 		},
 	}
-	if err := json.NewDecoder(res.Body).Decode(&ret); err != nil {
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1972,6 +2197,7 @@ func (c *BucketAccessControlsUpdateCall) Do() (*BucketAccessControl, error) {
 	//     "$ref": "BucketAccessControl"
 	//   },
 	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform",
 	//     "https://www.googleapis.com/auth/devstorage.full_control"
 	//   ]
 	// }
@@ -1985,6 +2211,7 @@ type BucketsDeleteCall struct {
 	bucket     string
 	urlParams_ gensupport.URLParams
 	ctx_       context.Context
+	header_    http.Header
 }
 
 // Delete: Permanently deletes an empty bucket.
@@ -2010,23 +2237,6 @@ func (c *BucketsDeleteCall) IfMetagenerationNotMatch(ifMetagenerationNotMatch in
 	return c
 }
 
-// QuotaUser sets the optional parameter "quotaUser": Available to use
-// for quota purposes for server-side applications. Can be any arbitrary
-// string assigned to a user, but should not exceed 40 characters.
-// Overrides userIp if both are provided.
-func (c *BucketsDeleteCall) QuotaUser(quotaUser string) *BucketsDeleteCall {
-	c.urlParams_.Set("quotaUser", quotaUser)
-	return c
-}
-
-// UserIP sets the optional parameter "userIp": IP address of the site
-// where the request originates. Use this if you want to enforce
-// per-user limits.
-func (c *BucketsDeleteCall) UserIP(userIP string) *BucketsDeleteCall {
-	c.urlParams_.Set("userIp", userIP)
-	return c
-}
-
 // Fields allows partial responses to be retrieved. See
 // https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
 // for more information.
@@ -2043,24 +2253,36 @@ func (c *BucketsDeleteCall) Context(ctx context.Context) *BucketsDeleteCall {
 	return c
 }
 
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *BucketsDeleteCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
 func (c *BucketsDeleteCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	urls := googleapi.ResolveRelative(c.s.BasePath, "b/{bucket}")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("DELETE", urls, body)
+	req.Header = reqHeaders
 	googleapi.Expand(req.URL, map[string]string{
 		"bucket": c.bucket,
 	})
-	req.Header.Set("User-Agent", c.s.userAgent())
-	if c.ctx_ != nil {
-		return ctxhttp.Do(c.ctx_, c.s.client, req)
-	}
-	return c.s.client.Do(req)
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
 }
 
 // Do executes the "storage.buckets.delete" call.
-func (c *BucketsDeleteCall) Do() error {
+func (c *BucketsDeleteCall) Do(opts ...googleapi.CallOption) error {
+	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("json")
 	if err != nil {
 		return err
@@ -2115,6 +2337,7 @@ type BucketsGetCall struct {
 	urlParams_   gensupport.URLParams
 	ifNoneMatch_ string
 	ctx_         context.Context
+	header_      http.Header
 }
 
 // Get: Returns metadata for the specified bucket.
@@ -2147,26 +2370,9 @@ func (c *BucketsGetCall) IfMetagenerationNotMatch(ifMetagenerationNotMatch int64
 //
 // Possible values:
 //   "full" - Include all properties.
-//   "noAcl" - Omit acl and defaultObjectAcl properties.
+//   "noAcl" - Omit owner, acl and defaultObjectAcl properties.
 func (c *BucketsGetCall) Projection(projection string) *BucketsGetCall {
 	c.urlParams_.Set("projection", projection)
-	return c
-}
-
-// QuotaUser sets the optional parameter "quotaUser": Available to use
-// for quota purposes for server-side applications. Can be any arbitrary
-// string assigned to a user, but should not exceed 40 characters.
-// Overrides userIp if both are provided.
-func (c *BucketsGetCall) QuotaUser(quotaUser string) *BucketsGetCall {
-	c.urlParams_.Set("quotaUser", quotaUser)
-	return c
-}
-
-// UserIP sets the optional parameter "userIp": IP address of the site
-// where the request originates. Use this if you want to enforce
-// per-user limits.
-func (c *BucketsGetCall) UserIP(userIP string) *BucketsGetCall {
-	c.urlParams_.Set("userIp", userIP)
 	return c
 }
 
@@ -2196,23 +2402,34 @@ func (c *BucketsGetCall) Context(ctx context.Context) *BucketsGetCall {
 	return c
 }
 
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *BucketsGetCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
 func (c *BucketsGetCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	urls := googleapi.ResolveRelative(c.s.BasePath, "b/{bucket}")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("GET", urls, body)
+	req.Header = reqHeaders
 	googleapi.Expand(req.URL, map[string]string{
 		"bucket": c.bucket,
 	})
-	req.Header.Set("User-Agent", c.s.userAgent())
-	if c.ifNoneMatch_ != "" {
-		req.Header.Set("If-None-Match", c.ifNoneMatch_)
-	}
-	if c.ctx_ != nil {
-		return ctxhttp.Do(c.ctx_, c.s.client, req)
-	}
-	return c.s.client.Do(req)
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
 }
 
 // Do executes the "storage.buckets.get" call.
@@ -2222,7 +2439,8 @@ func (c *BucketsGetCall) doRequest(alt string) (*http.Response, error) {
 // in error.(*googleapi.Error).Header. Use googleapi.IsNotModified to
 // check whether the returned error was because http.StatusNotModified
 // was returned.
-func (c *BucketsGetCall) Do() (*Bucket, error) {
+func (c *BucketsGetCall) Do(opts ...googleapi.CallOption) (*Bucket, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("json")
 	if res != nil && res.StatusCode == http.StatusNotModified {
 		if res.Body != nil {
@@ -2246,7 +2464,8 @@ func (c *BucketsGetCall) Do() (*Bucket, error) {
 			HTTPStatusCode: res.StatusCode,
 		},
 	}
-	if err := json.NewDecoder(res.Body).Decode(&ret); err != nil {
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2284,7 +2503,7 @@ func (c *BucketsGetCall) Do() (*Bucket, error) {
 	//       ],
 	//       "enumDescriptions": [
 	//         "Include all properties.",
-	//         "Omit acl and defaultObjectAcl properties."
+	//         "Omit owner, acl and defaultObjectAcl properties."
 	//       ],
 	//       "location": "query",
 	//       "type": "string"
@@ -2312,6 +2531,7 @@ type BucketsInsertCall struct {
 	bucket     *Bucket
 	urlParams_ gensupport.URLParams
 	ctx_       context.Context
+	header_    http.Header
 }
 
 // Insert: Creates a new bucket.
@@ -2368,26 +2588,9 @@ func (c *BucketsInsertCall) PredefinedDefaultObjectAcl(predefinedDefaultObjectAc
 //
 // Possible values:
 //   "full" - Include all properties.
-//   "noAcl" - Omit acl and defaultObjectAcl properties.
+//   "noAcl" - Omit owner, acl and defaultObjectAcl properties.
 func (c *BucketsInsertCall) Projection(projection string) *BucketsInsertCall {
 	c.urlParams_.Set("projection", projection)
-	return c
-}
-
-// QuotaUser sets the optional parameter "quotaUser": Available to use
-// for quota purposes for server-side applications. Can be any arbitrary
-// string assigned to a user, but should not exceed 40 characters.
-// Overrides userIp if both are provided.
-func (c *BucketsInsertCall) QuotaUser(quotaUser string) *BucketsInsertCall {
-	c.urlParams_.Set("quotaUser", quotaUser)
-	return c
-}
-
-// UserIP sets the optional parameter "userIp": IP address of the site
-// where the request originates. Use this if you want to enforce
-// per-user limits.
-func (c *BucketsInsertCall) UserIP(userIP string) *BucketsInsertCall {
-	c.urlParams_.Set("userIp", userIP)
 	return c
 }
 
@@ -2407,24 +2610,33 @@ func (c *BucketsInsertCall) Context(ctx context.Context) *BucketsInsertCall {
 	return c
 }
 
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *BucketsInsertCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
 func (c *BucketsInsertCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
 	var body io.Reader = nil
 	body, err := googleapi.WithoutDataWrapper.JSONReader(c.bucket)
 	if err != nil {
 		return nil, err
 	}
-	ctype := "application/json"
+	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
 	urls := googleapi.ResolveRelative(c.s.BasePath, "b")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("POST", urls, body)
-	googleapi.SetOpaque(req.URL)
-	req.Header.Set("Content-Type", ctype)
-	req.Header.Set("User-Agent", c.s.userAgent())
-	if c.ctx_ != nil {
-		return ctxhttp.Do(c.ctx_, c.s.client, req)
-	}
-	return c.s.client.Do(req)
+	req.Header = reqHeaders
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
 }
 
 // Do executes the "storage.buckets.insert" call.
@@ -2434,7 +2646,8 @@ func (c *BucketsInsertCall) doRequest(alt string) (*http.Response, error) {
 // in error.(*googleapi.Error).Header. Use googleapi.IsNotModified to
 // check whether the returned error was because http.StatusNotModified
 // was returned.
-func (c *BucketsInsertCall) Do() (*Bucket, error) {
+func (c *BucketsInsertCall) Do(opts ...googleapi.CallOption) (*Bucket, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("json")
 	if res != nil && res.StatusCode == http.StatusNotModified {
 		if res.Body != nil {
@@ -2458,7 +2671,8 @@ func (c *BucketsInsertCall) Do() (*Bucket, error) {
 			HTTPStatusCode: res.StatusCode,
 		},
 	}
-	if err := json.NewDecoder(res.Body).Decode(&ret); err != nil {
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2524,7 +2738,7 @@ func (c *BucketsInsertCall) Do() (*Bucket, error) {
 	//       ],
 	//       "enumDescriptions": [
 	//         "Include all properties.",
-	//         "Omit acl and defaultObjectAcl properties."
+	//         "Omit owner, acl and defaultObjectAcl properties."
 	//       ],
 	//       "location": "query",
 	//       "type": "string"
@@ -2553,6 +2767,7 @@ type BucketsListCall struct {
 	urlParams_   gensupport.URLParams
 	ifNoneMatch_ string
 	ctx_         context.Context
+	header_      http.Header
 }
 
 // List: Retrieves a list of buckets for a given project.
@@ -2589,26 +2804,9 @@ func (c *BucketsListCall) Prefix(prefix string) *BucketsListCall {
 //
 // Possible values:
 //   "full" - Include all properties.
-//   "noAcl" - Omit acl and defaultObjectAcl properties.
+//   "noAcl" - Omit owner, acl and defaultObjectAcl properties.
 func (c *BucketsListCall) Projection(projection string) *BucketsListCall {
 	c.urlParams_.Set("projection", projection)
-	return c
-}
-
-// QuotaUser sets the optional parameter "quotaUser": Available to use
-// for quota purposes for server-side applications. Can be any arbitrary
-// string assigned to a user, but should not exceed 40 characters.
-// Overrides userIp if both are provided.
-func (c *BucketsListCall) QuotaUser(quotaUser string) *BucketsListCall {
-	c.urlParams_.Set("quotaUser", quotaUser)
-	return c
-}
-
-// UserIP sets the optional parameter "userIp": IP address of the site
-// where the request originates. Use this if you want to enforce
-// per-user limits.
-func (c *BucketsListCall) UserIP(userIP string) *BucketsListCall {
-	c.urlParams_.Set("userIp", userIP)
 	return c
 }
 
@@ -2638,21 +2836,31 @@ func (c *BucketsListCall) Context(ctx context.Context) *BucketsListCall {
 	return c
 }
 
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *BucketsListCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
 func (c *BucketsListCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	urls := googleapi.ResolveRelative(c.s.BasePath, "b")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("GET", urls, body)
-	googleapi.SetOpaque(req.URL)
-	req.Header.Set("User-Agent", c.s.userAgent())
-	if c.ifNoneMatch_ != "" {
-		req.Header.Set("If-None-Match", c.ifNoneMatch_)
-	}
-	if c.ctx_ != nil {
-		return ctxhttp.Do(c.ctx_, c.s.client, req)
-	}
-	return c.s.client.Do(req)
+	req.Header = reqHeaders
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
 }
 
 // Do executes the "storage.buckets.list" call.
@@ -2662,7 +2870,8 @@ func (c *BucketsListCall) doRequest(alt string) (*http.Response, error) {
 // in error.(*googleapi.Error).Header. Use googleapi.IsNotModified to
 // check whether the returned error was because http.StatusNotModified
 // was returned.
-func (c *BucketsListCall) Do() (*Buckets, error) {
+func (c *BucketsListCall) Do(opts ...googleapi.CallOption) (*Buckets, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("json")
 	if res != nil && res.StatusCode == http.StatusNotModified {
 		if res.Body != nil {
@@ -2686,7 +2895,8 @@ func (c *BucketsListCall) Do() (*Buckets, error) {
 			HTTPStatusCode: res.StatusCode,
 		},
 	}
-	if err := json.NewDecoder(res.Body).Decode(&ret); err != nil {
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2729,7 +2939,7 @@ func (c *BucketsListCall) Do() (*Buckets, error) {
 	//       ],
 	//       "enumDescriptions": [
 	//         "Include all properties.",
-	//         "Omit acl and defaultObjectAcl properties."
+	//         "Omit owner, acl and defaultObjectAcl properties."
 	//       ],
 	//       "location": "query",
 	//       "type": "string"
@@ -2750,6 +2960,27 @@ func (c *BucketsListCall) Do() (*Buckets, error) {
 
 }
 
+// Pages invokes f for each page of results.
+// A non-nil error returned from f will halt the iteration.
+// The provided context supersedes any context provided to the Context method.
+func (c *BucketsListCall) Pages(ctx context.Context, f func(*Buckets) error) error {
+	c.ctx_ = ctx
+	defer c.PageToken(c.urlParams_.Get("pageToken")) // reset paging to original point
+	for {
+		x, err := c.Do()
+		if err != nil {
+			return err
+		}
+		if err := f(x); err != nil {
+			return err
+		}
+		if x.NextPageToken == "" {
+			return nil
+		}
+		c.PageToken(x.NextPageToken)
+	}
+}
+
 // method id "storage.buckets.patch":
 
 type BucketsPatchCall struct {
@@ -2758,9 +2989,12 @@ type BucketsPatchCall struct {
 	bucket2    *Bucket
 	urlParams_ gensupport.URLParams
 	ctx_       context.Context
+	header_    http.Header
 }
 
-// Patch: Updates a bucket. This method supports patch semantics.
+// Patch: Updates a bucket. Changes to the bucket will be readable
+// immediately after writing, but configuration changes may take time to
+// propagate. This method supports patch semantics.
 func (r *BucketsService) Patch(bucket string, bucket2 *Bucket) *BucketsPatchCall {
 	c := &BucketsPatchCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.bucket = bucket
@@ -2830,26 +3064,9 @@ func (c *BucketsPatchCall) PredefinedDefaultObjectAcl(predefinedDefaultObjectAcl
 //
 // Possible values:
 //   "full" - Include all properties.
-//   "noAcl" - Omit acl and defaultObjectAcl properties.
+//   "noAcl" - Omit owner, acl and defaultObjectAcl properties.
 func (c *BucketsPatchCall) Projection(projection string) *BucketsPatchCall {
 	c.urlParams_.Set("projection", projection)
-	return c
-}
-
-// QuotaUser sets the optional parameter "quotaUser": Available to use
-// for quota purposes for server-side applications. Can be any arbitrary
-// string assigned to a user, but should not exceed 40 characters.
-// Overrides userIp if both are provided.
-func (c *BucketsPatchCall) QuotaUser(quotaUser string) *BucketsPatchCall {
-	c.urlParams_.Set("quotaUser", quotaUser)
-	return c
-}
-
-// UserIP sets the optional parameter "userIp": IP address of the site
-// where the request originates. Use this if you want to enforce
-// per-user limits.
-func (c *BucketsPatchCall) UserIP(userIP string) *BucketsPatchCall {
-	c.urlParams_.Set("userIp", userIP)
 	return c
 }
 
@@ -2869,26 +3086,36 @@ func (c *BucketsPatchCall) Context(ctx context.Context) *BucketsPatchCall {
 	return c
 }
 
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *BucketsPatchCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
 func (c *BucketsPatchCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
 	var body io.Reader = nil
 	body, err := googleapi.WithoutDataWrapper.JSONReader(c.bucket2)
 	if err != nil {
 		return nil, err
 	}
-	ctype := "application/json"
+	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
 	urls := googleapi.ResolveRelative(c.s.BasePath, "b/{bucket}")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("PATCH", urls, body)
+	req.Header = reqHeaders
 	googleapi.Expand(req.URL, map[string]string{
 		"bucket": c.bucket,
 	})
-	req.Header.Set("Content-Type", ctype)
-	req.Header.Set("User-Agent", c.s.userAgent())
-	if c.ctx_ != nil {
-		return ctxhttp.Do(c.ctx_, c.s.client, req)
-	}
-	return c.s.client.Do(req)
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
 }
 
 // Do executes the "storage.buckets.patch" call.
@@ -2898,7 +3125,8 @@ func (c *BucketsPatchCall) doRequest(alt string) (*http.Response, error) {
 // in error.(*googleapi.Error).Header. Use googleapi.IsNotModified to
 // check whether the returned error was because http.StatusNotModified
 // was returned.
-func (c *BucketsPatchCall) Do() (*Bucket, error) {
+func (c *BucketsPatchCall) Do(opts ...googleapi.CallOption) (*Bucket, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("json")
 	if res != nil && res.StatusCode == http.StatusNotModified {
 		if res.Body != nil {
@@ -2922,12 +3150,13 @@ func (c *BucketsPatchCall) Do() (*Bucket, error) {
 			HTTPStatusCode: res.StatusCode,
 		},
 	}
-	if err := json.NewDecoder(res.Body).Decode(&ret); err != nil {
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
 		return nil, err
 	}
 	return ret, nil
 	// {
-	//   "description": "Updates a bucket. This method supports patch semantics.",
+	//   "description": "Updates a bucket. Changes to the bucket will be readable immediately after writing, but configuration changes may take time to propagate. This method supports patch semantics.",
 	//   "httpMethod": "PATCH",
 	//   "id": "storage.buckets.patch",
 	//   "parameterOrder": [
@@ -3000,7 +3229,7 @@ func (c *BucketsPatchCall) Do() (*Bucket, error) {
 	//       ],
 	//       "enumDescriptions": [
 	//         "Include all properties.",
-	//         "Omit acl and defaultObjectAcl properties."
+	//         "Omit owner, acl and defaultObjectAcl properties."
 	//       ],
 	//       "location": "query",
 	//       "type": "string"
@@ -3015,8 +3244,7 @@ func (c *BucketsPatchCall) Do() (*Bucket, error) {
 	//   },
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/cloud-platform",
-	//     "https://www.googleapis.com/auth/devstorage.full_control",
-	//     "https://www.googleapis.com/auth/devstorage.read_write"
+	//     "https://www.googleapis.com/auth/devstorage.full_control"
 	//   ]
 	// }
 
@@ -3030,9 +3258,12 @@ type BucketsUpdateCall struct {
 	bucket2    *Bucket
 	urlParams_ gensupport.URLParams
 	ctx_       context.Context
+	header_    http.Header
 }
 
-// Update: Updates a bucket.
+// Update: Updates a bucket. Changes to the bucket will be readable
+// immediately after writing, but configuration changes may take time to
+// propagate.
 func (r *BucketsService) Update(bucket string, bucket2 *Bucket) *BucketsUpdateCall {
 	c := &BucketsUpdateCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.bucket = bucket
@@ -3102,26 +3333,9 @@ func (c *BucketsUpdateCall) PredefinedDefaultObjectAcl(predefinedDefaultObjectAc
 //
 // Possible values:
 //   "full" - Include all properties.
-//   "noAcl" - Omit acl and defaultObjectAcl properties.
+//   "noAcl" - Omit owner, acl and defaultObjectAcl properties.
 func (c *BucketsUpdateCall) Projection(projection string) *BucketsUpdateCall {
 	c.urlParams_.Set("projection", projection)
-	return c
-}
-
-// QuotaUser sets the optional parameter "quotaUser": Available to use
-// for quota purposes for server-side applications. Can be any arbitrary
-// string assigned to a user, but should not exceed 40 characters.
-// Overrides userIp if both are provided.
-func (c *BucketsUpdateCall) QuotaUser(quotaUser string) *BucketsUpdateCall {
-	c.urlParams_.Set("quotaUser", quotaUser)
-	return c
-}
-
-// UserIP sets the optional parameter "userIp": IP address of the site
-// where the request originates. Use this if you want to enforce
-// per-user limits.
-func (c *BucketsUpdateCall) UserIP(userIP string) *BucketsUpdateCall {
-	c.urlParams_.Set("userIp", userIP)
 	return c
 }
 
@@ -3141,26 +3355,36 @@ func (c *BucketsUpdateCall) Context(ctx context.Context) *BucketsUpdateCall {
 	return c
 }
 
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *BucketsUpdateCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
 func (c *BucketsUpdateCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
 	var body io.Reader = nil
 	body, err := googleapi.WithoutDataWrapper.JSONReader(c.bucket2)
 	if err != nil {
 		return nil, err
 	}
-	ctype := "application/json"
+	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
 	urls := googleapi.ResolveRelative(c.s.BasePath, "b/{bucket}")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("PUT", urls, body)
+	req.Header = reqHeaders
 	googleapi.Expand(req.URL, map[string]string{
 		"bucket": c.bucket,
 	})
-	req.Header.Set("Content-Type", ctype)
-	req.Header.Set("User-Agent", c.s.userAgent())
-	if c.ctx_ != nil {
-		return ctxhttp.Do(c.ctx_, c.s.client, req)
-	}
-	return c.s.client.Do(req)
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
 }
 
 // Do executes the "storage.buckets.update" call.
@@ -3170,7 +3394,8 @@ func (c *BucketsUpdateCall) doRequest(alt string) (*http.Response, error) {
 // in error.(*googleapi.Error).Header. Use googleapi.IsNotModified to
 // check whether the returned error was because http.StatusNotModified
 // was returned.
-func (c *BucketsUpdateCall) Do() (*Bucket, error) {
+func (c *BucketsUpdateCall) Do(opts ...googleapi.CallOption) (*Bucket, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("json")
 	if res != nil && res.StatusCode == http.StatusNotModified {
 		if res.Body != nil {
@@ -3194,12 +3419,13 @@ func (c *BucketsUpdateCall) Do() (*Bucket, error) {
 			HTTPStatusCode: res.StatusCode,
 		},
 	}
-	if err := json.NewDecoder(res.Body).Decode(&ret); err != nil {
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
 		return nil, err
 	}
 	return ret, nil
 	// {
-	//   "description": "Updates a bucket.",
+	//   "description": "Updates a bucket. Changes to the bucket will be readable immediately after writing, but configuration changes may take time to propagate.",
 	//   "httpMethod": "PUT",
 	//   "id": "storage.buckets.update",
 	//   "parameterOrder": [
@@ -3272,7 +3498,7 @@ func (c *BucketsUpdateCall) Do() (*Bucket, error) {
 	//       ],
 	//       "enumDescriptions": [
 	//         "Include all properties.",
-	//         "Omit acl and defaultObjectAcl properties."
+	//         "Omit owner, acl and defaultObjectAcl properties."
 	//       ],
 	//       "location": "query",
 	//       "type": "string"
@@ -3287,8 +3513,7 @@ func (c *BucketsUpdateCall) Do() (*Bucket, error) {
 	//   },
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/cloud-platform",
-	//     "https://www.googleapis.com/auth/devstorage.full_control",
-	//     "https://www.googleapis.com/auth/devstorage.read_write"
+	//     "https://www.googleapis.com/auth/devstorage.full_control"
 	//   ]
 	// }
 
@@ -3301,29 +3526,13 @@ type ChannelsStopCall struct {
 	channel    *Channel
 	urlParams_ gensupport.URLParams
 	ctx_       context.Context
+	header_    http.Header
 }
 
 // Stop: Stop watching resources through this channel
 func (r *ChannelsService) Stop(channel *Channel) *ChannelsStopCall {
 	c := &ChannelsStopCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.channel = channel
-	return c
-}
-
-// QuotaUser sets the optional parameter "quotaUser": Available to use
-// for quota purposes for server-side applications. Can be any arbitrary
-// string assigned to a user, but should not exceed 40 characters.
-// Overrides userIp if both are provided.
-func (c *ChannelsStopCall) QuotaUser(quotaUser string) *ChannelsStopCall {
-	c.urlParams_.Set("quotaUser", quotaUser)
-	return c
-}
-
-// UserIP sets the optional parameter "userIp": IP address of the site
-// where the request originates. Use this if you want to enforce
-// per-user limits.
-func (c *ChannelsStopCall) UserIP(userIP string) *ChannelsStopCall {
-	c.urlParams_.Set("userIp", userIP)
 	return c
 }
 
@@ -3343,28 +3552,38 @@ func (c *ChannelsStopCall) Context(ctx context.Context) *ChannelsStopCall {
 	return c
 }
 
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ChannelsStopCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
 func (c *ChannelsStopCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
 	var body io.Reader = nil
 	body, err := googleapi.WithoutDataWrapper.JSONReader(c.channel)
 	if err != nil {
 		return nil, err
 	}
-	ctype := "application/json"
+	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
 	urls := googleapi.ResolveRelative(c.s.BasePath, "channels/stop")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("POST", urls, body)
-	googleapi.SetOpaque(req.URL)
-	req.Header.Set("Content-Type", ctype)
-	req.Header.Set("User-Agent", c.s.userAgent())
-	if c.ctx_ != nil {
-		return ctxhttp.Do(c.ctx_, c.s.client, req)
-	}
-	return c.s.client.Do(req)
+	req.Header = reqHeaders
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
 }
 
 // Do executes the "storage.channels.stop" call.
-func (c *ChannelsStopCall) Do() error {
+func (c *ChannelsStopCall) Do(opts ...googleapi.CallOption) error {
+	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("json")
 	if err != nil {
 		return err
@@ -3402,6 +3621,7 @@ type DefaultObjectAccessControlsDeleteCall struct {
 	entity     string
 	urlParams_ gensupport.URLParams
 	ctx_       context.Context
+	header_    http.Header
 }
 
 // Delete: Permanently deletes the default object ACL entry for the
@@ -3410,23 +3630,6 @@ func (r *DefaultObjectAccessControlsService) Delete(bucket string, entity string
 	c := &DefaultObjectAccessControlsDeleteCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.bucket = bucket
 	c.entity = entity
-	return c
-}
-
-// QuotaUser sets the optional parameter "quotaUser": Available to use
-// for quota purposes for server-side applications. Can be any arbitrary
-// string assigned to a user, but should not exceed 40 characters.
-// Overrides userIp if both are provided.
-func (c *DefaultObjectAccessControlsDeleteCall) QuotaUser(quotaUser string) *DefaultObjectAccessControlsDeleteCall {
-	c.urlParams_.Set("quotaUser", quotaUser)
-	return c
-}
-
-// UserIP sets the optional parameter "userIp": IP address of the site
-// where the request originates. Use this if you want to enforce
-// per-user limits.
-func (c *DefaultObjectAccessControlsDeleteCall) UserIP(userIP string) *DefaultObjectAccessControlsDeleteCall {
-	c.urlParams_.Set("userIp", userIP)
 	return c
 }
 
@@ -3446,25 +3649,37 @@ func (c *DefaultObjectAccessControlsDeleteCall) Context(ctx context.Context) *De
 	return c
 }
 
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *DefaultObjectAccessControlsDeleteCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
 func (c *DefaultObjectAccessControlsDeleteCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	urls := googleapi.ResolveRelative(c.s.BasePath, "b/{bucket}/defaultObjectAcl/{entity}")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("DELETE", urls, body)
+	req.Header = reqHeaders
 	googleapi.Expand(req.URL, map[string]string{
 		"bucket": c.bucket,
 		"entity": c.entity,
 	})
-	req.Header.Set("User-Agent", c.s.userAgent())
-	if c.ctx_ != nil {
-		return ctxhttp.Do(c.ctx_, c.s.client, req)
-	}
-	return c.s.client.Do(req)
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
 }
 
 // Do executes the "storage.defaultObjectAccessControls.delete" call.
-func (c *DefaultObjectAccessControlsDeleteCall) Do() error {
+func (c *DefaultObjectAccessControlsDeleteCall) Do(opts ...googleapi.CallOption) error {
+	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("json")
 	if err != nil {
 		return err
@@ -3498,6 +3713,7 @@ func (c *DefaultObjectAccessControlsDeleteCall) Do() error {
 	//   },
 	//   "path": "b/{bucket}/defaultObjectAcl/{entity}",
 	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform",
 	//     "https://www.googleapis.com/auth/devstorage.full_control"
 	//   ]
 	// }
@@ -3513,6 +3729,7 @@ type DefaultObjectAccessControlsGetCall struct {
 	urlParams_   gensupport.URLParams
 	ifNoneMatch_ string
 	ctx_         context.Context
+	header_      http.Header
 }
 
 // Get: Returns the default object ACL entry for the specified entity on
@@ -3521,23 +3738,6 @@ func (r *DefaultObjectAccessControlsService) Get(bucket string, entity string) *
 	c := &DefaultObjectAccessControlsGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.bucket = bucket
 	c.entity = entity
-	return c
-}
-
-// QuotaUser sets the optional parameter "quotaUser": Available to use
-// for quota purposes for server-side applications. Can be any arbitrary
-// string assigned to a user, but should not exceed 40 characters.
-// Overrides userIp if both are provided.
-func (c *DefaultObjectAccessControlsGetCall) QuotaUser(quotaUser string) *DefaultObjectAccessControlsGetCall {
-	c.urlParams_.Set("quotaUser", quotaUser)
-	return c
-}
-
-// UserIP sets the optional parameter "userIp": IP address of the site
-// where the request originates. Use this if you want to enforce
-// per-user limits.
-func (c *DefaultObjectAccessControlsGetCall) UserIP(userIP string) *DefaultObjectAccessControlsGetCall {
-	c.urlParams_.Set("userIp", userIP)
 	return c
 }
 
@@ -3567,24 +3767,35 @@ func (c *DefaultObjectAccessControlsGetCall) Context(ctx context.Context) *Defau
 	return c
 }
 
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *DefaultObjectAccessControlsGetCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
 func (c *DefaultObjectAccessControlsGetCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	urls := googleapi.ResolveRelative(c.s.BasePath, "b/{bucket}/defaultObjectAcl/{entity}")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("GET", urls, body)
+	req.Header = reqHeaders
 	googleapi.Expand(req.URL, map[string]string{
 		"bucket": c.bucket,
 		"entity": c.entity,
 	})
-	req.Header.Set("User-Agent", c.s.userAgent())
-	if c.ifNoneMatch_ != "" {
-		req.Header.Set("If-None-Match", c.ifNoneMatch_)
-	}
-	if c.ctx_ != nil {
-		return ctxhttp.Do(c.ctx_, c.s.client, req)
-	}
-	return c.s.client.Do(req)
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
 }
 
 // Do executes the "storage.defaultObjectAccessControls.get" call.
@@ -3594,7 +3805,8 @@ func (c *DefaultObjectAccessControlsGetCall) doRequest(alt string) (*http.Respon
 // returned at all) in error.(*googleapi.Error).Header. Use
 // googleapi.IsNotModified to check whether the returned error was
 // because http.StatusNotModified was returned.
-func (c *DefaultObjectAccessControlsGetCall) Do() (*ObjectAccessControl, error) {
+func (c *DefaultObjectAccessControlsGetCall) Do(opts ...googleapi.CallOption) (*ObjectAccessControl, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("json")
 	if res != nil && res.StatusCode == http.StatusNotModified {
 		if res.Body != nil {
@@ -3618,7 +3830,8 @@ func (c *DefaultObjectAccessControlsGetCall) Do() (*ObjectAccessControl, error) 
 			HTTPStatusCode: res.StatusCode,
 		},
 	}
-	if err := json.NewDecoder(res.Body).Decode(&ret); err != nil {
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -3649,6 +3862,7 @@ func (c *DefaultObjectAccessControlsGetCall) Do() (*ObjectAccessControl, error) 
 	//     "$ref": "ObjectAccessControl"
 	//   },
 	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform",
 	//     "https://www.googleapis.com/auth/devstorage.full_control"
 	//   ]
 	// }
@@ -3663,6 +3877,7 @@ type DefaultObjectAccessControlsInsertCall struct {
 	objectaccesscontrol *ObjectAccessControl
 	urlParams_          gensupport.URLParams
 	ctx_                context.Context
+	header_             http.Header
 }
 
 // Insert: Creates a new default object ACL entry on the specified
@@ -3671,23 +3886,6 @@ func (r *DefaultObjectAccessControlsService) Insert(bucket string, objectaccessc
 	c := &DefaultObjectAccessControlsInsertCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.bucket = bucket
 	c.objectaccesscontrol = objectaccesscontrol
-	return c
-}
-
-// QuotaUser sets the optional parameter "quotaUser": Available to use
-// for quota purposes for server-side applications. Can be any arbitrary
-// string assigned to a user, but should not exceed 40 characters.
-// Overrides userIp if both are provided.
-func (c *DefaultObjectAccessControlsInsertCall) QuotaUser(quotaUser string) *DefaultObjectAccessControlsInsertCall {
-	c.urlParams_.Set("quotaUser", quotaUser)
-	return c
-}
-
-// UserIP sets the optional parameter "userIp": IP address of the site
-// where the request originates. Use this if you want to enforce
-// per-user limits.
-func (c *DefaultObjectAccessControlsInsertCall) UserIP(userIP string) *DefaultObjectAccessControlsInsertCall {
-	c.urlParams_.Set("userIp", userIP)
 	return c
 }
 
@@ -3707,26 +3905,36 @@ func (c *DefaultObjectAccessControlsInsertCall) Context(ctx context.Context) *De
 	return c
 }
 
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *DefaultObjectAccessControlsInsertCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
 func (c *DefaultObjectAccessControlsInsertCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
 	var body io.Reader = nil
 	body, err := googleapi.WithoutDataWrapper.JSONReader(c.objectaccesscontrol)
 	if err != nil {
 		return nil, err
 	}
-	ctype := "application/json"
+	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
 	urls := googleapi.ResolveRelative(c.s.BasePath, "b/{bucket}/defaultObjectAcl")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("POST", urls, body)
+	req.Header = reqHeaders
 	googleapi.Expand(req.URL, map[string]string{
 		"bucket": c.bucket,
 	})
-	req.Header.Set("Content-Type", ctype)
-	req.Header.Set("User-Agent", c.s.userAgent())
-	if c.ctx_ != nil {
-		return ctxhttp.Do(c.ctx_, c.s.client, req)
-	}
-	return c.s.client.Do(req)
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
 }
 
 // Do executes the "storage.defaultObjectAccessControls.insert" call.
@@ -3736,7 +3944,8 @@ func (c *DefaultObjectAccessControlsInsertCall) doRequest(alt string) (*http.Res
 // returned at all) in error.(*googleapi.Error).Header. Use
 // googleapi.IsNotModified to check whether the returned error was
 // because http.StatusNotModified was returned.
-func (c *DefaultObjectAccessControlsInsertCall) Do() (*ObjectAccessControl, error) {
+func (c *DefaultObjectAccessControlsInsertCall) Do(opts ...googleapi.CallOption) (*ObjectAccessControl, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("json")
 	if res != nil && res.StatusCode == http.StatusNotModified {
 		if res.Body != nil {
@@ -3760,7 +3969,8 @@ func (c *DefaultObjectAccessControlsInsertCall) Do() (*ObjectAccessControl, erro
 			HTTPStatusCode: res.StatusCode,
 		},
 	}
-	if err := json.NewDecoder(res.Body).Decode(&ret); err != nil {
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -3787,6 +3997,7 @@ func (c *DefaultObjectAccessControlsInsertCall) Do() (*ObjectAccessControl, erro
 	//     "$ref": "ObjectAccessControl"
 	//   },
 	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform",
 	//     "https://www.googleapis.com/auth/devstorage.full_control"
 	//   ]
 	// }
@@ -3801,6 +4012,7 @@ type DefaultObjectAccessControlsListCall struct {
 	urlParams_   gensupport.URLParams
 	ifNoneMatch_ string
 	ctx_         context.Context
+	header_      http.Header
 }
 
 // List: Retrieves default object ACL entries on the specified bucket.
@@ -3824,23 +4036,6 @@ func (c *DefaultObjectAccessControlsListCall) IfMetagenerationMatch(ifMetagenera
 // given value.
 func (c *DefaultObjectAccessControlsListCall) IfMetagenerationNotMatch(ifMetagenerationNotMatch int64) *DefaultObjectAccessControlsListCall {
 	c.urlParams_.Set("ifMetagenerationNotMatch", fmt.Sprint(ifMetagenerationNotMatch))
-	return c
-}
-
-// QuotaUser sets the optional parameter "quotaUser": Available to use
-// for quota purposes for server-side applications. Can be any arbitrary
-// string assigned to a user, but should not exceed 40 characters.
-// Overrides userIp if both are provided.
-func (c *DefaultObjectAccessControlsListCall) QuotaUser(quotaUser string) *DefaultObjectAccessControlsListCall {
-	c.urlParams_.Set("quotaUser", quotaUser)
-	return c
-}
-
-// UserIP sets the optional parameter "userIp": IP address of the site
-// where the request originates. Use this if you want to enforce
-// per-user limits.
-func (c *DefaultObjectAccessControlsListCall) UserIP(userIP string) *DefaultObjectAccessControlsListCall {
-	c.urlParams_.Set("userIp", userIP)
 	return c
 }
 
@@ -3870,23 +4065,34 @@ func (c *DefaultObjectAccessControlsListCall) Context(ctx context.Context) *Defa
 	return c
 }
 
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *DefaultObjectAccessControlsListCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
 func (c *DefaultObjectAccessControlsListCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	urls := googleapi.ResolveRelative(c.s.BasePath, "b/{bucket}/defaultObjectAcl")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("GET", urls, body)
+	req.Header = reqHeaders
 	googleapi.Expand(req.URL, map[string]string{
 		"bucket": c.bucket,
 	})
-	req.Header.Set("User-Agent", c.s.userAgent())
-	if c.ifNoneMatch_ != "" {
-		req.Header.Set("If-None-Match", c.ifNoneMatch_)
-	}
-	if c.ctx_ != nil {
-		return ctxhttp.Do(c.ctx_, c.s.client, req)
-	}
-	return c.s.client.Do(req)
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
 }
 
 // Do executes the "storage.defaultObjectAccessControls.list" call.
@@ -3896,7 +4102,8 @@ func (c *DefaultObjectAccessControlsListCall) doRequest(alt string) (*http.Respo
 // returned at all) in error.(*googleapi.Error).Header. Use
 // googleapi.IsNotModified to check whether the returned error was
 // because http.StatusNotModified was returned.
-func (c *DefaultObjectAccessControlsListCall) Do() (*ObjectAccessControls, error) {
+func (c *DefaultObjectAccessControlsListCall) Do(opts ...googleapi.CallOption) (*ObjectAccessControls, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("json")
 	if res != nil && res.StatusCode == http.StatusNotModified {
 		if res.Body != nil {
@@ -3920,7 +4127,8 @@ func (c *DefaultObjectAccessControlsListCall) Do() (*ObjectAccessControls, error
 			HTTPStatusCode: res.StatusCode,
 		},
 	}
-	if err := json.NewDecoder(res.Body).Decode(&ret); err != nil {
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -3956,6 +4164,7 @@ func (c *DefaultObjectAccessControlsListCall) Do() (*ObjectAccessControls, error
 	//     "$ref": "ObjectAccessControls"
 	//   },
 	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform",
 	//     "https://www.googleapis.com/auth/devstorage.full_control"
 	//   ]
 	// }
@@ -3971,6 +4180,7 @@ type DefaultObjectAccessControlsPatchCall struct {
 	objectaccesscontrol *ObjectAccessControl
 	urlParams_          gensupport.URLParams
 	ctx_                context.Context
+	header_             http.Header
 }
 
 // Patch: Updates a default object ACL entry on the specified bucket.
@@ -3980,23 +4190,6 @@ func (r *DefaultObjectAccessControlsService) Patch(bucket string, entity string,
 	c.bucket = bucket
 	c.entity = entity
 	c.objectaccesscontrol = objectaccesscontrol
-	return c
-}
-
-// QuotaUser sets the optional parameter "quotaUser": Available to use
-// for quota purposes for server-side applications. Can be any arbitrary
-// string assigned to a user, but should not exceed 40 characters.
-// Overrides userIp if both are provided.
-func (c *DefaultObjectAccessControlsPatchCall) QuotaUser(quotaUser string) *DefaultObjectAccessControlsPatchCall {
-	c.urlParams_.Set("quotaUser", quotaUser)
-	return c
-}
-
-// UserIP sets the optional parameter "userIp": IP address of the site
-// where the request originates. Use this if you want to enforce
-// per-user limits.
-func (c *DefaultObjectAccessControlsPatchCall) UserIP(userIP string) *DefaultObjectAccessControlsPatchCall {
-	c.urlParams_.Set("userIp", userIP)
 	return c
 }
 
@@ -4016,27 +4209,37 @@ func (c *DefaultObjectAccessControlsPatchCall) Context(ctx context.Context) *Def
 	return c
 }
 
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *DefaultObjectAccessControlsPatchCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
 func (c *DefaultObjectAccessControlsPatchCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
 	var body io.Reader = nil
 	body, err := googleapi.WithoutDataWrapper.JSONReader(c.objectaccesscontrol)
 	if err != nil {
 		return nil, err
 	}
-	ctype := "application/json"
+	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
 	urls := googleapi.ResolveRelative(c.s.BasePath, "b/{bucket}/defaultObjectAcl/{entity}")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("PATCH", urls, body)
+	req.Header = reqHeaders
 	googleapi.Expand(req.URL, map[string]string{
 		"bucket": c.bucket,
 		"entity": c.entity,
 	})
-	req.Header.Set("Content-Type", ctype)
-	req.Header.Set("User-Agent", c.s.userAgent())
-	if c.ctx_ != nil {
-		return ctxhttp.Do(c.ctx_, c.s.client, req)
-	}
-	return c.s.client.Do(req)
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
 }
 
 // Do executes the "storage.defaultObjectAccessControls.patch" call.
@@ -4046,7 +4249,8 @@ func (c *DefaultObjectAccessControlsPatchCall) doRequest(alt string) (*http.Resp
 // returned at all) in error.(*googleapi.Error).Header. Use
 // googleapi.IsNotModified to check whether the returned error was
 // because http.StatusNotModified was returned.
-func (c *DefaultObjectAccessControlsPatchCall) Do() (*ObjectAccessControl, error) {
+func (c *DefaultObjectAccessControlsPatchCall) Do(opts ...googleapi.CallOption) (*ObjectAccessControl, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("json")
 	if res != nil && res.StatusCode == http.StatusNotModified {
 		if res.Body != nil {
@@ -4070,7 +4274,8 @@ func (c *DefaultObjectAccessControlsPatchCall) Do() (*ObjectAccessControl, error
 			HTTPStatusCode: res.StatusCode,
 		},
 	}
-	if err := json.NewDecoder(res.Body).Decode(&ret); err != nil {
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -4104,6 +4309,7 @@ func (c *DefaultObjectAccessControlsPatchCall) Do() (*ObjectAccessControl, error
 	//     "$ref": "ObjectAccessControl"
 	//   },
 	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform",
 	//     "https://www.googleapis.com/auth/devstorage.full_control"
 	//   ]
 	// }
@@ -4119,6 +4325,7 @@ type DefaultObjectAccessControlsUpdateCall struct {
 	objectaccesscontrol *ObjectAccessControl
 	urlParams_          gensupport.URLParams
 	ctx_                context.Context
+	header_             http.Header
 }
 
 // Update: Updates a default object ACL entry on the specified bucket.
@@ -4127,23 +4334,6 @@ func (r *DefaultObjectAccessControlsService) Update(bucket string, entity string
 	c.bucket = bucket
 	c.entity = entity
 	c.objectaccesscontrol = objectaccesscontrol
-	return c
-}
-
-// QuotaUser sets the optional parameter "quotaUser": Available to use
-// for quota purposes for server-side applications. Can be any arbitrary
-// string assigned to a user, but should not exceed 40 characters.
-// Overrides userIp if both are provided.
-func (c *DefaultObjectAccessControlsUpdateCall) QuotaUser(quotaUser string) *DefaultObjectAccessControlsUpdateCall {
-	c.urlParams_.Set("quotaUser", quotaUser)
-	return c
-}
-
-// UserIP sets the optional parameter "userIp": IP address of the site
-// where the request originates. Use this if you want to enforce
-// per-user limits.
-func (c *DefaultObjectAccessControlsUpdateCall) UserIP(userIP string) *DefaultObjectAccessControlsUpdateCall {
-	c.urlParams_.Set("userIp", userIP)
 	return c
 }
 
@@ -4163,27 +4353,37 @@ func (c *DefaultObjectAccessControlsUpdateCall) Context(ctx context.Context) *De
 	return c
 }
 
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *DefaultObjectAccessControlsUpdateCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
 func (c *DefaultObjectAccessControlsUpdateCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
 	var body io.Reader = nil
 	body, err := googleapi.WithoutDataWrapper.JSONReader(c.objectaccesscontrol)
 	if err != nil {
 		return nil, err
 	}
-	ctype := "application/json"
+	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
 	urls := googleapi.ResolveRelative(c.s.BasePath, "b/{bucket}/defaultObjectAcl/{entity}")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("PUT", urls, body)
+	req.Header = reqHeaders
 	googleapi.Expand(req.URL, map[string]string{
 		"bucket": c.bucket,
 		"entity": c.entity,
 	})
-	req.Header.Set("Content-Type", ctype)
-	req.Header.Set("User-Agent", c.s.userAgent())
-	if c.ctx_ != nil {
-		return ctxhttp.Do(c.ctx_, c.s.client, req)
-	}
-	return c.s.client.Do(req)
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
 }
 
 // Do executes the "storage.defaultObjectAccessControls.update" call.
@@ -4193,7 +4393,8 @@ func (c *DefaultObjectAccessControlsUpdateCall) doRequest(alt string) (*http.Res
 // returned at all) in error.(*googleapi.Error).Header. Use
 // googleapi.IsNotModified to check whether the returned error was
 // because http.StatusNotModified was returned.
-func (c *DefaultObjectAccessControlsUpdateCall) Do() (*ObjectAccessControl, error) {
+func (c *DefaultObjectAccessControlsUpdateCall) Do(opts ...googleapi.CallOption) (*ObjectAccessControl, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("json")
 	if res != nil && res.StatusCode == http.StatusNotModified {
 		if res.Body != nil {
@@ -4217,7 +4418,8 @@ func (c *DefaultObjectAccessControlsUpdateCall) Do() (*ObjectAccessControl, erro
 			HTTPStatusCode: res.StatusCode,
 		},
 	}
-	if err := json.NewDecoder(res.Body).Decode(&ret); err != nil {
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -4251,6 +4453,7 @@ func (c *DefaultObjectAccessControlsUpdateCall) Do() (*ObjectAccessControl, erro
 	//     "$ref": "ObjectAccessControl"
 	//   },
 	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform",
 	//     "https://www.googleapis.com/auth/devstorage.full_control"
 	//   ]
 	// }
@@ -4266,6 +4469,7 @@ type ObjectAccessControlsDeleteCall struct {
 	entity     string
 	urlParams_ gensupport.URLParams
 	ctx_       context.Context
+	header_    http.Header
 }
 
 // Delete: Permanently deletes the ACL entry for the specified entity on
@@ -4286,23 +4490,6 @@ func (c *ObjectAccessControlsDeleteCall) Generation(generation int64) *ObjectAcc
 	return c
 }
 
-// QuotaUser sets the optional parameter "quotaUser": Available to use
-// for quota purposes for server-side applications. Can be any arbitrary
-// string assigned to a user, but should not exceed 40 characters.
-// Overrides userIp if both are provided.
-func (c *ObjectAccessControlsDeleteCall) QuotaUser(quotaUser string) *ObjectAccessControlsDeleteCall {
-	c.urlParams_.Set("quotaUser", quotaUser)
-	return c
-}
-
-// UserIP sets the optional parameter "userIp": IP address of the site
-// where the request originates. Use this if you want to enforce
-// per-user limits.
-func (c *ObjectAccessControlsDeleteCall) UserIP(userIP string) *ObjectAccessControlsDeleteCall {
-	c.urlParams_.Set("userIp", userIP)
-	return c
-}
-
 // Fields allows partial responses to be retrieved. See
 // https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
 // for more information.
@@ -4319,26 +4506,38 @@ func (c *ObjectAccessControlsDeleteCall) Context(ctx context.Context) *ObjectAcc
 	return c
 }
 
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ObjectAccessControlsDeleteCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
 func (c *ObjectAccessControlsDeleteCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	urls := googleapi.ResolveRelative(c.s.BasePath, "b/{bucket}/o/{object}/acl/{entity}")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("DELETE", urls, body)
+	req.Header = reqHeaders
 	googleapi.Expand(req.URL, map[string]string{
 		"bucket": c.bucket,
 		"object": c.object,
 		"entity": c.entity,
 	})
-	req.Header.Set("User-Agent", c.s.userAgent())
-	if c.ctx_ != nil {
-		return ctxhttp.Do(c.ctx_, c.s.client, req)
-	}
-	return c.s.client.Do(req)
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
 }
 
 // Do executes the "storage.objectAccessControls.delete" call.
-func (c *ObjectAccessControlsDeleteCall) Do() error {
+func (c *ObjectAccessControlsDeleteCall) Do(opts ...googleapi.CallOption) error {
+	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("json")
 	if err != nil {
 		return err
@@ -4385,6 +4584,7 @@ func (c *ObjectAccessControlsDeleteCall) Do() error {
 	//   },
 	//   "path": "b/{bucket}/o/{object}/acl/{entity}",
 	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform",
 	//     "https://www.googleapis.com/auth/devstorage.full_control"
 	//   ]
 	// }
@@ -4401,6 +4601,7 @@ type ObjectAccessControlsGetCall struct {
 	urlParams_   gensupport.URLParams
 	ifNoneMatch_ string
 	ctx_         context.Context
+	header_      http.Header
 }
 
 // Get: Returns the ACL entry for the specified entity on the specified
@@ -4418,23 +4619,6 @@ func (r *ObjectAccessControlsService) Get(bucket string, object string, entity s
 // version, the default).
 func (c *ObjectAccessControlsGetCall) Generation(generation int64) *ObjectAccessControlsGetCall {
 	c.urlParams_.Set("generation", fmt.Sprint(generation))
-	return c
-}
-
-// QuotaUser sets the optional parameter "quotaUser": Available to use
-// for quota purposes for server-side applications. Can be any arbitrary
-// string assigned to a user, but should not exceed 40 characters.
-// Overrides userIp if both are provided.
-func (c *ObjectAccessControlsGetCall) QuotaUser(quotaUser string) *ObjectAccessControlsGetCall {
-	c.urlParams_.Set("quotaUser", quotaUser)
-	return c
-}
-
-// UserIP sets the optional parameter "userIp": IP address of the site
-// where the request originates. Use this if you want to enforce
-// per-user limits.
-func (c *ObjectAccessControlsGetCall) UserIP(userIP string) *ObjectAccessControlsGetCall {
-	c.urlParams_.Set("userIp", userIP)
 	return c
 }
 
@@ -4464,25 +4648,36 @@ func (c *ObjectAccessControlsGetCall) Context(ctx context.Context) *ObjectAccess
 	return c
 }
 
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ObjectAccessControlsGetCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
 func (c *ObjectAccessControlsGetCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	urls := googleapi.ResolveRelative(c.s.BasePath, "b/{bucket}/o/{object}/acl/{entity}")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("GET", urls, body)
+	req.Header = reqHeaders
 	googleapi.Expand(req.URL, map[string]string{
 		"bucket": c.bucket,
 		"object": c.object,
 		"entity": c.entity,
 	})
-	req.Header.Set("User-Agent", c.s.userAgent())
-	if c.ifNoneMatch_ != "" {
-		req.Header.Set("If-None-Match", c.ifNoneMatch_)
-	}
-	if c.ctx_ != nil {
-		return ctxhttp.Do(c.ctx_, c.s.client, req)
-	}
-	return c.s.client.Do(req)
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
 }
 
 // Do executes the "storage.objectAccessControls.get" call.
@@ -4492,7 +4687,8 @@ func (c *ObjectAccessControlsGetCall) doRequest(alt string) (*http.Response, err
 // returned at all) in error.(*googleapi.Error).Header. Use
 // googleapi.IsNotModified to check whether the returned error was
 // because http.StatusNotModified was returned.
-func (c *ObjectAccessControlsGetCall) Do() (*ObjectAccessControl, error) {
+func (c *ObjectAccessControlsGetCall) Do(opts ...googleapi.CallOption) (*ObjectAccessControl, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("json")
 	if res != nil && res.StatusCode == http.StatusNotModified {
 		if res.Body != nil {
@@ -4516,7 +4712,8 @@ func (c *ObjectAccessControlsGetCall) Do() (*ObjectAccessControl, error) {
 			HTTPStatusCode: res.StatusCode,
 		},
 	}
-	if err := json.NewDecoder(res.Body).Decode(&ret); err != nil {
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -4560,6 +4757,7 @@ func (c *ObjectAccessControlsGetCall) Do() (*ObjectAccessControl, error) {
 	//     "$ref": "ObjectAccessControl"
 	//   },
 	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform",
 	//     "https://www.googleapis.com/auth/devstorage.full_control"
 	//   ]
 	// }
@@ -4575,6 +4773,7 @@ type ObjectAccessControlsInsertCall struct {
 	objectaccesscontrol *ObjectAccessControl
 	urlParams_          gensupport.URLParams
 	ctx_                context.Context
+	header_             http.Header
 }
 
 // Insert: Creates a new ACL entry on the specified object.
@@ -4594,23 +4793,6 @@ func (c *ObjectAccessControlsInsertCall) Generation(generation int64) *ObjectAcc
 	return c
 }
 
-// QuotaUser sets the optional parameter "quotaUser": Available to use
-// for quota purposes for server-side applications. Can be any arbitrary
-// string assigned to a user, but should not exceed 40 characters.
-// Overrides userIp if both are provided.
-func (c *ObjectAccessControlsInsertCall) QuotaUser(quotaUser string) *ObjectAccessControlsInsertCall {
-	c.urlParams_.Set("quotaUser", quotaUser)
-	return c
-}
-
-// UserIP sets the optional parameter "userIp": IP address of the site
-// where the request originates. Use this if you want to enforce
-// per-user limits.
-func (c *ObjectAccessControlsInsertCall) UserIP(userIP string) *ObjectAccessControlsInsertCall {
-	c.urlParams_.Set("userIp", userIP)
-	return c
-}
-
 // Fields allows partial responses to be retrieved. See
 // https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
 // for more information.
@@ -4627,27 +4809,37 @@ func (c *ObjectAccessControlsInsertCall) Context(ctx context.Context) *ObjectAcc
 	return c
 }
 
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ObjectAccessControlsInsertCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
 func (c *ObjectAccessControlsInsertCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
 	var body io.Reader = nil
 	body, err := googleapi.WithoutDataWrapper.JSONReader(c.objectaccesscontrol)
 	if err != nil {
 		return nil, err
 	}
-	ctype := "application/json"
+	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
 	urls := googleapi.ResolveRelative(c.s.BasePath, "b/{bucket}/o/{object}/acl")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("POST", urls, body)
+	req.Header = reqHeaders
 	googleapi.Expand(req.URL, map[string]string{
 		"bucket": c.bucket,
 		"object": c.object,
 	})
-	req.Header.Set("Content-Type", ctype)
-	req.Header.Set("User-Agent", c.s.userAgent())
-	if c.ctx_ != nil {
-		return ctxhttp.Do(c.ctx_, c.s.client, req)
-	}
-	return c.s.client.Do(req)
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
 }
 
 // Do executes the "storage.objectAccessControls.insert" call.
@@ -4657,7 +4849,8 @@ func (c *ObjectAccessControlsInsertCall) doRequest(alt string) (*http.Response, 
 // returned at all) in error.(*googleapi.Error).Header. Use
 // googleapi.IsNotModified to check whether the returned error was
 // because http.StatusNotModified was returned.
-func (c *ObjectAccessControlsInsertCall) Do() (*ObjectAccessControl, error) {
+func (c *ObjectAccessControlsInsertCall) Do(opts ...googleapi.CallOption) (*ObjectAccessControl, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("json")
 	if res != nil && res.StatusCode == http.StatusNotModified {
 		if res.Body != nil {
@@ -4681,7 +4874,8 @@ func (c *ObjectAccessControlsInsertCall) Do() (*ObjectAccessControl, error) {
 			HTTPStatusCode: res.StatusCode,
 		},
 	}
-	if err := json.NewDecoder(res.Body).Decode(&ret); err != nil {
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -4721,6 +4915,7 @@ func (c *ObjectAccessControlsInsertCall) Do() (*ObjectAccessControl, error) {
 	//     "$ref": "ObjectAccessControl"
 	//   },
 	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform",
 	//     "https://www.googleapis.com/auth/devstorage.full_control"
 	//   ]
 	// }
@@ -4736,6 +4931,7 @@ type ObjectAccessControlsListCall struct {
 	urlParams_   gensupport.URLParams
 	ifNoneMatch_ string
 	ctx_         context.Context
+	header_      http.Header
 }
 
 // List: Retrieves ACL entries on the specified object.
@@ -4751,23 +4947,6 @@ func (r *ObjectAccessControlsService) List(bucket string, object string) *Object
 // version, the default).
 func (c *ObjectAccessControlsListCall) Generation(generation int64) *ObjectAccessControlsListCall {
 	c.urlParams_.Set("generation", fmt.Sprint(generation))
-	return c
-}
-
-// QuotaUser sets the optional parameter "quotaUser": Available to use
-// for quota purposes for server-side applications. Can be any arbitrary
-// string assigned to a user, but should not exceed 40 characters.
-// Overrides userIp if both are provided.
-func (c *ObjectAccessControlsListCall) QuotaUser(quotaUser string) *ObjectAccessControlsListCall {
-	c.urlParams_.Set("quotaUser", quotaUser)
-	return c
-}
-
-// UserIP sets the optional parameter "userIp": IP address of the site
-// where the request originates. Use this if you want to enforce
-// per-user limits.
-func (c *ObjectAccessControlsListCall) UserIP(userIP string) *ObjectAccessControlsListCall {
-	c.urlParams_.Set("userIp", userIP)
 	return c
 }
 
@@ -4797,24 +4976,35 @@ func (c *ObjectAccessControlsListCall) Context(ctx context.Context) *ObjectAcces
 	return c
 }
 
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ObjectAccessControlsListCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
 func (c *ObjectAccessControlsListCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	urls := googleapi.ResolveRelative(c.s.BasePath, "b/{bucket}/o/{object}/acl")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("GET", urls, body)
+	req.Header = reqHeaders
 	googleapi.Expand(req.URL, map[string]string{
 		"bucket": c.bucket,
 		"object": c.object,
 	})
-	req.Header.Set("User-Agent", c.s.userAgent())
-	if c.ifNoneMatch_ != "" {
-		req.Header.Set("If-None-Match", c.ifNoneMatch_)
-	}
-	if c.ctx_ != nil {
-		return ctxhttp.Do(c.ctx_, c.s.client, req)
-	}
-	return c.s.client.Do(req)
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
 }
 
 // Do executes the "storage.objectAccessControls.list" call.
@@ -4824,7 +5014,8 @@ func (c *ObjectAccessControlsListCall) doRequest(alt string) (*http.Response, er
 // returned at all) in error.(*googleapi.Error).Header. Use
 // googleapi.IsNotModified to check whether the returned error was
 // because http.StatusNotModified was returned.
-func (c *ObjectAccessControlsListCall) Do() (*ObjectAccessControls, error) {
+func (c *ObjectAccessControlsListCall) Do(opts ...googleapi.CallOption) (*ObjectAccessControls, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("json")
 	if res != nil && res.StatusCode == http.StatusNotModified {
 		if res.Body != nil {
@@ -4848,7 +5039,8 @@ func (c *ObjectAccessControlsListCall) Do() (*ObjectAccessControls, error) {
 			HTTPStatusCode: res.StatusCode,
 		},
 	}
-	if err := json.NewDecoder(res.Body).Decode(&ret); err != nil {
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -4885,6 +5077,7 @@ func (c *ObjectAccessControlsListCall) Do() (*ObjectAccessControls, error) {
 	//     "$ref": "ObjectAccessControls"
 	//   },
 	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform",
 	//     "https://www.googleapis.com/auth/devstorage.full_control"
 	//   ]
 	// }
@@ -4901,6 +5094,7 @@ type ObjectAccessControlsPatchCall struct {
 	objectaccesscontrol *ObjectAccessControl
 	urlParams_          gensupport.URLParams
 	ctx_                context.Context
+	header_             http.Header
 }
 
 // Patch: Updates an ACL entry on the specified object. This method
@@ -4922,23 +5116,6 @@ func (c *ObjectAccessControlsPatchCall) Generation(generation int64) *ObjectAcce
 	return c
 }
 
-// QuotaUser sets the optional parameter "quotaUser": Available to use
-// for quota purposes for server-side applications. Can be any arbitrary
-// string assigned to a user, but should not exceed 40 characters.
-// Overrides userIp if both are provided.
-func (c *ObjectAccessControlsPatchCall) QuotaUser(quotaUser string) *ObjectAccessControlsPatchCall {
-	c.urlParams_.Set("quotaUser", quotaUser)
-	return c
-}
-
-// UserIP sets the optional parameter "userIp": IP address of the site
-// where the request originates. Use this if you want to enforce
-// per-user limits.
-func (c *ObjectAccessControlsPatchCall) UserIP(userIP string) *ObjectAccessControlsPatchCall {
-	c.urlParams_.Set("userIp", userIP)
-	return c
-}
-
 // Fields allows partial responses to be retrieved. See
 // https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
 // for more information.
@@ -4955,28 +5132,38 @@ func (c *ObjectAccessControlsPatchCall) Context(ctx context.Context) *ObjectAcce
 	return c
 }
 
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ObjectAccessControlsPatchCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
 func (c *ObjectAccessControlsPatchCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
 	var body io.Reader = nil
 	body, err := googleapi.WithoutDataWrapper.JSONReader(c.objectaccesscontrol)
 	if err != nil {
 		return nil, err
 	}
-	ctype := "application/json"
+	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
 	urls := googleapi.ResolveRelative(c.s.BasePath, "b/{bucket}/o/{object}/acl/{entity}")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("PATCH", urls, body)
+	req.Header = reqHeaders
 	googleapi.Expand(req.URL, map[string]string{
 		"bucket": c.bucket,
 		"object": c.object,
 		"entity": c.entity,
 	})
-	req.Header.Set("Content-Type", ctype)
-	req.Header.Set("User-Agent", c.s.userAgent())
-	if c.ctx_ != nil {
-		return ctxhttp.Do(c.ctx_, c.s.client, req)
-	}
-	return c.s.client.Do(req)
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
 }
 
 // Do executes the "storage.objectAccessControls.patch" call.
@@ -4986,7 +5173,8 @@ func (c *ObjectAccessControlsPatchCall) doRequest(alt string) (*http.Response, e
 // returned at all) in error.(*googleapi.Error).Header. Use
 // googleapi.IsNotModified to check whether the returned error was
 // because http.StatusNotModified was returned.
-func (c *ObjectAccessControlsPatchCall) Do() (*ObjectAccessControl, error) {
+func (c *ObjectAccessControlsPatchCall) Do(opts ...googleapi.CallOption) (*ObjectAccessControl, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("json")
 	if res != nil && res.StatusCode == http.StatusNotModified {
 		if res.Body != nil {
@@ -5010,7 +5198,8 @@ func (c *ObjectAccessControlsPatchCall) Do() (*ObjectAccessControl, error) {
 			HTTPStatusCode: res.StatusCode,
 		},
 	}
-	if err := json.NewDecoder(res.Body).Decode(&ret); err != nil {
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -5057,6 +5246,7 @@ func (c *ObjectAccessControlsPatchCall) Do() (*ObjectAccessControl, error) {
 	//     "$ref": "ObjectAccessControl"
 	//   },
 	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform",
 	//     "https://www.googleapis.com/auth/devstorage.full_control"
 	//   ]
 	// }
@@ -5073,6 +5263,7 @@ type ObjectAccessControlsUpdateCall struct {
 	objectaccesscontrol *ObjectAccessControl
 	urlParams_          gensupport.URLParams
 	ctx_                context.Context
+	header_             http.Header
 }
 
 // Update: Updates an ACL entry on the specified object.
@@ -5093,23 +5284,6 @@ func (c *ObjectAccessControlsUpdateCall) Generation(generation int64) *ObjectAcc
 	return c
 }
 
-// QuotaUser sets the optional parameter "quotaUser": Available to use
-// for quota purposes for server-side applications. Can be any arbitrary
-// string assigned to a user, but should not exceed 40 characters.
-// Overrides userIp if both are provided.
-func (c *ObjectAccessControlsUpdateCall) QuotaUser(quotaUser string) *ObjectAccessControlsUpdateCall {
-	c.urlParams_.Set("quotaUser", quotaUser)
-	return c
-}
-
-// UserIP sets the optional parameter "userIp": IP address of the site
-// where the request originates. Use this if you want to enforce
-// per-user limits.
-func (c *ObjectAccessControlsUpdateCall) UserIP(userIP string) *ObjectAccessControlsUpdateCall {
-	c.urlParams_.Set("userIp", userIP)
-	return c
-}
-
 // Fields allows partial responses to be retrieved. See
 // https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
 // for more information.
@@ -5126,28 +5300,38 @@ func (c *ObjectAccessControlsUpdateCall) Context(ctx context.Context) *ObjectAcc
 	return c
 }
 
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ObjectAccessControlsUpdateCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
 func (c *ObjectAccessControlsUpdateCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
 	var body io.Reader = nil
 	body, err := googleapi.WithoutDataWrapper.JSONReader(c.objectaccesscontrol)
 	if err != nil {
 		return nil, err
 	}
-	ctype := "application/json"
+	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
 	urls := googleapi.ResolveRelative(c.s.BasePath, "b/{bucket}/o/{object}/acl/{entity}")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("PUT", urls, body)
+	req.Header = reqHeaders
 	googleapi.Expand(req.URL, map[string]string{
 		"bucket": c.bucket,
 		"object": c.object,
 		"entity": c.entity,
 	})
-	req.Header.Set("Content-Type", ctype)
-	req.Header.Set("User-Agent", c.s.userAgent())
-	if c.ctx_ != nil {
-		return ctxhttp.Do(c.ctx_, c.s.client, req)
-	}
-	return c.s.client.Do(req)
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
 }
 
 // Do executes the "storage.objectAccessControls.update" call.
@@ -5157,7 +5341,8 @@ func (c *ObjectAccessControlsUpdateCall) doRequest(alt string) (*http.Response, 
 // returned at all) in error.(*googleapi.Error).Header. Use
 // googleapi.IsNotModified to check whether the returned error was
 // because http.StatusNotModified was returned.
-func (c *ObjectAccessControlsUpdateCall) Do() (*ObjectAccessControl, error) {
+func (c *ObjectAccessControlsUpdateCall) Do(opts ...googleapi.CallOption) (*ObjectAccessControl, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("json")
 	if res != nil && res.StatusCode == http.StatusNotModified {
 		if res.Body != nil {
@@ -5181,7 +5366,8 @@ func (c *ObjectAccessControlsUpdateCall) Do() (*ObjectAccessControl, error) {
 			HTTPStatusCode: res.StatusCode,
 		},
 	}
-	if err := json.NewDecoder(res.Body).Decode(&ret); err != nil {
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -5228,6 +5414,7 @@ func (c *ObjectAccessControlsUpdateCall) Do() (*ObjectAccessControl, error) {
 	//     "$ref": "ObjectAccessControl"
 	//   },
 	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform",
 	//     "https://www.googleapis.com/auth/devstorage.full_control"
 	//   ]
 	// }
@@ -5243,6 +5430,7 @@ type ObjectsComposeCall struct {
 	composerequest    *ComposeRequest
 	urlParams_        gensupport.URLParams
 	ctx_              context.Context
+	header_           http.Header
 }
 
 // Compose: Concatenates a list of existing objects into a new object in
@@ -5292,23 +5480,6 @@ func (c *ObjectsComposeCall) IfMetagenerationMatch(ifMetagenerationMatch int64) 
 	return c
 }
 
-// QuotaUser sets the optional parameter "quotaUser": Available to use
-// for quota purposes for server-side applications. Can be any arbitrary
-// string assigned to a user, but should not exceed 40 characters.
-// Overrides userIp if both are provided.
-func (c *ObjectsComposeCall) QuotaUser(quotaUser string) *ObjectsComposeCall {
-	c.urlParams_.Set("quotaUser", quotaUser)
-	return c
-}
-
-// UserIP sets the optional parameter "userIp": IP address of the site
-// where the request originates. Use this if you want to enforce
-// per-user limits.
-func (c *ObjectsComposeCall) UserIP(userIP string) *ObjectsComposeCall {
-	c.urlParams_.Set("userIp", userIP)
-	return c
-}
-
 // Fields allows partial responses to be retrieved. See
 // https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
 // for more information.
@@ -5325,33 +5496,44 @@ func (c *ObjectsComposeCall) Context(ctx context.Context) *ObjectsComposeCall {
 	return c
 }
 
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ObjectsComposeCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
 func (c *ObjectsComposeCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
 	var body io.Reader = nil
 	body, err := googleapi.WithoutDataWrapper.JSONReader(c.composerequest)
 	if err != nil {
 		return nil, err
 	}
-	ctype := "application/json"
+	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
 	urls := googleapi.ResolveRelative(c.s.BasePath, "b/{destinationBucket}/o/{destinationObject}/compose")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("POST", urls, body)
+	req.Header = reqHeaders
 	googleapi.Expand(req.URL, map[string]string{
 		"destinationBucket": c.destinationBucket,
 		"destinationObject": c.destinationObject,
 	})
-	req.Header.Set("Content-Type", ctype)
-	req.Header.Set("User-Agent", c.s.userAgent())
-	if c.ctx_ != nil {
-		return ctxhttp.Do(c.ctx_, c.s.client, req)
-	}
-	return c.s.client.Do(req)
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
 }
 
 // Download fetches the API endpoint's "media" value, instead of the normal
 // API response value. If the returned error is nil, the Response is guaranteed to
 // have a 2xx status code. Callers must close the Response.Body as usual.
-func (c *ObjectsComposeCall) Download() (*http.Response, error) {
+func (c *ObjectsComposeCall) Download(opts ...googleapi.CallOption) (*http.Response, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("media")
 	if err != nil {
 		return nil, err
@@ -5370,7 +5552,8 @@ func (c *ObjectsComposeCall) Download() (*http.Response, error) {
 // in error.(*googleapi.Error).Header. Use googleapi.IsNotModified to
 // check whether the returned error was because http.StatusNotModified
 // was returned.
-func (c *ObjectsComposeCall) Do() (*Object, error) {
+func (c *ObjectsComposeCall) Do(opts ...googleapi.CallOption) (*Object, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("json")
 	if res != nil && res.StatusCode == http.StatusNotModified {
 		if res.Body != nil {
@@ -5394,7 +5577,8 @@ func (c *ObjectsComposeCall) Do() (*Object, error) {
 			HTTPStatusCode: res.StatusCode,
 		},
 	}
-	if err := json.NewDecoder(res.Body).Decode(&ret); err != nil {
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -5465,7 +5649,8 @@ func (c *ObjectsComposeCall) Do() (*Object, error) {
 	//     "https://www.googleapis.com/auth/devstorage.full_control",
 	//     "https://www.googleapis.com/auth/devstorage.read_write"
 	//   ],
-	//   "supportsMediaDownload": true
+	//   "supportsMediaDownload": true,
+	//   "useMediaDownloadService": true
 	// }
 
 }
@@ -5481,6 +5666,7 @@ type ObjectsCopyCall struct {
 	object            *Object
 	urlParams_        gensupport.URLParams
 	ctx_              context.Context
+	header_           http.Header
 }
 
 // Copy: Copies a source object to a destination object. Optionally
@@ -5592,18 +5778,9 @@ func (c *ObjectsCopyCall) IfSourceMetagenerationNotMatch(ifSourceMetagenerationN
 //
 // Possible values:
 //   "full" - Include all properties.
-//   "noAcl" - Omit the acl property.
+//   "noAcl" - Omit the owner, acl property.
 func (c *ObjectsCopyCall) Projection(projection string) *ObjectsCopyCall {
 	c.urlParams_.Set("projection", projection)
-	return c
-}
-
-// QuotaUser sets the optional parameter "quotaUser": Available to use
-// for quota purposes for server-side applications. Can be any arbitrary
-// string assigned to a user, but should not exceed 40 characters.
-// Overrides userIp if both are provided.
-func (c *ObjectsCopyCall) QuotaUser(quotaUser string) *ObjectsCopyCall {
-	c.urlParams_.Set("quotaUser", quotaUser)
 	return c
 }
 
@@ -5612,14 +5789,6 @@ func (c *ObjectsCopyCall) QuotaUser(quotaUser string) *ObjectsCopyCall {
 // to the latest version, the default).
 func (c *ObjectsCopyCall) SourceGeneration(sourceGeneration int64) *ObjectsCopyCall {
 	c.urlParams_.Set("sourceGeneration", fmt.Sprint(sourceGeneration))
-	return c
-}
-
-// UserIP sets the optional parameter "userIp": IP address of the site
-// where the request originates. Use this if you want to enforce
-// per-user limits.
-func (c *ObjectsCopyCall) UserIP(userIP string) *ObjectsCopyCall {
-	c.urlParams_.Set("userIp", userIP)
 	return c
 }
 
@@ -5639,35 +5808,46 @@ func (c *ObjectsCopyCall) Context(ctx context.Context) *ObjectsCopyCall {
 	return c
 }
 
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ObjectsCopyCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
 func (c *ObjectsCopyCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
 	var body io.Reader = nil
 	body, err := googleapi.WithoutDataWrapper.JSONReader(c.object)
 	if err != nil {
 		return nil, err
 	}
-	ctype := "application/json"
+	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
 	urls := googleapi.ResolveRelative(c.s.BasePath, "b/{sourceBucket}/o/{sourceObject}/copyTo/b/{destinationBucket}/o/{destinationObject}")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("POST", urls, body)
+	req.Header = reqHeaders
 	googleapi.Expand(req.URL, map[string]string{
 		"sourceBucket":      c.sourceBucket,
 		"sourceObject":      c.sourceObject,
 		"destinationBucket": c.destinationBucket,
 		"destinationObject": c.destinationObject,
 	})
-	req.Header.Set("Content-Type", ctype)
-	req.Header.Set("User-Agent", c.s.userAgent())
-	if c.ctx_ != nil {
-		return ctxhttp.Do(c.ctx_, c.s.client, req)
-	}
-	return c.s.client.Do(req)
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
 }
 
 // Download fetches the API endpoint's "media" value, instead of the normal
 // API response value. If the returned error is nil, the Response is guaranteed to
 // have a 2xx status code. Callers must close the Response.Body as usual.
-func (c *ObjectsCopyCall) Download() (*http.Response, error) {
+func (c *ObjectsCopyCall) Download(opts ...googleapi.CallOption) (*http.Response, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("media")
 	if err != nil {
 		return nil, err
@@ -5686,7 +5866,8 @@ func (c *ObjectsCopyCall) Download() (*http.Response, error) {
 // in error.(*googleapi.Error).Header. Use googleapi.IsNotModified to
 // check whether the returned error was because http.StatusNotModified
 // was returned.
-func (c *ObjectsCopyCall) Do() (*Object, error) {
+func (c *ObjectsCopyCall) Do(opts ...googleapi.CallOption) (*Object, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("json")
 	if res != nil && res.StatusCode == http.StatusNotModified {
 		if res.Body != nil {
@@ -5710,7 +5891,8 @@ func (c *ObjectsCopyCall) Do() (*Object, error) {
 			HTTPStatusCode: res.StatusCode,
 		},
 	}
-	if err := json.NewDecoder(res.Body).Decode(&ret); err != nil {
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -5814,7 +5996,7 @@ func (c *ObjectsCopyCall) Do() (*Object, error) {
 	//       ],
 	//       "enumDescriptions": [
 	//         "Include all properties.",
-	//         "Omit the acl property."
+	//         "Omit the owner, acl property."
 	//       ],
 	//       "location": "query",
 	//       "type": "string"
@@ -5850,7 +6032,8 @@ func (c *ObjectsCopyCall) Do() (*Object, error) {
 	//     "https://www.googleapis.com/auth/devstorage.full_control",
 	//     "https://www.googleapis.com/auth/devstorage.read_write"
 	//   ],
-	//   "supportsMediaDownload": true
+	//   "supportsMediaDownload": true,
+	//   "useMediaDownloadService": true
 	// }
 
 }
@@ -5863,6 +6046,7 @@ type ObjectsDeleteCall struct {
 	object     string
 	urlParams_ gensupport.URLParams
 	ctx_       context.Context
+	header_    http.Header
 }
 
 // Delete: Deletes an object and its metadata. Deletions are permanent
@@ -5916,23 +6100,6 @@ func (c *ObjectsDeleteCall) IfMetagenerationNotMatch(ifMetagenerationNotMatch in
 	return c
 }
 
-// QuotaUser sets the optional parameter "quotaUser": Available to use
-// for quota purposes for server-side applications. Can be any arbitrary
-// string assigned to a user, but should not exceed 40 characters.
-// Overrides userIp if both are provided.
-func (c *ObjectsDeleteCall) QuotaUser(quotaUser string) *ObjectsDeleteCall {
-	c.urlParams_.Set("quotaUser", quotaUser)
-	return c
-}
-
-// UserIP sets the optional parameter "userIp": IP address of the site
-// where the request originates. Use this if you want to enforce
-// per-user limits.
-func (c *ObjectsDeleteCall) UserIP(userIP string) *ObjectsDeleteCall {
-	c.urlParams_.Set("userIp", userIP)
-	return c
-}
-
 // Fields allows partial responses to be retrieved. See
 // https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
 // for more information.
@@ -5949,25 +6116,37 @@ func (c *ObjectsDeleteCall) Context(ctx context.Context) *ObjectsDeleteCall {
 	return c
 }
 
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ObjectsDeleteCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
 func (c *ObjectsDeleteCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	urls := googleapi.ResolveRelative(c.s.BasePath, "b/{bucket}/o/{object}")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("DELETE", urls, body)
+	req.Header = reqHeaders
 	googleapi.Expand(req.URL, map[string]string{
 		"bucket": c.bucket,
 		"object": c.object,
 	})
-	req.Header.Set("User-Agent", c.s.userAgent())
-	if c.ctx_ != nil {
-		return ctxhttp.Do(c.ctx_, c.s.client, req)
-	}
-	return c.s.client.Do(req)
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
 }
 
 // Do executes the "storage.objects.delete" call.
-func (c *ObjectsDeleteCall) Do() error {
+func (c *ObjectsDeleteCall) Do(opts ...googleapi.CallOption) error {
+	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("json")
 	if err != nil {
 		return err
@@ -6048,6 +6227,7 @@ type ObjectsGetCall struct {
 	urlParams_   gensupport.URLParams
 	ifNoneMatch_ string
 	ctx_         context.Context
+	header_      http.Header
 }
 
 // Get: Retrieves an object or its metadata.
@@ -6104,26 +6284,9 @@ func (c *ObjectsGetCall) IfMetagenerationNotMatch(ifMetagenerationNotMatch int64
 //
 // Possible values:
 //   "full" - Include all properties.
-//   "noAcl" - Omit the acl property.
+//   "noAcl" - Omit the owner, acl property.
 func (c *ObjectsGetCall) Projection(projection string) *ObjectsGetCall {
 	c.urlParams_.Set("projection", projection)
-	return c
-}
-
-// QuotaUser sets the optional parameter "quotaUser": Available to use
-// for quota purposes for server-side applications. Can be any arbitrary
-// string assigned to a user, but should not exceed 40 characters.
-// Overrides userIp if both are provided.
-func (c *ObjectsGetCall) QuotaUser(quotaUser string) *ObjectsGetCall {
-	c.urlParams_.Set("quotaUser", quotaUser)
-	return c
-}
-
-// UserIP sets the optional parameter "userIp": IP address of the site
-// where the request originates. Use this if you want to enforce
-// per-user limits.
-func (c *ObjectsGetCall) UserIP(userIP string) *ObjectsGetCall {
-	c.urlParams_.Set("userIp", userIP)
 	return c
 }
 
@@ -6153,30 +6316,42 @@ func (c *ObjectsGetCall) Context(ctx context.Context) *ObjectsGetCall {
 	return c
 }
 
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ObjectsGetCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
 func (c *ObjectsGetCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	urls := googleapi.ResolveRelative(c.s.BasePath, "b/{bucket}/o/{object}")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("GET", urls, body)
+	req.Header = reqHeaders
 	googleapi.Expand(req.URL, map[string]string{
 		"bucket": c.bucket,
 		"object": c.object,
 	})
-	req.Header.Set("User-Agent", c.s.userAgent())
-	if c.ifNoneMatch_ != "" {
-		req.Header.Set("If-None-Match", c.ifNoneMatch_)
-	}
-	if c.ctx_ != nil {
-		return ctxhttp.Do(c.ctx_, c.s.client, req)
-	}
-	return c.s.client.Do(req)
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
 }
 
 // Download fetches the API endpoint's "media" value, instead of the normal
 // API response value. If the returned error is nil, the Response is guaranteed to
 // have a 2xx status code. Callers must close the Response.Body as usual.
-func (c *ObjectsGetCall) Download() (*http.Response, error) {
+func (c *ObjectsGetCall) Download(opts ...googleapi.CallOption) (*http.Response, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("media")
 	if err != nil {
 		return nil, err
@@ -6195,7 +6370,8 @@ func (c *ObjectsGetCall) Download() (*http.Response, error) {
 // in error.(*googleapi.Error).Header. Use googleapi.IsNotModified to
 // check whether the returned error was because http.StatusNotModified
 // was returned.
-func (c *ObjectsGetCall) Do() (*Object, error) {
+func (c *ObjectsGetCall) Do(opts ...googleapi.CallOption) (*Object, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("json")
 	if res != nil && res.StatusCode == http.StatusNotModified {
 		if res.Body != nil {
@@ -6219,7 +6395,8 @@ func (c *ObjectsGetCall) Do() (*Object, error) {
 			HTTPStatusCode: res.StatusCode,
 		},
 	}
-	if err := json.NewDecoder(res.Body).Decode(&ret); err != nil {
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -6282,7 +6459,7 @@ func (c *ObjectsGetCall) Do() (*Object, error) {
 	//       ],
 	//       "enumDescriptions": [
 	//         "Include all properties.",
-	//         "Omit the acl property."
+	//         "Omit the owner, acl property."
 	//       ],
 	//       "location": "query",
 	//       "type": "string"
@@ -6299,7 +6476,8 @@ func (c *ObjectsGetCall) Do() (*Object, error) {
 	//     "https://www.googleapis.com/auth/devstorage.read_only",
 	//     "https://www.googleapis.com/auth/devstorage.read_write"
 	//   ],
-	//   "supportsMediaDownload": true
+	//   "supportsMediaDownload": true,
+	//   "useMediaDownloadService": true
 	// }
 
 }
@@ -6312,11 +6490,12 @@ type ObjectsInsertCall struct {
 	object           *Object
 	urlParams_       gensupport.URLParams
 	media_           io.Reader
-	resumable_       googleapi.SizeReaderAt
+	mediaBuffer_     *gensupport.MediaBuffer
 	mediaType_       string
-	protocol_        string
+	mediaSize_       int64 // mediaSize, if known.  Used only for calls to progressUpdater_.
 	progressUpdater_ googleapi.ProgressUpdater
 	ctx_             context.Context
+	header_          http.Header
 }
 
 // Insert: Stores a new object and metadata.
@@ -6406,48 +6585,49 @@ func (c *ObjectsInsertCall) PredefinedAcl(predefinedAcl string) *ObjectsInsertCa
 //
 // Possible values:
 //   "full" - Include all properties.
-//   "noAcl" - Omit the acl property.
+//   "noAcl" - Omit the owner, acl property.
 func (c *ObjectsInsertCall) Projection(projection string) *ObjectsInsertCall {
 	c.urlParams_.Set("projection", projection)
 	return c
 }
 
-// QuotaUser sets the optional parameter "quotaUser": Available to use
-// for quota purposes for server-side applications. Can be any arbitrary
-// string assigned to a user, but should not exceed 40 characters.
-// Overrides userIp if both are provided.
-func (c *ObjectsInsertCall) QuotaUser(quotaUser string) *ObjectsInsertCall {
-	c.urlParams_.Set("quotaUser", quotaUser)
-	return c
-}
-
-// UserIP sets the optional parameter "userIp": IP address of the site
-// where the request originates. Use this if you want to enforce
-// per-user limits.
-func (c *ObjectsInsertCall) UserIP(userIP string) *ObjectsInsertCall {
-	c.urlParams_.Set("userIp", userIP)
-	return c
-}
-
-// Media specifies the media to upload in a single chunk. At most one of
-// Media and ResumableMedia may be set.
-func (c *ObjectsInsertCall) Media(r io.Reader) *ObjectsInsertCall {
-	c.media_ = r
-	c.protocol_ = "multipart"
+// Media specifies the media to upload in one or more chunks. The chunk
+// size may be controlled by supplying a MediaOption generated by
+// googleapi.ChunkSize. The chunk size defaults to
+// googleapi.DefaultUploadChunkSize.The Content-Type header used in the
+// upload request will be determined by sniffing the contents of r,
+// unless a MediaOption generated by googleapi.ContentType is
+// supplied.
+// At most one of Media and ResumableMedia may be set.
+func (c *ObjectsInsertCall) Media(r io.Reader, options ...googleapi.MediaOption) *ObjectsInsertCall {
+	if ct := c.object.ContentType; ct != "" {
+		options = append([]googleapi.MediaOption{googleapi.ContentType(ct)}, options...)
+	}
+	opts := googleapi.ProcessMediaOptions(options)
+	chunkSize := opts.ChunkSize
+	if !opts.ForceEmptyContentType {
+		r, c.mediaType_ = gensupport.DetermineContentType(r, opts.ContentType)
+	}
+	c.media_, c.mediaBuffer_ = gensupport.PrepareUpload(r, chunkSize)
 	return c
 }
 
 // ResumableMedia specifies the media to upload in chunks and can be
-// canceled with ctx. At most one of Media and ResumableMedia may be
-// set. mediaType identifies the MIME media type of the upload, such as
-// "image/png". If mediaType is "", it will be auto-detected. The
-// provided ctx will supersede any context previously provided to the
-// Context method.
+// canceled with ctx.
+//
+// Deprecated: use Media instead.
+//
+// At most one of Media and ResumableMedia may be set. mediaType
+// identifies the MIME media type of the upload, such as "image/png". If
+// mediaType is "", it will be auto-detected. The provided ctx will
+// supersede any context previously provided to the Context method.
 func (c *ObjectsInsertCall) ResumableMedia(ctx context.Context, r io.ReaderAt, size int64, mediaType string) *ObjectsInsertCall {
 	c.ctx_ = ctx
-	c.resumable_ = io.NewSectionReader(r, 0, size)
-	c.mediaType_ = mediaType
-	c.protocol_ = "resumable"
+	rdr := gensupport.ReaderAtToReader(r, size)
+	rdr, c.mediaType_ = gensupport.DetermineContentType(rdr, mediaType)
+	c.mediaBuffer_ = gensupport.NewMediaBuffer(rdr, googleapi.DefaultUploadChunkSize)
+	c.media_ = nil
+	c.mediaSize_ = size
 	return c
 }
 
@@ -6478,43 +6658,57 @@ func (c *ObjectsInsertCall) Context(ctx context.Context) *ObjectsInsertCall {
 	return c
 }
 
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ObjectsInsertCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
 func (c *ObjectsInsertCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
 	var body io.Reader = nil
 	body, err := googleapi.WithoutDataWrapper.JSONReader(c.object)
 	if err != nil {
 		return nil, err
 	}
-	ctype := "application/json"
+	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
 	urls := googleapi.ResolveRelative(c.s.BasePath, "b/{bucket}/o")
-	if c.media_ != nil || c.resumable_ != nil {
+	if c.media_ != nil || c.mediaBuffer_ != nil {
 		urls = strings.Replace(urls, "https://www.googleapis.com/", "https://www.googleapis.com/upload/", 1)
-		c.urlParams_.Set("uploadType", c.protocol_)
+		protocol := "multipart"
+		if c.mediaBuffer_ != nil {
+			protocol = "resumable"
+		}
+		c.urlParams_.Set("uploadType", protocol)
+	}
+	if body == nil {
+		body = new(bytes.Buffer)
+		reqHeaders.Set("Content-Type", "application/json")
+	}
+	if c.media_ != nil {
+		combined, ctype := gensupport.CombineBodyMedia(body, "application/json", c.media_, c.mediaType_)
+		defer combined.Close()
+		reqHeaders.Set("Content-Type", ctype)
+		body = combined
+	}
+	if c.mediaBuffer_ != nil && c.mediaType_ != "" {
+		reqHeaders.Set("X-Upload-Content-Type", c.mediaType_)
 	}
 	urls += "?" + c.urlParams_.Encode()
-	if c.protocol_ != "resumable" {
-		var cancel func()
-		cancel, _ = googleapi.ConditionallyIncludeMedia(c.media_, &body, &ctype)
-		if cancel != nil {
-			defer cancel()
-		}
-	}
 	req, _ := http.NewRequest("POST", urls, body)
+	req.Header = reqHeaders
 	googleapi.Expand(req.URL, map[string]string{
 		"bucket": c.bucket,
 	})
-	if c.protocol_ == "resumable" {
-		if c.mediaType_ == "" {
-			c.mediaType_ = googleapi.DetectMediaType(c.resumable_)
-		}
-		req.Header.Set("X-Upload-Content-Type", c.mediaType_)
-	}
-	req.Header.Set("Content-Type", ctype)
-	req.Header.Set("User-Agent", c.s.userAgent())
-	if c.ctx_ != nil {
-		return ctxhttp.Do(c.ctx_, c.s.client, req)
-	}
-	return c.s.client.Do(req)
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
 }
 
 // Do executes the "storage.objects.insert" call.
@@ -6524,7 +6718,8 @@ func (c *ObjectsInsertCall) doRequest(alt string) (*http.Response, error) {
 // in error.(*googleapi.Error).Header. Use googleapi.IsNotModified to
 // check whether the returned error was because http.StatusNotModified
 // was returned.
-func (c *ObjectsInsertCall) Do() (*Object, error) {
+func (c *ObjectsInsertCall) Do(opts ...googleapi.CallOption) (*Object, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("json")
 	if res != nil && res.StatusCode == http.StatusNotModified {
 		if res.Body != nil {
@@ -6542,22 +6737,32 @@ func (c *ObjectsInsertCall) Do() (*Object, error) {
 	if err := googleapi.CheckResponse(res); err != nil {
 		return nil, err
 	}
-	if c.protocol_ == "resumable" {
+	if c.mediaBuffer_ != nil {
 		loc := res.Header.Get("Location")
-		rx := &googleapi.ResumableUpload{
-			Client:        c.s.client,
-			UserAgent:     c.s.userAgent(),
-			URI:           loc,
-			Media:         c.resumable_,
-			MediaType:     c.mediaType_,
-			ContentLength: c.resumable_.Size(),
-			Callback:      c.progressUpdater_,
+		rx := &gensupport.ResumableUpload{
+			Client:    c.s.client,
+			UserAgent: c.s.userAgent(),
+			URI:       loc,
+			Media:     c.mediaBuffer_,
+			MediaType: c.mediaType_,
+			Callback: func(curr int64) {
+				if c.progressUpdater_ != nil {
+					c.progressUpdater_(curr, c.mediaSize_)
+				}
+			},
 		}
-		res, err = rx.Upload(c.ctx_)
+		ctx := c.ctx_
+		if ctx == nil {
+			ctx = context.TODO()
+		}
+		res, err = rx.Upload(ctx)
 		if err != nil {
 			return nil, err
 		}
 		defer res.Body.Close()
+		if err := googleapi.CheckResponse(res); err != nil {
+			return nil, err
+		}
 	}
 	ret := &Object{
 		ServerResponse: googleapi.ServerResponse{
@@ -6565,7 +6770,8 @@ func (c *ObjectsInsertCall) Do() (*Object, error) {
 			HTTPStatusCode: res.StatusCode,
 		},
 	}
-	if err := json.NewDecoder(res.Body).Decode(&ret); err != nil {
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -6661,7 +6867,7 @@ func (c *ObjectsInsertCall) Do() (*Object, error) {
 	//       ],
 	//       "enumDescriptions": [
 	//         "Include all properties.",
-	//         "Omit the acl property."
+	//         "Omit the owner, acl property."
 	//       ],
 	//       "location": "query",
 	//       "type": "string"
@@ -6680,7 +6886,8 @@ func (c *ObjectsInsertCall) Do() (*Object, error) {
 	//     "https://www.googleapis.com/auth/devstorage.read_write"
 	//   ],
 	//   "supportsMediaDownload": true,
-	//   "supportsMediaUpload": true
+	//   "supportsMediaUpload": true,
+	//   "useMediaDownloadService": true
 	// }
 
 }
@@ -6693,6 +6900,7 @@ type ObjectsListCall struct {
 	urlParams_   gensupport.URLParams
 	ifNoneMatch_ string
 	ctx_         context.Context
+	header_      http.Header
 }
 
 // List: Retrieves a list of objects matching the criteria.
@@ -6742,26 +6950,9 @@ func (c *ObjectsListCall) Prefix(prefix string) *ObjectsListCall {
 //
 // Possible values:
 //   "full" - Include all properties.
-//   "noAcl" - Omit the acl property.
+//   "noAcl" - Omit the owner, acl property.
 func (c *ObjectsListCall) Projection(projection string) *ObjectsListCall {
 	c.urlParams_.Set("projection", projection)
-	return c
-}
-
-// QuotaUser sets the optional parameter "quotaUser": Available to use
-// for quota purposes for server-side applications. Can be any arbitrary
-// string assigned to a user, but should not exceed 40 characters.
-// Overrides userIp if both are provided.
-func (c *ObjectsListCall) QuotaUser(quotaUser string) *ObjectsListCall {
-	c.urlParams_.Set("quotaUser", quotaUser)
-	return c
-}
-
-// UserIP sets the optional parameter "userIp": IP address of the site
-// where the request originates. Use this if you want to enforce
-// per-user limits.
-func (c *ObjectsListCall) UserIP(userIP string) *ObjectsListCall {
-	c.urlParams_.Set("userIp", userIP)
 	return c
 }
 
@@ -6799,23 +6990,34 @@ func (c *ObjectsListCall) Context(ctx context.Context) *ObjectsListCall {
 	return c
 }
 
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ObjectsListCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
 func (c *ObjectsListCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	urls := googleapi.ResolveRelative(c.s.BasePath, "b/{bucket}/o")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("GET", urls, body)
+	req.Header = reqHeaders
 	googleapi.Expand(req.URL, map[string]string{
 		"bucket": c.bucket,
 	})
-	req.Header.Set("User-Agent", c.s.userAgent())
-	if c.ifNoneMatch_ != "" {
-		req.Header.Set("If-None-Match", c.ifNoneMatch_)
-	}
-	if c.ctx_ != nil {
-		return ctxhttp.Do(c.ctx_, c.s.client, req)
-	}
-	return c.s.client.Do(req)
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
 }
 
 // Do executes the "storage.objects.list" call.
@@ -6825,7 +7027,8 @@ func (c *ObjectsListCall) doRequest(alt string) (*http.Response, error) {
 // in error.(*googleapi.Error).Header. Use googleapi.IsNotModified to
 // check whether the returned error was because http.StatusNotModified
 // was returned.
-func (c *ObjectsListCall) Do() (*Objects, error) {
+func (c *ObjectsListCall) Do(opts ...googleapi.CallOption) (*Objects, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("json")
 	if res != nil && res.StatusCode == http.StatusNotModified {
 		if res.Body != nil {
@@ -6849,7 +7052,8 @@ func (c *ObjectsListCall) Do() (*Objects, error) {
 			HTTPStatusCode: res.StatusCode,
 		},
 	}
-	if err := json.NewDecoder(res.Body).Decode(&ret); err != nil {
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -6897,7 +7101,7 @@ func (c *ObjectsListCall) Do() (*Objects, error) {
 	//       ],
 	//       "enumDescriptions": [
 	//         "Include all properties.",
-	//         "Omit the acl property."
+	//         "Omit the owner, acl property."
 	//       ],
 	//       "location": "query",
 	//       "type": "string"
@@ -6924,6 +7128,27 @@ func (c *ObjectsListCall) Do() (*Objects, error) {
 
 }
 
+// Pages invokes f for each page of results.
+// A non-nil error returned from f will halt the iteration.
+// The provided context supersedes any context provided to the Context method.
+func (c *ObjectsListCall) Pages(ctx context.Context, f func(*Objects) error) error {
+	c.ctx_ = ctx
+	defer c.PageToken(c.urlParams_.Get("pageToken")) // reset paging to original point
+	for {
+		x, err := c.Do()
+		if err != nil {
+			return err
+		}
+		if err := f(x); err != nil {
+			return err
+		}
+		if x.NextPageToken == "" {
+			return nil
+		}
+		c.PageToken(x.NextPageToken)
+	}
+}
+
 // method id "storage.objects.patch":
 
 type ObjectsPatchCall struct {
@@ -6933,6 +7158,7 @@ type ObjectsPatchCall struct {
 	object2    *Object
 	urlParams_ gensupport.URLParams
 	ctx_       context.Context
+	header_    http.Header
 }
 
 // Patch: Updates an object's metadata. This method supports patch
@@ -7011,26 +7237,9 @@ func (c *ObjectsPatchCall) PredefinedAcl(predefinedAcl string) *ObjectsPatchCall
 //
 // Possible values:
 //   "full" - Include all properties.
-//   "noAcl" - Omit the acl property.
+//   "noAcl" - Omit the owner, acl property.
 func (c *ObjectsPatchCall) Projection(projection string) *ObjectsPatchCall {
 	c.urlParams_.Set("projection", projection)
-	return c
-}
-
-// QuotaUser sets the optional parameter "quotaUser": Available to use
-// for quota purposes for server-side applications. Can be any arbitrary
-// string assigned to a user, but should not exceed 40 characters.
-// Overrides userIp if both are provided.
-func (c *ObjectsPatchCall) QuotaUser(quotaUser string) *ObjectsPatchCall {
-	c.urlParams_.Set("quotaUser", quotaUser)
-	return c
-}
-
-// UserIP sets the optional parameter "userIp": IP address of the site
-// where the request originates. Use this if you want to enforce
-// per-user limits.
-func (c *ObjectsPatchCall) UserIP(userIP string) *ObjectsPatchCall {
-	c.urlParams_.Set("userIp", userIP)
 	return c
 }
 
@@ -7050,27 +7259,37 @@ func (c *ObjectsPatchCall) Context(ctx context.Context) *ObjectsPatchCall {
 	return c
 }
 
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ObjectsPatchCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
 func (c *ObjectsPatchCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
 	var body io.Reader = nil
 	body, err := googleapi.WithoutDataWrapper.JSONReader(c.object2)
 	if err != nil {
 		return nil, err
 	}
-	ctype := "application/json"
+	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
 	urls := googleapi.ResolveRelative(c.s.BasePath, "b/{bucket}/o/{object}")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("PATCH", urls, body)
+	req.Header = reqHeaders
 	googleapi.Expand(req.URL, map[string]string{
 		"bucket": c.bucket,
 		"object": c.object,
 	})
-	req.Header.Set("Content-Type", ctype)
-	req.Header.Set("User-Agent", c.s.userAgent())
-	if c.ctx_ != nil {
-		return ctxhttp.Do(c.ctx_, c.s.client, req)
-	}
-	return c.s.client.Do(req)
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
 }
 
 // Do executes the "storage.objects.patch" call.
@@ -7080,7 +7299,8 @@ func (c *ObjectsPatchCall) doRequest(alt string) (*http.Response, error) {
 // in error.(*googleapi.Error).Header. Use googleapi.IsNotModified to
 // check whether the returned error was because http.StatusNotModified
 // was returned.
-func (c *ObjectsPatchCall) Do() (*Object, error) {
+func (c *ObjectsPatchCall) Do(opts ...googleapi.CallOption) (*Object, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("json")
 	if res != nil && res.StatusCode == http.StatusNotModified {
 		if res.Body != nil {
@@ -7104,7 +7324,8 @@ func (c *ObjectsPatchCall) Do() (*Object, error) {
 			HTTPStatusCode: res.StatusCode,
 		},
 	}
-	if err := json.NewDecoder(res.Body).Decode(&ret); err != nil {
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -7188,7 +7409,7 @@ func (c *ObjectsPatchCall) Do() (*Object, error) {
 	//       ],
 	//       "enumDescriptions": [
 	//         "Include all properties.",
-	//         "Omit the acl property."
+	//         "Omit the owner, acl property."
 	//       ],
 	//       "location": "query",
 	//       "type": "string"
@@ -7203,8 +7424,7 @@ func (c *ObjectsPatchCall) Do() (*Object, error) {
 	//   },
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/cloud-platform",
-	//     "https://www.googleapis.com/auth/devstorage.full_control",
-	//     "https://www.googleapis.com/auth/devstorage.read_write"
+	//     "https://www.googleapis.com/auth/devstorage.full_control"
 	//   ]
 	// }
 
@@ -7221,6 +7441,7 @@ type ObjectsRewriteCall struct {
 	object            *Object
 	urlParams_        gensupport.URLParams
 	ctx_              context.Context
+	header_           http.Header
 }
 
 // Rewrite: Rewrites a source object to a destination object. Optionally
@@ -7346,18 +7567,9 @@ func (c *ObjectsRewriteCall) MaxBytesRewrittenPerCall(maxBytesRewrittenPerCall i
 //
 // Possible values:
 //   "full" - Include all properties.
-//   "noAcl" - Omit the acl property.
+//   "noAcl" - Omit the owner, acl property.
 func (c *ObjectsRewriteCall) Projection(projection string) *ObjectsRewriteCall {
 	c.urlParams_.Set("projection", projection)
-	return c
-}
-
-// QuotaUser sets the optional parameter "quotaUser": Available to use
-// for quota purposes for server-side applications. Can be any arbitrary
-// string assigned to a user, but should not exceed 40 characters.
-// Overrides userIp if both are provided.
-func (c *ObjectsRewriteCall) QuotaUser(quotaUser string) *ObjectsRewriteCall {
-	c.urlParams_.Set("quotaUser", quotaUser)
 	return c
 }
 
@@ -7380,14 +7592,6 @@ func (c *ObjectsRewriteCall) SourceGeneration(sourceGeneration int64) *ObjectsRe
 	return c
 }
 
-// UserIP sets the optional parameter "userIp": IP address of the site
-// where the request originates. Use this if you want to enforce
-// per-user limits.
-func (c *ObjectsRewriteCall) UserIP(userIP string) *ObjectsRewriteCall {
-	c.urlParams_.Set("userIp", userIP)
-	return c
-}
-
 // Fields allows partial responses to be retrieved. See
 // https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
 // for more information.
@@ -7404,29 +7608,39 @@ func (c *ObjectsRewriteCall) Context(ctx context.Context) *ObjectsRewriteCall {
 	return c
 }
 
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ObjectsRewriteCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
 func (c *ObjectsRewriteCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
 	var body io.Reader = nil
 	body, err := googleapi.WithoutDataWrapper.JSONReader(c.object)
 	if err != nil {
 		return nil, err
 	}
-	ctype := "application/json"
+	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
 	urls := googleapi.ResolveRelative(c.s.BasePath, "b/{sourceBucket}/o/{sourceObject}/rewriteTo/b/{destinationBucket}/o/{destinationObject}")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("POST", urls, body)
+	req.Header = reqHeaders
 	googleapi.Expand(req.URL, map[string]string{
 		"sourceBucket":      c.sourceBucket,
 		"sourceObject":      c.sourceObject,
 		"destinationBucket": c.destinationBucket,
 		"destinationObject": c.destinationObject,
 	})
-	req.Header.Set("Content-Type", ctype)
-	req.Header.Set("User-Agent", c.s.userAgent())
-	if c.ctx_ != nil {
-		return ctxhttp.Do(c.ctx_, c.s.client, req)
-	}
-	return c.s.client.Do(req)
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
 }
 
 // Do executes the "storage.objects.rewrite" call.
@@ -7436,7 +7650,8 @@ func (c *ObjectsRewriteCall) doRequest(alt string) (*http.Response, error) {
 // at all) in error.(*googleapi.Error).Header. Use
 // googleapi.IsNotModified to check whether the returned error was
 // because http.StatusNotModified was returned.
-func (c *ObjectsRewriteCall) Do() (*RewriteResponse, error) {
+func (c *ObjectsRewriteCall) Do(opts ...googleapi.CallOption) (*RewriteResponse, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("json")
 	if res != nil && res.StatusCode == http.StatusNotModified {
 		if res.Body != nil {
@@ -7460,7 +7675,8 @@ func (c *ObjectsRewriteCall) Do() (*RewriteResponse, error) {
 			HTTPStatusCode: res.StatusCode,
 		},
 	}
-	if err := json.NewDecoder(res.Body).Decode(&ret); err != nil {
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -7570,7 +7786,7 @@ func (c *ObjectsRewriteCall) Do() (*RewriteResponse, error) {
 	//       ],
 	//       "enumDescriptions": [
 	//         "Include all properties.",
-	//         "Omit the acl property."
+	//         "Omit the owner, acl property."
 	//       ],
 	//       "location": "query",
 	//       "type": "string"
@@ -7624,6 +7840,7 @@ type ObjectsUpdateCall struct {
 	object2    *Object
 	urlParams_ gensupport.URLParams
 	ctx_       context.Context
+	header_    http.Header
 }
 
 // Update: Updates an object's metadata.
@@ -7701,26 +7918,9 @@ func (c *ObjectsUpdateCall) PredefinedAcl(predefinedAcl string) *ObjectsUpdateCa
 //
 // Possible values:
 //   "full" - Include all properties.
-//   "noAcl" - Omit the acl property.
+//   "noAcl" - Omit the owner, acl property.
 func (c *ObjectsUpdateCall) Projection(projection string) *ObjectsUpdateCall {
 	c.urlParams_.Set("projection", projection)
-	return c
-}
-
-// QuotaUser sets the optional parameter "quotaUser": Available to use
-// for quota purposes for server-side applications. Can be any arbitrary
-// string assigned to a user, but should not exceed 40 characters.
-// Overrides userIp if both are provided.
-func (c *ObjectsUpdateCall) QuotaUser(quotaUser string) *ObjectsUpdateCall {
-	c.urlParams_.Set("quotaUser", quotaUser)
-	return c
-}
-
-// UserIP sets the optional parameter "userIp": IP address of the site
-// where the request originates. Use this if you want to enforce
-// per-user limits.
-func (c *ObjectsUpdateCall) UserIP(userIP string) *ObjectsUpdateCall {
-	c.urlParams_.Set("userIp", userIP)
 	return c
 }
 
@@ -7740,33 +7940,44 @@ func (c *ObjectsUpdateCall) Context(ctx context.Context) *ObjectsUpdateCall {
 	return c
 }
 
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ObjectsUpdateCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
 func (c *ObjectsUpdateCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
 	var body io.Reader = nil
 	body, err := googleapi.WithoutDataWrapper.JSONReader(c.object2)
 	if err != nil {
 		return nil, err
 	}
-	ctype := "application/json"
+	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
 	urls := googleapi.ResolveRelative(c.s.BasePath, "b/{bucket}/o/{object}")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("PUT", urls, body)
+	req.Header = reqHeaders
 	googleapi.Expand(req.URL, map[string]string{
 		"bucket": c.bucket,
 		"object": c.object,
 	})
-	req.Header.Set("Content-Type", ctype)
-	req.Header.Set("User-Agent", c.s.userAgent())
-	if c.ctx_ != nil {
-		return ctxhttp.Do(c.ctx_, c.s.client, req)
-	}
-	return c.s.client.Do(req)
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
 }
 
 // Download fetches the API endpoint's "media" value, instead of the normal
 // API response value. If the returned error is nil, the Response is guaranteed to
 // have a 2xx status code. Callers must close the Response.Body as usual.
-func (c *ObjectsUpdateCall) Download() (*http.Response, error) {
+func (c *ObjectsUpdateCall) Download(opts ...googleapi.CallOption) (*http.Response, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("media")
 	if err != nil {
 		return nil, err
@@ -7785,7 +7996,8 @@ func (c *ObjectsUpdateCall) Download() (*http.Response, error) {
 // in error.(*googleapi.Error).Header. Use googleapi.IsNotModified to
 // check whether the returned error was because http.StatusNotModified
 // was returned.
-func (c *ObjectsUpdateCall) Do() (*Object, error) {
+func (c *ObjectsUpdateCall) Do(opts ...googleapi.CallOption) (*Object, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("json")
 	if res != nil && res.StatusCode == http.StatusNotModified {
 		if res.Body != nil {
@@ -7809,7 +8021,8 @@ func (c *ObjectsUpdateCall) Do() (*Object, error) {
 			HTTPStatusCode: res.StatusCode,
 		},
 	}
-	if err := json.NewDecoder(res.Body).Decode(&ret); err != nil {
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -7893,7 +8106,7 @@ func (c *ObjectsUpdateCall) Do() (*Object, error) {
 	//       ],
 	//       "enumDescriptions": [
 	//         "Include all properties.",
-	//         "Omit the acl property."
+	//         "Omit the owner, acl property."
 	//       ],
 	//       "location": "query",
 	//       "type": "string"
@@ -7908,10 +8121,10 @@ func (c *ObjectsUpdateCall) Do() (*Object, error) {
 	//   },
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/cloud-platform",
-	//     "https://www.googleapis.com/auth/devstorage.full_control",
-	//     "https://www.googleapis.com/auth/devstorage.read_write"
+	//     "https://www.googleapis.com/auth/devstorage.full_control"
 	//   ],
-	//   "supportsMediaDownload": true
+	//   "supportsMediaDownload": true,
+	//   "useMediaDownloadService": true
 	// }
 
 }
@@ -7924,6 +8137,7 @@ type ObjectsWatchAllCall struct {
 	channel    *Channel
 	urlParams_ gensupport.URLParams
 	ctx_       context.Context
+	header_    http.Header
 }
 
 // WatchAll: Watch for changes on all objects in a bucket.
@@ -7974,26 +8188,9 @@ func (c *ObjectsWatchAllCall) Prefix(prefix string) *ObjectsWatchAllCall {
 //
 // Possible values:
 //   "full" - Include all properties.
-//   "noAcl" - Omit the acl property.
+//   "noAcl" - Omit the owner, acl property.
 func (c *ObjectsWatchAllCall) Projection(projection string) *ObjectsWatchAllCall {
 	c.urlParams_.Set("projection", projection)
-	return c
-}
-
-// QuotaUser sets the optional parameter "quotaUser": Available to use
-// for quota purposes for server-side applications. Can be any arbitrary
-// string assigned to a user, but should not exceed 40 characters.
-// Overrides userIp if both are provided.
-func (c *ObjectsWatchAllCall) QuotaUser(quotaUser string) *ObjectsWatchAllCall {
-	c.urlParams_.Set("quotaUser", quotaUser)
-	return c
-}
-
-// UserIP sets the optional parameter "userIp": IP address of the site
-// where the request originates. Use this if you want to enforce
-// per-user limits.
-func (c *ObjectsWatchAllCall) UserIP(userIP string) *ObjectsWatchAllCall {
-	c.urlParams_.Set("userIp", userIP)
 	return c
 }
 
@@ -8021,26 +8218,36 @@ func (c *ObjectsWatchAllCall) Context(ctx context.Context) *ObjectsWatchAllCall 
 	return c
 }
 
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ObjectsWatchAllCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
 func (c *ObjectsWatchAllCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
 	var body io.Reader = nil
 	body, err := googleapi.WithoutDataWrapper.JSONReader(c.channel)
 	if err != nil {
 		return nil, err
 	}
-	ctype := "application/json"
+	reqHeaders.Set("Content-Type", "application/json")
 	c.urlParams_.Set("alt", alt)
 	urls := googleapi.ResolveRelative(c.s.BasePath, "b/{bucket}/o/watch")
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("POST", urls, body)
+	req.Header = reqHeaders
 	googleapi.Expand(req.URL, map[string]string{
 		"bucket": c.bucket,
 	})
-	req.Header.Set("Content-Type", ctype)
-	req.Header.Set("User-Agent", c.s.userAgent())
-	if c.ctx_ != nil {
-		return ctxhttp.Do(c.ctx_, c.s.client, req)
-	}
-	return c.s.client.Do(req)
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
 }
 
 // Do executes the "storage.objects.watchAll" call.
@@ -8050,7 +8257,8 @@ func (c *ObjectsWatchAllCall) doRequest(alt string) (*http.Response, error) {
 // in error.(*googleapi.Error).Header. Use googleapi.IsNotModified to
 // check whether the returned error was because http.StatusNotModified
 // was returned.
-func (c *ObjectsWatchAllCall) Do() (*Channel, error) {
+func (c *ObjectsWatchAllCall) Do(opts ...googleapi.CallOption) (*Channel, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("json")
 	if res != nil && res.StatusCode == http.StatusNotModified {
 		if res.Body != nil {
@@ -8074,7 +8282,8 @@ func (c *ObjectsWatchAllCall) Do() (*Channel, error) {
 			HTTPStatusCode: res.StatusCode,
 		},
 	}
-	if err := json.NewDecoder(res.Body).Decode(&ret); err != nil {
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -8122,7 +8331,7 @@ func (c *ObjectsWatchAllCall) Do() (*Channel, error) {
 	//       ],
 	//       "enumDescriptions": [
 	//         "Include all properties.",
-	//         "Omit the acl property."
+	//         "Omit the owner, acl property."
 	//       ],
 	//       "location": "query",
 	//       "type": "string"
