@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
 	"runtime"
 	"runtime/pprof"
 	"syscall"
@@ -75,8 +76,12 @@ func runCmd(
 	cmdArgs []string) (err error) {
 	// Enable profiling, if requested.
 	if *fProfile {
-		// Memory
+		// Write a memory profile.
 		defer writeMemProfile("/tmp/mem.pprof")
+
+		// First trigger a garbage collection to get up to date information (cf.
+		// https://goo.gl/aXVQfL).
+		defer runtime.GC()
 
 		// CPU
 		var f *os.File
@@ -111,10 +116,6 @@ func runCmd(
 ////////////////////////////////////////////////////////////////////////
 
 func writeMemProfile(path string) (err error) {
-	// Trigger a garbage collection to get up to date information (cf.
-	// https://goo.gl/aXVQfL).
-	runtime.GC()
-
 	// Open the file.
 	var f *os.File
 	f, err = os.Create(path)
@@ -138,6 +139,36 @@ func writeMemProfile(path string) (err error) {
 	}
 
 	return
+}
+
+func init() {
+	// Listen for SIGUSR1, dumping a memory profile when it's received.
+	go func() {
+		c := make(chan os.Signal, 1)
+		signal.Notify(c, syscall.SIGUSR1)
+
+		for range c {
+			var ms runtime.MemStats
+
+			runtime.ReadMemStats(&ms)
+			log.Printf("Pre-GC mem stats:\n%#v", ms)
+
+			// Trigger a garbage collection to get up to date information (cf.
+			// https://goo.gl/aXVQfL).
+			runtime.GC()
+
+			runtime.ReadMemStats(&ms)
+			log.Printf("Post-GC mem stats:\n%#v", ms)
+
+			const path = "/tmp/mem.pprof"
+			err := writeMemProfile(path)
+			if err != nil {
+				log.Printf("Error writing profile: %v", err)
+			} else {
+				log.Printf("Profile written to %s", path)
+			}
+		}
+	}()
 }
 
 ////////////////////////////////////////////////////////////////////////
