@@ -17,7 +17,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"sync"
 
 	"github.com/jacobsa/comeback/internal/blob"
@@ -32,11 +31,17 @@ func makeBlobStore(ctx context.Context) (bs blob.Store, err error) {
 	crypter := getCrypter(ctx)
 	state := getState(ctx)
 
-	bs, err = wiring.MakeBlobStore(bucket, crypter, state.ExistingScores)
-	if err != nil {
-		err = fmt.Errorf("MakeBlobStore: %v", err)
-		return
-	}
+	// Store blobs in GCS.
+	bs = blob.NewGCSStore(bucket, wiring.BlobObjectNamePrefix)
+
+	// Don't make redundant calls to GCS.
+	bs = blob.NewExistingScoresStore(state.ExistingScores, bs)
+
+	// Make paranoid checks on the results.
+	bs = blob.NewCheckingStore(bs)
+
+	// Encrypt blob data before sending it off to GCS.
+	bs = blob.NewEncryptingStore(crypter, bs)
 
 	return
 }

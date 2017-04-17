@@ -22,7 +22,7 @@ import (
 
 // Return a blob store that wraps the supplied one, confirming that the blob
 // contents it loads are correct, guarding against silent data corruption.
-func Internal_NewCheckingStore(wrapped Store) Store {
+func NewCheckingStore(wrapped Store) Store {
 	return &checkingStore{wrapped}
 }
 

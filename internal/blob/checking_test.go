@@ -42,7 +42,7 @@ type checkingStoreTest struct {
 func (t *checkingStoreTest) SetUp(ti *TestInfo) {
 	t.ctx = ti.Ctx
 	t.wrapped = mock_blob.NewMockStore(ti.MockController, "wrapped")
-	t.store = blob.Internal_NewCheckingStore(t.wrapped)
+	t.store = blob.NewCheckingStore(t.wrapped)
 }
 
 ////////////////////////////////////////////////////////////////////////

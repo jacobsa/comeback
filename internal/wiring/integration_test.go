@@ -49,6 +49,10 @@ import (
 	"github.com/jacobsa/timeutil"
 )
 
+const (
+	objectNamePrefix = "blobs/"
+)
+
 func TestIntegration(t *testing.T) { RunTests(t) }
 
 func init() {
@@ -241,20 +245,16 @@ func (t *SaveAndRestoreTest) save() (score blob.Score, err error) {
 		return
 	}
 
-	// Create the blob store.
-	bs, err := wiring.MakeBlobStore(t.bucket, crypter, t.existingScores)
-	if err != nil {
-		err = fmt.Errorf("MakeBlobStore: %v", err)
-		return
-	}
-
 	// Save the source directory.
 	score, err = save.Save(
 		t.ctx,
 		t.src,
 		t.exclusions,
+		t.bucket,
+		objectNamePrefix,
+		crypter,
+		t.existingScores,
 		t.scoreMap,
-		bs,
 		gDiscardLogger,
 		timeutil.RealClock())
 
@@ -275,19 +275,14 @@ func (t *SaveAndRestoreTest) restore(score blob.Score) (err error) {
 		return
 	}
 
-	// Create the blob store.
-	blobStore, err := wiring.MakeBlobStore(t.bucket, crypter, t.existingScores)
-	if err != nil {
-		err = fmt.Errorf("MakeBlobStore: %v", err)
-		return
-	}
-
 	// Restore.
 	err = restore.Restore(
 		t.ctx,
 		t.dst,
 		score,
-		blobStore,
+		t.bucket,
+		objectNamePrefix,
+		crypter,
 		gDiscardLogger)
 
 	return

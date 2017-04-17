@@ -15,39 +15,6 @@
 
 package wiring
 
-import (
-	"github.com/jacobsa/comeback/internal/blob"
-	"github.com/jacobsa/comeback/internal/crypto"
-	"github.com/jacobsa/comeback/internal/util"
-	"github.com/jacobsa/gcloud/gcs"
-)
-
 const (
 	BlobObjectNamePrefix = "blobs/"
 )
-
-func minInt(a, b int) int {
-	if a < b {
-		return a
-	}
-
-	return b
-}
-
-// Create a blob store that stores blobs in the supplied bucket, encrypting
-// with the supplied crypter.
-//
-// existingScores must contain only scores that are known to exist in the
-// bucket, in hex form. It will be updated as the blob store is used.
-func MakeBlobStore(
-	bucket gcs.Bucket,
-	crypter crypto.Crypter,
-	existingScores util.StringSet) (bs blob.Store, err error) {
-	bs, err = blob.NewStore(
-		bucket,
-		BlobObjectNamePrefix,
-		crypter,
-		existingScores)
-
-	return
-}

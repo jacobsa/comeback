@@ -15,13 +15,7 @@
 
 package blob
 
-import (
-	"context"
-
-	"github.com/jacobsa/comeback/internal/crypto"
-	"github.com/jacobsa/comeback/internal/util"
-	"github.com/jacobsa/gcloud/gcs"
-)
+import "context"
 
 // A Store knows how to save blobs for later retrieval.
 type Store interface {
@@ -45,29 +39,4 @@ type SaveRequest struct {
 	// A buffer for holding the result of encryption. If the user reuses the
 	// request struct, we can reuse this buffer.
 	ciphertext []byte
-}
-
-// Create a blob store that stores blobs in the supplied bucket under the given
-// name prefix, encrypting with the supplied crypter.
-//
-// existingScores must contain only scores that are known to exist in the
-// bucket, in hex form. It will be updated as the blob store is used.
-func NewStore(
-	bucket gcs.Bucket,
-	objectNamePrefix string,
-	crypter crypto.Crypter,
-	existingScores util.StringSet) (bs Store, err error) {
-	// Store blobs in GCS.
-	bs = Internal_NewGCSStore(bucket, objectNamePrefix)
-
-	// Don't make redundant calls to GCS.
-	bs = Internal_NewExistingScoresStore(existingScores, bs)
-
-	// Make paranoid checks on the results.
-	bs = Internal_NewCheckingStore(bs)
-
-	// Encrypt blob data before sending it off to GCS.
-	bs = Internal_NewEncryptingStore(crypter, bs)
-
-	return
 }

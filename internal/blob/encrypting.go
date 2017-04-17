@@ -25,7 +25,7 @@ import (
 // Return a blob store that wraps the supplied one, encrypting and decrypting
 // data as it passes through. The supplied crypter should have deterministic
 // output.
-func Internal_NewEncryptingStore(crypter crypto.Crypter, wrapped Store) Store {
+func NewEncryptingStore(crypter crypto.Crypter, wrapped Store) Store {
 	return &encryptingStore{crypter, wrapped}
 }
 

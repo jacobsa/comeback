@@ -28,7 +28,7 @@ import (
 // existingScores must initially be a subset of the scores contained by the
 // wrapped store, in hex form. It will be updated upon successful calls to
 // wrapped.Store.
-func Internal_NewExistingScoresStore(
+func NewExistingScoresStore(
 	existingScores util.StringSet,
 	wrapped Store) (store Store) {
 	store = &existingScoresStore{

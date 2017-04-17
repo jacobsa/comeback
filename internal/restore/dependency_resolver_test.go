@@ -27,12 +27,15 @@ import (
 	"github.com/jacobsa/comeback/internal/dag"
 	"github.com/jacobsa/comeback/internal/fs"
 	"github.com/jacobsa/comeback/internal/repr"
-	"github.com/jacobsa/comeback/internal/util"
 	"github.com/jacobsa/comeback/internal/wiring"
 	"github.com/jacobsa/gcloud/gcs/gcsfake"
 	. "github.com/jacobsa/oglematchers"
 	. "github.com/jacobsa/ogletest"
 	"github.com/jacobsa/timeutil"
+)
+
+const (
+	objectNamePrefix = "blobs/"
 )
 
 func TestDependencyResolver(t *testing.T) { RunTests(t) }
@@ -53,7 +56,7 @@ func newFakeBlobStore(ctx context.Context) (blobStore blob.Store, err error) {
 	}
 
 	// And the blob store.
-	blobStore, err = wiring.MakeBlobStore(bucket, crypter, util.NewStringSet())
+	blobStore = newBlobStore(bucket, objectNamePrefix, crypter)
 	if err != nil {
 		err = fmt.Errorf("MakeBlobStore: %v", err)
 		return
