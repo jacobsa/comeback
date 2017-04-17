@@ -88,10 +88,22 @@ func addRandomFile(dir string) (err error) {
 	}
 
 	// Write out a file.
-	err = ioutil.WriteFile(path.Join(dir, randHex(16)), contents, 0400)
+	p := path.Join(dir, randHex(16))
+	err = ioutil.WriteFile(p, contents, 0400)
 	if err != nil {
 		err = fmt.Errorf("WriteFile: %v", err)
 		return
+	}
+
+	// Half of the time set the mtime decently far in the past, to trigger our
+	// score caching code path.
+	if rand.Uint32()%2 == 0 {
+		t := time.Now().Add(-2 * time.Hour)
+		err = os.Chtimes(p, time.Time{}, t)
+		if err != nil {
+			err = fmt.Errorf("chtimes: %v", err)
+			return
+		}
 	}
 
 	return
@@ -186,6 +198,8 @@ const fileChunkSize = 1 << 12
 type SaveAndRestoreTest struct {
 	commonTest
 
+	scoreMap state.ScoreMap
+
 	// Temporary directories for saving from and restoring to.
 	src string
 	dst string
@@ -199,6 +213,9 @@ func init() { RegisterTestSuite(&SaveAndRestoreTest{}) }
 func (t *SaveAndRestoreTest) SetUp(ti *TestInfo) {
 	var err error
 	t.commonTest.SetUp(ti)
+
+	// Create a score map.
+	t.scoreMap = state.NewScoreMap()
 
 	// Create the temporary directories.
 	t.src, err = ioutil.TempDir("", "comeback_integration_test")
@@ -236,7 +253,7 @@ func (t *SaveAndRestoreTest) save() (score blob.Score, err error) {
 		t.ctx,
 		t.src,
 		t.exclusions,
-		state.NewScoreMap(),
+		t.scoreMap,
 		bs,
 		gDiscardLogger,
 		timeutil.RealClock())
