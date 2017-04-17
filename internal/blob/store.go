@@ -22,18 +22,18 @@ import (
 	"golang.org/x/net/context"
 )
 
-// A Store knows how to store blobs for later retrieval.
+// A Store knows how to save blobs for later retrieval.
 type Store interface {
 	// Store a blob, returning a score with which it can later be retrieved.
-	Store(
+	Save(
 		ctx context.Context,
-		req *StoreRequest) (s Score, err error)
+		req *SaveRequest) (s Score, err error)
 
 	// Load a previously-stored blob.
 	Load(ctx context.Context, s Score) (blob []byte, err error)
 }
 
-type StoreRequest struct {
+type SaveRequest struct {
 	// The blob data to be stored.
 	Blob []byte
 

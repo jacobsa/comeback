@@ -72,14 +72,14 @@ func (m *mockStore) Load(p0 context.Context, p1 blob.Score) (o0 []uint8, o1 erro
 	return
 }
 
-func (m *mockStore) Store(p0 context.Context, p1 *blob.StoreRequest) (o0 blob.Score, o1 error) {
+func (m *mockStore) Save(p0 context.Context, p1 *blob.SaveRequest) (o0 blob.Score, o1 error) {
 	// Get a file name and line number for the caller.
 	_, file, line, _ := runtime.Caller(1)
 
 	// Hand the call off to the controller, which does most of the work.
 	retVals := m.controller.HandleMethodCall(
 		m,
-		"Store",
+		"Save",
 		file,
 		line,
 		[]interface{}{p0, p1})

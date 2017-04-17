@@ -96,7 +96,7 @@ type reusableObjects struct {
 
 	// A request for storing a blob. Reusing this allows us to reuse any internal
 	// state that the blob store may cache.
-	storeReq blob.StoreRequest
+	storeReq blob.SaveRequest
 }
 
 func (v *visitor) Visit(ctx context.Context, untyped dag.Node) (err error) {
@@ -231,7 +231,7 @@ loop:
 		storeReq.Blob = chunk
 
 		var s blob.Score
-		s, err = v.blobStore.Store(ctx, storeReq)
+		s, err = v.blobStore.Save(ctx, storeReq)
 		if err != nil {
 			err = fmt.Errorf("Store: %v", err)
 			return
@@ -272,7 +272,7 @@ func (v *visitor) saveDir(
 	// Write out the blob.
 	storeReq.Blob = b
 
-	s, err := v.blobStore.Store(ctx, storeReq)
+	s, err := v.blobStore.Save(ctx, storeReq)
 	if err != nil {
 		err = fmt.Errorf("Store: %v", err)
 		return

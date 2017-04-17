@@ -95,9 +95,9 @@ func (t *VisitorTest) call(n *node) (err error) {
 }
 
 func (t *VisitorTest) store(b []byte) (s blob.Score, err error) {
-	s, err = t.blobStore.Store(
+	s, err = t.blobStore.Save(
 		t.ctx,
-		&blob.StoreRequest{Blob: b})
+		&blob.SaveRequest{Blob: b})
 
 	return
 }

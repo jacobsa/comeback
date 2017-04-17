@@ -67,7 +67,7 @@ func (t *EncryptingStore_StoreTest) CallsCrypter() {
 		WillOnce(oglemock.Return(nil, errors.New("")))
 
 	// Call
-	t.store.Store(t.ctx, &blob.StoreRequest{Blob: b})
+	t.store.Save(t.ctx, &blob.SaveRequest{Blob: b})
 }
 
 func (t *EncryptingStore_StoreTest) CrypterReturnsError() {
@@ -76,7 +76,7 @@ func (t *EncryptingStore_StoreTest) CrypterReturnsError() {
 		WillOnce(oglemock.Return(nil, errors.New("taco")))
 
 	// Call
-	_, err := t.store.Store(t.ctx, &blob.StoreRequest{})
+	_, err := t.store.Save(t.ctx, &blob.SaveRequest{})
 
 	ExpectThat(err, Error(HasSubstr("Encrypt")))
 	ExpectThat(err, Error(HasSubstr("taco")))
@@ -90,14 +90,14 @@ func (t *EncryptingStore_StoreTest) CallsWrapped() {
 		WillOnce(oglemock.Return(encryptedBlob, nil))
 
 	// Wrapped
-	var req *blob.StoreRequest
-	ExpectCall(t.wrapped, "Store")(Any(), Any()).
+	var req *blob.SaveRequest
+	ExpectCall(t.wrapped, "Save")(Any(), Any()).
 		WillOnce(oglemock.DoAll(
-		oglemock.SaveArg(1, &req),
-		oglemock.Return(blob.Score{}, errors.New(""))))
+			oglemock.SaveArg(1, &req),
+			oglemock.Return(blob.Score{}, errors.New(""))))
 
 	// Call
-	t.store.Store(t.ctx, &blob.StoreRequest{})
+	t.store.Save(t.ctx, &blob.SaveRequest{})
 
 	AssertNe(nil, req)
 	ExpectThat(req.Blob, DeepEquals(encryptedBlob))
@@ -109,11 +109,11 @@ func (t *EncryptingStore_StoreTest) WrappedReturnsError() {
 		WillOnce(oglemock.Return([]byte{}, nil))
 
 	// Wrapped
-	ExpectCall(t.wrapped, "Store")(Any(), Any()).
+	ExpectCall(t.wrapped, "Save")(Any(), Any()).
 		WillOnce(oglemock.Return(blob.Score{}, errors.New("taco")))
 
 	// Call
-	_, err := t.store.Store(t.ctx, &blob.StoreRequest{})
+	_, err := t.store.Save(t.ctx, &blob.SaveRequest{})
 
 	ExpectThat(err, Error(Equals("taco")))
 }
@@ -126,11 +126,11 @@ func (t *EncryptingStore_StoreTest) WrappedSucceeds() {
 	// Wrapped
 	expected := blob.ComputeScore([]byte("taco"))
 
-	ExpectCall(t.wrapped, "Store")(Any(), Any()).
+	ExpectCall(t.wrapped, "Save")(Any(), Any()).
 		WillOnce(oglemock.Return(expected, nil))
 
 	// Call
-	score, err := t.store.Store(t.ctx, &blob.StoreRequest{})
+	score, err := t.store.Save(t.ctx, &blob.SaveRequest{})
 	AssertEq(nil, err)
 
 	ExpectThat(score, DeepEquals(expected))

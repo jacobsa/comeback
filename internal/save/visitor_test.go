@@ -45,11 +45,11 @@ func TestBlobStore(t *testing.T) { RunTests(t) }
 // Helpers
 ////////////////////////////////////////////////////////////////////////
 
-// Match *blob.StoreRequest where the Blob field's contents are equal to the
+// Match *blob.SaveRequest where the Blob field's contents are equal to the
 // given slice.
 func blobEquals(expected []byte) Matcher {
 	pred := func(c interface{}) (err error) {
-		req, ok := c.(*blob.StoreRequest)
+		req, ok := c.(*blob.SaveRequest)
 		if !ok {
 			err = fmt.Errorf("which has type %T", c)
 			return
@@ -63,7 +63,7 @@ func blobEquals(expected []byte) Matcher {
 		return
 	}
 
-	return NewMatcher(pred, "*blob.StoreRequest with appropriate content")
+	return NewMatcher(pred, "*blob.SaveRequest with appropriate content")
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -219,10 +219,10 @@ func (t *VisitorTest) Directory() {
 	t.node.Children = []*fsNode{child0, child1}
 
 	// Snoop on the call to the blob store.
-	var savedReq *blob.StoreRequest
+	var savedReq *blob.SaveRequest
 	expectedScore := blob.ComputeScore([]byte("taco"))
 
-	ExpectCall(t.blobStore, "Store")(Any(), Any()).
+	ExpectCall(t.blobStore, "Save")(Any(), Any()).
 		WillOnce(DoAll(SaveArg(1, &savedReq), Return(expectedScore, nil)))
 
 	// Call
@@ -281,7 +281,7 @@ func (t *VisitorTest) File_LastChunkIsFull() {
 	AssertEq(nil, err)
 
 	score0 := blob.ComputeScore(expected0)
-	ExpectCall(t.blobStore, "Store")(Any(), blobEquals(expected0)).
+	ExpectCall(t.blobStore, "Save")(Any(), blobEquals(expected0)).
 		WillOnce(Return(score0, nil))
 
 	// Blob store (chunk 1)
@@ -289,7 +289,7 @@ func (t *VisitorTest) File_LastChunkIsFull() {
 	AssertEq(nil, err)
 
 	score1 := blob.ComputeScore(expected1)
-	ExpectCall(t.blobStore, "Store")(Any(), blobEquals(expected1)).
+	ExpectCall(t.blobStore, "Save")(Any(), blobEquals(expected1)).
 		WillOnce(Return(score1, nil))
 
 	// Call
@@ -322,7 +322,7 @@ func (t *VisitorTest) File_LastChunkIsPartial() {
 	AssertEq(nil, err)
 
 	score0 := blob.ComputeScore(expected0)
-	ExpectCall(t.blobStore, "Store")(Any(), blobEquals(expected0)).
+	ExpectCall(t.blobStore, "Save")(Any(), blobEquals(expected0)).
 		WillOnce(Return(score0, nil))
 
 	// Blob store (chunk 1)
@@ -330,7 +330,7 @@ func (t *VisitorTest) File_LastChunkIsPartial() {
 	AssertEq(nil, err)
 
 	score1 := blob.ComputeScore(expected1)
-	ExpectCall(t.blobStore, "Store")(Any(), blobEquals(expected1)).
+	ExpectCall(t.blobStore, "Save")(Any(), blobEquals(expected1)).
 		WillOnce(Return(score1, nil))
 
 	// Call

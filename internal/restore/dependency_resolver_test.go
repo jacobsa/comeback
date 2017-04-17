@@ -104,9 +104,9 @@ func (t *DependencyResolverTest) call(n *node) (deps []*node, err error) {
 }
 
 func (t *DependencyResolverTest) store(b []byte) (s blob.Score, err error) {
-	s, err = t.blobStore.Store(
+	s, err = t.blobStore.Save(
 		t.ctx,
-		&blob.StoreRequest{Blob: b})
+		&blob.SaveRequest{Blob: b})
 
 	return
 }

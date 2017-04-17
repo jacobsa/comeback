@@ -64,8 +64,8 @@ const metadataKey_MD5 = "comeback_md5"
 // bucket's namespace -- if a score name exists, then it points to the correct
 // data.
 //
-// The resulting store requires StoreRequest.score fields to be filled in by
-// the caller.
+// The resulting store requires SaveRequest.score fields to be filled in by the
+// caller.
 func Internal_NewGCSStore(
 	bucket gcs.Bucket,
 	prefix string) (store Store) {
@@ -290,9 +290,9 @@ func (s *gcsStore) makeName(score Score) (name string) {
 // Public interface
 ////////////////////////////////////////////////////////////////////////
 
-func (s *gcsStore) Store(
+func (s *gcsStore) Save(
 	ctx context.Context,
-	req *StoreRequest) (score Score, err error) {
+	req *SaveRequest) (score Score, err error) {
 	blob := req.Blob
 
 	// Pull out the score and choose an object name.

@@ -22,7 +22,7 @@ import (
 
 // Create a blob store that wraps another, responding immediately to calls to
 // Store for content that already exists in the wrapped blob store. For calls
-// that are passed on, this store will fill in StoreRequest.score.
+// that are passed on, this store will fill in SaveRequest.score.
 //
 // existingScores must initially be a subset of the scores contained by the
 // wrapped store, in hex form. It will be updated upon successful calls to
@@ -43,9 +43,9 @@ type existingScoresStore struct {
 	wrapped Store
 }
 
-func (bs *existingScoresStore) Store(
+func (bs *existingScoresStore) Save(
 	ctx context.Context,
-	req *StoreRequest) (s Score, err error) {
+	req *SaveRequest) (s Score, err error) {
 	s = ComputeScore(req.Blob)
 
 	// Do we need to do anything?
@@ -56,7 +56,7 @@ func (bs *existingScoresStore) Store(
 	// Pass on the blob to the wrapped store, saving it the trouble of
 	// recomputing the score. If it is successful, remember that fact.
 	req.score = s
-	_, err = bs.wrapped.Store(ctx, req)
+	_, err = bs.wrapped.Save(ctx, req)
 	if err == nil {
 		bs.scores.Add(s.Hex())
 	}

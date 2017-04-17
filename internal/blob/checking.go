@@ -31,10 +31,10 @@ type checkingStore struct {
 	wrapped Store
 }
 
-func (s *checkingStore) Store(
+func (s *checkingStore) Save(
 	ctx context.Context,
-	req *StoreRequest) (score Score, err error) {
-	return s.wrapped.Store(ctx, req)
+	req *SaveRequest) (score Score, err error) {
+	return s.wrapped.Save(ctx, req)
 }
 
 func (s *checkingStore) Load(
