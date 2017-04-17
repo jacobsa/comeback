@@ -114,6 +114,7 @@ func (t *VisitorTest) call() (err error) {
 		t.dir,
 		t.scoreMap,
 		t.blobStore,
+		make(semaphore, 10),
 		&t.clock,
 		log.New(ioutil.Discard, "", 0),
 		make(chan *fsNode, 1))

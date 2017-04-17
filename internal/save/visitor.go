@@ -22,7 +22,6 @@ import (
 	"log"
 	"os"
 	"path"
-	"sync"
 
 	"github.com/jacobsa/comeback/internal/blob"
 	"github.com/jacobsa/comeback/internal/dag"
@@ -52,50 +51,33 @@ func newVisitor(
 	basePath string,
 	scoreMap state.ScoreMap,
 	blobStore blob.Store,
+	readFromDiskSem semaphore,
 	clock timeutil.Clock,
 	logger *log.Logger,
 	visitedNodes chan<- *fsNode) (v dag.Visitor) {
 	v = &visitor{
-		chunkSize:    chunkSize,
-		basePath:     basePath,
-		scoreMap:     scoreMap,
-		blobStore:    blobStore,
-		clock:        clock,
-		logger:       logger,
-		visitedNodes: visitedNodes,
+		chunkSize:       chunkSize,
+		basePath:        basePath,
+		scoreMap:        scoreMap,
+		blobStore:       blobStore,
+		readFromDiskSem: readFromDiskSem,
+		clock:           clock,
+		logger:          logger,
+		visitedNodes:    visitedNodes,
 	}
 
 	return
 }
 
 type visitor struct {
-	chunkSize    int
-	basePath     string
-	scoreMap     state.ScoreMap
-	blobStore    blob.Store
-	clock        timeutil.Clock
-	logger       *log.Logger
-	visitedNodes chan<- *fsNode
-
-	mu sync.Mutex
-
-	// A freelist of objects that it may be beneficial to reuse from call to
-	// call.
-	//
-	// GUARDED_BY(mu)
-	freelist []*reusableObjects
-}
-
-type reusableObjects struct {
-	// A buffer into which we read file chunks.
-	//
-	// INVARIANT: len(buf) is always the visitor's chunk size, and cap(buf) is a
-	// bit more, to cover magic bytes added by repr.MarshalFile.
-	buf []byte
-
-	// A request for storing a blob. Reusing this allows us to reuse any internal
-	// state that the blob store may cache.
-	storeReq blob.SaveRequest
+	chunkSize       int
+	basePath        string
+	scoreMap        state.ScoreMap
+	blobStore       blob.Store
+	readFromDiskSem semaphore
+	clock           timeutil.Clock
+	logger          *log.Logger
+	visitedNodes    chan<- *fsNode
 }
 
 func (v *visitor) Visit(ctx context.Context, untyped dag.Node) (err error) {
@@ -191,48 +173,16 @@ func (v *visitor) saveFile(
 	defer f.Close()
 
 	// Process a chunk at a time.
-	ro := v.getReusableObjects()
-	defer v.putReusableObjects(ro)
-
-	buf := ro.buf
-	storeReq := &ro.storeReq
-
-loop:
 	for {
-		// Read some data.
-		var n int
-		n, err = io.ReadFull(f, buf)
-
-		switch {
-		case err == io.EOF:
-			// EOF means we're done.
-			err = nil
-			break loop
-
-		case err == io.ErrUnexpectedEOF:
-			// A short read is fine.
-			err = nil
-
-		case err != nil:
-			err = fmt.Errorf("Read: %v", err)
-			return
-		}
-
-		// Encapsulate the data so it can be identified as a file chunk.
-		var chunk []byte
-		chunk, err = repr.MarshalFile(buf[:n])
-		if err != nil {
-			err = fmt.Errorf("MarshalFile: %v", err)
-			return
-		}
-
-		// Write out the blob.
-		storeReq.Blob = chunk
-
 		var s blob.Score
-		s, err = v.blobStore.Save(ctx, storeReq)
+		s, err = v.saveFileChunk(ctx, f)
+
+		if err == io.EOF {
+			err = nil
+			break
+		}
+
 		if err != nil {
-			err = fmt.Errorf("Store: %v", err)
 			return
 		}
 
@@ -247,13 +197,99 @@ loop:
 	return
 }
 
+// Returns io.EOF when the reader is exhausted.
+func (v *visitor) saveFileChunk(
+	ctx context.Context,
+	f *os.File) (s blob.Score, err error) {
+	// Wait for permission to allocate memory.
+	err = v.readFromDiskSem.Acquire(ctx)
+	if err != nil {
+		err = fmt.Errorf("acquiring semaphore: %v", err)
+		return
+	}
+
+	// Release the semaphore when we return if the blob store doesn't release it.
+	needToRelease := true
+	ctx = markSemAcquired(
+		ctx,
+		v.readFromDiskSem,
+		func() {
+			needToRelease = false
+		},
+	)
+
+	defer func() {
+		if needToRelease {
+			v.readFromDiskSem.Release()
+		}
+	}()
+
+	// Read a chunk of data from the file.
+	var n int
+	buf := make([]byte, v.chunkSize)
+	n, err = io.ReadFull(f, buf)
+
+	switch {
+	case err == io.EOF:
+		// EOF means we're done.
+		return
+
+	case err == io.ErrUnexpectedEOF:
+		// A short read is fine.
+		err = nil
+
+	case err != nil:
+		err = fmt.Errorf("Read: %v", err)
+		return
+	}
+
+	// Encapsulate the data so it can be identified as a file chunk.
+	var chunk []byte
+	chunk, err = repr.MarshalFile(buf[:n])
+	if err != nil {
+		err = fmt.Errorf("MarshalFile: %v", err)
+		return
+	}
+
+	// Write out the blob.
+	saveReq := &blob.SaveRequest{
+		Blob: chunk,
+	}
+
+	s, err = v.blobStore.Save(ctx, saveReq)
+	if err != nil {
+		err = fmt.Errorf("Store: %v", err)
+		return
+	}
+
+	return
+}
+
 func (v *visitor) saveDir(
 	ctx context.Context,
 	children []*fsNode) (scores []blob.Score, err error) {
-	ro := v.getReusableObjects()
-	defer v.putReusableObjects(ro)
+	// Wait for permission to allocate memory.
+	err = v.readFromDiskSem.Acquire(ctx)
+	if err != nil {
+		err = fmt.Errorf("acquiring semaphore: %v", err)
+		return
+	}
 
-	storeReq := &ro.storeReq
+	// Release the semaphore when we return if the blob store doesn't release it.
+	needToRelease := true
+	ctx = markSemAcquired(
+		ctx,
+		v.readFromDiskSem,
+		func() {
+			needToRelease = false
+		},
+	)
+
+	defer func() {
+		if needToRelease {
+			v.readFromDiskSem.Release()
+		}
+	}()
 
 	// Set up a list of directory entries.
 	var entries []*fs.FileInfo
@@ -269,7 +305,9 @@ func (v *visitor) saveDir(
 	}
 
 	// Write out the blob.
-	storeReq.Blob = b
+	storeReq := &blob.SaveRequest{
+		Blob: b,
+	}
 
 	s, err := v.blobStore.Save(ctx, storeReq)
 	if err != nil {
@@ -279,36 +317,4 @@ func (v *visitor) saveDir(
 
 	scores = []blob.Score{s}
 	return
-}
-
-// LOCKS_EXCLUDED(v.mu)
-func (v *visitor) getReusableObjects() (ro *reusableObjects) {
-	// Check the freelist.
-	{
-		v.mu.Lock()
-		l := len(v.freelist)
-		if l > 0 {
-			ro = v.freelist[l-1]
-			v.freelist = v.freelist[:l-1]
-		}
-		v.mu.Unlock()
-	}
-
-	if ro != nil {
-		return
-	}
-
-	// Otherwise, allocate.
-	ro = &reusableObjects{
-		buf: make([]byte, v.chunkSize, v.chunkSize+v.chunkSize/2),
-	}
-
-	return
-}
-
-// LOCKS_EXCLUDED(v.mu)
-func (v *visitor) putReusableObjects(ro *reusableObjects) {
-	v.mu.Lock()
-	v.freelist = append(v.freelist, ro)
-	v.mu.Unlock()
 }

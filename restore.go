@@ -23,6 +23,7 @@ import (
 
 	"github.com/jacobsa/comeback/internal/blob"
 	"github.com/jacobsa/comeback/internal/restore"
+	"github.com/jacobsa/comeback/internal/wiring"
 )
 
 var cmdRestore = &Command{
@@ -45,7 +46,8 @@ func runRestore(ctx context.Context, args []string) (err error) {
 	}
 
 	// Grab dependencies.
-	blobStore := getBlobStore(ctx)
+	bucket := getBucket(ctx)
+	crypter := getCrypter(ctx)
 
 	// Make sure the target doesn't exist.
 	err = os.RemoveAll(dstDir)
@@ -66,7 +68,9 @@ func runRestore(ctx context.Context, args []string) (err error) {
 		ctx,
 		dstDir,
 		score,
-		blobStore,
+		bucket,
+		wiring.BlobObjectNamePrefix,
+		crypter,
 		log.New(os.Stderr, "Restore progress: ", 0),
 	)
 

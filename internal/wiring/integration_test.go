@@ -49,6 +49,10 @@ import (
 	"github.com/jacobsa/timeutil"
 )
 
+const (
+	objectNamePrefix = "blobs/"
+)
+
 func TestIntegration(t *testing.T) { RunTests(t) }
 
 func init() {
@@ -88,10 +92,22 @@ func addRandomFile(dir string) (err error) {
 	}
 
 	// Write out a file.
-	err = ioutil.WriteFile(path.Join(dir, randHex(16)), contents, 0400)
+	p := path.Join(dir, randHex(16))
+	err = ioutil.WriteFile(p, contents, 0400)
 	if err != nil {
 		err = fmt.Errorf("WriteFile: %v", err)
 		return
+	}
+
+	// Half of the time set the mtime decently far in the past, to trigger our
+	// score caching code path.
+	if rand.Uint32()%2 == 0 {
+		t := time.Now().Add(-2 * time.Hour)
+		err = os.Chtimes(p, time.Time{}, t)
+		if err != nil {
+			err = fmt.Errorf("chtimes: %v", err)
+			return
+		}
 	}
 
 	return
@@ -186,6 +202,8 @@ const fileChunkSize = 1 << 12
 type SaveAndRestoreTest struct {
 	commonTest
 
+	scoreMap state.ScoreMap
+
 	// Temporary directories for saving from and restoring to.
 	src string
 	dst string
@@ -199,6 +217,9 @@ func init() { RegisterTestSuite(&SaveAndRestoreTest{}) }
 func (t *SaveAndRestoreTest) SetUp(ti *TestInfo) {
 	var err error
 	t.commonTest.SetUp(ti)
+
+	// Create a score map.
+	t.scoreMap = state.NewScoreMap()
 
 	// Create the temporary directories.
 	t.src, err = ioutil.TempDir("", "comeback_integration_test")
@@ -224,20 +245,16 @@ func (t *SaveAndRestoreTest) save() (score blob.Score, err error) {
 		return
 	}
 
-	// Create the blob store.
-	bs, err := wiring.MakeBlobStore(t.bucket, crypter, t.existingScores)
-	if err != nil {
-		err = fmt.Errorf("MakeBlobStore: %v", err)
-		return
-	}
-
 	// Save the source directory.
 	score, err = save.Save(
 		t.ctx,
 		t.src,
 		t.exclusions,
-		state.NewScoreMap(),
-		bs,
+		t.bucket,
+		objectNamePrefix,
+		crypter,
+		t.existingScores,
+		t.scoreMap,
 		gDiscardLogger,
 		timeutil.RealClock())
 
@@ -258,19 +275,14 @@ func (t *SaveAndRestoreTest) restore(score blob.Score) (err error) {
 		return
 	}
 
-	// Create the blob store.
-	blobStore, err := wiring.MakeBlobStore(t.bucket, crypter, t.existingScores)
-	if err != nil {
-		err = fmt.Errorf("MakeBlobStore: %v", err)
-		return
-	}
-
 	// Restore.
 	err = restore.Restore(
 		t.ctx,
 		t.dst,
 		score,
-		blobStore,
+		t.bucket,
+		objectNamePrefix,
+		crypter,
 		gDiscardLogger)
 
 	return

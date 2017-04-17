@@ -23,18 +23,26 @@ import (
 	"syscall"
 
 	"github.com/jacobsa/comeback/internal/blob"
+	"github.com/jacobsa/comeback/internal/crypto"
 	"github.com/jacobsa/comeback/internal/dag"
 	"github.com/jacobsa/comeback/internal/fs"
 	"github.com/jacobsa/comeback/internal/sys"
+	"github.com/jacobsa/comeback/internal/util"
+	"github.com/jacobsa/gcloud/gcs"
 )
 
 // Restore the backup rooted at the supplied score into the given directory,
 // which must already exist.
+//
+// The supplied bucket is assumed to contain objects with the given name
+// prefix.
 func Restore(
 	ctx context.Context,
 	dir string,
 	score blob.Score,
-	blobStore blob.Store,
+	bucket gcs.Bucket,
+	objectNamePrefix string,
+	crypter crypto.Crypter,
 	logger *log.Logger) (err error) {
 	// Hopefully enough parallelism to keep our CPUs saturated (for decryption,
 	// SHA-1 computation, etc.) or our NIC saturated (for GCS traffic), depending
@@ -61,6 +69,9 @@ func Restore(
 		},
 	}
 
+	// Create a blob store.
+	blobStore := newBlobStore(bucket, objectNamePrefix, crypter)
+
 	// Walk the graph.
 	err = dag.Visit(
 		ctx,
@@ -74,6 +85,28 @@ func Restore(
 		err = fmt.Errorf("dag.Visit: %v", err)
 		return
 	}
+
+	return
+}
+
+// newBlobStore creates a blob store that loads blobs from the supplied bucket
+// under the given name prefix, decrypting with the supplied crypter.
+func newBlobStore(
+	bucket gcs.Bucket,
+	objectNamePrefix string,
+	crypter crypto.Crypter) (bs blob.Store) {
+	// Load blobs from GCS.
+	bs = blob.NewGCSStore(bucket, objectNamePrefix)
+
+	// Fulfill the contract required by NewGCSStore. This is necessary in tests
+	// that write using the blob store created by this function.
+	bs = blob.NewExistingScoresStore(util.NewStringSet(), bs)
+
+	// Make paranoid checks on the results.
+	bs = blob.NewCheckingStore(bs)
+
+	// Decrypt blob data coming back from GCS.
+	bs = blob.NewEncryptingStore(crypter, bs)
 
 	return
 }

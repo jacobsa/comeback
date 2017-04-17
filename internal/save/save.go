@@ -21,28 +21,50 @@ import (
 	"fmt"
 	"log"
 	"regexp"
+	"runtime"
 
 	"golang.org/x/sync/errgroup"
 
 	"github.com/jacobsa/comeback/internal/blob"
+	"github.com/jacobsa/comeback/internal/crypto"
 	"github.com/jacobsa/comeback/internal/dag"
 	"github.com/jacobsa/comeback/internal/fs"
 	"github.com/jacobsa/comeback/internal/state"
+	"github.com/jacobsa/comeback/internal/util"
+	"github.com/jacobsa/gcloud/gcs"
 	"github.com/jacobsa/timeutil"
 )
 
 // Save a backup of the given directory, applying the supplied exclusions and
 // using the supplied score map to avoid reading file content when possible.
 // Return a score for the root of the backup.
+//
+// The supplied bucket will be used to store objects with the given name
+// prefix. existingScores must contain only scores that are known to exist in
+// the bucket, in hex form. It will be updated as blobs are saved to the
+// bucket.
 func Save(
 	ctx context.Context,
 	dir string,
 	exclusions []*regexp.Regexp,
+	bucket gcs.Bucket,
+	objectNamePrefix string,
+	crypter crypto.Crypter,
+	existingScores util.StringSet,
 	scoreMap state.ScoreMap,
-	blobStore blob.Store,
 	logger *log.Logger,
 	clock timeutil.Clock) (score blob.Score, err error) {
 	eg, ctx := errgroup.WithContext(ctx)
+
+	// Set up a semaphore that limits memory usage for read buffers. It's
+	// unlikely that we need significant parallelism when reading from local
+	// disk.
+	readFromDiskSem := make(semaphore, 4)
+
+	// Set up a semaphore that limits memory usage while encrypting and computing
+	// scores. There's no reason that we would need to do this with a parallelism
+	// much greater than GOMAXPROCS.
+	encryptAndComputeScoresSem := make(semaphore, runtime.GOMAXPROCS(0)+2)
 
 	// Visit each node in the graph, writing the processed nodes to a channel.
 	processedNodes := make(chan *fsNode, 100)
@@ -63,7 +85,15 @@ func Save(
 			fileChunkSize,
 			dir,
 			scoreMap,
-			blobStore,
+			newBlobStore(
+				bucket,
+				objectNamePrefix,
+				crypter,
+				existingScores,
+				readFromDiskSem,
+				encryptAndComputeScoresSem,
+			),
+			readFromDiskSem,
 			clock,
 			logger,
 			processedNodes)
@@ -96,6 +126,61 @@ func Save(
 	})
 
 	err = eg.Wait()
+	return
+}
+
+// newBlobStore creates a blob store that stores blobs in the supplied bucket
+// under the given name prefix, encrypting with the supplied crypter.
+//
+// existingScores must contain only scores that are known to exist in the
+// bucket, in hex form. It will be updated as the blob store is used.
+//
+// It is assumed that readFromDiskSem is held upon calling Save, and
+// encryptAndComputeScoresSem is not.
+func newBlobStore(
+	bucket gcs.Bucket,
+	objectNamePrefix string,
+	crypter crypto.Crypter,
+	existingScores util.StringSet,
+	readFromDiskSem semaphore,
+	encryptAndComputeScoresSem semaphore) (bs blob.Store) {
+	// Store blobs in GCS.
+	bs = blob.NewGCSStore(bucket, objectNamePrefix)
+
+	// At this point in a Store call it's clear that we're going to have to go to
+	// the network. Release the semaphore to allow more encryption to happen so
+	// that we don't block CPU-bound work on the network. It's likely we'll need
+	// more parallelism to keep the network saturated.
+	bs = &semaphoreReleasingBlobStore{
+		Store: bs,
+		sem:   encryptAndComputeScoresSem,
+	}
+
+	// Don't make redundant calls to GCS.
+	bs = blob.NewExistingScoresStore(existingScores, bs)
+
+	// Make paranoid checks on the results.
+	bs = blob.NewCheckingStore(bs)
+
+	// Encrypt blob data before sending it off to GCS.
+	bs = blob.NewEncryptingStore(crypter, bs)
+
+	// Release the semaphore we held while loading data from disk. We do this
+	// under encryptAndComputeScoresSem in order to avoid a window of unbounded
+	// memory usage where we've released that semaphore but are blocking on
+	// acquiring this one, still holding the read buffer in memory.
+	bs = &semaphoreReleasingBlobStore{
+		Store: bs,
+		sem:   readFromDiskSem,
+	}
+
+	// Acquire permission to encrypt the plaintext encrypted downstream by the
+	// encrypting store.
+	bs = &semaphoreAcquiringBlobStore{
+		Store: bs,
+		sem:   encryptAndComputeScoresSem,
+	}
+
 	return
 }
 

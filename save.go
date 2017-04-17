@@ -26,6 +26,7 @@ import (
 	"github.com/jacobsa/comeback/internal/config"
 	"github.com/jacobsa/comeback/internal/registry"
 	"github.com/jacobsa/comeback/internal/save"
+	"github.com/jacobsa/comeback/internal/wiring"
 	"github.com/jacobsa/timeutil"
 )
 
@@ -119,7 +120,8 @@ func runSave(ctx context.Context, args []string) (err error) {
 	// Make sure to do this before setting up state saving below, because these
 	// calls may modify the state struct.
 	reg := getRegistry(ctx)
-	blobStore := getBlobStore(ctx)
+	bucket := getBucket(ctx)
+	crypter := getCrypter(ctx)
 	state := getState(ctx)
 	clock := timeutil.RealClock()
 
@@ -136,8 +138,11 @@ func runSave(ctx context.Context, args []string) (err error) {
 		ctx,
 		job.BasePath,
 		job.Excludes,
+		bucket,
+		wiring.BlobObjectNamePrefix,
+		crypter,
+		state.ExistingScores,
 		state.ScoresForFiles,
-		blobStore,
 		log.New(os.Stderr, "Save progress: ", 0),
 		clock)
 

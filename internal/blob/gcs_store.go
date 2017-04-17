@@ -64,9 +64,10 @@ const metadataKey_MD5 = "comeback_md5"
 // bucket's namespace -- if a score name exists, then it points to the correct
 // data.
 //
-// The resulting store requires SaveRequest.score fields to be filled in by the
-// caller.
-func Internal_NewGCSStore(
+// Awkward interface: the resulting store requires SaveRequest.score fields to
+// be filled in by the caller. This is accomplished by ensuring that it is
+// wrapped by a store created with NewEncryptingStore.
+func NewGCSStore(
 	bucket gcs.Bucket,
 	prefix string) (store Store) {
 	store = &gcsStore{

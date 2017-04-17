@@ -24,6 +24,7 @@ import (
 	"os/signal"
 	"reflect"
 	"runtime"
+	"runtime/debug"
 	"runtime/pprof"
 	"strings"
 	"syscall"
@@ -228,6 +229,13 @@ func formatBytes(b uint64) string {
 
 func main() {
 	flag.Parse()
+
+	// We naturally have a large working set, since we need to buffer lots of
+	// data in flight to GCS over a high latency link. Ensure that we don't waste
+	// a ton of memory on heap garbage.
+	if _, gogcSet := os.LookupEnv("GOGC"); !gogcSet {
+		debug.SetGCPercent(25)
+	}
 
 	// Set up bare logging output.
 	log.SetFlags(log.Lmicroseconds | log.Lshortfile)

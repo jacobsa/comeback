@@ -25,7 +25,7 @@ import (
 // Return a blob store that wraps the supplied one, encrypting and decrypting
 // data as it passes through. The supplied crypter should have deterministic
 // output.
-func Internal_NewEncryptingStore(crypter crypto.Crypter, wrapped Store) Store {
+func NewEncryptingStore(crypter crypto.Crypter, wrapped Store) Store {
 	return &encryptingStore{crypter, wrapped}
 }
 
@@ -38,14 +38,12 @@ func (s *encryptingStore) Save(
 	ctx context.Context,
 	req *SaveRequest) (score Score, err error) {
 	// Encrypt the plaintext blob.
-	ciphertext := req.ciphertext[:0]
-	ciphertext, err = s.crypter.Encrypt(ciphertext, req.Blob)
+	ciphertext, err := s.crypter.Encrypt(nil, req.Blob)
 	if err != nil {
 		err = fmt.Errorf("Encrypt: %v", err)
 		return
 	}
 
-	req.ciphertext = ciphertext
 	req.Blob = ciphertext
 
 	// Pass on the encrypted blob.
