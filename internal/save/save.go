@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"log"
 	"regexp"
+	"runtime"
 
 	"golang.org/x/sync/errgroup"
 
@@ -55,6 +56,16 @@ func Save(
 	clock timeutil.Clock) (score blob.Score, err error) {
 	eg, ctx := errgroup.WithContext(ctx)
 
+	// Set up a semaphore that limits memory usage for read buffers. It's
+	// unlikely that we need significant parallelism when reading from local
+	// disk.
+	readFromDiskSem := make(semaphore, 4)
+
+	// Set up a semaphore that limits memory usage while encrypting and computing
+	// scores. There's no reason that we would need to do this with a parallelism
+	// much greater than GOMAXPROCS.
+	encryptAndComputeScoresSem := make(semaphore, runtime.GOMAXPROCS(0)+2)
+
 	// Visit each node in the graph, writing the processed nodes to a channel.
 	processedNodes := make(chan *fsNode, 100)
 	eg.Go(func() (err error) {
@@ -74,7 +85,15 @@ func Save(
 			fileChunkSize,
 			dir,
 			scoreMap,
-			newBlobStore(bucket, objectNamePrefix, crypter, existingScores),
+			newBlobStore(
+				bucket,
+				objectNamePrefix,
+				crypter,
+				existingScores,
+				readFromDiskSem,
+				encryptAndComputeScoresSem,
+			),
+			readFromDiskSem,
 			clock,
 			logger,
 			processedNodes)
@@ -115,13 +134,27 @@ func Save(
 //
 // existingScores must contain only scores that are known to exist in the
 // bucket, in hex form. It will be updated as the blob store is used.
+//
+// It is assumed that readFromDiskSem is held upon calling Save, and
+// encryptAndComputeScoresSem is not.
 func newBlobStore(
 	bucket gcs.Bucket,
 	objectNamePrefix string,
 	crypter crypto.Crypter,
-	existingScores util.StringSet) (bs blob.Store) {
+	existingScores util.StringSet,
+	readFromDiskSem semaphore,
+	encryptAndComputeScoresSem semaphore) (bs blob.Store) {
 	// Store blobs in GCS.
 	bs = blob.NewGCSStore(bucket, objectNamePrefix)
+
+	// At this point in a Store call it's clear that we're going to have to go to
+	// the network. Release the semaphore to allow more encryption to happen so
+	// that we don't block CPU-bound work on the network. It's likely we'll need
+	// more parallelism to keep the network saturated.
+	bs = &semaphoreReleasingBlobStore{
+		Store: bs,
+		sem:   encryptAndComputeScoresSem,
+	}
 
 	// Don't make redundant calls to GCS.
 	bs = blob.NewExistingScoresStore(existingScores, bs)
@@ -131,6 +164,22 @@ func newBlobStore(
 
 	// Encrypt blob data before sending it off to GCS.
 	bs = blob.NewEncryptingStore(crypter, bs)
+
+	// Release the semaphore we held while loading data from disk. We do this
+	// under encryptAndComputeScoresSem in order to avoid a window of unbounded
+	// memory usage where we've released that semaphore but are blocking on
+	// acquiring this one, still holding the read buffer in memory.
+	bs = &semaphoreReleasingBlobStore{
+		Store: bs,
+		sem:   readFromDiskSem,
+	}
+
+	// Acquire permission to encrypt the plaintext encrypted downstream by the
+	// encrypting store.
+	bs = &semaphoreAcquiringBlobStore{
+		Store: bs,
+		sem:   encryptAndComputeScoresSem,
+	}
 
 	return
 }
