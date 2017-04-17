@@ -33,10 +33,6 @@ type SaveRequest struct {
 	Blob []byte
 
 	// The score of the blob, used in a conspiracy between existingScoresStore
-	// and downstream stores.
+	// and downstream stores to avoid recomputing scores.
 	score Score
-
-	// A buffer for holding the result of encryption. If the user reuses the
-	// request struct, we can reuse this buffer.
-	ciphertext []byte
 }
