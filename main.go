@@ -21,8 +21,10 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"reflect"
 	"runtime"
 	"runtime/pprof"
+	"strings"
 	"syscall"
 
 	"golang.org/x/net/context"
@@ -151,14 +153,14 @@ func init() {
 			var ms runtime.MemStats
 
 			runtime.ReadMemStats(&ms)
-			log.Printf("Pre-GC mem stats:\n%#v", ms)
+			log.Printf("Pre-GC mem stats:\n%s", formatMemStats(&ms))
 
 			// Trigger a garbage collection to get up to date information (cf.
 			// https://goo.gl/aXVQfL).
 			runtime.GC()
 
 			runtime.ReadMemStats(&ms)
-			log.Printf("Post-GC mem stats:\n%#v", ms)
+			log.Printf("Post-GC mem stats:\n%s", formatMemStats(&ms))
 
 			const path = "/tmp/mem.pprof"
 			err := writeMemProfile(path)
@@ -169,6 +171,56 @@ func init() {
 			}
 		}
 	}()
+}
+
+func formatMemStats(ms *runtime.MemStats) string {
+	fields := []string{
+		"Alloc",
+		"TotalAlloc",
+		"Sys",
+		"HeapAlloc",
+		"HeapSys",
+		"HeapIdle",
+		"HeapInuse",
+		"HeapReleased",
+	}
+
+	var lines []string
+	v := reflect.ValueOf(*ms)
+	for _, f := range fields {
+		fv := v.FieldByName(f)
+		if !fv.IsValid() {
+			panic(fmt.Sprintf("bad field: %q", f))
+		}
+
+		lines = append(lines, fmt.Sprintf("  %12s: %s", f, formatBytes(fv.Uint())))
+	}
+
+	return strings.Join(lines, "\n")
+}
+
+func formatBytes(b uint64) string {
+	var val float64
+	var unit string
+	switch {
+	case b >= 1<<30:
+		val = float64(b) / (1 << 30)
+		unit = "GiB"
+
+	case b >= 1<<20:
+		val = float64(b) / (1 << 20)
+		unit = "MiB"
+
+	case b >= 1<<10:
+		val = float64(b) / (1 << 10)
+		unit = "KiB"
+
+	default:
+		val = float64(b)
+		unit = "bytes"
+	}
+
+	return fmt.Sprintf("%6.2f %s", val, unit)
 }
 
 ////////////////////////////////////////////////////////////////////////
