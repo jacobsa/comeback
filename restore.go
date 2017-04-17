@@ -16,14 +16,13 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
 
 	"github.com/jacobsa/comeback/internal/blob"
 	"github.com/jacobsa/comeback/internal/restore"
-
-	"golang.org/x/net/context"
 )
 
 var cmdRestore = &Command{

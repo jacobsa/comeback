@@ -16,18 +16,18 @@
 package save
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
 	"regexp"
 
-	"golang.org/x/net/context"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/jacobsa/comeback/internal/blob"
 	"github.com/jacobsa/comeback/internal/dag"
 	"github.com/jacobsa/comeback/internal/fs"
 	"github.com/jacobsa/comeback/internal/state"
-	"github.com/jacobsa/syncutil"
 	"github.com/jacobsa/timeutil"
 )
 
@@ -42,11 +42,11 @@ func Save(
 	blobStore blob.Store,
 	logger *log.Logger,
 	clock timeutil.Clock) (score blob.Score, err error) {
-	b := syncutil.NewBundle(ctx)
+	eg, ctx := errgroup.WithContext(ctx)
 
 	// Visit each node in the graph, writing the processed nodes to a channel.
 	processedNodes := make(chan *fsNode, 100)
-	b.Add(func(ctx context.Context) (err error) {
+	eg.Go(func() (err error) {
 		defer close(processedNodes)
 
 		// The resolver only makes use of the local file system. It actually seems
@@ -85,7 +85,7 @@ func Save(
 	})
 
 	// Find the root score.
-	b.Add(func(ctx context.Context) (err error) {
+	eg.Go(func() (err error) {
 		score, err = findRootScore(processedNodes)
 		if err != nil {
 			err = fmt.Errorf("findRootScore: %v", err)
@@ -95,7 +95,7 @@ func Save(
 		return
 	})
 
-	err = b.Join()
+	err = eg.Wait()
 	return
 }
 

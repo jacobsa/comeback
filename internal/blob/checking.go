@@ -16,9 +16,8 @@
 package blob
 
 import (
+	"context"
 	"fmt"
-
-	"golang.org/x/net/context"
 )
 
 // Return a blob store that wraps the supplied one, confirming that the blob

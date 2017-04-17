@@ -16,10 +16,9 @@
 package blob_test
 
 import (
+	"context"
 	"errors"
 	"testing"
-
-	"golang.org/x/net/context"
 
 	"github.com/jacobsa/comeback/internal/blob"
 	"github.com/jacobsa/comeback/internal/blob/mock"

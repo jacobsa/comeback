@@ -17,6 +17,7 @@ package blob
 
 import (
 	"bytes"
+	"context"
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
@@ -24,11 +25,10 @@ import (
 	"strconv"
 	"strings"
 
-	"golang.org/x/net/context"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/jacobsa/gcloud/gcs"
 	"github.com/jacobsa/gcloud/gcs/gcsutil"
-	"github.com/jacobsa/syncutil"
 )
 
 // A key placed in GCS object metadata by gcsStore containing the hex SHA-1
@@ -210,19 +210,19 @@ func ListBlobObjects(
 	bucket gcs.Bucket,
 	namePrefix string,
 	objects chan<- *gcs.Object) (err error) {
-	b := syncutil.NewBundle(ctx)
+	eg, ctx := errgroup.WithContext(ctx)
 
 	// GCS object listing is slow. Parallelize sixteen ways.
 	const hexDigits = "0123456789abcdef"
 	for i := 0; i < len(hexDigits); i++ {
 		digit := hexDigits[i]
-		b.Add(func(ctx context.Context) (err error) {
+		eg.Go(func() (err error) {
 			err = gcsutil.ListPrefix(ctx, bucket, namePrefix+string(digit), objects)
 			return
 		})
 	}
 
-	err = b.Join()
+	err = eg.Wait()
 	return
 }
 
@@ -233,11 +233,11 @@ func ListScores(
 	bucket gcs.Bucket,
 	namePrefix string,
 	scores chan<- Score) (err error) {
-	b := syncutil.NewBundle(ctx)
+	eg, ctx := errgroup.WithContext(ctx)
 
 	// List object records into a channel.
 	objects := make(chan *gcs.Object, 100)
-	b.Add(func(ctx context.Context) (err error) {
+	eg.Go(func() (err error) {
 		defer close(objects)
 		err = ListBlobObjects(ctx, bucket, namePrefix, objects)
 		if err != nil {
@@ -249,7 +249,7 @@ func ListScores(
 	})
 
 	// Parse and verify records, and write out scores.
-	b.Add(func(ctx context.Context) (err error) {
+	eg.Go(func() (err error) {
 		for o := range objects {
 			// Parse and verify.
 			var score Score
@@ -273,7 +273,7 @@ func ListScores(
 		return
 	})
 
-	err = b.Join()
+	err = eg.Wait()
 	return
 }
 

@@ -16,6 +16,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -23,8 +24,6 @@ import (
 	"os/signal"
 	"os/user"
 	"strconv"
-
-	"golang.org/x/net/context"
 
 	"github.com/jacobsa/comeback/internal/blob"
 	"github.com/jacobsa/comeback/internal/comebackfs"

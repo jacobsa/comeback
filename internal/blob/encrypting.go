@@ -16,9 +16,8 @@
 package blob
 
 import (
+	"context"
 	"fmt"
-
-	"golang.org/x/net/context"
 
 	"github.com/jacobsa/comeback/internal/crypto"
 )

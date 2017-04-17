@@ -16,10 +16,9 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"sync"
-
-	"golang.org/x/net/context"
 
 	"github.com/jacobsa/comeback/internal/blob"
 	"github.com/jacobsa/comeback/internal/wiring"

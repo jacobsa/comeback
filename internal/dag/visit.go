@@ -16,13 +16,14 @@
 package dag
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"sync"
 
-	"github.com/jacobsa/syncutil"
+	"golang.org/x/sync/errgroup"
 
-	"golang.org/x/net/context"
+	"github.com/jacobsa/syncutil"
 )
 
 // Call the visitor once for each unique node in the union of startNodes and
@@ -46,7 +47,7 @@ func Visit(
 	v Visitor,
 	resolverParallelism int,
 	visitorParallelism int) (err error) {
-	b := syncutil.NewBundle(ctx)
+	eg, ctx := errgroup.WithContext(ctx)
 
 	// Set up a state struct.
 	state := &visitState{
@@ -67,7 +68,7 @@ func Visit(
 
 	// Run workers.
 	for i := 0; i < resolverParallelism; i++ {
-		b.Add(func(ctx context.Context) (err error) {
+		eg.Go(func() (err error) {
 			err = state.resolveNodes(ctx)
 			if err != nil {
 				err = fmt.Errorf("resolveNodes: %v", err)
@@ -79,7 +80,7 @@ func Visit(
 	}
 
 	for i := 0; i < visitorParallelism; i++ {
-		b.Add(func(ctx context.Context) (err error) {
+		eg.Go(func() (err error) {
 			err = state.visitNodes(ctx)
 			if err != nil {
 				err = fmt.Errorf("visitNodes: %v", err)
@@ -100,7 +101,7 @@ func Visit(
 	//
 	//  *  The bundle observes worker B's error before worker A's.
 	//
-	b.Join()
+	eg.Wait()
 	state.mu.Lock()
 	err = state.firstErr
 	state.mu.Unlock()

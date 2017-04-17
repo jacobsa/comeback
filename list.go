@@ -16,12 +16,11 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"text/tabwriter"
 	"time"
-
-	"golang.org/x/net/context"
 )
 
 var cmdList = &Command{

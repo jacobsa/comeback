@@ -16,6 +16,7 @@
 package verify
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/jacobsa/comeback/internal/blob"
@@ -23,7 +24,6 @@ import (
 	"github.com/jacobsa/comeback/internal/fs"
 	"github.com/jacobsa/comeback/internal/repr"
 	"github.com/jacobsa/timeutil"
-	"golang.org/x/net/context"
 )
 
 // Create a dependency resolver for the DAG of blobs in the supplied bucket.

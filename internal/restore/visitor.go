@@ -16,6 +16,7 @@
 package restore
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -23,7 +24,6 @@ import (
 	"time"
 	"unsafe"
 
-	"golang.org/x/net/context"
 	"golang.org/x/sys/unix"
 
 	"github.com/jacobsa/comeback/internal/blob"

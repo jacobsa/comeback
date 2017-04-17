@@ -19,14 +19,15 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"time"
 
+	"golang.org/x/sync/errgroup"
+
 	"github.com/jacobsa/gcloud/gcs"
 	"github.com/jacobsa/gcloud/gcs/gcsutil"
-	"github.com/jacobsa/syncutil"
-	"golang.org/x/net/context"
 )
 
 var cmdDeleteGarbage = &Command{
@@ -39,14 +40,14 @@ var cmdDeleteGarbage = &Command{
 ////////////////////////////////////////////////////////////////////////
 
 func runDeleteGarbage(ctx context.Context, args []string) (err error) {
-	b := syncutil.NewBundle(ctx)
+	eg, ctx := errgroup.WithContext(ctx)
 
 	// Grab dependencies.
 	bucket := getBucket(ctx)
 
 	// List all garbage objects.
 	objects := make(chan *gcs.Object, 100)
-	b.Add(func(ctx context.Context) (err error) {
+	eg.Go(func() (err error) {
 		defer close(objects)
 		err = gcsutil.ListPrefix(ctx, bucket, garbagePrefix, objects)
 		if err != nil {
@@ -61,7 +62,7 @@ func runDeleteGarbage(ctx context.Context, args []string) (err error) {
 	// Convert to names.
 	var count uint64
 	toDelete := make(chan string)
-	b.Add(func(ctx context.Context) (err error) {
+	eg.Go(func() (err error) {
 		defer close(toDelete)
 		ticker := time.Tick(2 * time.Second)
 
@@ -90,7 +91,7 @@ func runDeleteGarbage(ctx context.Context, args []string) (err error) {
 	})
 
 	// Delete the objects.
-	b.Add(func(ctx context.Context) (err error) {
+	eg.Go(func() (err error) {
 		err = deleteObjects(ctx, bucket, toDelete)
 		if err != nil {
 			err = fmt.Errorf("deleteObjects: %v", err)
@@ -100,7 +101,7 @@ func runDeleteGarbage(ctx context.Context, args []string) (err error) {
 		return
 	})
 
-	err = b.Join()
+	err = eg.Wait()
 	if err != nil {
 		return
 	}

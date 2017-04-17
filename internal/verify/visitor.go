@@ -16,12 +16,12 @@
 package verify
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/jacobsa/comeback/internal/blob"
 	"github.com/jacobsa/comeback/internal/dag"
 	"github.com/jacobsa/timeutil"
-	"golang.org/x/net/context"
 )
 
 // Create a visitor that confirms file chunks can be loaded from the supplied

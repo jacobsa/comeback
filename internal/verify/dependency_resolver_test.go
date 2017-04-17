@@ -16,12 +16,11 @@
 package verify
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"testing"
 	"time"
-
-	"golang.org/x/net/context"
 
 	"github.com/jacobsa/comeback/internal/blob"
 	"github.com/jacobsa/comeback/internal/blob/mock"

@@ -22,6 +22,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"log"
@@ -29,12 +30,12 @@ import (
 	"sync/atomic"
 	"time"
 
+	"golang.org/x/sync/errgroup"
+
 	"github.com/jacobsa/comeback/internal/blob"
 	"github.com/jacobsa/comeback/internal/verify"
 	"github.com/jacobsa/comeback/internal/wiring"
 	"github.com/jacobsa/gcloud/gcs"
-	"github.com/jacobsa/syncutil"
-	"golang.org/x/net/context"
 )
 
 var cmdGC = &Command{
@@ -60,11 +61,11 @@ const garbagePrefix = "garbage/"
 func parseGCInput(
 	ctx context.Context,
 	r io.Reader) (scores []blob.Score, err error) {
-	b := syncutil.NewBundle(ctx)
+	eg, ctx := errgroup.WithContext(ctx)
 
 	// Parse the input, writing records into a channel.
 	verifyRecords := make(chan verify.Record, 100)
-	b.Add(func(ctx context.Context) (err error) {
+	eg.Go(func() (err error) {
 		defer close(verifyRecords)
 		err = parseVerifyOutput(ctx, r, verifyRecords)
 		if err != nil {
@@ -76,7 +77,7 @@ func parseGCInput(
 	})
 
 	// Save the scores from the records.
-	b.Add(func(ctx context.Context) (err error) {
+	eg.Go(func() (err error) {
 		for r := range verifyRecords {
 			scores = append(scores, r.Node.Score)
 			for _, child := range r.Children {
@@ -87,7 +88,7 @@ func parseGCInput(
 		return
 	})
 
-	err = b.Join()
+	err = eg.Wait()
 	return
 }
 
@@ -131,11 +132,11 @@ func cloneGarbage(
 	bucket gcs.Bucket,
 	garbageScores <-chan blob.Score,
 	garbageObjects chan<- string) (err error) {
-	b := syncutil.NewBundle(ctx)
+	eg, ctx := errgroup.WithContext(ctx)
 
 	const parallelism = 128
 	for i := 0; i < parallelism; i++ {
-		b.Add(func(ctx context.Context) (err error) {
+		eg.Go(func() (err error) {
 			// Process each score.
 			for score := range garbageScores {
 				srcName := wiring.BlobObjectNamePrefix + score.Hex()
@@ -165,7 +166,7 @@ func cloneGarbage(
 		})
 	}
 
-	err = b.Join()
+	err = eg.Wait()
 	return
 }
 
@@ -174,11 +175,11 @@ func deleteObjects(
 	ctx context.Context,
 	bucket gcs.Bucket,
 	names <-chan string) (err error) {
-	b := syncutil.NewBundle(ctx)
+	eg, ctx := errgroup.WithContext(ctx)
 
 	const parallelism = 128
 	for i := 0; i < parallelism; i++ {
-		b.Add(func(ctx context.Context) (err error) {
+		eg.Go(func() (err error) {
 			for name := range names {
 				err = bucket.DeleteObject(
 					ctx,
@@ -196,7 +197,7 @@ func deleteObjects(
 		})
 	}
 
-	err = b.Join()
+	err = eg.Wait()
 	return
 }
 
@@ -229,11 +230,11 @@ func runGC(ctx context.Context, args []string) (err error) {
 		return
 	}
 
-	b := syncutil.NewBundle(ctx)
+	eg, ctx := errgroup.WithContext(ctx)
 
 	// List all extant scores into a channel.
 	allScores := make(chan blob.Score, 100)
-	b.Add(func(ctx context.Context) (err error) {
+	eg.Go(func() (err error) {
 		defer close(allScores)
 		err = blob.ListScores(ctx, bucket, wiring.BlobObjectNamePrefix, allScores)
 		if err != nil {
@@ -249,7 +250,7 @@ func runGC(ctx context.Context, args []string) (err error) {
 	var garbageScoresCount uint64
 
 	allScoresAfterCounting := make(chan blob.Score, 100)
-	b.Add(func(ctx context.Context) (err error) {
+	eg.Go(func() (err error) {
 		defer close(allScoresAfterCounting)
 		ticker := time.Tick(2 * time.Second)
 
@@ -280,7 +281,7 @@ func runGC(ctx context.Context, args []string) (err error) {
 
 	// Filter to garbage scores.
 	garbageScores := make(chan blob.Score, 100)
-	b.Add(func(ctx context.Context) (err error) {
+	eg.Go(func() (err error) {
 		defer close(garbageScores)
 		err = filterToGarbage(
 			ctx,
@@ -298,7 +299,7 @@ func runGC(ctx context.Context, args []string) (err error) {
 
 	// Count the number of garbage scores.
 	garbageScoresAfterCounting := make(chan blob.Score, 100)
-	b.Add(func(ctx context.Context) (err error) {
+	eg.Go(func() (err error) {
 		defer close(garbageScoresAfterCounting)
 		for score := range garbageScores {
 			atomic.AddUint64(&garbageScoresCount, 1)
@@ -317,7 +318,7 @@ func runGC(ctx context.Context, args []string) (err error) {
 
 	// Clone garbage blobs into a backup location.
 	toDelete := make(chan string, 100)
-	b.Add(func(ctx context.Context) (err error) {
+	eg.Go(func() (err error) {
 		defer close(toDelete)
 		err = cloneGarbage(
 			ctx,
@@ -333,7 +334,7 @@ func runGC(ctx context.Context, args []string) (err error) {
 	})
 
 	// Delete the original objects.
-	b.Add(func(ctx context.Context) (err error) {
+	eg.Go(func() (err error) {
 		err = deleteObjects(ctx, bucket, toDelete)
 		if err != nil {
 			err = fmt.Errorf("deleteObjects: %v", err)
@@ -343,7 +344,7 @@ func runGC(ctx context.Context, args []string) (err error) {
 		return
 	})
 
-	err = b.Join()
+	err = eg.Wait()
 	if err != nil {
 		return
 	}

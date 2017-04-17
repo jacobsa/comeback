@@ -16,11 +16,10 @@
 package save
 
 import (
+	"context"
 	"os"
 	"testing"
 	"time"
-
-	"golang.org/x/net/context"
 
 	"github.com/jacobsa/comeback/internal/fs"
 	"github.com/jacobsa/comeback/internal/state"

@@ -16,10 +16,9 @@
 package wiring
 
 import (
+	"context"
 	"crypto/sha256"
 	"fmt"
-
-	"golang.org/x/net/context"
 
 	"github.com/jacobsa/comeback/internal/crypto"
 	"github.com/jacobsa/comeback/internal/registry"

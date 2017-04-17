@@ -17,6 +17,7 @@ package save
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -25,8 +26,6 @@ import (
 	"path"
 	"testing"
 	"time"
-
-	"golang.org/x/net/context"
 
 	"github.com/jacobsa/comeback/internal/blob"
 	"github.com/jacobsa/comeback/internal/blob/mock"

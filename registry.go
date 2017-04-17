@@ -16,11 +16,10 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"sync"
-
-	"golang.org/x/net/context"
 
 	"github.com/jacobsa/comeback/internal/crypto"
 	"github.com/jacobsa/comeback/internal/registry"

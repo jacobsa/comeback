@@ -16,8 +16,9 @@
 package blob
 
 import (
+	"context"
+
 	"github.com/jacobsa/comeback/internal/util"
-	"golang.org/x/net/context"
 )
 
 // Create a blob store that wraps another, responding immediately to calls to

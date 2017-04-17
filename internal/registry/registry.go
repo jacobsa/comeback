@@ -16,9 +16,8 @@
 package registry
 
 import (
+	"context"
 	"time"
-
-	"golang.org/x/net/context"
 
 	"github.com/jacobsa/comeback/internal/blob"
 )

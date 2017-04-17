@@ -16,13 +16,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 	"time"
-
-	"golang.org/x/net/context"
 
 	"github.com/jacobsa/comeback/internal/config"
 	"github.com/jacobsa/comeback/internal/registry"

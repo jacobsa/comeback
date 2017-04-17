@@ -16,12 +16,12 @@
 package verify
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/jacobsa/comeback/internal/blob"
 	"github.com/jacobsa/comeback/internal/dag"
 	"github.com/jacobsa/timeutil"
-	"golang.org/x/net/context"
 )
 
 // Read all blobs necessary for verifying the directory structure rooted at a

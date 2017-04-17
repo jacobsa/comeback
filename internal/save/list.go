@@ -16,11 +16,10 @@
 package save
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"regexp"
-
-	"golang.org/x/net/context"
 
 	"github.com/jacobsa/comeback/internal/dag"
 )

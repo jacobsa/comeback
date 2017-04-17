@@ -16,10 +16,11 @@
 package blob
 
 import (
+	"context"
+
 	"github.com/jacobsa/comeback/internal/crypto"
 	"github.com/jacobsa/comeback/internal/util"
 	"github.com/jacobsa/gcloud/gcs"
-	"golang.org/x/net/context"
 )
 
 // A Store knows how to save blobs for later retrieval.

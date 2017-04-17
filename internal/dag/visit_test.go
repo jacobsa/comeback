@@ -16,6 +16,7 @@
 package dag_test
 
 import (
+	"context"
 	cryptorand "crypto/rand"
 	"encoding/binary"
 	"errors"
@@ -28,8 +29,6 @@ import (
 	"sync"
 	"testing"
 	"time"
-
-	"golang.org/x/net/context"
 
 	"github.com/jacobsa/comeback/internal/dag"
 	. "github.com/jacobsa/oglematchers"

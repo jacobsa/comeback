@@ -16,13 +16,12 @@
 package restore
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"testing"
 	"time"
-
-	"golang.org/x/net/context"
 
 	"github.com/jacobsa/comeback/internal/blob"
 	"github.com/jacobsa/comeback/internal/dag"

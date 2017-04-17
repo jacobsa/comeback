@@ -16,13 +16,12 @@
 package save
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
 	"regexp"
-
-	"golang.org/x/net/context"
 
 	"github.com/jacobsa/comeback/internal/dag"
 	"github.com/jacobsa/comeback/internal/fs"

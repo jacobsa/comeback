@@ -15,7 +15,7 @@
 
 package dag
 
-import "golang.org/x/net/context"
+import "context"
 
 // A value uniquely identifying a node within a DAG. A good choice is an
 // integer, a string, or a pointer to a struct. The latter is useful for

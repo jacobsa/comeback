@@ -16,11 +16,10 @@
 package comebackfs
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
-
-	"golang.org/x/net/context"
 
 	"github.com/jacobsa/comeback/internal/blob"
 	"github.com/jacobsa/comeback/internal/fs"

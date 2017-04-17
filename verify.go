@@ -52,6 +52,7 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io"
 	"log"
@@ -60,12 +61,12 @@ import (
 	"path"
 	"time"
 
+	"golang.org/x/sync/errgroup"
+
 	"github.com/jacobsa/comeback/internal/blob"
 	"github.com/jacobsa/comeback/internal/verify"
 	"github.com/jacobsa/comeback/internal/wiring"
 	"github.com/jacobsa/gcloud/gcs"
-	"github.com/jacobsa/syncutil"
-	"golang.org/x/net/context"
 )
 
 var cmdVerify = &Command{
@@ -144,12 +145,12 @@ func listAllScores(
 	ctx context.Context,
 	bucket gcs.Bucket,
 	namePrefix string) (scores []blob.Score, err error) {
-	b := syncutil.NewBundle(ctx)
-	defer func() { err = b.Join() }()
+	eg, ctx := errgroup.WithContext(ctx)
+	defer func() { err = eg.Wait() }()
 
 	// List scores into a channel.
 	scoreChan := make(chan blob.Score, 100)
-	b.Add(func(ctx context.Context) (err error) {
+	eg.Go(func() (err error) {
 		defer close(scoreChan)
 		err = blob.ListScores(ctx, bucket, wiring.BlobObjectNamePrefix, scoreChan)
 		if err != nil {
@@ -161,7 +162,7 @@ func listAllScores(
 	})
 
 	// Accumulate into the slice.
-	b.Add(func(ctx context.Context) (err error) {
+	eg.Go(func() (err error) {
 		for score := range scoreChan {
 			scores = append(scores, score)
 		}
@@ -186,11 +187,11 @@ func verifyImpl(
 	knownStructure map[verify.Node][]verify.Node,
 	blobStore blob.Store,
 	output io.Writer) (nodesVerified uint64, err error) {
-	b := syncutil.NewBundle(ctx)
+	eg, ctx := errgroup.WithContext(ctx)
 
 	// Call the workhorse function, writing records int o a channel.
 	records := make(chan verify.Record, 100)
-	b.Add(func(ctx context.Context) (err error) {
+	eg.Go(func() (err error) {
 		defer close(records)
 		err = verify.Verify(
 			ctx,
@@ -210,7 +211,7 @@ func verifyImpl(
 	})
 
 	// Count and output the nodes visited.
-	b.Add(func(ctx context.Context) (err error) {
+	eg.Go(func() (err error) {
 		for r := range records {
 			// Increment the count.
 			nodesVerified++
@@ -226,7 +227,7 @@ func verifyImpl(
 		return
 	})
 
-	err = b.Join()
+	err = eg.Wait()
 	return
 }
 
@@ -236,11 +237,11 @@ func parseKnownStructure(
 	ctx context.Context,
 	r io.Reader) (knownStructure map[verify.Node][]verify.Node, err error) {
 	const stalenessThreshold = 90 * 24 * time.Hour
-	b := syncutil.NewBundle(ctx)
+	eg, ctx := errgroup.WithContext(ctx)
 
 	// Parse records into a channel.
 	records := make(chan verify.Record, 100)
-	b.Add(func(ctx context.Context) (err error) {
+	eg.Go(func() (err error) {
 		defer close(records)
 		err = parseVerifyOutput(ctx, r, records)
 		if err != nil {
@@ -253,7 +254,7 @@ func parseKnownStructure(
 
 	// Accumulate into the map.
 	knownStructure = make(map[verify.Node][]verify.Node)
-	b.Add(func(ctx context.Context) (err error) {
+	eg.Go(func() (err error) {
 		now := time.Now()
 		for r := range records {
 			// Skip stale records.
@@ -267,7 +268,7 @@ func parseKnownStructure(
 		return
 	})
 
-	err = b.Join()
+	err = eg.Wait()
 	return
 }
 

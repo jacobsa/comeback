@@ -16,14 +16,13 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"sync"
 	"time"
-
-	"golang.org/x/net/context"
 
 	"github.com/jacobsa/comeback/internal/state"
 	"github.com/jacobsa/comeback/internal/util"

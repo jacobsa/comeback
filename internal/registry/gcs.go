@@ -16,6 +16,7 @@
 package registry
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
@@ -27,7 +28,6 @@ import (
 	"github.com/jacobsa/comeback/internal/crypto"
 	"github.com/jacobsa/gcloud/gcs"
 	"github.com/jacobsa/gcloud/gcs/gcsutil"
-	"golang.org/x/net/context"
 )
 
 // Create a registry that stores data in the supplied GCS bucket, deriving a

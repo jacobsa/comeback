@@ -16,9 +16,8 @@
 package main
 
 import (
+	"context"
 	"flag"
-
-	"golang.org/x/net/context"
 )
 
 type Command struct {

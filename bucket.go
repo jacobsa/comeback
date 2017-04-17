@@ -16,12 +16,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"sync"
 	"time"
 
-	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 

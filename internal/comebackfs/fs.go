@@ -22,8 +22,6 @@ import (
 	"os"
 	"time"
 
-	"golang.org/x/net/context"
-
 	"github.com/jacobsa/comeback/internal/blob"
 	"github.com/jacobsa/comeback/internal/fs"
 	pkgfs "github.com/jacobsa/comeback/internal/fs"
@@ -31,6 +29,7 @@ import (
 	"github.com/jacobsa/fuse/fuseops"
 	"github.com/jacobsa/fuse/fuseutil"
 	"github.com/jacobsa/syncutil"
+	"golang.org/x/net/context"
 )
 
 // Create a read-only file system for browsing the backup rooted by the

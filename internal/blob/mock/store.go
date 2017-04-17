@@ -7,13 +7,13 @@
 package mock_blob
 
 import (
+	"context"
 	fmt "fmt"
 	runtime "runtime"
 	unsafe "unsafe"
 
 	blob "github.com/jacobsa/comeback/internal/blob"
 	oglemock "github.com/jacobsa/oglemock"
-	context "golang.org/x/net/context"
 )
 
 type MockStore interface {

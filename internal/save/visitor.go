@@ -16,14 +16,13 @@
 package save
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"log"
 	"os"
 	"path"
 	"sync"
-
-	"golang.org/x/net/context"
 
 	"github.com/jacobsa/comeback/internal/blob"
 	"github.com/jacobsa/comeback/internal/dag"

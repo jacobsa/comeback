@@ -16,6 +16,7 @@
 package save
 
 import (
+	"context"
 	"io/ioutil"
 	"math/rand"
 	"os"
@@ -23,8 +24,6 @@ import (
 	"regexp"
 	"sort"
 	"testing"
-
-	"golang.org/x/net/context"
 
 	"github.com/jacobsa/comeback/internal/dag"
 	"github.com/jacobsa/comeback/internal/fs"

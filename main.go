@@ -16,6 +16,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
@@ -26,8 +27,6 @@ import (
 	"runtime/pprof"
 	"strings"
 	"syscall"
-
-	"golang.org/x/net/context"
 )
 
 var fProfile = flag.Bool("profile", false, "Write pprof profiles to /tmp.")

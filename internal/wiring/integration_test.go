@@ -16,6 +16,7 @@
 package wiring_test
 
 import (
+	"context"
 	cryptorand "crypto/rand"
 	"encoding/hex"
 	"fmt"
@@ -31,8 +32,6 @@ import (
 	"syscall"
 	"testing"
 	"time"
-
-	"golang.org/x/net/context"
 
 	"github.com/jacobsa/comeback/internal/blob"
 	"github.com/jacobsa/comeback/internal/fs"
