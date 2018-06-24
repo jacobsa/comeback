@@ -20,7 +20,7 @@ import (
 
 const (
 	keyFile    = "/Users/jacobsa/.comeback.key"
-	bucketName = "some-bucket"
+	bucketName = "jacobsa-test"
 )
 
 func main() {
