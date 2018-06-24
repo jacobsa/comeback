@@ -8,10 +8,19 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
+	"time"
 
 	"github.com/jacobsa/gcloud/gcs"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
 	"golang.org/x/sync/errgroup"
+)
+
+const (
+	keyFile    = "/Users/jacobsa/.comeback.key"
+	bucketName = "some-bucket"
 )
 
 func main() {
@@ -50,7 +59,58 @@ func run(ctx context.Context) (err error) {
 }
 
 func createBucket(ctx context.Context) (bucket gcs.Bucket, err error) {
-	err = errors.New("TODO")
+	// Create an oauth2 token source.
+	tokenSrc, err := makeTokenSource(ctx)
+	if err != nil {
+		err = fmt.Errorf("makeTokenSource: %v", err)
+		return
+	}
+
+	// Turn that into a connection.
+	connCfg := &gcs.ConnConfig{
+		TokenSource:     tokenSrc,
+		MaxBackoffSleep: time.Minute,
+	}
+
+	conn, err := gcs.NewConn(connCfg)
+	if err != nil {
+		err = fmt.Errorf("NewConn: %v", err)
+		return
+	}
+
+	// Grab the bucket.
+	bucket, err = conn.OpenBucket(
+		ctx,
+		&gcs.OpenBucketOptions{
+			Name: bucketName,
+		})
+
+	if err != nil {
+		err = fmt.Errorf("OpenBucket: %v", err)
+		return
+	}
+
+	return
+}
+
+func makeTokenSource(ctx context.Context) (ts oauth2.TokenSource, err error) {
+	// Attempt to read the JSON file.
+	contents, err := ioutil.ReadFile(keyFile)
+	if err != nil {
+		err = fmt.Errorf("ReadFile(%q): %v", keyFile, err)
+		return
+	}
+
+	// Create a config struct based on its contents.
+	jwtConfig, err := google.JWTConfigFromJSON(contents, gcs.Scope_FullControl)
+	if err != nil {
+		err = fmt.Errorf("JWTConfigFromJSON: %v", err)
+		return
+	}
+
+	// Create the token source.
+	ts = jwtConfig.TokenSource(ctx)
+
 	return
 }
 
