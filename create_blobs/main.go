@@ -134,7 +134,7 @@ func createBlobs(
 			return
 		}
 
-		if created := atomic.AddUint64(count, 1); created%100 == 0 {
+		if created := atomic.AddUint64(count, 1); created%10 == 0 {
 			log.Printf("Created %d blobs...", created)
 		}
 	}
@@ -175,7 +175,8 @@ func createBlob(ctx context.Context, bucket gcs.Bucket) (err error) {
 
 func makeBlobContents() (b []byte, err error) {
 	// Choose a length.
-	l := rand.Int63() % (1 << 20)
+	const maxLen = 1 << 16
+	l := rand.Int63() % maxLen
 
 	// Read that many bytes.
 	return ioutil.ReadAll(&io.LimitedReader{cryptorand.Reader, l})
