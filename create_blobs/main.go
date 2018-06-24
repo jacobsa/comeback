@@ -7,13 +7,16 @@ package main
 import (
 	"bytes"
 	"context"
+	cryptorand "crypto/rand"
 	"encoding/hex"
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"math/rand"
 	"os"
 	"path"
+	"sync/atomic"
 	"time"
 
 	"github.com/jacobsa/gcloud/gcs"
@@ -47,9 +50,10 @@ func run(ctx context.Context) (err error) {
 	eg, ctx := errgroup.WithContext(ctx)
 
 	const parallelism = 32
+	var created uint64
 	for i := 0; i < parallelism; i++ {
 		eg.Go(func() (err error) {
-			err = createBlobs(ctx, bucket)
+			err = createBlobs(ctx, bucket, &created)
 			if err != nil {
 				err = fmt.Errorf("creating blobs: %v", err)
 				return
@@ -120,11 +124,18 @@ func makeTokenSource(ctx context.Context) (ts oauth2.TokenSource, err error) {
 }
 
 // createBlobs repeatedly creates blobs until it fails.
-func createBlobs(ctx context.Context, bucket gcs.Bucket) (err error) {
+func createBlobs(
+	ctx context.Context,
+	bucket gcs.Bucket,
+	count *uint64) (err error) {
 	for {
 		err = createBlob(ctx, bucket)
 		if err != nil {
 			return
+		}
+
+		if created := atomic.AddUint64(count, 1); created%100 == 0 {
+			log.Printf("Created %d blobs...", created)
 		}
 	}
 }
@@ -164,8 +175,8 @@ func createBlob(ctx context.Context, bucket gcs.Bucket) (err error) {
 
 func makeBlobContents() (b []byte, err error) {
 	// Choose a length.
-	l := rand.Int64() % (1 << 20)
+	l := rand.Int63() % (1 << 20)
 
 	// Read that many bytes.
-	return ioutil.ReadAll(io.LimitedReader{cryptorand.Reader, l})
+	return ioutil.ReadAll(&io.LimitedReader{cryptorand.Reader, l})
 }
