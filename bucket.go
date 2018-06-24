@@ -80,7 +80,9 @@ func makeBucket(ctx context.Context) (bucket gcs.Bucket, err error) {
 	// Grab the bucket.
 	bucket, err = conn.OpenBucket(
 		ctx,
-		cfg.BucketName)
+		&gcs.OpenBucketOptions{
+			Name: cfg.BucketName,
+		})
 
 	if err != nil {
 		err = fmt.Errorf("OpenBucket: %v", err)
