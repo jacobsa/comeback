@@ -8,9 +8,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/hex"
-	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
+	"math/rand"
 	"os"
 	"path"
 	"time"
@@ -162,6 +163,9 @@ func createBlob(ctx context.Context, bucket gcs.Bucket) (err error) {
 }
 
 func makeBlobContents() (b []byte, err error) {
-	err = errors.New("TODO")
-	return
+	// Choose a length.
+	l := rand.Int64() % (1 << 20)
+
+	// Read that many bytes.
+	return ioutil.ReadAll(io.LimitedReader{cryptorand.Reader, l})
 }
