@@ -116,6 +116,16 @@ func makeTokenSource(ctx context.Context) (ts oauth2.TokenSource, err error) {
 
 // createBlobs repeatedly creates blobs until it fails.
 func createBlobs(ctx context.Context, bucket gcs.Bucket) (err error) {
+	for {
+		err = createBlob(ctx, bucket)
+		if err != nil {
+			return
+		}
+	}
+}
+
+// createBlob creates one blob.
+func createBlob(ctx context.Context, bucket gcs.Bucket) (err error) {
 	err = errors.New("TODO")
 	return
 }
