@@ -5,14 +5,18 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
 	"time"
 
 	"github.com/jacobsa/gcloud/gcs"
+	"github.com/jacobsa/gcloud/gcs/gcsutil"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"golang.org/x/sync/errgroup"
@@ -126,6 +130,38 @@ func createBlobs(ctx context.Context, bucket gcs.Bucket) (err error) {
 
 // createBlob creates one blob.
 func createBlob(ctx context.Context, bucket gcs.Bucket) (err error) {
+	// Choose contents.
+	contents, err := makeBlobContents()
+	if err != nil {
+		err = fmt.Errorf("choosing contents: %v", err)
+		return
+	}
+
+	// Hash them.
+	crc32c := *gcsutil.CRC32C(contents)
+	md5 := *gcsutil.MD5(contents)
+
+	// Use the hash as the blob name.
+	blobName := path.Join("tmp", hex.EncodeToString(md5[:]))
+
+	// Create the blob.
+	createReq := &gcs.CreateObjectRequest{
+		Name:     blobName,
+		Contents: bytes.NewReader(contents),
+		CRC32C:   &crc32c,
+		MD5:      &md5,
+	}
+
+	_, err = bucket.CreateObject(ctx, createReq)
+	if err != nil {
+		err = fmt.Errorf("CreateObject: %v", err)
+		return
+	}
+
+	return
+}
+
+func makeBlobContents() (b []byte, err error) {
 	err = errors.New("TODO")
 	return
 }
