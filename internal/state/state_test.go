@@ -48,7 +48,7 @@ func (t *StateTest) RoundTrip() {
 	t.s.ExistingScores = util.NewStringSet()
 	t.s.ExistingScores.Add("taco")
 	t.s.ExistingScores.Add("burrito")
-	t.s.RelistTime = time.Now()
+	t.s.RelistTime = time.Now().Round(0)
 
 	t.s.ScoresForFiles = state.NewScoreMap()
 	key := state.ScoreMapKey{Path: "queso"}
