@@ -15,9 +15,10 @@
 package fuseutil
 
 import (
+	"context"
+
 	"github.com/jacobsa/fuse"
 	"github.com/jacobsa/fuse/fuseops"
-	"golang.org/x/net/context"
 )
 
 // A FileSystem that responds to all ops with fuse.ENOSYS. Embed this in your
@@ -88,6 +89,13 @@ func (fs *NotImplementedFileSystem) CreateFile(
 func (fs *NotImplementedFileSystem) CreateSymlink(
 	ctx context.Context,
 	op *fuseops.CreateSymlinkOp) (err error) {
+	err = fuse.ENOSYS
+	return
+}
+
+func (fs *NotImplementedFileSystem) CreateLink(
+	ctx context.Context,
+	op *fuseops.CreateLinkOp) (err error) {
 	err = fuse.ENOSYS
 	return
 }
@@ -179,6 +187,34 @@ func (fs *NotImplementedFileSystem) ReleaseFileHandle(
 func (fs *NotImplementedFileSystem) ReadSymlink(
 	ctx context.Context,
 	op *fuseops.ReadSymlinkOp) (err error) {
+	err = fuse.ENOSYS
+	return
+}
+
+func (fs *NotImplementedFileSystem) RemoveXattr(
+	ctx context.Context,
+	op *fuseops.RemoveXattrOp) (err error) {
+	err = fuse.ENOSYS
+	return
+}
+
+func (fs *NotImplementedFileSystem) GetXattr(
+	ctx context.Context,
+	op *fuseops.GetXattrOp) (err error) {
+	err = fuse.ENOSYS
+	return
+}
+
+func (fs *NotImplementedFileSystem) ListXattr(
+	ctx context.Context,
+	op *fuseops.ListXattrOp) (err error) {
+	err = fuse.ENOSYS
+	return
+}
+
+func (fs *NotImplementedFileSystem) SetXattr(
+	ctx context.Context,
+	op *fuseops.SetXattrOp) (err error) {
 	err = fuse.ENOSYS
 	return
 }

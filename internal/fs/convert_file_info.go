@@ -111,7 +111,7 @@ func convertFileInfo(
 	case os.ModeSocket:
 		out.Type = TypeSocket
 	default:
-		return out, fmt.Errorf("Unhandled mode: %v %u", in.Mode(), in.Mode())
+		return out, fmt.Errorf("Unhandled mode: %v", in.Mode())
 	}
 
 	return out, nil
